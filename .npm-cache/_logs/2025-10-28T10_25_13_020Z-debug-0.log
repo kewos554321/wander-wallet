@@ -1,0 +1,42 @@
+0 verbose cli /Users/jayson/.nvm/versions/node/v20.16.0/bin/node /Users/jayson/.nvm/versions/node/v20.16.0/lib/node_modules/npm/bin/npm-cli.js
+1 info using npm@10.8.1
+2 info using node@v20.16.0
+3 silly config load:file:/Users/jayson/.nvm/versions/node/v20.16.0/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/jayson/Documents/practice/wander-wallet/.npmrc
+5 silly config load:file:/Users/jayson/.npmrc
+6 silly config load:file:/Users/jayson/.nvm/versions/node/v20.16.0/etc/npmrc
+7 verbose title npm exec shadcn@latest init -d
+8 verbose argv "exec" "--yes" "--" "shadcn@latest" "init" "-d"
+9 verbose logfile logs-max:10 dir:/Users/jayson/Documents/practice/wander-wallet/.npm-cache/_logs/2025-10-28T10_25_13_020Z-
+10 verbose logfile /Users/jayson/Documents/practice/wander-wallet/.npm-cache/_logs/2025-10-28T10_25_13_020Z-debug-0.log
+11 silly logfile done cleaning log files
+12 http fetch GET https://registry.npmjs.org/npm attempt 1 failed with ENOTFOUND
+13 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+14 http fetch GET https://registry.npmjs.org/shadcn attempt 1 failed with ENOTFOUND
+15 http fetch GET https://registry.npmjs.org/npm attempt 2 failed with ENOTFOUND
+16 http fetch GET https://registry.npmjs.org/shadcn attempt 2 failed with ENOTFOUND
+17 http fetch GET https://registry.npmjs.org/npm attempt 3 failed with ENOTFOUND
+18 http fetch GET https://registry.npmjs.org/shadcn attempt 3 failed with ENOTFOUND
+19 verbose type system
+20 verbose stack FetchError: request to https://registry.npmjs.org/shadcn failed, reason: getaddrinfo ENOTFOUND registry.npmjs.org
+20 verbose stack     at ClientRequest.<anonymous> (/Users/jayson/.nvm/versions/node/v20.16.0/lib/node_modules/npm/node_modules/minipass-fetch/lib/index.js:130:14)
+20 verbose stack     at ClientRequest.emit (node:events:519:28)
+20 verbose stack     at _destroy (node:_http_client:880:13)
+20 verbose stack     at onSocketNT (node:_http_client:900:5)
+20 verbose stack     at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+21 error code ENOTFOUND
+22 error syscall getaddrinfo
+23 error errno ENOTFOUND
+24 error network request to https://registry.npmjs.org/shadcn failed, reason: getaddrinfo ENOTFOUND registry.npmjs.org
+25 error network This is a problem related to network connectivity.
+25 error network In most cases you are behind a proxy or have bad network settings.
+25 error network
+25 error network If you are behind a proxy, please make sure that the
+25 error network 'proxy' config is set properly.  See: 'npm help config'
+26 verbose cwd /Users/jayson/Documents/practice/wander-wallet
+27 verbose os Darwin 24.6.0
+28 verbose node v20.16.0
+29 verbose npm  v10.8.1
+30 verbose exit 1
+31 verbose code 1
+32 error A complete log of this run can be found in: /Users/jayson/Documents/practice/wander-wallet/.npm-cache/_logs/2025-10-28T10_25_13_020Z-debug-0.log
