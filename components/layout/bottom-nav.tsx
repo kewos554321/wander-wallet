@@ -2,14 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Wallet, History, Settings, User } from "lucide-react"
+import { Home, Wallet, History, Settings, Folder } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { href: "/", label: "首頁", icon: Home },
+  { href: "/projects", label: "專案", icon: Folder },
   { href: "/wallet", label: "錢包", icon: Wallet },
   { href: "/history", label: "記錄", icon: History },
-  { href: "/profile", label: "個人", icon: User },
   { href: "/settings", label: "設定", icon: Settings },
 ]
 
