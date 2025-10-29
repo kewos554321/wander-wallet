@@ -1,4 +1,4 @@
-import { AppLayout } from "@/components/app-layout"
+import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Wallet, TrendingUp, CreditCard, History } from "lucide-react"

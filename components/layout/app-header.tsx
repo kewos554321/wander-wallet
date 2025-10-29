@@ -1,6 +1,6 @@
 "use client"
 
-import { ModeToggle } from "@/components/mode-toggle"
+import { ModeToggle } from "@/components/system/mode-toggle"
 import { Button } from "@/components/ui/button"
 import { Menu, Bell, Search } from "lucide-react"
 
@@ -41,3 +41,5 @@ export function AppHeader({ title = "Wander Wallet", showBack = false, onBack }:
     </header>
   )
 }
+
+

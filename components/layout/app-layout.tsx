@@ -1,7 +1,7 @@
 "use client"
 
-import { AppHeader } from "@/components/app-header"
-import { BottomNav } from "@/components/bottom-nav"
+import { AppHeader } from "./app-header"
+import { BottomNav } from "./bottom-nav"
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -30,3 +30,5 @@ export function AppLayout({
     </div>
   )
 }
+
+
