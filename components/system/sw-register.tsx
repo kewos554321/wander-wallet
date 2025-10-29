@@ -18,7 +18,6 @@ export default function ServiceWorkerRegister() {
         // Attempt to update on load to pick latest SW
         registration.update().catch(() => {});
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error("Service worker registration failed", err);
       }
     };

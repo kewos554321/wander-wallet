@@ -2,10 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-type BeforeInstallPromptEvent = Event & {
+interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
-};
+}
+
+// Helpers hoisted to module scope to avoid hook deps noise
+type NavigatorWithStandalone = Navigator & { standalone?: boolean };
+const hasStandalone = (n: Navigator): n is NavigatorWithStandalone => "standalone" in n;
+
+type WindowWithMSStream = Window & { MSStream?: unknown };
+const hasMSStream = (w: Window): w is WindowWithMSStream => "MSStream" in w;
 
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -13,15 +20,17 @@ export default function InstallPrompt() {
   const [hasPrompted, setHasPrompted] = useState(false);
 
   const isIOS = useMemo(() => {
-    if (typeof navigator === "undefined") return false;
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    if (typeof navigator === "undefined" || typeof window === "undefined") return false;
+    const isiOSUA = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const noMS = !hasMSStream(window);
+    return isiOSUA && noMS;
   }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const mediaStandalone = window.matchMedia("(display-mode: standalone)").matches;
-    const iosStandalone = (window.navigator as any).standalone === true; // iOS Safari
+    const iosStandalone = hasStandalone(window.navigator) && window.navigator.standalone === true; // iOS Safari
     setIsStandalone(mediaStandalone || iosStandalone);
 
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -62,7 +71,7 @@ export default function InstallPrompt() {
 
       {isIOS && (
         <p className="text-sm text-muted-foreground mt-2">
-          To install on iOS, tap the share button ⎋ and then "Add to Home Screen" ➕.
+          To install on iOS, tap the share button ⎋ and then &quot;Add to Home Screen&quot; ➕.
         </p>
       )}
     </div>

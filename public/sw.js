@@ -1,6 +1,6 @@
 /* Basic service worker for PWA installability and future enhancements */
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 

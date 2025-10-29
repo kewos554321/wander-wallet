@@ -7,7 +7,6 @@ type Theme = "light" | "dark" | "system"
 type ThemeProviderProps = {
   children: React.ReactNode
   defaultTheme?: Theme
-  attribute?: "class"
   enableSystem?: boolean
 }
 
@@ -32,7 +31,6 @@ function applyTheme(theme: Theme) {
 export function ThemeProvider({
   children,
   defaultTheme = "system",
-  attribute = "class",
   enableSystem = true,
 }: ThemeProviderProps) {
   const [theme, setTheme] = React.useState<Theme>(() => {

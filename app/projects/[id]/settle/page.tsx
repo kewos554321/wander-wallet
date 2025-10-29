@@ -1,6 +1,6 @@
 import { AppLayout } from "@/components/layout/app-layout"
 
-export default function SettlePage({ params }: { params: { id: string } }) {
+export default function SettlePage() {
   return (
     <AppLayout title="結算" showBack>
       <div className="space-y-4">
