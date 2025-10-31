@@ -68,7 +68,6 @@ export default function NewProjectPage() {
               <div className="flex items-center justify-center">
                 <Calendar
                 mode="range"
-                // captionLayout="dropdown"
                 defaultMonth={dateRange?.from}
                 selected={dateRange}
                 className="p-2 [--cell-size:--spacing(10)] text-sm"
