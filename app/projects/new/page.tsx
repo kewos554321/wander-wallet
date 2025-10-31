@@ -96,6 +96,27 @@ export default function NewProjectPage() {
             <Button variant="outline" className="w-full">取消</Button>
           </Link>
         </div>
+        <div>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={async () => {
+              try {
+                const res = await fetch("/api/users")
+                if (!res.ok) {
+                  alert("讀取 users 失敗")
+                  return
+                }
+                const data = await res.json()
+                alert(JSON.stringify(data, null, 2))
+              } catch {
+                alert("讀取 users 發生錯誤")
+              }
+            }}
+          >
+            測試讀取使用者（Alert）
+          </Button>
+        </div>
       </div>
     </AppLayout>
   )
