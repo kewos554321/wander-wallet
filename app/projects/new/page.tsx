@@ -87,10 +87,19 @@ export default function NewProjectPage() {
                 {startDate} 至 {endDate}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="p-0">
-              <Calendar
+            <PopoverContent
+              align="center"
+              sideOffset={8}
+              collisionPadding={16}
+              className="p-2 w-[calc(100vw-32px)] max-w-[360px]"
+            >
+              <div className="flex items-center justify-center">
+                <Calendar
                 mode="range"
+                // captionLayout="dropdown"
+                defaultMonth={dateRange?.from}
                 selected={dateRange}
+                className="p-2 [--cell-size:--spacing(10)] text-sm"
                 onSelect={(range) => {
                   setDateRange(range)
                   if (range?.from && range?.to) {
@@ -104,7 +113,8 @@ export default function NewProjectPage() {
                     setEndDate(v)
                   }
                 }}
-              />
+                />
+              </div>
             </PopoverContent>
           </Popover>
         </div>
