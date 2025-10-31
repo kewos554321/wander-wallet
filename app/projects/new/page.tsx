@@ -128,41 +128,6 @@ export default function NewProjectPage() {
             ) : null}
           </div>
         </div>
-        <div className="space-y-2">
-          <label className="block text-sm">參與者與權限</label>
-          <div className="space-y-2">
-            {participants.map((p, idx) => (
-              <div key={p.id} className="flex items-center gap-2">
-                <Input
-                  placeholder={idx === 0 ? "擁有者（預設為自己）" : "姓名/暱稱"}
-                  value={p.displayName}
-                  onChange={e => updateParticipant(p.id, { displayName: e.target.value })}
-                />
-                <Input
-                  placeholder="Email（可空白，之後邀請）"
-                  type="email"
-                  value={p.email}
-                  onChange={e => updateParticipant(p.id, { email: e.target.value })}
-                />
-                <select
-                  className="h-9 rounded-md border px-2 text-sm"
-                  value={p.role}
-                  onChange={e => updateParticipant(p.id, { role: e.target.value as any })}
-                >
-                  <option value="owner">擁有者</option>
-                  <option value="editor">可編輯</option>
-                  <option value="viewer">僅檢視</option>
-                </select>
-                {idx > 0 ? (
-                  <Button variant="outline" onClick={() => removeParticipant(p.id)}>移除</Button>
-                ) : null}
-              </div>
-            ))}
-            <div>
-              <Button variant="outline" onClick={addParticipant}>新增旅伴</Button>
-            </div>
-          </div>
-        </div>
         <div className="flex gap-2">
           <Button className="flex-1" onClick={handleSubmit}>建立</Button>
           <Link href="/projects" className="flex-1">
