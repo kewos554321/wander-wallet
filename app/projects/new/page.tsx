@@ -16,37 +16,12 @@ export default function NewProjectPage() {
   const [startDate, setStartDate] = useState(todayStr)
   const [endDate, setEndDate] = useState(todayStr)
   const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: new Date(todayStr), to: new Date(todayStr) })
-  const [coverFile, setCoverFile] = useState<File | null>(null)
-  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null)
+  
   const [participants, setParticipants] = useState<Array<{ id: string; displayName: string; email: string; role: "owner" | "editor" | "viewer" }>>([
     { id: crypto.randomUUID(), displayName: "我", email: "", role: "owner" },
   ])
 
-  function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null
-    setCoverFile(file)
-    if (file) {
-      const url = URL.createObjectURL(file)
-      setCoverPreviewUrl(url)
-    } else {
-      setCoverPreviewUrl(null)
-    }
-  }
-
-  function addParticipant() {
-    setParticipants(prev => [
-      ...prev,
-      { id: crypto.randomUUID(), displayName: "", email: "", role: "editor" },
-    ])
-  }
-
-  function updateParticipant(id: string, updates: Partial<{ displayName: string; email: string; role: "owner" | "editor" | "viewer" }>) {
-    setParticipants(prev => prev.map(p => (p.id === id ? { ...p, ...updates } : p)))
-  }
-
-  function removeParticipant(id: string) {
-    setParticipants(prev => prev.filter(p => p.id !== id))
-  }
+  
 
   function handleSubmit() {
     // Basic inline validation for required fields
@@ -59,7 +34,6 @@ export default function NewProjectPage() {
       name,
       startDate,
       endDate,
-      coverFileName: coverFile?.name ?? null,
       participants,
     }
     // eslint-disable-next-line no-console
@@ -118,16 +92,7 @@ export default function NewProjectPage() {
             </PopoverContent>
           </Popover>
         </div>
-        <div>
-          <label className="block text-sm mb-1">封面</label>
-          <div className="flex items-center gap-3">
-            <Input type="file" accept="image/*" onChange={handleCoverChange} />
-            {coverPreviewUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={coverPreviewUrl} alt="封面預覽" className="h-12 w-12 rounded object-cover border" />
-            ) : null}
-          </div>
-        </div>
+        
         <div className="flex gap-2">
           <Button className="flex-1" onClick={handleSubmit}>建立</Button>
           <Link href="/projects" className="flex-1">
