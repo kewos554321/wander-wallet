@@ -17,7 +17,7 @@ export default function NewProjectPage() {
   const [endDate, setEndDate] = useState(todayStr)
   const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: new Date(todayStr), to: new Date(todayStr) })
   
-  const [participants, setParticipants] = useState<Array<{ id: string; displayName: string; email: string; role: "owner" | "editor" | "viewer" }>>([
+  const [participants] = useState<Array<{ id: string; displayName: string; email: string; role: "owner" | "editor" | "viewer" }>>([
     { id: crypto.randomUUID(), displayName: "我", email: "", role: "owner" },
   ])
 
@@ -36,8 +36,6 @@ export default function NewProjectPage() {
       endDate,
       participants,
     }
-    // eslint-disable-next-line no-console
-    console.log("createProject", payload)
     alert("已建立（示範）")
   }
 
