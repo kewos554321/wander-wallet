@@ -10,12 +10,26 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Calendar as CalendarIcon } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 
+// Helper function to format date as YYYY-MM-DD in local timezone
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+// Helper function to create a Date object from YYYY-MM-DD string in local timezone
+function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
 export default function NewProjectPage() {
   const [name, setName] = useState("")
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayStr = formatLocalDate(new Date())
   const [startDate, setStartDate] = useState(todayStr)
   const [endDate, setEndDate] = useState(todayStr)
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: new Date(todayStr), to: new Date(todayStr) })
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: parseLocalDate(todayStr), to: parseLocalDate(todayStr) })
   
   const [participants] = useState<Array<{ id: string; displayName: string; email: string; role: "owner" | "editor" | "viewer" }>>([
     { id: crypto.randomUUID(), displayName: "我", email: "", role: "owner" },
@@ -27,7 +41,7 @@ export default function NewProjectPage() {
     // Basic inline validation for required fields
     if (!name.trim()) return alert("請輸入專案名稱")
     if (!startDate || !endDate) return alert("請選擇出發日與結束日")
-    if (new Date(startDate) > new Date(endDate)) return alert("結束日需晚於出發日")
+    if (parseLocalDate(startDate) > parseLocalDate(endDate)) return alert("結束日需晚於出發日")
 
     // Mock submit: print payload for now
     const payload = {
@@ -74,12 +88,12 @@ export default function NewProjectPage() {
                 onSelect={(range) => {
                   setDateRange(range)
                   if (range?.from && range?.to) {
-                    const from = range.from.toISOString().slice(0,10)
-                    const to = range.to.toISOString().slice(0,10)
+                    const from = formatLocalDate(range.from)
+                    const to = formatLocalDate(range.to)
                     setStartDate(from)
                     setEndDate(to)
                   } else if (range?.from) {
-                    const v = range.from.toISOString().slice(0,10)
+                    const v = formatLocalDate(range.from)
                     setStartDate(v)
                     setEndDate(v)
                   }
