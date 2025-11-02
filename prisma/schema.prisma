@@ -74,13 +74,15 @@ model VerificationToken {
 
 // 旅行專案（項目）
 model Project {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String   // 專案名稱
-  description String?  // 描述
-  shareCode   String   @unique // 分享碼，用於邀請其他用戶
-  createdBy   String   @map("created_by") @db.Uuid // 創建者
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String    // 專案名稱
+  description String?   // 描述
+  startDate   DateTime? @map("start_date") // 出發日期
+  endDate     DateTime? @map("end_date")   // 結束日期
+  shareCode   String    @unique @map("share_code") // 分享碼，用於邀請其他用戶
+  createdBy   String    @map("created_by") @db.Uuid // 創建者
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   creator    User             @relation("ProjectCreator", fields: [createdBy], references: [id], onDelete: Cascade)
   members    ProjectMember[]  // 專案成員

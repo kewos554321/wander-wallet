@@ -3,6 +3,8 @@ CREATE TABLE "projects" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "name" TEXT NOT NULL,
     "description" TEXT,
+    "start_date" TIMESTAMP(3),
+    "end_date" TIMESTAMP(3),
     "share_code" TEXT NOT NULL,
     "created_by" UUID NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

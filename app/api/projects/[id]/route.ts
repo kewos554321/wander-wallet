@@ -110,11 +110,13 @@ export async function PUT(
     }
 
     const body = await req.json()
-    const { name, description } = body
+    const { name, description, startDate, endDate } = body
 
     const updateData: {
       name?: string
       description?: string | null
+      startDate?: Date | null
+      endDate?: Date | null
     } = {}
 
     if (name !== undefined) {
@@ -126,6 +128,42 @@ export async function PUT(
 
     if (description !== undefined) {
       updateData.description = description?.trim() || null
+    }
+
+    // 處理日期更新
+    let startDateObj: Date | null = null
+    let endDateObj: Date | null = null
+
+    if (startDate !== undefined) {
+      if (startDate === null) {
+        startDateObj = null
+      } else {
+        startDateObj = new Date(startDate)
+        if (isNaN(startDateObj.getTime())) {
+          return NextResponse.json({ error: "無效的出發日期" }, { status: 400 })
+        }
+      }
+      updateData.startDate = startDateObj
+    }
+
+    if (endDate !== undefined) {
+      if (endDate === null) {
+        endDateObj = null
+      } else {
+        endDateObj = new Date(endDate)
+        if (isNaN(endDateObj.getTime())) {
+          return NextResponse.json({ error: "無效的結束日期" }, { status: 400 })
+        }
+      }
+      updateData.endDate = endDateObj
+    }
+
+    // 驗證結束日期必須晚於出發日期
+    const finalStartDate = startDateObj !== undefined ? startDateObj : undefined
+    const finalEndDate = endDateObj !== undefined ? endDateObj : undefined
+    
+    if (finalStartDate && finalEndDate && finalEndDate < finalStartDate) {
+      return NextResponse.json({ error: "結束日期需晚於出發日期" }, { status: 400 })
     }
 
     const project = await prisma.project.update({
