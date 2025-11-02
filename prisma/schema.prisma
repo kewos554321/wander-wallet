@@ -23,8 +23,12 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  accounts Account[]
-  sessions Session[]
+  accounts            Account[]
+  sessions            Session[]
+  createdProjects     Project[]           @relation("ProjectCreator")
+  projectMemberships  ProjectMember[]
+  paidExpenses        Expense[]           @relation("ExpensePayer")
+  expenseParticipants ExpenseParticipant[] @relation("ExpenseParticipant")
 
   @@map("users")
 }
@@ -66,4 +70,68 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+// 旅行專案（項目）
+model Project {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   // 專案名稱
+  description String?  // 描述
+  shareCode   String   @unique // 分享碼，用於邀請其他用戶
+  createdBy   String   @map("created_by") @db.Uuid // 創建者
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  creator    User             @relation("ProjectCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  members    ProjectMember[]  // 專案成員
+  expenses   Expense[]        // 費用記錄
+
+  @@map("projects")
+}
+
+// 專案成員（多對多關係）
+model ProjectMember {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  role      String   @default("member") // owner, member
+  joinedAt  DateTime @default(now()) @map("joined_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId]) // 確保每個用戶在同一專案中只有一條記錄
+  @@map("project_members")
+}
+
+// 費用記錄
+model Expense {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId   String   @map("project_id") @db.Uuid
+  paidBy      String   @map("paid_by") @db.Uuid // 付款人
+  amount      Decimal  @db.Decimal(10, 2) // 總金額
+  description String?  // 描述（如：午餐、交通費）
+  category    String?  // 分類
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  project       Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  payer         User                 @relation("ExpensePayer", fields: [paidBy], references: [id], onDelete: Cascade)
+  participants  ExpenseParticipant[] // 費用參與者
+
+  @@map("expenses")
+}
+
+// 費用參與者（表示哪些人應該分擔這筆費用）
+model ExpenseParticipant {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  expenseId  String  @map("expense_id") @db.Uuid
+  userId     String  @map("user_id") @db.Uuid
+  shareAmount Decimal @map("share_amount") @db.Decimal(10, 2) // 應該分擔的金額
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user    User    @relation("ExpenseParticipant", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([expenseId, userId]) // 確保每個用戶在同一筆費用中只有一條記錄
+  @@map("expense_participants")
 }
