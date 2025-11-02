@@ -23,11 +23,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/login",
   },
   callbacks: {
-    async session({ session, user }) {
-      if (session.user && user) {
-        session.user.id = user.id
+    async session({ session, token }) {
+      // JWT strategy 使用 token 而不是 user
+      if (session.user && token) {
+        session.user.id = token.sub as string
       }
       return session
+    },
+    async jwt({ token, user, account }) {
+      // 首次登入時，將 user id 存到 token
+      if (user) {
+        token.sub = user.id
+      }
+      return token
     },
     async signIn({ user, account, profile }) {
       // 允許所有 OAuth 登入
@@ -38,7 +46,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   session: {
-    strategy: "database",
+    strategy: "jwt", // 改用 JWT 策略，可在 Edge Runtime 運行
   },
   trustHost: true,
   secret: process.env.NEXTAUTH_SECRET,
