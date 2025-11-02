@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { use, useEffect, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -41,14 +42,17 @@ interface Project {
   expenses: Expense[]
 }
 
-export default function ProjectOverview({ params }: { params: { id: string } }) {
+export default function ProjectOverview({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
-  const { id } = params
+  const { id } = use(params)
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchProject()
+    if (id) {
+      fetchProject()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   async function fetchProject() {
@@ -64,8 +68,8 @@ export default function ProjectOverview({ params }: { params: { id: string } }) 
       }
       const data = await res.json()
       setProject(data)
-    } catch (error) {
-      console.error("獲取專案錯誤:", error)
+    } catch {
+      console.error("獲取專案錯誤")
     } finally {
       setLoading(false)
     }
@@ -83,7 +87,7 @@ export default function ProjectOverview({ params }: { params: { id: string } }) 
           text: "透過分享碼加入這個旅行專案",
           url: shareUrl,
         })
-      } catch (error) {
+      } catch {
         // 用戶取消分享
       }
     } else {
@@ -199,12 +203,14 @@ export default function ProjectOverview({ params }: { params: { id: string } }) 
                   className="flex items-center justify-between p-3 rounded-lg border"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
                       {member.user.image ? (
-                        <img
+                        <Image
                           src={member.user.image}
-                          alt={member.user.name || member.user.email}
-                          className="h-10 w-10 rounded-full"
+                          alt={member.user.name || member.user.email || "用戶頭像"}
+                          width={40}
+                          height={40}
+                          className="rounded-full object-cover"
                         />
                       ) : (
                         <User className="h-5 w-5 text-primary" />

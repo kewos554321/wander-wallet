@@ -133,21 +133,22 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json(project, { status: 201 })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("創建專案錯誤:", error)
+    const prismaError = error as { message?: string; code?: string; meta?: unknown }
     console.error("錯誤詳情:", {
-      message: error?.message,
-      code: error?.code,
-      meta: error?.meta,
+      message: prismaError?.message,
+      code: prismaError?.code,
+      meta: prismaError?.meta,
     })
     
     // 如果是数据库表不存在的错误，提供更明确的提示
-    if (error?.code === 'P2022' || error?.message?.includes('does not exist')) {
+    if (prismaError?.code === 'P2022' || prismaError?.message?.includes('does not exist')) {
       return NextResponse.json(
         { 
           error: "資料庫表結構不完整",
           details: "請運行數據庫遷移：npx prisma migrate dev",
-          code: error?.code,
+          code: prismaError?.code,
           hint: "數據庫中缺少必要的表或列，請檢查遷移狀態並運行遷移。",
         },
         { status: 500 }
@@ -155,7 +156,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 如果是外鍵約束錯誤，說明用戶不存在
-    if (error?.code === 'P2003') {
+    if (prismaError?.code === "P2003") {
       // 自動登出無效的 session
       await logout()
       
@@ -164,7 +165,7 @@ export async function POST(req: NextRequest) {
           error: "用戶記錄不存在",
           details: "已自動登出，請重新登入",
           requiresLogout: true,
-          code: error?.code,
+          code: prismaError?.code,
           hint: "數據庫可能已重置，請重新登入系統。",
         },
         { 
@@ -179,8 +180,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { 
         error: "創建專案失敗",
-        details: error?.message || "未知錯誤",
-        code: error?.code,
+        details: prismaError?.message || "未知錯誤",
+        code: prismaError?.code,
       },
       { status: 500 }
     )
@@ -188,7 +189,7 @@ export async function POST(req: NextRequest) {
 }
 
 // 獲取用戶的所有專案
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth()
     if (!session?.user?.id) {

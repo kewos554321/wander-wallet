@@ -79,9 +79,10 @@ function calculateOptimalSettlements(balances: Balance[]): Settlement[] {
 // 獲取專案的結算方案
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await auth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
@@ -91,7 +92,7 @@ export async function GET(
     const membership = await prisma.projectMember.findUnique({
       where: {
         projectId_userId: {
-          projectId: params.id,
+          projectId: id,
           userId: session.user.id,
         },
       },
@@ -104,7 +105,7 @@ export async function GET(
     // 獲取所有費用
     const expenses = await prisma.expense.findMany({
       where: {
-        projectId: params.id,
+        projectId: id,
       },
       include: {
         payer: {
@@ -131,7 +132,7 @@ export async function GET(
     // 獲取所有成員
     const members = await prisma.projectMember.findMany({
       where: {
-        projectId: params.id,
+        projectId: id,
       },
       include: {
         user: {
@@ -149,7 +150,7 @@ export async function GET(
     const balanceMap = new Map<string, Balance>()
 
     // 初始化所有成員的餘額為0
-    members.forEach((member) => {
+    members.forEach((member: { userId: string; user: { name: string | null; email: string | null } }) => {
       balanceMap.set(member.userId, {
         userId: member.userId,
         userName: member.user.name || member.user.email?.split("@")[0] || "Unknown",
@@ -159,13 +160,13 @@ export async function GET(
     })
 
     // 計算每個人的淨支出
-    expenses.forEach((expense) => {
+    expenses.forEach((expense: { amount: number | string; paidBy: string; participants: Array<{ userId: string; shareAmount: number | string }> }) => {
       const paidAmount = Number(expense.amount)
       const payerBalance = balanceMap.get(expense.paidBy)!
       payerBalance.balance += paidAmount // 付了錢，餘額增加
 
       // 扣除每個參與者應該分擔的金額
-      expense.participants.forEach((participant) => {
+      expense.participants.forEach((participant: { userId: string; shareAmount: number | string }) => {
         const shareAmount = Number(participant.shareAmount)
         const participantBalance = balanceMap.get(participant.userId)!
         participantBalance.balance -= shareAmount // 應該分擔，餘額減少
@@ -174,14 +175,14 @@ export async function GET(
 
     const balances = Array.from(balanceMap.values())
     const totalPaid = expenses.reduce(
-      (sum, e) => sum + Number(e.amount),
+      (sum: number, e: { amount: number | string }) => sum + Number(e.amount),
       0
     )
     const totalShared = expenses.reduce(
-      (sum, e) =>
+      (sum: number, e: { participants: Array<{ shareAmount: number | string }> }) =>
         sum +
         e.participants.reduce(
-          (pSum, p) => pSum + Number(p.shareAmount),
+          (pSum: number, p: { shareAmount: number | string }) => pSum + Number(p.shareAmount),
           0
         ),
       0

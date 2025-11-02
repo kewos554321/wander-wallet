@@ -1,9 +1,13 @@
+"use client"
+
+import { use } from "react"
 import Link from "next/link"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
-export default function NewExpense({ params }: { params: { id: string } }) {
+export default function NewExpense({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   return (
     <AppLayout title="新增支出" showBack>
       <div className="space-y-4">
@@ -17,7 +21,7 @@ export default function NewExpense({ params }: { params: { id: string } }) {
         </div>
         <div className="flex gap-2">
           <Button className="flex-1">儲存</Button>
-          <Link href={`/projects/${params.id}/expenses`} className="flex-1">
+          <Link href={`/projects/${id}/expenses`} className="flex-1">
             <Button variant="outline" className="w-full">取消</Button>
           </Link>
         </div>

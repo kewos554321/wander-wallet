@@ -2,12 +2,18 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/db"
 
+interface Participant {
+  userId: string
+  shareAmount: number | string
+}
+
 // 獲取單個費用詳情
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string; expenseId: string } }
+  { params }: { params: Promise<{ id: string; expenseId: string }> }
 ) {
   try {
+    const { id, expenseId } = await params
     const session = await auth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
@@ -17,7 +23,7 @@ export async function GET(
     const membership = await prisma.projectMember.findUnique({
       where: {
         projectId_userId: {
-          projectId: params.id,
+          projectId: id,
           userId: session.user.id,
         },
       },
@@ -29,8 +35,8 @@ export async function GET(
 
     const expense = await prisma.expense.findFirst({
       where: {
-        id: params.expenseId,
-        projectId: params.id,
+        id: expenseId,
+        projectId: id,
       },
       include: {
         payer: {
@@ -73,9 +79,10 @@ export async function GET(
 // 更新費用
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string; expenseId: string } }
+  { params }: { params: Promise<{ id: string; expenseId: string }> }
 ) {
   try {
+    const { id, expenseId } = await params
     const session = await auth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
@@ -85,7 +92,7 @@ export async function PUT(
     const membership = await prisma.projectMember.findUnique({
       where: {
         projectId_userId: {
-          projectId: params.id,
+          projectId: id,
           userId: session.user.id,
         },
       },
@@ -101,8 +108,8 @@ export async function PUT(
     // 獲取現有費用
     const existingExpense = await prisma.expense.findFirst({
       where: {
-        id: params.expenseId,
-        projectId: params.id,
+        id: expenseId,
+        projectId: id,
       },
     })
 
@@ -129,15 +136,15 @@ export async function PUT(
       // 驗證所有參與者都是專案成員
       const projectMembers = await prisma.projectMember.findMany({
         where: {
-          projectId: params.id,
+          projectId: id,
         },
         select: {
           userId: true,
         },
       })
 
-      const memberIds = new Set(projectMembers.map((m) => m.userId))
-      const participantUserIds = participants.map((p: any) => p.userId)
+      const memberIds = new Set(projectMembers.map((m: { userId: string }) => m.userId))
+      const participantUserIds = participants.map((p: Participant) => p.userId)
 
       for (const userId of participantUserIds) {
         if (!memberIds.has(userId)) {
@@ -150,7 +157,7 @@ export async function PUT(
 
       // 驗證分擔總額
       const totalShare = participants.reduce(
-        (sum: number, p: any) => sum + Number(p.shareAmount || 0),
+        (sum: number, p: Participant) => sum + Number(p.shareAmount || 0),
         0
       )
 
@@ -163,25 +170,30 @@ export async function PUT(
     }
 
     // 更新費用（如果需要更新參與者，先刪除舊的再創建新的）
-    const updateData: any = {}
+    const updateData: {
+      paidBy?: string
+      amount?: number
+      description?: string | null
+      category?: string | null
+    } = {}
     if (paidBy !== undefined) updateData.paidBy = paidBy
     if (amount !== undefined) updateData.amount = Number(amount)
     if (description !== undefined) updateData.description = description?.trim() || null
     if (category !== undefined) updateData.category = category?.trim() || null
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: typeof prisma) => {
       if (participants && Array.isArray(participants)) {
         // 刪除舊的參與者
         await tx.expenseParticipant.deleteMany({
           where: {
-            expenseId: params.expenseId,
+            expenseId: expenseId,
           },
         })
 
         // 創建新的參與者
         await tx.expenseParticipant.createMany({
-          data: participants.map((p: any) => ({
-            expenseId: params.expenseId,
+          data: participants.map((p: Participant) => ({
+            expenseId: expenseId,
             userId: p.userId,
             shareAmount: Number(p.shareAmount),
           })),
@@ -191,7 +203,7 @@ export async function PUT(
       // 更新費用
       if (Object.keys(updateData).length > 0) {
         await tx.expense.update({
-          where: { id: params.expenseId },
+          where: { id: expenseId },
           data: updateData,
         })
       }
@@ -199,7 +211,7 @@ export async function PUT(
 
     // 返回更新後的費用
     const expense = await prisma.expense.findUnique({
-      where: { id: params.expenseId },
+      where: { id: expenseId },
       include: {
         payer: {
           select: {
@@ -237,9 +249,10 @@ export async function PUT(
 // 刪除費用
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string; expenseId: string } }
+  { params }: { params: Promise<{ id: string; expenseId: string }> }
 ) {
   try {
+    const { id, expenseId } = await params
     const session = await auth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
@@ -249,7 +262,7 @@ export async function DELETE(
     const membership = await prisma.projectMember.findUnique({
       where: {
         projectId_userId: {
-          projectId: params.id,
+          projectId: id,
           userId: session.user.id,
         },
       },
@@ -261,8 +274,8 @@ export async function DELETE(
 
     const expense = await prisma.expense.findFirst({
       where: {
-        id: params.expenseId,
-        projectId: params.id,
+        id: expenseId,
+        projectId: id,
       },
     })
 
@@ -271,7 +284,7 @@ export async function DELETE(
     }
 
     await prisma.expense.delete({
-      where: { id: params.expenseId },
+      where: { id: expenseId },
     })
 
     return NextResponse.json({ message: "費用已刪除" })

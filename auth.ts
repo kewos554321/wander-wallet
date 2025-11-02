@@ -30,14 +30,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return session
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       // 首次登入時，將 user id 存到 token
       if (user) {
         token.sub = user.id
       }
       return token
     },
-    async signIn({ user, account, profile }) {
+    async signIn({ account }) {
       // 允許所有 OAuth 登入
       if (account?.provider === "google") {
         return true

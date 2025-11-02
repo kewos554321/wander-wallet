@@ -33,7 +33,6 @@ export default function NewProjectPage() {
   const [description, setDescription] = useState("")
   const [loading, setLoading] = useState(false)
   
-  const todayStr = formatLocalDate(new Date())
   const [startDate, setStartDate] = useState<string | null>(null)
   const [endDate, setEndDate] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState<DateRange | undefined>()

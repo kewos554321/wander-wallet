@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Input } from "@/components/ui/input"
@@ -11,17 +11,10 @@ import { Users, ArrowRight } from "lucide-react"
 export default function JoinProjectPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [shareCode, setShareCode] = useState("")
+  const codeFromUrl = searchParams.get("code") || ""
+  const [shareCode, setShareCode] = useState(codeFromUrl.toUpperCase())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    // 從URL參數中獲取分享碼
-    const code = searchParams.get("code")
-    if (code) {
-      setShareCode(code.toUpperCase())
-    }
-  }, [searchParams])
 
   async function handleJoin(e: React.FormEvent) {
     e.preventDefault()

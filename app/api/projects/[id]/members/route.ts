@@ -5,9 +5,10 @@ import { prisma } from "@/lib/db"
 // 獲取專案成員列表
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await auth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
@@ -17,7 +18,7 @@ export async function GET(
     const membership = await prisma.projectMember.findUnique({
       where: {
         projectId_userId: {
-          projectId: params.id,
+          projectId: id,
           userId: session.user.id,
         },
       },
@@ -29,7 +30,7 @@ export async function GET(
 
     const members = await prisma.projectMember.findMany({
       where: {
-        projectId: params.id,
+        projectId: id,
       },
       include: {
         user: {
@@ -59,9 +60,10 @@ export async function GET(
 // 移除成員（只有專案創建者可以移除）
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await auth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
@@ -76,7 +78,7 @@ export async function DELETE(
 
     // 檢查專案是否存在
     const project = await prisma.project.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     if (!project) {
@@ -96,7 +98,7 @@ export async function DELETE(
     await prisma.projectMember.delete({
       where: {
         projectId_userId: {
-          projectId: params.id,
+          projectId: id,
           userId,
         },
       },

@@ -132,7 +132,7 @@ export default function ProjectsPage() {
           text: "透過分享碼加入這個旅行專案",
           url: shareUrl,
         })
-      } catch (error) {
+      } catch {
         // 用戶取消分享
       }
     } else {

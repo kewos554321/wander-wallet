@@ -2,12 +2,18 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/db"
 
+interface Participant {
+  userId: string
+  shareAmount: number | string
+}
+
 // 獲取專案的所有費用
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await auth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
@@ -17,7 +23,7 @@ export async function GET(
     const membership = await prisma.projectMember.findUnique({
       where: {
         projectId_userId: {
-          projectId: params.id,
+          projectId: id,
           userId: session.user.id,
         },
       },
@@ -29,7 +35,7 @@ export async function GET(
 
     const expenses = await prisma.expense.findMany({
       where: {
-        projectId: params.id,
+        projectId: id,
       },
       include: {
         payer: {
@@ -71,9 +77,10 @@ export async function GET(
 // 創建新費用
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await auth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
@@ -83,7 +90,7 @@ export async function POST(
     const membership = await prisma.projectMember.findUnique({
       where: {
         projectId_userId: {
-          projectId: params.id,
+          projectId: id,
           userId: session.user.id,
         },
       },
@@ -118,15 +125,15 @@ export async function POST(
     // 驗證所有參與者都是專案成員
     const projectMembers = await prisma.projectMember.findMany({
       where: {
-        projectId: params.id,
+        projectId: id,
       },
       select: {
         userId: true,
       },
     })
 
-    const memberIds = new Set(projectMembers.map((m) => m.userId))
-    const participantUserIds = participants.map((p: any) => p.userId)
+    const memberIds = new Set(projectMembers.map((m: { userId: string }) => m.userId))
+    const participantUserIds = participants.map((p: Participant) => p.userId)
 
     for (const userId of participantUserIds) {
       if (!memberIds.has(userId)) {
@@ -147,7 +154,7 @@ export async function POST(
 
     // 計算分擔總額並驗證
     const totalShare = participants.reduce(
-      (sum: number, p: any) => sum + Number(p.shareAmount || 0),
+      (sum: number, p: Participant) => sum + Number(p.shareAmount || 0),
       0
     )
 
@@ -161,13 +168,13 @@ export async function POST(
     // 創建費用記錄
     const expense = await prisma.expense.create({
       data: {
-        projectId: params.id,
+        projectId: id,
         paidBy,
         amount: amountNum,
         description: description?.trim() || null,
         category: category?.trim() || null,
         participants: {
-          create: participants.map((p: any) => ({
+          create: participants.map((p: Participant) => ({
             userId: p.userId,
             shareAmount: Number(p.shareAmount),
           })),

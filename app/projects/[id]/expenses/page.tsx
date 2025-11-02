@@ -1,9 +1,12 @@
+"use client"
+
+import { use } from "react"
 import Link from "next/link"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
 
-export default function ExpensesList({ params }: { params: { id: string } }) {
-  const { id } = params
+export default function ExpensesList({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   return (
     <AppLayout title="支出列表" showBack>
       <div className="space-y-4">
