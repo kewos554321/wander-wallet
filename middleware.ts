@@ -1,9 +1,15 @@
-import { auth } from "@/auth"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { getToken } from "next-auth/jwt"
 
-export default auth((req) => {
+export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
-  const isLoggedIn = !!req.auth
+  
+  // 使用 getToken 檢查 JWT，不依賴 Prisma
+  const token = await getToken({ 
+    req,
+    secret: process.env.NEXTAUTH_SECRET 
+  })
+  const isLoggedIn = !!token
 
   // 公開路由（不需要登入即可訪問）
   const publicPaths = [
@@ -26,7 +32,7 @@ export default auth((req) => {
   }
 
   return NextResponse.next()
-})
+}
 
 export const config = {
   matcher: [
