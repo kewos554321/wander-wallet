@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Input } from "@/components/ui/input"
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, ArrowRight } from "lucide-react"
 
-export default function JoinProjectPage() {
+function JoinForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const codeFromUrl = searchParams.get("code") || ""
@@ -103,6 +103,24 @@ export default function JoinProjectPage() {
         </Card>
       </div>
     </AppLayout>
+  )
+}
+
+export default function JoinProjectPage() {
+  return (
+    <Suspense fallback={
+      <AppLayout title="加入專案" showBack>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex justify-center">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            </div>
+          </CardContent>
+        </Card>
+      </AppLayout>
+    }>
+      <JoinForm />
+    </Suspense>
   )
 }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Wallet, Mail, Lock, Eye, EyeOff } from "lucide-react"
 
-export default function LoginPage() {
+function LoginForm() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || "/"
   const [email, setEmail] = useState("")
@@ -194,6 +194,24 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="flex justify-center">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }
 

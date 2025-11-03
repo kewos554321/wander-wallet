@@ -181,7 +181,7 @@ export async function PUT(
     if (description !== undefined) updateData.description = description?.trim() || null
     if (category !== undefined) updateData.category = category?.trim() || null
 
-    await prisma.$transaction(async (tx: typeof prisma) => {
+    await prisma.$transaction(async (tx) => {
       if (participants && Array.isArray(participants)) {
         // 刪除舊的參與者
         await tx.expenseParticipant.deleteMany({
