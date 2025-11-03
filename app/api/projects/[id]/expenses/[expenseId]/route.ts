@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/db"
+import { Prisma } from "@prisma/client"
 
 interface Participant {
   userId: string
@@ -181,7 +182,7 @@ export async function PUT(
     if (description !== undefined) updateData.description = description?.trim() || null
     if (category !== undefined) updateData.category = category?.trim() || null
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       if (participants && Array.isArray(participants)) {
         // 刪除舊的參與者
         await tx.expenseParticipant.deleteMany({
