@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     // 檢查是否已經是成員
     const isAlreadyMember = project.members.some(
-      (member) => member.userId === session.user.id
+      (member: { userId: string }) => member.userId === session.user.id
     )
 
     if (isAlreadyMember) {
