@@ -14,12 +14,15 @@ const hasStandalone = (n: Navigator): n is NavigatorWithStandalone => "standalon
 type WindowWithMSStream = Window & { MSStream?: unknown };
 const hasMSStream = (w: Window): w is WindowWithMSStream => "MSStream" in w;
 
+import { X } from "lucide-react";
+
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [hasPrompted, setHasPrompted] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
 
-  const isIOS = useMemo(() => {
+  const isiOS = useMemo(() => {
     if (typeof navigator === "undefined" || typeof window === "undefined") return false;
     const isiOSUA = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const noMS = !hasMSStream(window);
@@ -44,16 +47,32 @@ export default function InstallPrompt() {
     };
   }, []);
 
-  if (isStandalone) return null;
+  if (isStandalone || isDismissed) return null;
 
-  const canPrompt = !!deferredPrompt && !hasPrompted && !isIOS;
+  const canPrompt = !!deferredPrompt && !hasPrompted && !isiOS;
+  
+  if (!canPrompt && !isiOS) return null;
 
   return (
-    <div className="p-4 rounded-md border">
-      <h3 className="font-medium mb-2">Install App</h3>
+    <div className="fixed top-4 left-4 right-4 z-50 p-4 rounded-md border bg-background shadow-lg">
+      <div className="flex justify-between items-start mb-2">
+        <h3 className="font-medium">Install App</h3>
+        <button 
+          onClick={() => setIsDismissed(true)}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </button>
+      </div>
+      
+      <p className="text-sm text-muted-foreground mb-4">
+        Install Wander Wallet for a better experience, offline access, and quick access to your budget.
+      </p>
+      
       {canPrompt && (
         <button
-          className="px-3 py-2 rounded bg-black text-white dark:bg-white dark:text-black"
+          className="px-3 py-2 rounded bg-black text-white dark:bg-white dark:text-black w-full sm:w-auto"
           onClick={async () => {
             if (!deferredPrompt) return;
             try {
@@ -69,8 +88,8 @@ export default function InstallPrompt() {
         </button>
       )}
 
-      {isIOS && (
-        <p className="text-sm text-muted-foreground mt-2">
+      {isiOS && (
+        <p className="text-sm text-muted-foreground">
           To install on iOS, tap the share button ⎋ and then &quot;Add to Home Screen&quot; ➕.
         </p>
       )}
