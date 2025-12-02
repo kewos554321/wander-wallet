@@ -1,105 +1,197 @@
 "use client"
 
-import Link from "next/link"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { signOut } from "next-auth/react"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Calendar as CalendarIcon } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 
+// Helper function to format date as YYYY-MM-DD in local timezone
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
+// Helper function to create a Date object from YYYY-MM-DD string in local timezone
+function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number)
+  return new Date(year, month - 1, day)
+}
+
 export default function NewProjectPage() {
+  const router = useRouter()
   const [name, setName] = useState("")
-  const todayStr = new Date().toISOString().slice(0, 10)
-  const [startDate, setStartDate] = useState(todayStr)
-  const [endDate, setEndDate] = useState(todayStr)
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: new Date(todayStr), to: new Date(todayStr) })
+  const [description, setDescription] = useState("")
+  const [loading, setLoading] = useState(false)
   
-  const [participants] = useState<Array<{ id: string; displayName: string; email: string; role: "owner" | "editor" | "viewer" }>>([
-    { id: crypto.randomUUID(), displayName: "我", email: "", role: "owner" },
-  ])
+  const [startDate, setStartDate] = useState<string | null>(null)
+  const [endDate, setEndDate] = useState<string | null>(null)
+  const [dateRange, setDateRange] = useState<DateRange | undefined>()
 
-  
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
 
-  function handleSubmit() {
-    // Basic inline validation for required fields
-    if (!name.trim()) return alert("請輸入專案名稱")
-    if (!startDate || !endDate) return alert("請選擇出發日與結束日")
-    if (new Date(startDate) > new Date(endDate)) return alert("結束日需晚於出發日")
-
-    // Mock submit: print payload for now
-    const payload = {
-      name,
-      startDate,
-      endDate,
-      participants,
+    if (!name.trim()) {
+      alert("請輸入專案名稱")
+      return
     }
-    alert("已建立（示範）")
+
+    // 驗證日期
+    if (startDate && endDate && parseLocalDate(startDate) > parseLocalDate(endDate)) {
+      alert("結束日需晚於出發日")
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          description: description.trim() || null,
+          startDate: startDate || null,
+          endDate: endDate || null,
+        }),
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        console.error("建立專案失敗:", error)
+        
+        // 如果需要登出，自動執行登出並重定向
+        if (error.requiresLogout) {
+          await signOut({ 
+            redirect: true, 
+            callbackUrl: "/login?error=session_invalid" 
+          })
+          return
+        }
+        
+        const errorMessage = error.details 
+          ? `${error.error || "建立專案失敗"}\n詳情: ${error.details}`
+          : error.error || "建立專案失敗"
+        alert(errorMessage)
+        setLoading(false)
+        return
+      }
+
+      const project = await res.json()
+      // 導航到新建立的專案
+      router.push(`/projects/${project.id}`)
+    } catch (error) {
+      console.error("建立專案錯誤:", error)
+      alert("建立專案失敗")
+      setLoading(false)
+    }
+  }
+
+  function formatDateRange(start: string | null, end: string | null): string {
+    if (!start && !end) return "選擇日期"
+    if (start && !end) return `${start} 至 ...`
+    if (!start && end) return `... 至 ${end}`
+    return `${start} 至 ${end}`
   }
 
   return (
     <AppLayout title="新增專案" showBack>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm mb-1">專案名稱</label>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <label htmlFor="name" className="text-sm font-medium">
+            專案名稱 <span className="text-destructive">*</span>
+          </label>
           <Input
-            placeholder="例如：日本關西 5 天"
+            id="name"
+            placeholder="例如：日本關西 5 天、歐洲自由行"
             value={name}
-            onChange={e => setName(e.target.value)}
+            onChange={(e) => setName(e.target.value)}
+            disabled={loading}
+            required
           />
         </div>
-        <div>
-          <label className="block text-sm mb-1">出發日與結束日</label>
+
+        <div className="space-y-2">
+          <label htmlFor="dates" className="text-sm font-medium">
+            出發日與結束日
+          </label>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full justify-start font-normal">
+              <Button variant="outline" className="w-full justify-start font-normal" type="button">
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {startDate} 至 {endDate}
+                {formatDateRange(startDate, endDate)}
               </Button>
             </PopoverTrigger>
             <PopoverContent
-              align="center"
+              align="start"
               sideOffset={8}
               collisionPadding={16}
               className="p-2 w-[calc(100vw-32px)] max-w-[360px]"
             >
               <div className="flex items-center justify-center">
                 <Calendar
-                mode="range"
-                defaultMonth={dateRange?.from}
-                selected={dateRange}
-                className="p-2 [--cell-size:--spacing(10)] text-sm"
-                onSelect={(range) => {
-                  setDateRange(range)
-                  if (range?.from && range?.to) {
-                    const from = range.from.toISOString().slice(0,10)
-                    const to = range.to.toISOString().slice(0,10)
-                    setStartDate(from)
-                    setEndDate(to)
-                  } else if (range?.from) {
-                    const v = range.from.toISOString().slice(0,10)
-                    setStartDate(v)
-                    setEndDate(v)
-                  }
-                }}
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  className="p-2 [--cell-size:--spacing(10)] text-sm"
+                  onSelect={(range) => {
+                    setDateRange(range)
+                    if (range?.from && range?.to) {
+                      const from = formatLocalDate(range.from)
+                      const to = formatLocalDate(range.to)
+                      setStartDate(from)
+                      setEndDate(to)
+                    } else if (range?.from) {
+                      const from = formatLocalDate(range.from)
+                      setStartDate(from)
+                      setEndDate(null)
+                    } else {
+                      setStartDate(null)
+                      setEndDate(null)
+                    }
+                  }}
                 />
               </div>
             </PopoverContent>
           </Popover>
         </div>
-        
-        <div className="flex gap-2">
-          <Button className="flex-1" onClick={handleSubmit}>建立</Button>
-          <Link href="/projects" className="flex-1">
-            <Button variant="outline" className="w-full">取消</Button>
-          </Link>
+
+        <div className="space-y-2">
+          <label htmlFor="description" className="text-sm font-medium">
+            描述（選填）
+          </label>
+          <Textarea
+            id="description"
+            placeholder="記錄這次旅行的目的地、日期等資訊..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            disabled={loading}
+            rows={4}
+          />
         </div>
 
-      </div>
+        <div className="flex gap-3 pt-4">
+          <Button type="submit" className="flex-1" disabled={loading}>
+            {loading ? "建立中..." : "建立專案"}
+          </Button>
+          <Link href="/projects" className="flex-1">
+            <Button type="button" variant="outline" className="w-full" disabled={loading}>
+              取消
+            </Button>
+          </Link>
+        </div>
+      </form>
     </AppLayout>
   )
 }
-
-

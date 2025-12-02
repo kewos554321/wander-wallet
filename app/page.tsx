@@ -1,15 +1,21 @@
+import { auth } from "@/auth"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Wallet, TrendingUp, CreditCard, History } from "lucide-react"
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth()
+  const userName = session?.user?.name || session?.user?.email?.split("@")[0] || "用戶"
+
   return (
     <AppLayout title="Wander Wallet">
       <div className="space-y-6">
         {/* 歡迎區塊 */}
         <div className="text-center py-4">
-          <h2 className="text-2xl font-bold mb-2">歡迎回來！</h2>
+          <h2 className="text-2xl font-bold mb-2">
+            歡迎回來，{userName}！
+          </h2>
           <p className="text-muted-foreground">管理你的旅行預算</p>
         </div>
 
