@@ -43,7 +43,7 @@ export default function Home() {
         </div>
 
         {/* 最近記錄 */}
-        <Card>
+        <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <History className="h-5 w-5" />
