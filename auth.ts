@@ -9,13 +9,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code"
-        }
-      }
     }),
   ],
   pages: {
@@ -23,30 +16,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/login",
   },
   callbacks: {
-    async session({ session, token }) {
-      // JWT strategy 使用 token 而不是 user
-      if (session.user && token) {
-        session.user.id = token.sub as string
-      }
-      return session
-    },
-    async jwt({ token, user }) {
-      // 首次登入時，將 user id 存到 token
-      if (user) {
-        token.sub = user.id
+    async jwt({ token, user, account }) {
+      // 首次登入時 (有 user 和 account)，將用戶資訊存到 token
+      if (account && user) {
+        token.id = user.id
+        token.email = user.email
+        token.name = user.name
+        token.picture = user.image
       }
       return token
     },
-    async signIn({ account }) {
-      // 允許所有 OAuth 登入
-      if (account?.provider === "google") {
-        return true
+    async session({ session, token }) {
+      // 從 token 取得用戶資訊放到 session
+      if (session.user) {
+        session.user.id = token.id as string
+        session.user.email = token.email as string
+        session.user.name = token.name as string
+        session.user.image = token.picture as string
       }
-      return true
+      return session
     },
   },
   session: {
-    strategy: "jwt", // 改用 JWT 策略，可在 Edge Runtime 運行
+    strategy: "jwt",
   },
   trustHost: true,
   secret: process.env.NEXTAUTH_SECRET,
