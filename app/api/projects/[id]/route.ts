@@ -50,6 +50,7 @@ export async function GET(
                 id: true,
                 name: true,
                 email: true,
+                image: true,
               },
             },
             participants: {
@@ -59,6 +60,7 @@ export async function GET(
                     id: true,
                     name: true,
                     email: true,
+                    image: true,
                   },
                 },
               },

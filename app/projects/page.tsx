@@ -151,12 +151,14 @@ export default function ProjectsPage() {
       <div className="space-y-4 pb-20">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">旅行專案</h2>
-          <Link href="/projects/new">
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-1" />
-              新增專案
-            </Button>
-          </Link>
+          {!loading && projects.length > 0 && (
+            <Link href="/projects/new">
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-1" />
+                新增專案
+              </Button>
+            </Link>
+          )}
         </div>
 
         {loading ? (

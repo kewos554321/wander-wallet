@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -18,7 +15,7 @@ model User {
   email         String    @unique
   emailVerified DateTime? @map("email_verified")
   name          String?
-  password      String? // 加密後的密碼，OAuth 用戶為 null
+  password      String?
   image         String?
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
@@ -75,18 +72,18 @@ model VerificationToken {
 // 旅行專案（項目）
 model Project {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String    // 專案名稱
-  description String?   // 描述
-  startDate   DateTime? @map("start_date") // 出發日期
-  endDate     DateTime? @map("end_date")   // 結束日期
-  shareCode   String    @unique @map("share_code") // 分享碼，用於邀請其他用戶
-  createdBy   String    @map("created_by") @db.Uuid // 創建者
+  name        String
+  description String?
+  startDate   DateTime? @map("start_date")
+  endDate     DateTime? @map("end_date")
+  shareCode   String    @unique @map("share_code")
+  createdBy   String    @map("created_by") @db.Uuid
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
   creator    User             @relation("ProjectCreator", fields: [createdBy], references: [id], onDelete: Cascade)
-  members    ProjectMember[]  // 專案成員
-  expenses   Expense[]        // 費用記錄
+  members    ProjectMember[]
+  expenses   Expense[]
 
   @@map("projects")
 }
@@ -96,13 +93,13 @@ model ProjectMember {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   projectId String   @map("project_id") @db.Uuid
   userId    String   @map("user_id") @db.Uuid
-  role      String   @default("member") // owner, member
+  role      String   @default("member")
   joinedAt  DateTime @default(now()) @map("joined_at")
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([projectId, userId]) // 確保每個用戶在同一專案中只有一條記錄
+  @@unique([projectId, userId])
   @@map("project_members")
 }
 
@@ -110,30 +107,30 @@ model ProjectMember {
 model Expense {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   projectId   String   @map("project_id") @db.Uuid
-  paidBy      String   @map("paid_by") @db.Uuid // 付款人
-  amount      Decimal  @db.Decimal(10, 2) // 總金額
-  description String?  // 描述（如：午餐、交通費）
-  category    String?  // 分類
+  paidBy      String   @map("paid_by") @db.Uuid
+  amount      Decimal  @db.Decimal(10, 2)
+  description String?
+  category    String?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   project       Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
   payer         User                 @relation("ExpensePayer", fields: [paidBy], references: [id], onDelete: Cascade)
-  participants  ExpenseParticipant[] // 費用參與者
+  participants  ExpenseParticipant[]
 
   @@map("expenses")
 }
 
-// 費用參與者（表示哪些人應該分擔這筆費用）
+// 費用參與者
 model ExpenseParticipant {
   id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   expenseId  String  @map("expense_id") @db.Uuid
   userId     String  @map("user_id") @db.Uuid
-  shareAmount Decimal @map("share_amount") @db.Decimal(10, 2) // 應該分擔的金額
+  shareAmount Decimal @map("share_amount") @db.Decimal(10, 2)
 
   expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
   user    User    @relation("ExpenseParticipant", fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([expenseId, userId]) // 確保每個用戶在同一筆費用中只有一條記錄
+  @@unique([expenseId, userId])
   @@map("expense_participants")
 }

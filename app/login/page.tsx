@@ -12,8 +12,8 @@ import { Wallet, Mail, Lock, Eye, EyeOff } from "lucide-react"
 function LoginForm() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || "/"
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [email, setEmail] = useState("test@example.com")
+  const [password, setPassword] = useState("test1234")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -21,9 +21,18 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    // TODO: 實作 Email/Password 登入邏輯
-    console.log("登入:", { email, password })
-    setTimeout(() => setIsLoading(false), 1000)
+    try {
+      await signIn("credentials", {
+        email,
+        password,
+        callbackUrl,
+        redirect: true,
+      })
+    } catch (error) {
+      console.error("登入錯誤:", error)
+      alert("登入失敗")
+      setIsLoading(false)
+    }
   }
 
   const handleGoogleLogin = async () => {
