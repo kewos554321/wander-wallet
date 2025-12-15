@@ -48,26 +48,30 @@ export async function GET(
             payer: {
               select: {
                 id: true,
-                name: true,
-                email: true,
-                image: true,
+                displayName: true,
+                user: {
+                  select: {
+                    name: true,
+                    email: true,
+                  },
+                },
               },
             },
             participants: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    image: true,
-                  },
-                },
+              select: {
+                id: true,
+                memberId: true,
               },
             },
           },
           orderBy: {
             createdAt: "desc",
+          },
+        },
+        _count: {
+          select: {
+            expenses: true,
+            members: true,
           },
         },
       },
@@ -78,10 +82,19 @@ export async function GET(
     }
 
     return NextResponse.json(project)
-  } catch (error) {
-    console.error("獲取專案錯誤:", error)
+  } catch (error: unknown) {
+    const prismaError = error as { message?: string; code?: string; meta?: unknown }
+    console.error("獲取專案錯誤:", {
+      message: prismaError?.message,
+      code: prismaError?.code,
+      meta: prismaError?.meta,
+    })
     return NextResponse.json(
-      { error: "獲取專案失敗" },
+      {
+        error: "獲取專案失敗",
+        details: prismaError?.message,
+        code: prismaError?.code,
+      },
       { status: 500 }
     )
   }

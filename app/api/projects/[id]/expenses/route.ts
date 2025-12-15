@@ -3,7 +3,7 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/db"
 
 interface Participant {
-  userId: string
+  memberId: string
   shareAmount: number | string
 }
 
@@ -39,19 +39,33 @@ export async function GET(
         payer: {
           select: {
             id: true,
-            name: true,
-            email: true,
-            image: true,
-          },
-        },
-        participants: {
-          include: {
+            displayName: true,
+            userId: true,
             user: {
               select: {
                 id: true,
                 name: true,
                 email: true,
                 image: true,
+              },
+            },
+          },
+        },
+        participants: {
+          include: {
+            member: {
+              select: {
+                id: true,
+                displayName: true,
+                userId: true,
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    image: true,
+                  },
+                },
               },
             },
           },
@@ -97,10 +111,10 @@ export async function POST(
     }
 
     const body = await req.json()
-    const { paidBy, amount, description, category, participants } = body
+    const { paidByMemberId, amount, description, category, participants } = body
 
     // 驗證必填欄位
-    if (!paidBy || !amount || !participants || !Array.isArray(participants)) {
+    if (!paidByMemberId || !amount || !participants || !Array.isArray(participants)) {
       return NextResponse.json(
         { error: "付款人、金額和參與者必填" },
         { status: 400 }
@@ -124,24 +138,24 @@ export async function POST(
         projectId: id,
       },
       select: {
-        userId: true,
+        id: true,
       },
     })
 
-    const memberIds = new Set(projectMembers.map((m: { userId: string | null }) => m.userId).filter((id): id is string => id !== null))
-    const participantUserIds = participants.map((p: Participant) => p.userId)
+    const memberIdSet = new Set(projectMembers.map((m: { id: string }) => m.id))
+    const participantMemberIds = participants.map((p: Participant) => p.memberId)
 
-    for (const userId of participantUserIds) {
-      if (!memberIds.has(userId)) {
+    for (const memberId of participantMemberIds) {
+      if (!memberIdSet.has(memberId)) {
         return NextResponse.json(
-          { error: `用戶 ${userId} 不是專案成員` },
+          { error: `成員 ${memberId} 不是專案成員` },
           { status: 400 }
         )
       }
     }
 
     // 驗證付款人也是專案成員
-    if (!memberIds.has(paidBy)) {
+    if (!memberIdSet.has(paidByMemberId)) {
       return NextResponse.json(
         { error: "付款人必須是專案成員" },
         { status: 400 }
@@ -165,13 +179,13 @@ export async function POST(
     const expense = await prisma.expense.create({
       data: {
         projectId: id,
-        paidBy,
+        paidByMemberId,
         amount: amountNum,
         description: description?.trim() || null,
         category: category?.trim() || null,
         participants: {
           create: participants.map((p: Participant) => ({
-            userId: p.userId,
+            memberId: p.memberId,
             shareAmount: Number(p.shareAmount),
           })),
         },
@@ -180,19 +194,33 @@ export async function POST(
         payer: {
           select: {
             id: true,
-            name: true,
-            email: true,
-            image: true,
-          },
-        },
-        participants: {
-          include: {
+            displayName: true,
+            userId: true,
             user: {
               select: {
                 id: true,
                 name: true,
                 email: true,
                 image: true,
+              },
+            },
+          },
+        },
+        participants: {
+          include: {
+            member: {
+              select: {
+                id: true,
+                displayName: true,
+                userId: true,
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    image: true,
+                  },
+                },
               },
             },
           },

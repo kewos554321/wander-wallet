@@ -6,41 +6,40 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Plus,
   Share2,
   User,
   Calculator,
   Users,
-  PieChart,
   Receipt,
   Utensils,
   Car,
   Home,
   Gamepad2,
   ShoppingBag,
-  MoreHorizontal
+  ChevronRight,
+  ArrowUpRight,
+  ArrowDownLeft
 } from "lucide-react"
+import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 
 interface ProjectMember {
   id: string
   role: string
+  displayName: string
   user: {
     id: string
     name: string | null
     email: string
     image: string | null
-  }
+  } | null
 }
 
 interface ExpenseParticipant {
   id: string
-  shareAmount: number
-  user: {
-    id: string
-    name: string | null
-    email: string
-  }
+  memberId: string
 }
 
 interface Expense {
@@ -51,9 +50,11 @@ interface Expense {
   createdAt: string
   payer: {
     id: string
-    name: string | null
-    email: string
-    image: string | null
+    displayName: string
+    user: {
+      name: string | null
+      email: string
+    } | null
   }
   participants: ExpenseParticipant[]
 }
@@ -84,7 +85,6 @@ function groupExpensesByDate(expenses: Expense[]): Record<string, Expense[]> {
 
   sorted.forEach((expense) => {
     const date = new Date(expense.createdAt).toLocaleDateString("zh-TW", {
-      year: "numeric",
       month: "long",
       day: "numeric",
     })
@@ -115,21 +115,21 @@ function getCategoryIcon(category: string | null) {
   }
 }
 
-// 類別顏色
+// 類別顏色 - 更柔和的配色
 function getCategoryColor(category: string | null) {
   switch (category) {
     case "food":
-      return "bg-orange-100 text-orange-600"
+      return "bg-orange-50 text-orange-500"
     case "transport":
-      return "bg-blue-100 text-blue-600"
+      return "bg-blue-50 text-blue-500"
     case "accommodation":
-      return "bg-purple-100 text-purple-600"
+      return "bg-violet-50 text-violet-500"
     case "entertainment":
-      return "bg-pink-100 text-pink-600"
+      return "bg-pink-50 text-pink-500"
     case "shopping":
-      return "bg-yellow-100 text-yellow-600"
+      return "bg-amber-50 text-amber-500"
     default:
-      return "bg-gray-100 text-gray-600"
+      return "bg-slate-50 text-slate-500"
   }
 }
 
@@ -202,133 +202,179 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
   }
 
   const totalAmount = project.expenses.reduce((sum, e) => sum + Number(e.amount), 0)
+  const perPerson = project.members.length > 0 ? totalAmount / project.members.length : 0
   const groupedExpenses = groupExpensesByDate(project.expenses)
 
   return (
     <AppLayout title={project.name} showBack>
-      <div className="pb-20">
-        {/* 頂部總覽 */}
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-500 -mx-4 px-4 py-5 text-white">
-          <div className="text-center">
-            <div className="text-sm opacity-80">總支出</div>
-            <div className="text-3xl font-bold mt-1">
-              ${totalAmount.toLocaleString("zh-TW")}
+      <div className="pb-24 space-y-6">
+        {/* 總覽卡片 - Clean Minimal 風格 */}
+        <Card className="border-0 shadow-sm bg-white">
+          <CardContent className="p-6">
+            <div className="text-center space-y-1">
+              <p className="text-sm text-muted-foreground">總支出</p>
+              <p className="text-4xl font-semibold tracking-tight">
+                ${totalAmount.toLocaleString("zh-TW")}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                平均每人 ${Math.round(perPerson).toLocaleString("zh-TW")}
+              </p>
             </div>
-            {project.description && (
-              <div className="text-sm opacity-80 mt-2">{project.description}</div>
-            )}
-          </div>
-        </div>
 
-        {/* 快速操作列 */}
-        <div className="flex gap-2 overflow-x-auto py-4 -mx-4 px-4 border-b">
-          <Link href={`/projects/${id}/expenses`}>
-            <button className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <Receipt className="h-5 w-5 text-blue-600" />
-              </div>
-              <span className="text-xs">{project.expenses.length} 筆支出</span>
-            </button>
-          </Link>
-          <Link href={`/projects/${id}/settle`}>
-            <button className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
-              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                <Calculator className="h-5 w-5 text-green-600" />
-              </div>
-              <span className="text-xs">結餘</span>
-            </button>
-          </Link>
-          <Link href={`/projects/${id}/members`}>
-            <button className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
-              <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
-                <Users className="h-5 w-5 text-orange-600" />
-              </div>
-              <span className="text-xs">{project.members.length} 位成員</span>
-            </button>
-          </Link>
-          <button className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-secondary transition-colors opacity-50">
-            <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-              <PieChart className="h-5 w-5 text-purple-600" />
-            </div>
-            <span className="text-xs">統計</span>
-          </button>
-          <button
-            onClick={handleShare}
-            className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-secondary transition-colors"
-          >
-            <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-              <Share2 className="h-5 w-5 text-gray-600" />
-            </div>
-            <span className="text-xs">邀請</span>
-          </button>
-        </div>
+            {/* 成員頭像列 */}
+            <div className="flex justify-center mt-4 -space-x-2">
+              {project.members.slice(0, 5).map((member) => {
+                const avatarData = parseAvatarString(member.user?.image)
+                const isCustomAvatar = avatarData !== null
+                const hasExternalImage = member.user?.image && !member.user.image.startsWith("avatar:")
 
-        {/* 支出列表（按日期分組）*/}
-        <div className="mt-2">
-          {project.expenses.length === 0 ? (
-            <div className="text-center py-16">
-              <Receipt className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
-              <p className="text-muted-foreground mb-4">還沒有支出記錄</p>
-              <Link href={`/projects/${id}/expenses/new`}>
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-1" />
-                  新增支出
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            Object.entries(groupedExpenses).map(([date, expenses]) => (
-              <div key={date}>
-                {/* 日期標題 */}
-                <div className="bg-secondary/50 px-4 py-2 text-sm text-muted-foreground font-medium sticky top-0">
-                  {date}
+                if (isCustomAvatar) {
+                  const Icon = getAvatarIcon(avatarData.iconId)
+                  const color = getAvatarColor(avatarData.colorId)
+                  return (
+                    <div
+                      key={member.id}
+                      className="h-8 w-8 rounded-full border-2 border-white flex items-center justify-center"
+                      style={{ backgroundColor: color }}
+                      title={member.displayName}
+                    >
+                      <Icon className="size-4 text-white" />
+                    </div>
+                  )
+                }
+
+                return (
+                  <div
+                    key={member.id}
+                    className="h-8 w-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center overflow-hidden"
+                    title={member.displayName}
+                  >
+                    {hasExternalImage ? (
+                      <Image
+                        src={member.user!.image!}
+                        alt=""
+                        width={32}
+                        height={32}
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span className="text-xs font-medium text-slate-500">
+                        {member.displayName.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+              {project.members.length > 5 && (
+                <div className="h-8 w-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center">
+                  <span className="text-xs text-slate-500">+{project.members.length - 5}</span>
                 </div>
-                {/* 當日支出 */}
-                <div className="divide-y">
-                  {expenses.map((expense) => (
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 快速操作 - 橫向卡片 */}
+        <div className="grid grid-cols-2 gap-3">
+          <Link href={`/projects/${id}/settle`}>
+            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                  <Calculator className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm">結算</p>
+                  <p className="text-xs text-muted-foreground">查看誰欠誰</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href={`/projects/${id}/members`}>
+            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                  <Users className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm">成員</p>
+                  <p className="text-xs text-muted-foreground">{project.members.length} 人</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+
+        {/* 邀請按鈕 */}
+        <button
+          onClick={handleShare}
+          className="w-full py-3 px-4 rounded-xl border border-dashed border-slate-200 text-sm text-muted-foreground hover:border-slate-300 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
+        >
+          <Share2 className="h-4 w-4" />
+          邀請朋友加入 · {project.shareCode}
+        </button>
+
+        {/* 最近支出 */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold">最近支出</h2>
+            <Link
+              href={`/projects/${id}/expenses`}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              查看全部
+            </Link>
+          </div>
+
+          {project.expenses.length === 0 ? (
+            <Card className="border-0 shadow-sm">
+              <CardContent className="py-12 text-center">
+                <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3">
+                  <Receipt className="h-6 w-6 text-slate-300" />
+                </div>
+                <p className="text-muted-foreground mb-4">還沒有支出記錄</p>
+                <Link href={`/projects/${id}/expenses/new`}>
+                  <Button variant="outline" size="sm">
+                    <Plus className="h-4 w-4 mr-1" />
+                    新增第一筆
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-0 shadow-sm overflow-hidden">
+              <CardContent className="p-0 divide-y divide-slate-100">
+                {Object.entries(groupedExpenses).slice(0, 3).map(([date, expenses]) => (
+                  expenses.slice(0, 3).map((expense) => (
                     <Link
                       key={expense.id}
                       href={`/projects/${id}/expenses`}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/30 transition-colors"
+                      className="flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors"
                     >
                       {/* 類別圖標 */}
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${getCategoryColor(expense.category)}`}>
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${getCategoryColor(expense.category)}`}>
                         {getCategoryIcon(expense.category)}
                       </div>
                       {/* 描述和付款人 */}
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">
+                        <p className="font-medium text-sm truncate">
                           {expense.description || "支出"}
-                        </div>
-                        <div className="text-sm text-muted-foreground flex items-center gap-1">
-                          {expense.payer?.image ? (
-                            <Image
-                              src={expense.payer.image}
-                              alt=""
-                              width={16}
-                              height={16}
-                              className="rounded-full"
-                            />
-                          ) : (
-                            <User className="h-3 w-3" />
-                          )}
-                          <span>{expense.payer?.name || expense.payer?.email?.split("@")[0] || "未知"} 先付</span>
-                        </div>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {expense.payer?.user?.name || expense.payer?.displayName || "未知"} 付款 · {expense.participants?.length || 0} 人分攤
+                        </p>
                       </div>
                       {/* 金額 */}
-                      <div className="text-right">
-                        <div className="font-semibold">
-                          ${Number(expense.amount).toLocaleString("zh-TW")}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {expense.participants.length} 人分
-                        </div>
-                      </div>
+                      <p className="font-semibold tabular-nums">
+                        ${Number(expense.amount).toLocaleString("zh-TW")}
+                      </p>
                     </Link>
-                  ))}
-                </div>
-              </div>
-            ))
+                  ))
+                ))}
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>
@@ -336,10 +382,11 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
       {/* 浮動新增按鈕 */}
       <Link
         href={`/projects/${id}/expenses/new`}
-        className="fixed bottom-20 right-4 z-50"
+        className="fixed bottom-24 right-4 z-50"
       >
-        <Button className="h-12 w-12 rounded-full shadow-lg">
+        <Button size="lg" className="h-14 px-6 rounded-full shadow-lg gap-2">
           <Plus className="h-5 w-5" />
+          新增支出
         </Button>
       </Link>
     </AppLayout>

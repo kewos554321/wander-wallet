@@ -8,21 +8,31 @@ import { AppLayout } from "@/components/layout/app-layout"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Check, User } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 
 interface Member {
   id: string
   role: string
+  displayName: string
+  userId: string | null
   user: {
     id: string
     name: string | null
     email: string
     image: string | null
-  }
+  } | null
 }
 
 interface ParticipantShare {
-  userId: string
+  memberId: string
   shareAmount: number
 }
 
@@ -61,13 +71,14 @@ export default function NewExpense({ params }: { params: Promise<{ id: string }>
       const res = await fetch(`/api/projects/${id}/members`)
       if (res.ok) {
         const data = await res.json()
+        // 取得所有成員（包含未認領的）
         setMembers(data)
         // 預設選取所有成員為參與者
-        const allUserIds = new Set<string>(data.map((m: Member) => m.user.id))
-        setSelectedParticipants(allUserIds)
+        const allMemberIds = new Set<string>(data.map((m: Member) => m.id))
+        setSelectedParticipants(allMemberIds)
         // 預設付款人為第一位成員
         if (data.length > 0) {
-          setPaidBy(data[0].user.id)
+          setPaidBy(data[0].id)
         }
       }
     } catch (error) {
@@ -77,19 +88,19 @@ export default function NewExpense({ params }: { params: Promise<{ id: string }>
     }
   }
 
-  function toggleParticipant(userId: string) {
+  function toggleParticipant(memberId: string) {
     const newSelected = new Set(selectedParticipants)
-    if (newSelected.has(userId)) {
-      newSelected.delete(userId)
+    if (newSelected.has(memberId)) {
+      newSelected.delete(memberId)
     } else {
-      newSelected.add(userId)
+      newSelected.add(memberId)
     }
     setSelectedParticipants(newSelected)
   }
 
   function selectAllParticipants() {
-    const allUserIds = new Set(members.map((m) => m.user.id))
-    setSelectedParticipants(allUserIds)
+    const allMemberIds = new Set(members.map((m) => m.id))
+    setSelectedParticipants(allMemberIds)
   }
 
   function calculateShares(): ParticipantShare[] {
@@ -100,8 +111,8 @@ export default function NewExpense({ params }: { params: Promise<{ id: string }>
 
     if (splitMode === "equal") {
       const sharePerPerson = Math.round((amountNum / participantCount) * 100) / 100
-      const shares = Array.from(selectedParticipants).map((userId) => ({
-        userId,
+      const shares = Array.from(selectedParticipants).map((memberId) => ({
+        memberId,
         shareAmount: sharePerPerson,
       }))
       // 處理尾差
@@ -112,16 +123,16 @@ export default function NewExpense({ params }: { params: Promise<{ id: string }>
       }
       return shares
     } else {
-      return Array.from(selectedParticipants).map((userId) => ({
-        userId,
-        shareAmount: Number(customShares[userId]) || 0,
+      return Array.from(selectedParticipants).map((memberId) => ({
+        memberId,
+        shareAmount: Number(customShares[memberId]) || 0,
       }))
     }
   }
 
   function getCustomSharesTotal(): number {
     return Array.from(selectedParticipants).reduce(
-      (sum, userId) => sum + (Number(customShares[userId]) || 0),
+      (sum, memberId) => sum + (Number(customShares[memberId]) || 0),
       0
     )
   }
@@ -159,7 +170,7 @@ export default function NewExpense({ params }: { params: Promise<{ id: string }>
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          paidBy,
+          paidByMemberId: paidBy,
           amount: amountNum,
           description: description.trim() || null,
           category: category || null,
@@ -247,121 +258,160 @@ export default function NewExpense({ params }: { params: Promise<{ id: string }>
         {/* 付款人 */}
         <div>
           <label className="block text-sm font-medium mb-2">誰付的錢？ *</label>
-          <div className="grid grid-cols-2 gap-2">
-            {members.map((member) => (
-              <button
-                key={member.user.id}
-                type="button"
-                onClick={() => setPaidBy(member.user.id)}
-                className={`p-3 rounded-lg border text-left transition-colors ${
-                  paidBy === member.user.id
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/50"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                    {member.user.image ? (
-                      <Image
-                        src={member.user.image}
-                        alt={member.user.name || ""}
-                        width={32}
-                        height={32}
-                        className="rounded-full object-cover"
-                      />
-                    ) : (
-                      <User className="h-4 w-4 text-primary" />
-                    )}
-                  </div>
-                  <span className="text-sm font-medium truncate">
-                    {member.user.name || member.user.email?.split("@")[0]}
-                  </span>
-                  {paidBy === member.user.id && (
-                    <Check className="h-4 w-4 text-primary ml-auto" />
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
+          {members.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              沒有成員，請先新增成員
+            </p>
+          ) : (
+            <Select value={paidBy} onValueChange={setPaidBy}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="選擇付款人" />
+              </SelectTrigger>
+              <SelectContent>
+                {members.map((member) => {
+                  const avatarData = parseAvatarString(member.user?.image)
+                  const hasExternalImage = member.user?.image && !member.user.image.startsWith("avatar:")
+                  return (
+                    <SelectItem key={member.id} value={member.id}>
+                      <div className="flex items-center gap-2">
+                        {avatarData ? (
+                          <div
+                            className="h-6 w-6 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
+                          >
+                            {(() => { const Icon = getAvatarIcon(avatarData.iconId); return <Icon className="h-3 w-3 text-white" /> })()}
+                          </div>
+                        ) : (
+                          <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden">
+                            {hasExternalImage ? (
+                              <Image
+                                src={member.user!.image!}
+                                alt={member.displayName}
+                                width={24}
+                                height={24}
+                                className="rounded-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-xs font-medium text-slate-500">
+                                {member.displayName.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        <span>{member.displayName}</span>
+                        {!member.userId && <span className="text-xs text-muted-foreground">(未認領)</span>}
+                      </div>
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         {/* 分擔者 */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium">誰要分擔？ *</label>
-            <button
-              type="button"
-              onClick={selectAllParticipants}
-              className="text-xs text-primary hover:underline"
-            >
-              全選
-            </button>
-          </div>
-          <Card>
-            <CardContent className="p-3 space-y-2">
-              {members.map((member) => {
-                const isSelected = selectedParticipants.has(member.user.id)
-                return (
-                  <div
-                    key={member.user.id}
-                    className={`flex items-center justify-between p-2 rounded-lg transition-colors cursor-pointer ${
-                      isSelected ? "bg-primary/5" : "hover:bg-secondary/50"
-                    }`}
-                    onClick={() => toggleParticipant(member.user.id)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`h-5 w-5 rounded border flex items-center justify-center ${
-                          isSelected ? "bg-primary border-primary" : "border-border"
-                        }`}
-                      >
-                        {isSelected && <Check className="h-3 w-3 text-primary-foreground" />}
-                      </div>
-                      <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                        {member.user.image ? (
-                          <Image
-                            src={member.user.image}
-                            alt={member.user.name || ""}
-                            width={28}
-                            height={28}
-                            className="rounded-full object-cover"
-                          />
-                        ) : (
-                          <User className="h-3.5 w-3.5 text-primary" />
-                        )}
-                      </div>
-                      <span className="text-sm">
-                        {member.user.name || member.user.email?.split("@")[0]}
-                      </span>
-                    </div>
-                    {isSelected && splitMode === "equal" && amountNum > 0 && (
-                      <span className="text-sm text-muted-foreground">
-                        ${sharePerPerson.toFixed(2)}
-                      </span>
-                    )}
-                    {isSelected && splitMode === "custom" && (
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0"
-                        value={customShares[member.user.id] || ""}
-                        onChange={(e) => {
-                          e.stopPropagation()
-                          setCustomShares({
-                            ...customShares,
-                            [member.user.id]: e.target.value,
-                          })
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="w-24 h-8 text-right"
-                      />
-                    )}
+          <label className="block text-sm font-medium mb-2">幫誰付？ *</label>
+          {members.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              沒有成員，請先新增成員
+            </p>
+          ) : (
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-0 divide-y divide-slate-100">
+                {/* 全選選項 */}
+                <label className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      checked={selectedParticipants.size === members.length}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          selectAllParticipants()
+                        } else {
+                          setSelectedParticipants(new Set())
+                        }
+                      }}
+                    />
+                    <span className="font-medium">全部成員</span>
                   </div>
-                )
-              })}
-            </CardContent>
-          </Card>
+                  <span className="text-sm text-muted-foreground">
+                    {selectedParticipants.size}/{members.length} 人
+                  </span>
+                </label>
+
+                {/* 成員列表 */}
+                {members.map((member) => {
+                  const isSelected = selectedParticipants.has(member.id)
+                  const avatarData = parseAvatarString(member.user?.image)
+                  const hasExternalImage = member.user?.image && !member.user.image.startsWith("avatar:")
+                  return (
+                    <label
+                      key={member.id}
+                      className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleParticipant(member.id)}
+                        />
+                        {avatarData ? (
+                          <div
+                            className="h-8 w-8 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
+                          >
+                            {(() => { const Icon = getAvatarIcon(avatarData.iconId); return <Icon className="h-4 w-4 text-white" /> })()}
+                          </div>
+                        ) : (
+                          <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden">
+                            {hasExternalImage ? (
+                              <Image
+                                src={member.user!.image!}
+                                alt={member.displayName}
+                                width={32}
+                                height={32}
+                                className="rounded-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-sm font-medium text-slate-500">
+                                {member.displayName.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{member.displayName}</span>
+                          {!member.userId && <span className="text-xs text-muted-foreground">(未認領)</span>}
+                        </div>
+                      </div>
+                      {isSelected && splitMode === "equal" && amountNum > 0 && (
+                        <span className="text-sm text-muted-foreground tabular-nums">
+                          ${sharePerPerson.toFixed(2)}
+                        </span>
+                      )}
+                      {isSelected && splitMode === "custom" && (
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0"
+                          value={customShares[member.id] || ""}
+                          onChange={(e) => {
+                            e.stopPropagation()
+                            setCustomShares({
+                              ...customShares,
+                              [member.id]: e.target.value,
+                            })
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-24 h-8 text-right"
+                        />
+                      )}
+                    </label>
+                  )
+                })}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* 分擔方式 */}

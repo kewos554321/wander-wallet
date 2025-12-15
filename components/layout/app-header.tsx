@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { ModeToggle } from "@/components/system/mode-toggle"
 import { Button } from "@/components/ui/button"
-import { Menu, Bell, Search } from "lucide-react"
+import { ArrowLeft, Bell, Search } from "lucide-react"
 
 interface AppHeaderProps {
   title?: string
@@ -24,7 +24,7 @@ export function AppHeader({ title = "Wander Wallet", showBack = false, onBack }:
               onClick={onBack ?? (() => router.back())}
               className="h-8 w-8 -ml-2"
             >
-              <Menu className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" />
             </Button>
           )}
           <h1 className="text-lg font-semibold">{title}</h1>

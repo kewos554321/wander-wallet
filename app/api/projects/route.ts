@@ -198,6 +198,30 @@ export async function GET() {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
+    // 驗證用戶是否存在於資料庫中
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+    })
+
+    if (!user) {
+      console.error("用戶不存在:", session.user.id)
+      // 自動登出無效的 session
+      await logout()
+      return NextResponse.json(
+        {
+          error: "用戶不存在",
+          details: "已自動登出，請重新登入",
+          requiresLogout: true,
+        },
+        {
+          status: 401,
+          headers: {
+            "Clear-Site-Data": '"cache", "cookies", "storage"',
+          },
+        }
+      )
+    }
+
     const projects = await prisma.project.findMany({
       where: {
         members: {
@@ -227,28 +251,9 @@ export async function GET() {
           },
         },
         expenses: {
-          include: {
-            payer: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
-            participants: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                  },
-                },
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
+          select: {
+            id: true,
+            amount: true,
           },
         },
         _count: {
@@ -264,10 +269,19 @@ export async function GET() {
     })
 
     return NextResponse.json(projects)
-  } catch (error) {
-    console.error("獲取專案錯誤:", error)
+  } catch (error: unknown) {
+    const prismaError = error as { message?: string; code?: string; meta?: unknown }
+    console.error("獲取專案錯誤:", {
+      message: prismaError?.message,
+      code: prismaError?.code,
+      meta: prismaError?.meta,
+    })
     return NextResponse.json(
-      { error: "獲取專案失敗" },
+      {
+        error: "獲取專案失敗",
+        details: prismaError?.message,
+        code: prismaError?.code,
+      },
       { status: 500 }
     )
   }

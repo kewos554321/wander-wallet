@@ -1,27 +1,29 @@
 "use client"
 
 import { use, useEffect, useState } from "react"
+import Image from "next/image"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { ArrowRight, CheckCircle2, AlertCircle, TrendingUp, TrendingDown } from "lucide-react"
+import { ArrowRight, CheckCircle2, AlertCircle, TrendingUp, TrendingDown, User } from "lucide-react"
+import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 
 interface Balance {
-  userId: string
-  userName: string
-  userEmail: string
+  memberId: string
+  displayName: string
+  userImage: string | null
   balance: number
 }
 
 interface Settlement {
   from: {
-    id: string
-    name: string | null
-    email: string
+    memberId: string
+    displayName: string
+    userImage: string | null
   }
   to: {
-    id: string
-    name: string | null
-    email: string
+    memberId: string
+    displayName: string
+    userImage: string | null
   }
   amount: number
 }
@@ -151,33 +153,83 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
               </div>
             ) : (
               <div className="space-y-3">
-                {settlements.map((s, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
-                  >
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="text-center">
-                        <div className="font-medium text-sm">
-                          {s.from.name || s.from.email?.split("@")[0]}
+                {settlements.map((s, idx) => {
+                  const fromAvatarData = parseAvatarString(s.from.userImage)
+                  const toAvatarData = parseAvatarString(s.to.userImage)
+                  const fromHasExternalImage = s.from.userImage && !s.from.userImage.startsWith("avatar:")
+                  const toHasExternalImage = s.to.userImage && !s.to.userImage.startsWith("avatar:")
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="flex flex-col items-center gap-1">
+                          {fromAvatarData ? (
+                            <div
+                              className="h-10 w-10 rounded-full flex items-center justify-center"
+                              style={{ backgroundColor: getAvatarColor(fromAvatarData.colorId) }}
+                            >
+                              {(() => { const Icon = getAvatarIcon(fromAvatarData.iconId); return <Icon className="h-5 w-5 text-white" /> })()}
+                            </div>
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center overflow-hidden">
+                              {fromHasExternalImage ? (
+                                <Image
+                                  src={s.from.userImage!}
+                                  alt={s.from.displayName}
+                                  width={40}
+                                  height={40}
+                                  className="rounded-full object-cover"
+                                />
+                              ) : (
+                                <User className="h-5 w-5 text-red-500" />
+                              )}
+                            </div>
+                          )}
+                          <div className="font-medium text-sm">
+                            {s.from.displayName}
+                          </div>
+                          <div className="text-xs text-muted-foreground">付款</div>
                         </div>
-                        <div className="text-xs text-muted-foreground">付款</div>
+                        <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                        <div className="flex flex-col items-center gap-1">
+                          {toAvatarData ? (
+                            <div
+                              className="h-10 w-10 rounded-full flex items-center justify-center"
+                              style={{ backgroundColor: getAvatarColor(toAvatarData.colorId) }}
+                            >
+                              {(() => { const Icon = getAvatarIcon(toAvatarData.iconId); return <Icon className="h-5 w-5 text-white" /> })()}
+                            </div>
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center overflow-hidden">
+                              {toHasExternalImage ? (
+                                <Image
+                                  src={s.to.userImage!}
+                                  alt={s.to.displayName}
+                                  width={40}
+                                  height={40}
+                                  className="rounded-full object-cover"
+                                />
+                              ) : (
+                                <User className="h-5 w-5 text-green-500" />
+                              )}
+                            </div>
+                          )}
+                          <div className="font-medium text-sm">
+                            {s.to.displayName}
+                          </div>
+                          <div className="text-xs text-muted-foreground">收款</div>
+                        </div>
                       </div>
-                      <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                      <div className="text-center">
-                        <div className="font-medium text-sm">
-                          {s.to.name || s.to.email?.split("@")[0]}
+                      <div className="text-right">
+                        <div className="font-bold text-primary">
+                          ${s.amount.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
-                        <div className="text-xs text-muted-foreground">收款</div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-bold text-primary">
-                        ${s.amount.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </CardContent>
@@ -198,17 +250,45 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                   <span className="text-sm font-medium text-green-600">應收款（付多了）</span>
                 </div>
                 <div className="space-y-2">
-                  {creditors.map((b) => (
-                    <div
-                      key={b.userId}
-                      className="flex items-center justify-between p-3 rounded-lg border border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950"
-                    >
-                      <span className="font-medium">{b.userName}</span>
-                      <span className="text-green-600 font-bold">
-                        +${b.balance.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                  ))}
+                  {creditors.map((b) => {
+                    const avatarData = parseAvatarString(b.userImage)
+                    const hasExternalImage = b.userImage && !b.userImage.startsWith("avatar:")
+                    return (
+                      <div
+                        key={b.memberId}
+                        className="flex items-center justify-between p-3 rounded-lg border border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950"
+                      >
+                        <div className="flex items-center gap-3">
+                          {avatarData ? (
+                            <div
+                              className="h-8 w-8 rounded-full flex items-center justify-center"
+                              style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
+                            >
+                              {(() => { const Icon = getAvatarIcon(avatarData.iconId); return <Icon className="h-4 w-4 text-white" /> })()}
+                            </div>
+                          ) : (
+                            <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center overflow-hidden">
+                              {hasExternalImage ? (
+                                <Image
+                                  src={b.userImage!}
+                                  alt={b.displayName}
+                                  width={32}
+                                  height={32}
+                                  className="rounded-full object-cover"
+                                />
+                              ) : (
+                                <User className="h-4 w-4 text-green-600" />
+                              )}
+                            </div>
+                          )}
+                          <span className="font-medium">{b.displayName}</span>
+                        </div>
+                        <span className="text-green-600 font-bold">
+                          +${b.balance.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -221,17 +301,45 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                   <span className="text-sm font-medium text-red-600">應付款（欠款）</span>
                 </div>
                 <div className="space-y-2">
-                  {debtors.map((b) => (
-                    <div
-                      key={b.userId}
-                      className="flex items-center justify-between p-3 rounded-lg border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950"
-                    >
-                      <span className="font-medium">{b.userName}</span>
-                      <span className="text-red-600 font-bold">
-                        ${b.balance.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                  ))}
+                  {debtors.map((b) => {
+                    const avatarData = parseAvatarString(b.userImage)
+                    const hasExternalImage = b.userImage && !b.userImage.startsWith("avatar:")
+                    return (
+                      <div
+                        key={b.memberId}
+                        className="flex items-center justify-between p-3 rounded-lg border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950"
+                      >
+                        <div className="flex items-center gap-3">
+                          {avatarData ? (
+                            <div
+                              className="h-8 w-8 rounded-full flex items-center justify-center"
+                              style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
+                            >
+                              {(() => { const Icon = getAvatarIcon(avatarData.iconId); return <Icon className="h-4 w-4 text-white" /> })()}
+                            </div>
+                          ) : (
+                            <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center overflow-hidden">
+                              {hasExternalImage ? (
+                                <Image
+                                  src={b.userImage!}
+                                  alt={b.displayName}
+                                  width={32}
+                                  height={32}
+                                  className="rounded-full object-cover"
+                                />
+                              ) : (
+                                <User className="h-4 w-4 text-red-600" />
+                              )}
+                            </div>
+                          )}
+                          <span className="font-medium">{b.displayName}</span>
+                        </div>
+                        <span className="text-red-600 font-bold">
+                          ${b.balance.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -244,15 +352,43 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                   <span className="text-sm font-medium text-muted-foreground">已結清</span>
                 </div>
                 <div className="space-y-2">
-                  {settled.map((b) => (
-                    <div
-                      key={b.userId}
-                      className="flex items-center justify-between p-3 rounded-lg border bg-secondary/30"
-                    >
-                      <span className="font-medium text-muted-foreground">{b.userName}</span>
-                      <span className="text-muted-foreground">$0.00</span>
-                    </div>
-                  ))}
+                  {settled.map((b) => {
+                    const avatarData = parseAvatarString(b.userImage)
+                    const hasExternalImage = b.userImage && !b.userImage.startsWith("avatar:")
+                    return (
+                      <div
+                        key={b.memberId}
+                        className="flex items-center justify-between p-3 rounded-lg border bg-secondary/30"
+                      >
+                        <div className="flex items-center gap-3">
+                          {avatarData ? (
+                            <div
+                              className="h-8 w-8 rounded-full flex items-center justify-center"
+                              style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
+                            >
+                              {(() => { const Icon = getAvatarIcon(avatarData.iconId); return <Icon className="h-4 w-4 text-white" /> })()}
+                            </div>
+                          ) : (
+                            <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden">
+                              {hasExternalImage ? (
+                                <Image
+                                  src={b.userImage!}
+                                  alt={b.displayName}
+                                  width={32}
+                                  height={32}
+                                  className="rounded-full object-cover"
+                                />
+                              ) : (
+                                <User className="h-4 w-4 text-slate-400" />
+                              )}
+                            </div>
+                          )}
+                          <span className="font-medium text-muted-foreground">{b.displayName}</span>
+                        </div>
+                        <span className="text-muted-foreground">$0.00</span>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}

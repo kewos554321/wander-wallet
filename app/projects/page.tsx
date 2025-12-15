@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardAction } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,15 +15,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical, Users, DollarSign, Plus, Share2, Trash2, Edit } from "lucide-react"
+import { MoreVertical, Users, Plus, Share2, Trash2, Edit, ChevronRight, Folder } from "lucide-react"
+import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 
 interface ProjectMember {
+  id: string
+  displayName: string
   user: {
     id: string
     name: string | null
     email: string
     image: string | null
-  }
+  } | null
   role: string
 }
 
@@ -86,7 +90,8 @@ export default function ProjectsPage() {
             return
           }
         }
-        console.error("獲取專案失敗")
+        const errorData = await res.json().catch(() => ({}))
+        console.error("獲取專案失敗:", res.status, errorData)
         return
       }
       const data = await res.json()
@@ -148,65 +153,68 @@ export default function ProjectsPage() {
 
   return (
     <AppLayout title="專案">
-      <div className="space-y-4 pb-20">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">旅行專案</h2>
-          {!loading && projects.length > 0 && (
-            <Link href="/projects/new">
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                新增專案
-              </Button>
-            </Link>
-          )}
-        </div>
-
+      <div className="space-y-6 pb-20">
         {loading ? (
-          <div className="text-center py-8 text-muted-foreground">載入中...</div>
+          <div className="text-center py-12 text-muted-foreground">載入中...</div>
         ) : projects.length === 0 ? (
-          <div className="text-center py-12 space-y-4">
-            <p className="text-muted-foreground">目前還沒有專案</p>
-            <Link href="/projects/new">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                建立第一個專案
-              </Button>
-            </Link>
-          </div>
+          <Card className="border-0 shadow-sm">
+            <CardContent className="py-16 text-center">
+              <div className="h-16 w-16 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-4">
+                <Folder className="h-8 w-8 text-slate-300" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">還沒有專案</h3>
+              <p className="text-muted-foreground text-sm mb-6">建立一個專案來開始記錄旅行花費</p>
+              <Link href="/projects/new">
+                <Button size="lg" className="rounded-full px-6">
+                  <Plus className="h-4 w-4 mr-2" />
+                  建立專案
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
         ) : (
-          <div className="grid gap-4">
-            {projects.map((project) => {
-              const totalAmount = calculateTotalAmount(project.expenses)
-              const memberCount = project._count.members || project.members.length
-              const expenseCount = project._count.expenses || project.expenses.length
+          <>
+            {/* 專案列表 */}
+            <div className="space-y-3">
+              {projects.map((project) => {
+                const totalAmount = calculateTotalAmount(project.expenses)
+                const memberCount = project._count.members || project.members.length
+                const expenseCount = project._count.expenses || project.expenses.length
+                const perPerson = memberCount > 0 ? totalAmount / memberCount : 0
 
-              return (
-                <Card
-                  key={project.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => router.push(`/projects/${project.id}`)}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="truncate">
-                          {project.name}
-                        </CardTitle>
-                        {project.description && (
-                          <CardDescription className="mt-1 line-clamp-2">
-                            {project.description}
-                          </CardDescription>
-                        )}
-                      </div>
-                      <CardAction>
+                // 格式化日期
+                const formatDateRange = () => {
+                  if (!project.startDate && !project.endDate) return null
+                  const start = project.startDate ? new Date(project.startDate).toLocaleDateString("zh-TW", { month: "short", day: "numeric" }) : ""
+                  const end = project.endDate ? new Date(project.endDate).toLocaleDateString("zh-TW", { month: "short", day: "numeric" }) : ""
+                  if (start && end) return `${start} - ${end}`
+                  if (start) return `${start} 出發`
+                  return null
+                }
+                const dateRange = formatDateRange()
+
+                return (
+                  <Card
+                    key={project.id}
+                    className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => router.push(`/projects/${project.id}`)}
+                  >
+                    <CardContent className="p-4">
+                      {/* 頂部：標題與選項 */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-base truncate">{project.name}</h3>
+                          {dateRange && (
+                            <p className="text-xs text-muted-foreground mt-0.5">{dateRange}</p>
+                          )}
+                        </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             asChild
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 -mr-2 -mt-1">
                               <MoreVertical className="h-4 w-4" />
-                              <span className="sr-only">更多選項</span>
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -226,7 +234,7 @@ export default function ProjectsPage() {
                               }}
                             >
                               <Edit className="h-4 w-4 mr-2" />
-                              編輯專案
+                              查看詳情
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -241,45 +249,93 @@ export default function ProjectsPage() {
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </CardAction>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <div className="text-xs text-muted-foreground">成員</div>
-                          <div className="font-semibold">{memberCount}</div>
-                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <div className="text-xs text-muted-foreground">費用</div>
-                          <div className="font-semibold">{expenseCount} 筆</div>
-                        </div>
+
+                      {/* 中間：金額資訊 */}
+                      <div className="flex items-baseline gap-2 mb-3">
+                        <span className="text-2xl font-semibold tabular-nums">
+                          ${totalAmount.toLocaleString("zh-TW")}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          · 每人 ${Math.round(perPerson).toLocaleString("zh-TW")}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <div className="text-xs text-muted-foreground">總額</div>
-                          <div className="font-semibold">
-                            ${totalAmount.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+
+                      {/* 底部：成員與統計 */}
+                      <div className="flex items-center justify-between">
+                        {/* 成員頭像 */}
+                        <div className="flex items-center gap-2">
+                          <div className="flex -space-x-2">
+                            {project.members.slice(0, 4).map((member) => {
+                              const avatarData = parseAvatarString(member.user?.image)
+                              const isCustomAvatar = avatarData !== null
+                              const hasExternalImage = member.user?.image && !member.user.image.startsWith("avatar:")
+
+                              if (isCustomAvatar) {
+                                const Icon = getAvatarIcon(avatarData.iconId)
+                                const color = getAvatarColor(avatarData.colorId)
+                                return (
+                                  <div
+                                    key={member.id}
+                                    className="h-7 w-7 rounded-full border-2 border-white flex items-center justify-center"
+                                    style={{ backgroundColor: color }}
+                                    title={member.displayName}
+                                  >
+                                    <Icon className="size-3.5 text-white" />
+                                  </div>
+                                )
+                              }
+
+                              return (
+                                <div
+                                  key={member.id}
+                                  className="h-7 w-7 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center overflow-hidden"
+                                  title={member.displayName}
+                                >
+                                  {hasExternalImage ? (
+                                    <Image
+                                      src={member.user!.image!}
+                                      alt=""
+                                      width={28}
+                                      height={28}
+                                      className="object-cover"
+                                    />
+                                  ) : (
+                                    <span className="text-xs font-medium text-slate-500">
+                                      {member.displayName.charAt(0).toUpperCase()}
+                                    </span>
+                                  )}
+                                </div>
+                              )
+                            })}
+                            {memberCount > 4 && (
+                              <div className="h-7 w-7 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center">
+                                <span className="text-[10px] text-slate-500">+{memberCount - 4}</span>
+                              </div>
+                            )}
                           </div>
+                          <span className="text-xs text-muted-foreground">{memberCount} 人</span>
                         </div>
+
+                        {/* 支出筆數 */}
+                        <span className="text-xs text-muted-foreground">
+                          {expenseCount} 筆支出
+                        </span>
                       </div>
-                    </div>
-                    <div className="mt-4 pt-4 border-t">
-                      <div className="text-xs text-muted-foreground">
-                        分享碼：<span className="font-mono font-semibold">{project.shareCode}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+
+            {/* 新增專案按鈕 */}
+            <Link href="/projects/new" className="block">
+              <button className="w-full py-4 px-4 rounded-xl border border-dashed border-slate-200 text-sm text-muted-foreground hover:border-slate-300 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                <Plus className="h-4 w-4" />
+                新增專案
+              </button>
+            </Link>
+          </>
         )}
       </div>
     </AppLayout>

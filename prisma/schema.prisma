@@ -24,8 +24,6 @@ model User {
   sessions            Session[]
   createdProjects     Project[]           @relation("ProjectCreator")
   projectMemberships  ProjectMember[]
-  paidExpenses        Expense[]           @relation("ExpensePayer")
-  expenseParticipants ExpenseParticipant[] @relation("ExpenseParticipant")
 
   @@map("users")
 }
@@ -101,6 +99,9 @@ model ProjectMember {
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  paidExpenses        Expense[]            @relation("ExpensePayer")
+  expenseParticipants ExpenseParticipant[] @relation("ExpenseParticipant")
+
   @@unique([projectId, userId])
   @@map("project_members")
 }
@@ -109,7 +110,7 @@ model ProjectMember {
 model Expense {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   projectId   String   @map("project_id") @db.Uuid
-  paidBy      String   @map("paid_by") @db.Uuid
+  paidByMemberId String @map("paid_by_member_id") @db.Uuid
   amount      Decimal  @db.Decimal(10, 2)
   description String?
   category    String?
@@ -117,7 +118,7 @@ model Expense {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   project       Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  payer         User                 @relation("ExpensePayer", fields: [paidBy], references: [id], onDelete: Cascade)
+  payer         ProjectMember        @relation("ExpensePayer", fields: [paidByMemberId], references: [id], onDelete: Cascade)
   participants  ExpenseParticipant[]
 
   @@map("expenses")
@@ -127,12 +128,12 @@ model Expense {
 model ExpenseParticipant {
   id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   expenseId  String  @map("expense_id") @db.Uuid
-  userId     String  @map("user_id") @db.Uuid
+  memberId   String  @map("member_id") @db.Uuid
   shareAmount Decimal @map("share_amount") @db.Decimal(10, 2)
 
-  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
-  user    User    @relation("ExpenseParticipant", fields: [userId], references: [id], onDelete: Cascade)
+  expense Expense       @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  member  ProjectMember @relation("ExpenseParticipant", fields: [memberId], references: [id], onDelete: Cascade)
 
-  @@unique([expenseId, userId])
+  @@unique([expenseId, memberId])
   @@map("expense_participants")
 }

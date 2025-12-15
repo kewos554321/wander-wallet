@@ -15,16 +15,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Plus, Trash2, User } from "lucide-react"
+import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 
-interface ExpenseParticipant {
+interface Member {
   id: string
-  shareAmount: number
+  displayName: string
+  userId: string | null
   user: {
     id: string
     name: string | null
     email: string
     image: string | null
-  }
+  } | null
+}
+
+interface ExpenseParticipant {
+  id: string
+  shareAmount: number
+  member: Member
 }
 
 interface Expense {
@@ -33,12 +41,7 @@ interface Expense {
   description: string | null
   category: string | null
   createdAt: string
-  payer: {
-    id: string
-    name: string | null
-    email: string
-    image: string | null
-  }
+  payer: Member
   participants: ExpenseParticipant[]
 }
 
@@ -174,48 +177,83 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                         {formatDate(expense.createdAt)}
                       </div>
                       <div className="flex items-center gap-2 mt-2">
-                        <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                          {expense.payer?.image ? (
-                            <Image
-                              src={expense.payer.image}
-                              alt={expense.payer?.name || ""}
-                              width={24}
-                              height={24}
-                              className="rounded-full object-cover"
-                            />
-                          ) : (
-                            <User className="h-3 w-3 text-primary" />
-                          )}
-                        </div>
+                        {(() => {
+                          const avatarData = parseAvatarString(expense.payer?.user?.image)
+                          if (avatarData) {
+                            const Icon = getAvatarIcon(avatarData.iconId)
+                            return (
+                              <div
+                                className="h-6 w-6 rounded-full flex items-center justify-center"
+                                style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
+                              >
+                                <Icon className="h-3 w-3 text-white" />
+                              </div>
+                            )
+                          }
+                          const hasExternalImage = expense.payer?.user?.image && !expense.payer.user.image.startsWith("avatar:")
+                          return (
+                            <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                              {hasExternalImage ? (
+                                <Image
+                                  src={expense.payer!.user!.image!}
+                                  alt={expense.payer!.displayName}
+                                  width={24}
+                                  height={24}
+                                  className="rounded-full object-cover"
+                                />
+                              ) : (
+                                <User className="h-3 w-3 text-primary" />
+                              )}
+                            </div>
+                          )
+                        })()}
                         <span className="text-sm text-muted-foreground">
-                          {expense.payer?.name || expense.payer?.email?.split("@")[0] || "未知"} 代付
+                          {expense.payer.displayName} 代付
+                          {!expense.payer.userId && <span className="text-xs ml-1">(未認領)</span>}
                         </span>
                       </div>
                       {expense.participants.length > 0 && (
                         <div className="flex items-center gap-1 mt-2">
                           <span className="text-xs text-muted-foreground">分擔者：</span>
                           <div className="flex -space-x-1">
-                            {expense.participants.slice(0, 5).map((p) => (
-                              <div
-                                key={p.id}
-                                className="h-5 w-5 rounded-full bg-secondary flex items-center justify-center overflow-hidden border-2 border-background"
-                                title={`${p.user.name || p.user.email}: $${p.shareAmount}`}
-                              >
-                                {p.user.image ? (
-                                  <Image
-                                    src={p.user.image}
-                                    alt={p.user.name || ""}
-                                    width={20}
-                                    height={20}
-                                    className="rounded-full object-cover"
-                                  />
-                                ) : (
-                                  <span className="text-[10px]">
-                                    {(p.user.name || p.user.email)?.[0]?.toUpperCase()}
-                                  </span>
-                                )}
-                              </div>
-                            ))}
+                            {expense.participants.slice(0, 5).map((p) => {
+                              const avatarData = parseAvatarString(p.member.user?.image)
+                              if (avatarData) {
+                                const Icon = getAvatarIcon(avatarData.iconId)
+                                return (
+                                  <div
+                                    key={p.id}
+                                    className="h-5 w-5 rounded-full flex items-center justify-center border-2 border-background"
+                                    style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
+                                    title={`${p.member.displayName}: $${p.shareAmount}`}
+                                  >
+                                    <Icon className="h-2.5 w-2.5 text-white" />
+                                  </div>
+                                )
+                              }
+                              const hasExternalImage = p.member.user?.image && !p.member.user.image.startsWith("avatar:")
+                              return (
+                                <div
+                                  key={p.id}
+                                  className="h-5 w-5 rounded-full bg-secondary flex items-center justify-center overflow-hidden border-2 border-background"
+                                  title={`${p.member.displayName}: $${p.shareAmount}`}
+                                >
+                                  {hasExternalImage ? (
+                                    <Image
+                                      src={p.member.user!.image!}
+                                      alt={p.member.displayName}
+                                      width={20}
+                                      height={20}
+                                      className="rounded-full object-cover"
+                                    />
+                                  ) : (
+                                    <span className="text-[10px]">
+                                      {p.member.displayName[0]?.toUpperCase()}
+                                    </span>
+                                  )}
+                                </div>
+                              )
+                            })}
                             {expense.participants.length > 5 && (
                               <div className="h-5 w-5 rounded-full bg-secondary flex items-center justify-center text-[10px] border-2 border-background">
                                 +{expense.participants.length - 5}

@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { User, Copy, Share2, UserMinus, Check, UserPlus } from "lucide-react"
+import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 
 interface ProjectMember {
   id: string
@@ -251,25 +252,40 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
                 const isUnclaimed = !member.userId
                 const isCurrentUser = member.user?.id === session?.user?.id
                 const canClaim = isUnclaimed && !project.members.some(m => m.user?.id === session?.user?.id)
+                const avatarData = parseAvatarString(member.user?.image)
+                const isCustomAvatar = avatarData !== null
+                const hasExternalImage = member.user?.image && !member.user.image.startsWith("avatar:")
 
                 return (
                   <div
                     key={member.id}
                     className="flex items-center gap-3 p-4"
                   >
-                    <div className={`h-10 w-10 rounded-full flex items-center justify-center overflow-hidden ${isUnclaimed ? 'bg-muted' : 'bg-primary/10'}`}>
-                      {member.user?.image ? (
-                        <Image
-                          src={member.user.image}
-                          alt=""
-                          width={40}
-                          height={40}
-                          className="rounded-full object-cover"
-                        />
-                      ) : (
-                        <User className={`h-5 w-5 ${isUnclaimed ? 'text-muted-foreground' : 'text-primary'}`} />
-                      )}
-                    </div>
+                    {isCustomAvatar ? (
+                      <div
+                        className="h-10 w-10 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
+                      >
+                        {(() => {
+                          const Icon = getAvatarIcon(avatarData.iconId)
+                          return <Icon className="size-5 text-white" />
+                        })()}
+                      </div>
+                    ) : (
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center overflow-hidden ${isUnclaimed ? 'bg-muted' : 'bg-primary/10'}`}>
+                        {hasExternalImage ? (
+                          <Image
+                            src={member.user!.image!}
+                            alt=""
+                            width={40}
+                            height={40}
+                            className="rounded-full object-cover"
+                          />
+                        ) : (
+                          <User className={`h-5 w-5 ${isUnclaimed ? 'text-muted-foreground' : 'text-primary'}`} />
+                        )}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">
                         {member.displayName}

@@ -67,13 +67,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // JWT strategy 使用 token 而不是 user
       if (session.user && token) {
         session.user.id = token.sub as string
+        session.user.name = token.name as string
+        session.user.image = token.picture as string | null
       }
       return session
     },
-    async jwt({ token, user }) {
-      // 首次登入時，將 user id 存到 token
+    async jwt({ token, user, trigger }) {
+      // 首次登入時，將 user 資料存到 token
       if (user) {
         token.sub = user.id
+        token.name = user.name
+        token.picture = user.image
+      }
+      // 當 session 更新時，從資料庫取得最新資料
+      if (trigger === "update" && token.sub) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: { name: true, image: true },
+        })
+        if (dbUser) {
+          token.name = dbUser.name
+          token.picture = dbUser.image
+        }
       }
       return token
     },
