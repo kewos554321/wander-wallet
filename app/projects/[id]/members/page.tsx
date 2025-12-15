@@ -15,17 +15,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { User, Copy, Share2, UserMinus, Check, QrCode } from "lucide-react"
+import { User, Copy, Share2, UserMinus, Check, UserPlus } from "lucide-react"
 
 interface ProjectMember {
   id: string
+  userId: string | null
   role: string
+  displayName: string
+  claimedAt: string | null
   user: {
     id: string
     name: string | null
     email: string
     image: string | null
-  }
+  } | null
 }
 
 interface Project {
@@ -48,8 +51,13 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [showInvite, setShowInvite] = useState(false)
+  const [showAddMember, setShowAddMember] = useState(false)
   const [copied, setCopied] = useState(false)
   const [removing, setRemoving] = useState<string | null>(null)
+  const [newMemberName, setNewMemberName] = useState("")
+  const [adding, setAdding] = useState(false)
+  const [addError, setAddError] = useState("")
+  const [claiming, setClaiming] = useState<string | null>(null)
 
   useEffect(() => {
     fetchProject()
@@ -106,15 +114,43 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
     }
   }
 
-  async function handleRemoveMember(userId: string) {
+  async function handleAddMember(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newMemberName.trim()) return
+
+    setAdding(true)
+    setAddError("")
+    try {
+      const res = await fetch(`/api/projects/${id}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newMemberName.trim() }),
+      })
+
+      if (res.ok) {
+        setNewMemberName("")
+        setShowAddMember(false)
+        fetchProject()
+      } else {
+        const data = await res.json()
+        setAddError(data.error || "新增失敗")
+      }
+    } catch {
+      setAddError("新增失敗")
+    } finally {
+      setAdding(false)
+    }
+  }
+
+  async function handleRemoveMember(memberId: string) {
     if (!confirm("確定要移除這位成員嗎？")) return
 
-    setRemoving(userId)
+    setRemoving(memberId)
     try {
       const res = await fetch(`/api/projects/${id}/members`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ memberId }),
       })
 
       if (res.ok) {
@@ -127,6 +163,30 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
       alert("移除失敗")
     } finally {
       setRemoving(null)
+    }
+  }
+
+  async function handleClaimMember(memberId: string) {
+    if (!confirm("確定要認領這個身份嗎？認領後此成員的所有費用記錄將與你的帳號關聯。")) return
+
+    setClaiming(memberId)
+    try {
+      const res = await fetch(`/api/projects/${id}/members/claim`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      })
+
+      if (res.ok) {
+        fetchProject()
+      } else {
+        const data = await res.json()
+        alert(data.error || "認領失敗")
+      }
+    } catch {
+      alert("認領失敗")
+    } finally {
+      setClaiming(null)
     }
   }
 
@@ -152,18 +212,24 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
   return (
     <AppLayout title="成員管理" showBack>
       <div className="space-y-4 pb-20">
-        {/* 邀請區塊 */}
+        {/* 新增成員區塊 */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold">邀請成員</h3>
-              <Button size="sm" onClick={() => setShowInvite(true)}>
-                <Share2 className="h-4 w-4 mr-1" />
-                邀請
-              </Button>
+              <h3 className="font-semibold">新增成員</h3>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => setShowInvite(true)}>
+                  <Share2 className="h-4 w-4 mr-1" />
+                  分享
+                </Button>
+                <Button size="sm" onClick={() => setShowAddMember(true)}>
+                  <UserPlus className="h-4 w-4 mr-1" />
+                  新增
+                </Button>
+              </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              分享連結或分享碼給朋友，讓他們加入這個專案
+              直接輸入 Email 新增成員，或分享連結邀請朋友加入
             </p>
             <div className="mt-3 flex items-center gap-2">
               <div className="flex-1 bg-secondary rounded-lg px-3 py-2">
@@ -181,55 +247,78 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
           <h3 className="font-semibold mb-3">{project.members.length} 位成員</h3>
           <Card>
             <CardContent className="p-0 divide-y">
-              {project.members.map((member) => (
-                <div
-                  key={member.id}
-                  className="flex items-center gap-3 p-4"
-                >
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                    {member.user.image ? (
-                      <Image
-                        src={member.user.image}
-                        alt=""
-                        width={40}
-                        height={40}
-                        className="rounded-full object-cover"
-                      />
-                    ) : (
-                      <User className="h-5 w-5 text-primary" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">
-                      {member.user.name || member.user.email?.split("@")[0]}
-                      {member.role === "owner" && (
-                        <span className="ml-2 text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                          建立者
-                        </span>
-                      )}
-                      {member.user.id === session?.user?.id && (
-                        <span className="ml-2 text-xs bg-secondary px-1.5 py-0.5 rounded">
-                          你
-                        </span>
+              {project.members.map((member) => {
+                const isUnclaimed = !member.userId
+                const isCurrentUser = member.user?.id === session?.user?.id
+                const canClaim = isUnclaimed && !project.members.some(m => m.user?.id === session?.user?.id)
+
+                return (
+                  <div
+                    key={member.id}
+                    className="flex items-center gap-3 p-4"
+                  >
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center overflow-hidden ${isUnclaimed ? 'bg-muted' : 'bg-primary/10'}`}>
+                      {member.user?.image ? (
+                        <Image
+                          src={member.user.image}
+                          alt=""
+                          width={40}
+                          height={40}
+                          className="rounded-full object-cover"
+                        />
+                      ) : (
+                        <User className={`h-5 w-5 ${isUnclaimed ? 'text-muted-foreground' : 'text-primary'}`} />
                       )}
                     </div>
-                    <div className="text-sm text-muted-foreground truncate">
-                      {member.user.email}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">
+                        {member.displayName}
+                        {member.role === "owner" && (
+                          <span className="ml-2 text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                            建立者
+                          </span>
+                        )}
+                        {isCurrentUser && (
+                          <span className="ml-2 text-xs bg-secondary px-1.5 py-0.5 rounded">
+                            你
+                          </span>
+                        )}
+                        {isUnclaimed && (
+                          <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
+                            未認領
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground truncate">
+                        {member.user?.email || '等待認領...'}
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      {canClaim && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleClaimMember(member.id)}
+                          disabled={claiming === member.id}
+                        >
+                          {claiming === member.id ? "認領中..." : "認領"}
+                        </Button>
+                      )}
+                      {isOwner && !isCurrentUser && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleRemoveMember(member.id)}
+                          disabled={removing === member.id}
+                        >
+                          <UserMinus className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  {isOwner && member.user.id !== session?.user?.id && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => handleRemoveMember(member.user.id)}
-                      disabled={removing === member.user.id}
-                    >
-                      <UserMinus className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
+                )
+              })}
             </CardContent>
           </Card>
         </div>
@@ -281,6 +370,57 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
               分享給朋友
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 新增成員對話框 */}
+      <Dialog open={showAddMember} onOpenChange={(open) => {
+        setShowAddMember(open)
+        if (!open) {
+          setNewMemberName("")
+          setAddError("")
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>新增成員</DialogTitle>
+            <DialogDescription>
+              輸入成員名稱，之後他們可以透過分享連結加入並認領身份
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAddMember} className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">名稱</label>
+              <Input
+                type="text"
+                placeholder="例：小明"
+                value={newMemberName}
+                onChange={(e) => setNewMemberName(e.target.value)}
+                disabled={adding}
+              />
+              {addError && (
+                <p className="text-sm text-destructive mt-1">{addError}</p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowAddMember(false)}
+                disabled={adding}
+              >
+                取消
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={adding || !newMemberName.trim()}
+              >
+                {adding ? "新增中..." : "新增成員"}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </AppLayout>

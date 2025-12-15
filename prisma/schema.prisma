@@ -90,14 +90,16 @@ model Project {
 
 // 專案成員（多對多關係）
 model ProjectMember {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  projectId String   @map("project_id") @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  role      String   @default("member")
-  joinedAt  DateTime @default(now()) @map("joined_at")
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId   String    @map("project_id") @db.Uuid
+  userId      String?   @map("user_id") @db.Uuid
+  displayName String    @map("display_name")
+  role        String    @default("member")
+  joinedAt    DateTime  @default(now()) @map("joined_at")
+  claimedAt   DateTime? @map("claimed_at")
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, userId])
   @@map("project_members")

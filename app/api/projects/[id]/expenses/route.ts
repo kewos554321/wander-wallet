@@ -20,12 +20,10 @@ export async function GET(
     }
 
     // 檢查用戶是否為專案成員
-    const membership = await prisma.projectMember.findUnique({
+    const membership = await prisma.projectMember.findFirst({
       where: {
-        projectId_userId: {
-          projectId: id,
-          userId: session.user.id,
-        },
+        projectId: id,
+        userId: session.user.id,
       },
     })
 
@@ -87,12 +85,10 @@ export async function POST(
     }
 
     // 檢查用戶是否為專案成員
-    const membership = await prisma.projectMember.findUnique({
+    const membership = await prisma.projectMember.findFirst({
       where: {
-        projectId_userId: {
-          projectId: id,
-          userId: session.user.id,
-        },
+        projectId: id,
+        userId: session.user.id,
       },
     })
 
@@ -132,7 +128,7 @@ export async function POST(
       },
     })
 
-    const memberIds = new Set(projectMembers.map((m: { userId: string }) => m.userId))
+    const memberIds = new Set(projectMembers.map((m: { userId: string | null }) => m.userId).filter((id): id is string => id !== null))
     const participantUserIds = participants.map((p: Participant) => p.userId)
 
     for (const userId of participantUserIds) {

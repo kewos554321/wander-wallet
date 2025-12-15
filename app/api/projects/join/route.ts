@@ -10,6 +10,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
+    // 獲取用戶資料
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: "用戶不存在" }, { status: 401 })
+    }
+
     const body = await req.json()
     const { shareCode } = body
 
@@ -33,9 +42,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "無效的分享碼" }, { status: 404 })
     }
 
-    // 檢查是否已經是成員
+    // 檢查是否已經是成員（已綁定帳號的成員）
     const isAlreadyMember = project.members.some(
-      (member: { userId: string }) => member.userId === session.user.id
+      (member: { userId: string | null }) => member.userId === session.user.id
     )
 
     if (isAlreadyMember) {
@@ -47,7 +56,9 @@ export async function POST(req: NextRequest) {
       data: {
         projectId: project.id,
         userId: session.user.id,
+        displayName: user.name || user.email.split("@")[0],
         role: "member",
+        claimedAt: new Date(),
       },
     })
 

@@ -100,12 +100,10 @@ export async function PUT(
     }
 
     // 檢查用戶是否有權限（必須是專案成員）
-    const membership = await prisma.projectMember.findUnique({
+    const membership = await prisma.projectMember.findFirst({
       where: {
-        projectId_userId: {
-          projectId: id,
-          userId: session.user.id,
-        },
+        projectId: id,
+        userId: session.user.id,
       },
     })
 

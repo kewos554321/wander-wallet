@@ -105,7 +105,9 @@ export async function POST(req: NextRequest) {
         members: {
           create: {
             userId: session.user.id,
+            displayName: user.name || user.email.split("@")[0],
             role: "owner",
+            claimedAt: new Date(),
           },
         },
       },

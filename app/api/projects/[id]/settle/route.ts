@@ -89,12 +89,10 @@ export async function GET(
     }
 
     // 檢查用戶是否為專案成員
-    const membership = await prisma.projectMember.findUnique({
+    const membership = await prisma.projectMember.findFirst({
       where: {
-        projectId_userId: {
-          projectId: id,
-          userId: session.user.id,
-        },
+        projectId: id,
+        userId: session.user.id,
       },
     })
 
@@ -149,11 +147,12 @@ export async function GET(
     // balance = 已付款總額 - 應該分擔總額
     const balanceMap = new Map<string, Balance>()
 
-    // 初始化所有成員的餘額為0
-    members.forEach((member: { userId: string; user: { name: string | null; email: string | null } }) => {
+    // 初始化所有已認領成員的餘額為0（跳過佔位成員）
+    members.forEach((member: { userId: string | null; displayName: string; user: { name: string | null; email: string | null } | null }) => {
+      if (!member.userId || !member.user) return // 跳過未認領的佔位成員
       balanceMap.set(member.userId, {
         userId: member.userId,
-        userName: member.user.name || member.user.email?.split("@")[0] || "Unknown",
+        userName: member.user.name || member.user.email?.split("@")[0] || member.displayName,
         userEmail: member.user.email || "",
         balance: 0,
       })
