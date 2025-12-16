@@ -10,7 +10,7 @@ import { StatCard } from "@/components/dashboard/stat-card"
 import { TrendAreaChart } from "@/components/dashboard/trend-area-chart"
 import { CategoryPieChart } from "@/components/dashboard/category-pie-chart"
 import { BalanceBarChart } from "@/components/dashboard/balance-bar-chart"
-import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
+import { useAuthFetch, useLiff, useBindGroupToProject } from "@/components/auth/liff-provider"
 import {
   Plus,
   Share2,
@@ -25,6 +25,7 @@ import {
   ChevronRight,
 } from "lucide-react"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
+import { getProjectShareUrl } from "@/lib/utils"
 
 interface ProjectMember {
   id: string
@@ -121,6 +122,9 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
   const authFetch = useAuthFetch()
   const { user } = useLiff()
 
+  // 如果從 LINE 群組開啟，自動綁定群組到專案
+  useBindGroupToProject(id)
+
   useEffect(() => {
     if (id) {
       fetchProject()
@@ -149,7 +153,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
 
   async function handleShare() {
     if (!project) return
-    const shareUrl = `${window.location.origin}/projects/join?code=${project.shareCode}`
+    const shareUrl = getProjectShareUrl(project.shareCode)
 
     if (navigator.share) {
       try {

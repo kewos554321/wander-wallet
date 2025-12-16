@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/client", "prisma"],
+  // 允許 ngrok 等開發工具的跨域請求
+  allowedDevOrigins: ["*.ngrok-free.app", "*.ngrok.io"],
   images: {
     remotePatterns: [
       {

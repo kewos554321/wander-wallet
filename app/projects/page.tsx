@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical, Users, Plus, Share2, Trash2, Edit, ChevronRight, Folder } from "lucide-react"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
+import { getProjectShareUrl } from "@/lib/utils"
 
 interface ProjectMember {
   id: string
@@ -110,8 +111,8 @@ export default function ProjectsPage() {
   }
 
   async function handleShare(shareCode: string) {
-    const shareUrl = `${window.location.origin}/projects/join?code=${shareCode}`
-    
+    const shareUrl = getProjectShareUrl(shareCode)
+
     if (navigator.share) {
       try {
         await navigator.share({

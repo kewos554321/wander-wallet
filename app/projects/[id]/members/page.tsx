@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { User, Copy, Share2, UserMinus, Check, UserPlus } from "lucide-react"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
+import { getProjectShareUrl } from "@/lib/utils"
 
 interface ProjectMember {
   id: string
@@ -84,7 +85,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
 
   async function handleCopyLink() {
     if (!project) return
-    const shareUrl = `${window.location.origin}/projects/join?code=${project.shareCode}`
+    const shareUrl = getProjectShareUrl(project.shareCode)
     await navigator.clipboard.writeText(shareUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -99,7 +100,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
 
   async function handleShare() {
     if (!project) return
-    const shareUrl = `${window.location.origin}/projects/join?code=${project.shareCode}`
+    const shareUrl = getProjectShareUrl(project.shareCode)
 
     if (navigator.share) {
       try {
@@ -209,7 +210,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
   }
 
   const isOwner = project.creator?.id === user?.id
-  const shareUrl = `${window.location.origin}/projects/join?code=${project.shareCode}`
+  const shareUrl = getProjectShareUrl(project.shareCode)
 
   return (
     <AppLayout title="成員管理" showBack>

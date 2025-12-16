@@ -15,6 +15,7 @@ import {
   login as liffLogin,
   logout as liffLogout,
   getAccessToken,
+  getGroupId,
   LiffUser,
 } from "@/lib/liff"
 
@@ -35,6 +36,7 @@ interface LiffContextType {
   isAuthenticated: boolean
   sessionToken: string | null
   isDevMode: boolean
+  lineGroupId: string | null // LINE 群組 ID（如果從群組開啟）
   login: () => void
   logout: () => void
   refreshSession: () => Promise<void>
@@ -65,6 +67,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
   const [liffProfile, setLiffProfile] = useState<LiffUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [sessionToken, setSessionToken] = useState<string | null>(null)
+  const [lineGroupId, setLineGroupId] = useState<string | null>(null)
 
   const authenticateWithBackend = useCallback(async (accessToken: string) => {
     try {
@@ -77,7 +80,8 @@ export function LiffProvider({ children }: { children: ReactNode }) {
       })
 
       if (!response.ok) {
-        console.error("Backend authentication failed")
+        const errorData = await response.json().catch(() => ({}))
+        console.error("Backend authentication failed:", response.status, errorData)
         return null
       }
 
@@ -124,22 +128,38 @@ export function LiffProvider({ children }: { children: ReactNode }) {
       try {
         await initLiff()
 
+        // 取得 LIFF 開啟環境（檢查是否從群組開啟）
+        const groupId = getGroupId()
+        if (groupId) {
+          setLineGroupId(groupId)
+          console.log("LIFF opened from LINE group:", groupId)
+        }
+
+        console.log("LIFF initialized, isLoggedIn:", isLoggedIn())
+
         if (isLoggedIn()) {
           // 取得 LINE 用戶資料
           const profile = await getProfile()
+          console.log("LIFF profile:", profile)
           setLiffProfile(profile)
 
           // 取得 access token 並向後端驗證
           const accessToken = getAccessToken()
+          console.log("LIFF accessToken:", accessToken ? "exists" : "null")
+
           if (accessToken) {
             const authData = await authenticateWithBackend(accessToken)
+            console.log("Backend auth result:", authData ? "success" : "failed")
             if (authData) {
               setUser(authData.user)
               setSessionToken(authData.sessionToken)
               localStorage.setItem(SESSION_TOKEN_KEY, authData.sessionToken)
             }
+          } else {
+            console.warn("No access token available, cannot authenticate with backend")
           }
         } else {
+          console.log("Not logged in, redirecting to LINE login...")
           // 自動登入（在 LINE App 內或外部瀏覽器都會跳轉到 LINE Login）
           liffLogin()
         }
@@ -183,6 +203,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!user,
     sessionToken,
     isDevMode: DEV_MODE,
+    lineGroupId,
     login,
     logout,
     refreshSession,
@@ -236,4 +257,41 @@ export function useAuthFetch() {
   )
 
   return authFetch
+}
+
+/**
+ * Custom hook to bind LINE group to a project
+ * Should be called when accessing a project page
+ */
+export function useBindGroupToProject(projectId: string | null) {
+  const { lineGroupId, sessionToken } = useLiff()
+  const [bound, setBound] = useState(false)
+
+  useEffect(() => {
+    async function bindGroup() {
+      if (!lineGroupId || !projectId || !sessionToken || bound) return
+
+      try {
+        const response = await fetch(`/api/projects/${projectId}/bind-group`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionToken}`,
+          },
+          body: JSON.stringify({ lineGroupId }),
+        })
+
+        if (response.ok) {
+          console.log("Successfully bound LINE group to project")
+          setBound(true)
+        }
+      } catch (error) {
+        console.error("Failed to bind group to project:", error)
+      }
+    }
+
+    bindGroup()
+  }, [lineGroupId, projectId, sessionToken, bound])
+
+  return { lineGroupId, bound }
 }

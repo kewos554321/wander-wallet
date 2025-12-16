@@ -33,6 +33,7 @@ model Project {
   startDate   DateTime? @map("start_date")
   endDate     DateTime? @map("end_date")
   shareCode   String    @unique @map("share_code")
+  lineGroupId String?   @map("line_group_id") // LINE 群組 ID，用於發送通知
   createdBy   String    @map("created_by") @db.Uuid
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")

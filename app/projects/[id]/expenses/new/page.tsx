@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { AppLayout } from "@/components/layout/app-layout"
-import { useAuthFetch } from "@/components/auth/liff-provider"
+import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -16,8 +16,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
+import { shareExpenseToLine, isShareTargetPickerAvailable } from "@/lib/liff"
+import { Send, Check } from "lucide-react"
 
 interface Member {
   id: string
@@ -46,10 +55,20 @@ const CATEGORIES = [
   { value: "other", label: "其他" },
 ]
 
+interface CreatedExpense {
+  projectName: string
+  payerName: string
+  amount: number
+  description?: string
+  category?: string
+  participantCount: number
+}
+
 export default function NewExpense({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { id } = use(params)
   const authFetch = useAuthFetch()
+  const { isDevMode } = useLiff()
 
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
@@ -63,16 +82,32 @@ export default function NewExpense({ params }: { params: Promise<{ id: string }>
   const [splitMode, setSplitMode] = useState<"equal" | "custom">("equal")
   const [customShares, setCustomShares] = useState<Record<string, string>>({})
 
+  // 分享相關狀態
+  const [showShareDialog, setShowShareDialog] = useState(false)
+  const [createdExpense, setCreatedExpense] = useState<CreatedExpense | null>(null)
+  const [sharing, setSharing] = useState(false)
+  const [projectName, setProjectName] = useState("")
+
   useEffect(() => {
-    fetchMembers()
+    fetchProjectAndMembers()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
-  async function fetchMembers() {
+  async function fetchProjectAndMembers() {
     try {
-      const res = await authFetch(`/api/projects/${id}/members`)
-      if (res.ok) {
-        const data = await res.json()
+      // 同時獲取專案和成員資料
+      const [projectRes, membersRes] = await Promise.all([
+        authFetch(`/api/projects/${id}`),
+        authFetch(`/api/projects/${id}/members`),
+      ])
+
+      if (projectRes.ok) {
+        const projectData = await projectRes.json()
+        setProjectName(projectData.name)
+      }
+
+      if (membersRes.ok) {
+        const data = await membersRes.json()
         // 取得所有成員（包含未認領的）
         setMembers(data)
         // 預設選取所有成員為參與者
@@ -84,7 +119,7 @@ export default function NewExpense({ params }: { params: Promise<{ id: string }>
         }
       }
     } catch (error) {
-      console.error("獲取成員列表錯誤:", error)
+      console.error("獲取資料錯誤:", error)
     } finally {
       setLoading(false)
     }
@@ -181,7 +216,28 @@ export default function NewExpense({ params }: { params: Promise<{ id: string }>
       })
 
       if (res.ok) {
-        router.push(`/projects/${id}/expenses`)
+        // 取得付款人名稱
+        const payerMember = members.find((m) => m.id === paidBy)
+        const payerName = payerMember?.displayName || "未知"
+
+        // 檢查是否可以分享（在 LINE App 內且非開發模式）
+        const canShare = !isDevMode && isShareTargetPickerAvailable()
+
+        if (canShare) {
+          // 顯示分享對話框
+          setCreatedExpense({
+            projectName,
+            payerName,
+            amount: amountNum,
+            description: description.trim() || undefined,
+            category: category || undefined,
+            participantCount: participants.length,
+          })
+          setShowShareDialog(true)
+        } else {
+          // 直接跳轉
+          router.push(`/projects/${id}/expenses`)
+        }
       } else {
         const data = await res.json()
         alert(data.error || "新增失敗")
@@ -192,6 +248,28 @@ export default function NewExpense({ params }: { params: Promise<{ id: string }>
     } finally {
       setSubmitting(false)
     }
+  }
+
+  async function handleShareToLine() {
+    if (!createdExpense) return
+
+    setSharing(true)
+    try {
+      await shareExpenseToLine({
+        ...createdExpense,
+        projectId: id,
+      })
+    } catch (error) {
+      console.error("分享失敗:", error)
+    } finally {
+      setSharing(false)
+      router.push(`/projects/${id}/expenses`)
+    }
+  }
+
+  function handleSkipShare() {
+    setShowShareDialog(false)
+    router.push(`/projects/${id}/expenses`)
   }
 
   if (loading) {
@@ -464,6 +542,67 @@ export default function NewExpense({ params }: { params: Promise<{ id: string }>
           </Link>
         </div>
       </form>
+
+      {/* 分享到 LINE 對話框 */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Check className="h-5 w-5 text-green-500" />
+              新增成功
+            </DialogTitle>
+            <DialogDescription>
+              要分享這筆消費到 LINE 群組嗎？
+            </DialogDescription>
+          </DialogHeader>
+          {createdExpense && (
+            <div className="bg-muted rounded-lg p-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">付款人</span>
+                <span>{createdExpense.payerName}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">金額</span>
+                <span className="font-bold">
+                  {new Intl.NumberFormat("zh-TW", {
+                    style: "currency",
+                    currency: "TWD",
+                    minimumFractionDigits: 0,
+                  }).format(createdExpense.amount)}
+                </span>
+              </div>
+              {createdExpense.description && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">備註</span>
+                  <span>{createdExpense.description}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">分攤人數</span>
+                <span>{createdExpense.participantCount} 人</span>
+              </div>
+            </div>
+          )}
+          <div className="flex gap-2 mt-4">
+            <Button
+              onClick={handleShareToLine}
+              disabled={sharing}
+              className="flex-1"
+            >
+              <Send className="h-4 w-4 mr-2" />
+              {sharing ? "分享中..." : "分享到 LINE"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleSkipShare}
+              disabled={sharing}
+              className="flex-1"
+            >
+              略過
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   )
 }

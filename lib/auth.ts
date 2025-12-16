@@ -148,6 +148,11 @@ export async function verifyLiffAccessToken(accessToken: string): Promise<boolea
       }),
     })
 
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      console.error("LINE token verification failed:", response.status, errorData)
+    }
+
     return response.ok
   } catch (error) {
     console.error("Failed to verify LIFF access token:", error)
@@ -171,9 +176,15 @@ export async function getLineProfile(accessToken: string): Promise<{
       },
     })
 
-    if (!response.ok) return null
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      console.error("LINE profile API failed:", response.status, errorData)
+      return null
+    }
 
-    return response.json()
+    const profile = await response.json()
+    console.log("LINE profile API success:", profile.userId, profile.displayName)
+    return profile
   } catch (error) {
     console.error("Failed to get LINE profile:", error)
     return null
