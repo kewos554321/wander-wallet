@@ -15,7 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { User, Copy, Share2, UserMinus, Check, UserPlus } from "lucide-react"
+import { User, Copy, Share2, UserMinus, Check, UserPlus, Search, Trash2, X } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { getProjectShareUrl } from "@/lib/utils"
 
@@ -55,12 +56,15 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
   const [loading, setLoading] = useState(true)
   const [showInvite, setShowInvite] = useState(false)
   const [showAddMember, setShowAddMember] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const [copiedType, setCopiedType] = useState<"code" | "link" | null>(null)
   const [removing, setRemoving] = useState<string | null>(null)
   const [newMemberName, setNewMemberName] = useState("")
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState("")
   const [claiming, setClaiming] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set())
+  const [batchMode, setBatchMode] = useState(false)
 
   useEffect(() => {
     fetchProject()
@@ -87,15 +91,15 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
     if (!project) return
     const shareUrl = getProjectShareUrl(project.shareCode)
     await navigator.clipboard.writeText(shareUrl)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    setCopiedType("link")
+    setTimeout(() => setCopiedType(null), 2000)
   }
 
   async function handleCopyCode() {
     if (!project) return
     await navigator.clipboard.writeText(project.shareCode)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    setCopiedType("code")
+    setTimeout(() => setCopiedType(null), 2000)
   }
 
   async function handleShare() {
@@ -193,6 +197,70 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
     }
   }
 
+  // 批次刪除成員
+  async function handleBatchRemove() {
+    if (selectedMembers.size === 0) return
+    if (!confirm(`確定要移除這 ${selectedMembers.size} 位成員嗎？`)) return
+
+    setRemoving("batch")
+    try {
+      const memberIds = Array.from(selectedMembers)
+      const results = await Promise.all(
+        memberIds.map(memberId =>
+          authFetch(`/api/projects/${id}/members`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ memberId }),
+          })
+        )
+      )
+
+      const failCount = results.filter(res => !res.ok).length
+      if (failCount > 0) {
+        alert(`${failCount} 位成員移除失敗`)
+      }
+
+      setSelectedMembers(new Set())
+      setBatchMode(false)
+      fetchProject()
+    } catch {
+      alert("批次移除失敗")
+    } finally {
+      setRemoving(null)
+    }
+  }
+
+  // 切換單一成員選擇
+  function toggleMemberSelection(memberId: string) {
+    setSelectedMembers(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(memberId)) {
+        newSet.delete(memberId)
+      } else {
+        newSet.add(memberId)
+      }
+      return newSet
+    })
+  }
+
+  // 全選/取消全選（排除自己和建立者）
+  function toggleSelectAll(selectableMembers: ProjectMember[]) {
+    const selectableIds = selectableMembers.map(m => m.id)
+    const allSelected = selectableIds.every(id => selectedMembers.has(id))
+
+    if (allSelected) {
+      setSelectedMembers(new Set())
+    } else {
+      setSelectedMembers(new Set(selectableIds))
+    }
+  }
+
+  // 退出批次模式
+  function exitBatchMode() {
+    setBatchMode(false)
+    setSelectedMembers(new Set())
+  }
+
   if (loading) {
     return (
       <AppLayout title="成員" showBack>
@@ -212,57 +280,143 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
   const isOwner = project.creator?.id === user?.id
   const shareUrl = getProjectShareUrl(project.shareCode)
 
+  // 過濾成員（搜尋）
+  const filteredMembers = project.members.filter(member => {
+    if (!searchQuery.trim()) return true
+    const query = searchQuery.toLowerCase()
+    return (
+      member.displayName.toLowerCase().includes(query) ||
+      member.user?.email?.toLowerCase().includes(query) ||
+      member.user?.name?.toLowerCase().includes(query)
+    )
+  })
+
+  // 可選擇的成員（排除自己）
+  const selectableMembers = filteredMembers.filter(
+    member => member.user?.id !== user?.id
+  )
+
   return (
     <AppLayout title="成員管理" showBack>
       <div className="space-y-4 pb-20">
-        {/* 新增成員區塊 */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold">新增成員</h3>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => setShowInvite(true)}>
-                  <Share2 className="h-4 w-4 mr-1" />
-                  分享
-                </Button>
-                <Button size="sm" onClick={() => setShowAddMember(true)}>
-                  <UserPlus className="h-4 w-4 mr-1" />
-                  新增
-                </Button>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              直接輸入 Email 新增成員，或分享連結邀請朋友加入
-            </p>
-            <div className="mt-3 flex items-center gap-2">
-              <div className="flex-1 bg-secondary rounded-lg px-3 py-2">
-                <span className="text-sm font-mono">{project.shareCode}</span>
-              </div>
-              <Button variant="outline" size="sm" onClick={handleCopyCode}>
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+        {/* 操作列 */}
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold">{project.members.length} 位成員</h3>
+          <div className="flex gap-2">
+            {isOwner && (
+              <Button
+                variant={batchMode ? "secondary" : "outline"}
+                size="icon"
+                onClick={() => batchMode ? exitBatchMode() : setBatchMode(true)}
+                title={batchMode ? "取消批次" : "批次管理"}
+              >
+                {batchMode ? <X className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
               </Button>
+            )}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowInvite(true)}
+              title="邀請成員"
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowAddMember(true)}
+              title="手動新增"
+            >
+              <UserPlus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* 搜尋欄 */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="搜尋成員..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+              onClick={() => setSearchQuery("")}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+
+        {/* 批次操作列 */}
+        {batchMode && (
+          <div className="flex items-center justify-between bg-secondary/50 rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={selectableMembers.length > 0 && selectableMembers.every(m => selectedMembers.has(m.id))}
+                onCheckedChange={() => toggleSelectAll(selectableMembers)}
+              />
+              <span className="text-sm">
+                {selectedMembers.size > 0
+                  ? `已選擇 ${selectedMembers.size} 位`
+                  : "全選"
+                }
+              </span>
             </div>
-          </CardContent>
-        </Card>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBatchRemove}
+              disabled={selectedMembers.size === 0 || removing === "batch"}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              {removing === "batch" ? "移除中..." : "移除"}
+            </Button>
+          </div>
+        )}
 
         {/* 成員列表 */}
-        <div>
-          <h3 className="font-semibold mb-3">{project.members.length} 位成員</h3>
-          <Card>
-            <CardContent className="p-0 divide-y">
-              {project.members.map((member) => {
+        <Card>
+          <CardContent className="p-0 divide-y">
+            {filteredMembers.length === 0 ? (
+              <div className="p-4 text-center text-muted-foreground">
+                {searchQuery ? "找不到符合的成員" : "尚無成員"}
+              </div>
+            ) : filteredMembers.map((member) => {
                 const isUnclaimed = !member.userId
                 const isCurrentUser = member.user?.id === user?.id
                 const canClaim = isUnclaimed && !project.members.some(m => m.user?.id === user?.id)
                 const avatarData = parseAvatarString(member.user?.image)
                 const isCustomAvatar = avatarData !== null
                 const hasExternalImage = member.user?.image && !member.user.image.startsWith("avatar:")
+                const canSelect = !isCurrentUser // 不能選擇自己
 
                 return (
                   <div
                     key={member.id}
-                    className="flex items-center gap-3 p-4"
+                    className={`flex items-center gap-3 p-4 ${batchMode && selectedMembers.has(member.id) ? 'bg-destructive/5' : ''} ${batchMode && canSelect ? 'cursor-pointer active:bg-muted/50' : ''}`}
+                    onClick={() => {
+                      if (batchMode && canSelect) {
+                        toggleMemberSelection(member.id)
+                      }
+                    }}
                   >
+                    {/* 批次模式 checkbox */}
+                    {batchMode && (
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedMembers.has(member.id)}
+                          onCheckedChange={() => toggleMemberSelection(member.id)}
+                          disabled={!canSelect}
+                          className={!canSelect ? "opacity-30" : ""}
+                        />
+                      </div>
+                    )}
                     {isCustomAvatar ? (
                       <div
                         className="h-10 w-10 rounded-full flex items-center justify-center"
@@ -339,7 +493,6 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
               })}
             </CardContent>
           </Card>
-        </div>
       </div>
 
       {/* 邀請對話框 */}
@@ -362,7 +515,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
                   </span>
                 </div>
                 <Button variant="outline" onClick={handleCopyCode}>
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copiedType === "code" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
@@ -377,7 +530,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
                   className="text-sm"
                 />
                 <Button variant="outline" onClick={handleCopyLink}>
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copiedType === "link" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
