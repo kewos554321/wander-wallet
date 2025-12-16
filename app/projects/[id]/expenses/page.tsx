@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Trash2, User } from "lucide-react"
+import { Pencil, Plus, Trash2, User } from "lucide-react"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 
@@ -269,6 +269,15 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                       <span className="text-lg font-bold text-red-600">
                         -${Number(expense.amount).toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
+                      <Link href={`/projects/${id}/expenses/${expense.id}/edit`}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-primary"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </Link>
                       <Button
                         variant="ghost"
                         size="icon"
