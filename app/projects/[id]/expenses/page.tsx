@@ -287,17 +287,8 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
               const isSelected = selectedIds.has(expense.id)
               const categoryInfo = getCategoryInfo(expense.category)
               const CategoryIcon = categoryInfo?.icon || Receipt
-              const CardWrapper = selectMode ? "div" : Link
-              const cardProps = selectMode
-                ? {
-                    onClick: () => toggleSelect(expense.id),
-                  }
-                : {
-                    href: `/projects/${id}/expenses/${expense.id}/edit`,
-                  }
 
-              return (
-                <CardWrapper key={expense.id} {...(cardProps as Record<string, unknown>)}>
+              const cardContent = (
                   <div className={`bg-white dark:bg-slate-900 rounded-2xl overflow-hidden transition-all cursor-pointer border border-slate-100 dark:border-slate-800 ${
                     selectMode
                       ? isSelected
@@ -459,7 +450,16 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                       </div>
                     )}
                   </div>
-                </CardWrapper>
+              )
+
+              return selectMode ? (
+                <div key={expense.id} onClick={() => toggleSelect(expense.id)}>
+                  {cardContent}
+                </div>
+              ) : (
+                <Link key={expense.id} href={`/projects/${id}/expenses/${expense.id}/edit`}>
+                  {cardContent}
+                </Link>
               )
             })}
           </>
