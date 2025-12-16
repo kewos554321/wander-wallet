@@ -22,9 +22,9 @@ export function StatCard({
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
       <div className="flex items-start justify-between">
-        <div className="space-y-1">
+        <div className="space-y-1 min-w-0 flex-1">
           <p className="text-xs text-slate-500 dark:text-slate-400">{title}</p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+          <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 truncate">
             {value}
           </p>
           {subtitle && (

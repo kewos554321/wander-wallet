@@ -7,9 +7,6 @@ import { useRouter } from "next/navigation"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
 import { StatCard } from "@/components/dashboard/stat-card"
-import { TrendAreaChart } from "@/components/dashboard/trend-area-chart"
-import { CategoryPieChart } from "@/components/dashboard/category-pie-chart"
-import { BalanceBarChart } from "@/components/dashboard/balance-bar-chart"
 import { useAuthFetch, useLiff, useBindGroupToProject } from "@/components/auth/liff-provider"
 import {
   Plus,
@@ -23,7 +20,17 @@ import {
   Gamepad2,
   ShoppingBag,
   ChevronRight,
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Info,
+  Download,
+  ArrowRightLeft,
+  Settings,
+  StickyNote,
 } from "lucide-react"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { getProjectShareUrl } from "@/lib/utils"
 
@@ -194,66 +201,6 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
     return paid - owed
   }, [project, user])
 
-  // 按日期分組的支出趨勢數據
-  const trendData = useMemo(() => {
-    if (!project) return []
-
-    const dateMap = new Map<string, number>()
-    project.expenses.forEach((expense) => {
-      const date = new Date(expense.createdAt).toLocaleDateString("zh-TW", {
-        month: "numeric",
-        day: "numeric",
-      })
-      dateMap.set(date, (dateMap.get(date) || 0) + Number(expense.amount))
-    })
-
-    return Array.from(dateMap.entries())
-      .map(([date, amount]) => ({ date, amount }))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(-7)
-  }, [project])
-
-  // 類別統計數據
-  const categoryData = useMemo(() => {
-    if (!project) return []
-
-    const categoryMap = new Map<string, number>()
-    project.expenses.forEach((expense) => {
-      const cat = expense.category || "other"
-      categoryMap.set(cat, (categoryMap.get(cat) || 0) + Number(expense.amount))
-    })
-
-    return Array.from(categoryMap.entries())
-      .map(([name, value]) => ({ name, value, color: "" }))
-      .sort((a, b) => b.value - a.value)
-  }, [project])
-
-  // 成員付款比較數據
-  const memberBalanceData = useMemo(() => {
-    if (!project) return []
-
-    return project.members.map((member) => {
-      let paid = 0
-      let share = 0
-
-      project.expenses.forEach((expense) => {
-        if (expense.payer.id === member.id) {
-          paid += Number(expense.amount)
-        }
-        const participant = expense.participants.find((p) => p.memberId === member.id)
-        if (participant) {
-          share += Number(participant.shareAmount)
-        }
-      })
-
-      return {
-        name: member.displayName.slice(0, 4),
-        paid,
-        share,
-        balance: paid - share,
-      }
-    })
-  }, [project])
 
   if (loading) {
     return (
@@ -274,92 +221,153 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
   const totalAmount = project.expenses.reduce((sum, e) => sum + Number(e.amount), 0)
   const perPerson = project.members.length > 0 ? totalAmount / project.members.length : 0
 
+  const displayBalance = isNaN(userBalance) ? 0 : userBalance
+
   return (
     <AppLayout title={project.name} showBack>
-      <div className="pb-24 space-y-4 px-4">
-        {/* 統計卡片 */}
-        <div className="grid grid-cols-2 gap-3">
-          <StatCard title="總支出" value={`$${totalAmount.toLocaleString("zh-TW")}`} />
-          <StatCard
-            title="平均每人"
-            value={`$${Math.round(perPerson).toLocaleString("zh-TW")}`}
-          />
-        </div>
+      <div className="pb-24 space-y-6 px-4">
+        {/* 功能 */}
+        <div>
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">功能</h2>
+          <div className="grid grid-cols-4 gap-3">
+            <Link href={`/projects/${id}/settle`}>
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center">
+                  <Calculator className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">結算</p>
+              </div>
+            </Link>
 
-        {/* 你的餘額 */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
-                你的餘額
-              </p>
-              <p
-                className={`text-2xl font-bold ${
-                  userBalance >= 0 ? "text-emerald-500" : "text-red-500"
-                }`}
-              >
-                {userBalance >= 0 ? "+" : ""}${Math.abs(userBalance).toLocaleString("zh-TW")}
-              </p>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                {userBalance > 0
-                  ? "有人需要付你錢"
-                  : userBalance < 0
-                  ? "你需要付給別人"
-                  : "已結清"}
-              </p>
-            </div>
-            <div className="h-12 w-12 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center text-2xl">
-              {userBalance >= 0 ? "💰" : "💸"}
-            </div>
+            <Link href={`/projects/${id}/members`}>
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
+                  <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">成員</p>
+              </div>
+            </Link>
+
+            <Link href={`/projects/${id}/stats`}>
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="h-10 w-10 rounded-xl bg-violet-50 dark:bg-violet-950 flex items-center justify-center">
+                  <BarChart3 className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                </div>
+                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">統計</p>
+              </div>
+            </Link>
+
+            <button onClick={handleShare} className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="h-10 w-10 rounded-xl bg-orange-50 dark:bg-orange-950 flex items-center justify-center">
+                <Share2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              </div>
+              <p className="font-medium text-sm text-slate-900 dark:text-slate-100">邀請</p>
+            </button>
+
+            <Link href={`/projects/${id}/export`}>
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="h-10 w-10 rounded-xl bg-cyan-50 dark:bg-cyan-950 flex items-center justify-center">
+                  <Download className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                </div>
+                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">匯出</p>
+              </div>
+            </Link>
+
+            <Link href={`/projects/${id}/currency`}>
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="h-10 w-10 rounded-xl bg-amber-50 dark:bg-amber-950 flex items-center justify-center">
+                  <ArrowRightLeft className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">幣種</p>
+              </div>
+            </Link>
+
+            <Link href={`/projects/${id}/settings`}>
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                </div>
+                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">設定</p>
+              </div>
+            </Link>
+
+            <Link href={`/projects/${id}/notes`}>
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="h-10 w-10 rounded-xl bg-yellow-50 dark:bg-yellow-950 flex items-center justify-center">
+                  <StickyNote className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                </div>
+                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">筆記</p>
+              </div>
+            </Link>
           </div>
         </div>
 
-        {/* 消費趨勢圖 */}
-        {trendData.length > 0 && <TrendAreaChart data={trendData} />}
-
-        {/* 分類統計 */}
-        {categoryData.length > 0 && <CategoryPieChart data={categoryData} />}
-
-        {/* 成員付款比較 */}
-        {memberBalanceData.length > 0 && <BalanceBarChart data={memberBalanceData} />}
-
-        {/* 快速操作 */}
-        <div className="grid grid-cols-2 gap-3">
-          <Link href={`/projects/${id}/settle`}>
-            <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex items-center gap-3 hover:shadow-md transition-shadow cursor-pointer">
-              <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center">
-                <Calculator className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">結算</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">查看誰欠誰</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
-            </div>
-          </Link>
-
-          <Link href={`/projects/${id}/members`}>
-            <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex items-center gap-3 hover:shadow-md transition-shadow cursor-pointer">
-              <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
-                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">成員</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{project.members.length} 人</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
-            </div>
-          </Link>
+        {/* 總覽 */}
+        <div>
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">總覽</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard title="總支出" value={`$${totalAmount.toLocaleString("zh-TW")}`} />
+            <StatCard
+              title="平均每人"
+              value={`$${Math.round(perPerson).toLocaleString("zh-TW")}`}
+            />
+          </div>
         </div>
 
-        {/* 邀請按鈕 */}
-        <button
-          onClick={handleShare}
-          className="w-full py-3 px-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400 hover:border-slate-300 hover:bg-slate-50 dark:hover:border-slate-600 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
-        >
-          <Share2 className="h-4 w-4" />
-          邀請朋友加入 · {project.shareCode}
-        </button>
+        {/* 我的餘額 */}
+        <div>
+          <div className="flex items-center gap-1.5 mb-3">
+            <h2 className="font-semibold text-slate-900 dark:text-slate-100">我的餘額</h2>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                  <Info className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-64">
+                <p className="font-medium">餘額 = 你付的錢 − 你應付的錢</p>
+                <p className="text-slate-400 mt-1.5">正數 = 有人欠你錢</p>
+                <p className="text-slate-400">負數 = 你欠別人錢</p>
+                <p className="text-slate-400 mt-1.5 text-[10px]">若顯示 $0，可能是你不在支出的分攤名單中，或帳號尚未認領成員</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <p
+                  className={`text-2xl font-bold ${
+                    displayBalance >= 0 ? "text-emerald-500" : "text-red-500"
+                  }`}
+                >
+                  {displayBalance >= 0 ? "+" : ""}${Math.abs(displayBalance).toLocaleString("zh-TW")}
+                </p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                  {displayBalance > 0
+                    ? "有人需要付你錢"
+                    : displayBalance < 0
+                    ? "你需要付給別人"
+                    : "已結清"}
+                </p>
+              </div>
+              <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${
+                displayBalance > 0
+                  ? "bg-emerald-50 dark:bg-emerald-950"
+                  : displayBalance < 0
+                  ? "bg-red-50 dark:bg-red-950"
+                  : "bg-slate-100 dark:bg-slate-800"
+              }`}>
+                {displayBalance > 0 ? (
+                  <TrendingUp className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                ) : displayBalance < 0 ? (
+                  <TrendingDown className="h-6 w-6 text-red-600 dark:text-red-400" />
+                ) : (
+                  <Minus className="h-6 w-6 text-slate-400" />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* 最近支出 */}
         <div>
@@ -388,7 +396,10 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
             </div>
           ) : (
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
-              {project.expenses.slice(0, 5).map((expense) => (
+              {[...project.expenses]
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .slice(0, 5)
+                .map((expense) => (
                 <Link
                   key={expense.id}
                   href={`/projects/${id}/expenses`}
@@ -420,9 +431,8 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
 
       {/* 浮動新增按鈕 */}
       <Link href={`/projects/${id}/expenses/new`} className="fixed bottom-24 right-4 z-50">
-        <Button size="lg" className="h-14 px-6 rounded-full shadow-lg gap-2">
-          <Plus className="h-5 w-5" />
-          新增支出
+        <Button size="icon" className="h-14 w-14 rounded-full shadow-xl shadow-black/25">
+          <Plus className="h-6 w-6" />
         </Button>
       </Link>
     </AppLayout>
