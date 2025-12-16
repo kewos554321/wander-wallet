@@ -12,6 +12,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Calendar as CalendarIcon } from "lucide-react"
 import type { DateRange } from "react-day-picker"
+import { CoverPicker } from "@/components/cover-picker"
 
 // Helper function to format date as YYYY-MM-DD in local timezone
 function formatLocalDate(date: Date): string {
@@ -31,6 +32,7 @@ export default function NewProjectPage() {
   const router = useRouter()
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
+  const [cover, setCover] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const authFetch = useAuthFetch()
 
@@ -63,6 +65,7 @@ export default function NewProjectPage() {
         body: JSON.stringify({
           name: name.trim(),
           description: description.trim() || null,
+          cover: cover,
           startDate: startDate || null,
           endDate: endDate || null,
         }),
@@ -112,6 +115,11 @@ export default function NewProjectPage() {
             disabled={loading}
             required
           />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">封面圖片</label>
+          <CoverPicker value={cover} onChange={setCover} disabled={loading} />
         </div>
 
         <div className="space-y-2">

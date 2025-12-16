@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { name, description, startDate, endDate } = body
+    const { name, description, cover, startDate, endDate } = body
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return NextResponse.json({ error: "專案名稱必填" }, { status: 400 })
@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
       data: {
         name: name.trim(),
         description: description?.trim() || null,
+        cover: cover || null,
         startDate: startDateObj,
         endDate: endDateObj,
         shareCode,

@@ -30,6 +30,7 @@ model Project {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String
   description String?
+  cover       String?   // 封面圖片：preset:1-6 或 base64 data URL
   startDate   DateTime? @map("start_date")
   endDate     DateTime? @map("end_date")
   shareCode   String    @unique @map("share_code")

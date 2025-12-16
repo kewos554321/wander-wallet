@@ -15,9 +15,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical, Users, Plus, Share2, Trash2, Edit, ChevronRight, Folder } from "lucide-react"
+import { MoreVertical, Plus, Share2, Trash2, Edit, Folder } from "lucide-react"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { getProjectShareUrl } from "@/lib/utils"
+import { parseCover, getPresetCover } from "@/lib/covers"
 
 interface ProjectMember {
   id: string
@@ -40,6 +41,7 @@ interface Project {
   id: string
   name: string
   description: string | null
+  cover: string | null
   startDate: string | null
   endDate: string | null
   shareCode: string
@@ -176,136 +178,184 @@ export default function ProjectsPage() {
                 }
                 const dateRange = formatDateRange()
 
+                // 解析封面
+                const coverData = parseCover(project.cover)
+                const presetCover = coverData.type === "preset" ? getPresetCover(coverData.presetId!) : null
+
                 return (
                   <Card
                     key={project.id}
-                    className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                    className={`relative shadow-md hover:shadow-lg transition-all cursor-pointer overflow-hidden py-0 gap-0 ${coverData.type !== "none" ? "h-36 border-0" : "border border-slate-200"}`}
                     onClick={() => router.push(`/projects/${project.id}`)}
                   >
-                    <CardContent className="p-4">
-                      {/* 頂部：標題與選項 */}
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-base truncate">{project.name}</h3>
-                          {dateRange && (
-                            <p className="text-xs text-muted-foreground mt-0.5">{dateRange}</p>
-                          )}
+                    {/* 有封面：全景覆蓋設計 */}
+                    {coverData.type !== "none" ? (
+                      <>
+                        {/* Cover 背景 */}
+                        <div className="absolute inset-0">
+                          {coverData.type === "preset" && presetCover ? (
+                            <div
+                              className="absolute inset-0"
+                              style={{ background: presetCover.gradient }}
+                            />
+                          ) : coverData.type === "custom" && coverData.customUrl ? (
+                            <Image
+                              src={coverData.customUrl}
+                              alt=""
+                              fill
+                              className="object-cover"
+                            />
+                          ) : null}
+                          {/* 漸層遮罩 */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                         </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            asChild
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 -mr-2 -mt-1">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleShare(project.shareCode)
-                              }}
+
+                        {/* 選項按鈕 */}
+                        <div className="absolute top-2 right-2 z-10">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              asChild
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              <Share2 className="h-4 w-4 mr-2" />
-                              分享專案
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                router.push(`/projects/${project.id}`)
-                              }}
-                            >
-                              <Edit className="h-4 w-4 mr-2" />
-                              查看詳情
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleDelete(project.id)
-                              }}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              刪除專案
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/20">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShare(project.shareCode) }}>
+                                <Share2 className="h-4 w-4 mr-2" />
+                                分享專案
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/projects/${project.id}`) }}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                查看詳情
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(project.id) }} className="text-destructive">
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                刪除專案
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
 
-                      {/* 中間：金額資訊 */}
-                      <div className="flex items-baseline gap-2 mb-3">
-                        <span className="text-2xl font-semibold tabular-nums">
-                          ${totalAmount.toLocaleString("zh-TW")}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          · 每人 ${Math.round(perPerson).toLocaleString("zh-TW")}
-                        </span>
-                      </div>
-
-                      {/* 底部：成員與統計 */}
-                      <div className="flex items-center justify-between">
-                        {/* 成員頭像 */}
-                        <div className="flex items-center gap-2">
-                          <div className="flex -space-x-2">
-                            {project.members.slice(0, 4).map((member) => {
-                              const avatarData = parseAvatarString(member.user?.image)
-                              const isCustomAvatar = avatarData !== null
-                              const hasExternalImage = member.user?.image && !member.user.image.startsWith("avatar:")
-
-                              if (isCustomAvatar) {
-                                const Icon = getAvatarIcon(avatarData.iconId)
-                                const color = getAvatarColor(avatarData.colorId)
-                                return (
-                                  <div
-                                    key={member.id}
-                                    className="h-7 w-7 rounded-full border-2 border-white flex items-center justify-center"
-                                    style={{ backgroundColor: color }}
-                                    title={member.displayName}
-                                  >
-                                    <Icon className="size-3.5 text-white" />
-                                  </div>
-                                )
-                              }
-
-                              return (
-                                <div
-                                  key={member.id}
-                                  className="h-7 w-7 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center overflow-hidden"
-                                  title={member.displayName}
-                                >
-                                  {hasExternalImage ? (
-                                    <Image
-                                      src={member.user!.image!}
-                                      alt=""
-                                      width={28}
-                                      height={28}
-                                      className="object-cover"
-                                    />
-                                  ) : (
-                                    <span className="text-xs font-medium text-slate-500">
-                                      {member.displayName.charAt(0).toUpperCase()}
-                                    </span>
-                                  )}
-                                </div>
-                              )
-                            })}
-                            {memberCount > 4 && (
-                              <div className="h-7 w-7 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center">
-                                <span className="text-[10px] text-slate-500">+{memberCount - 4}</span>
+                        {/* 資訊區 - 底部 */}
+                        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h3 className="font-bold text-lg leading-tight">{project.name}</h3>
+                              {dateRange && (
+                                <p className="text-xs text-white/70 mt-0.5">{dateRange}</p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xl font-bold tabular-nums">${totalAmount.toLocaleString("zh-TW")}</p>
+                              <p className="text-[11px] text-white/70">人均 ${Math.round(perPerson).toLocaleString("zh-TW")}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-white/80">
+                            <div className="flex items-center gap-2">
+                              <div className="flex -space-x-1.5">
+                                {project.members.slice(0, 3).map((member) => {
+                                  const avatarData = parseAvatarString(member.user?.image)
+                                  const isCustomAvatar = avatarData !== null
+                                  const hasExternalImage = member.user?.image && !member.user.image.startsWith("avatar:")
+                                  if (isCustomAvatar) {
+                                    const Icon = getAvatarIcon(avatarData.iconId)
+                                    const color = getAvatarColor(avatarData.colorId)
+                                    return (
+                                      <div key={member.id} className="h-5 w-5 rounded-full border border-white/50 flex items-center justify-center" style={{ backgroundColor: color }}>
+                                        <Icon className="size-2.5 text-white" />
+                                      </div>
+                                    )
+                                  }
+                                  return (
+                                    <div key={member.id} className="h-5 w-5 rounded-full bg-white/30 border border-white/50 flex items-center justify-center overflow-hidden">
+                                      {hasExternalImage ? (
+                                        <Image src={member.user!.image!} alt="" width={20} height={20} className="object-cover" />
+                                      ) : (
+                                        <span className="text-[9px] font-medium">{member.displayName.charAt(0).toUpperCase()}</span>
+                                      )}
+                                    </div>
+                                  )
+                                })}
                               </div>
+                              <span>{memberCount} 人</span>
+                            </div>
+                            <span>{expenseCount} 筆支出</span>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      /* 無封面：原始設計 */
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-base truncate">{project.name}</h3>
+                            {dateRange && (
+                              <span className="text-[11px] text-muted-foreground">{dateRange}</span>
                             )}
                           </div>
-                          <span className="text-xs text-muted-foreground">{memberCount} 人</span>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 -mr-2 -mt-1">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShare(project.shareCode) }}>
+                                <Share2 className="h-4 w-4 mr-2" />
+                                分享專案
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/projects/${project.id}`) }}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                查看詳情
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(project.id) }} className="text-destructive">
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                刪除專案
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
-
-                        {/* 支出筆數 */}
-                        <span className="text-xs text-muted-foreground">
-                          {expenseCount} 筆支出
-                        </span>
-                      </div>
-                    </CardContent>
+                        <div className="flex items-baseline gap-1.5 mt-1">
+                          <span className="text-xl font-bold tabular-nums tracking-tight">${totalAmount.toLocaleString("zh-TW")}</span>
+                          <span className="text-xs text-muted-foreground">/ 人均 ${Math.round(perPerson).toLocaleString("zh-TW")}</span>
+                        </div>
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
+                          <div className="flex items-center gap-2">
+                            <div className="flex -space-x-1.5">
+                              {project.members.slice(0, 3).map((member) => {
+                                const avatarData = parseAvatarString(member.user?.image)
+                                const isCustomAvatar = avatarData !== null
+                                const hasExternalImage = member.user?.image && !member.user.image.startsWith("avatar:")
+                                if (isCustomAvatar) {
+                                  const Icon = getAvatarIcon(avatarData.iconId)
+                                  const color = getAvatarColor(avatarData.colorId)
+                                  return (
+                                    <div key={member.id} className="h-5 w-5 rounded-full border-2 border-white flex items-center justify-center shadow-sm" style={{ backgroundColor: color }}>
+                                      <Icon className="size-2.5 text-white" />
+                                    </div>
+                                  )
+                                }
+                                return (
+                                  <div key={member.id} className="h-5 w-5 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center overflow-hidden shadow-sm">
+                                    {hasExternalImage ? (
+                                      <Image src={member.user!.image!} alt="" width={20} height={20} className="object-cover" />
+                                    ) : (
+                                      <span className="text-[9px] font-medium text-slate-500">{member.displayName.charAt(0).toUpperCase()}</span>
+                                    )}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                            <span className="text-xs text-muted-foreground">{memberCount} 人</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">{expenseCount} 筆支出</span>
+                        </div>
+                      </CardContent>
+                    )}
                   </Card>
                 )
               })}

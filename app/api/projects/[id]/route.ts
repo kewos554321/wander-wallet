@@ -125,11 +125,12 @@ export async function PUT(
     }
 
     const body = await req.json()
-    const { name, description, startDate, endDate } = body
+    const { name, description, cover, startDate, endDate } = body
 
     const updateData: {
       name?: string
       description?: string | null
+      cover?: string | null
       startDate?: Date | null
       endDate?: Date | null
     } = {}
@@ -143,6 +144,10 @@ export async function PUT(
 
     if (description !== undefined) {
       updateData.description = description?.trim() || null
+    }
+
+    if (cover !== undefined) {
+      updateData.cover = cover || null
     }
 
     // 處理日期更新
