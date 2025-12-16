@@ -22,6 +22,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.github.com",
       },
+      {
+        protocol: "https",
+        hostname: "profile.line-scdn.net",
+      },
+      {
+        protocol: "https",
+        hostname: "**.line-scdn.net",
+      },
     ],
   },
   async headers() {
