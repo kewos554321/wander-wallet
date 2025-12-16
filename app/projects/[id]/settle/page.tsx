@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from "react"
 import Image from "next/image"
 import { AppLayout } from "@/components/layout/app-layout"
+import { useAuthFetch } from "@/components/auth/liff-provider"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { ArrowRight, CheckCircle2, AlertCircle, TrendingUp, TrendingDown, User } from "lucide-react"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
@@ -44,6 +45,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
   const [data, setData] = useState<SettleData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const authFetch = useAuthFetch()
 
   useEffect(() => {
     fetchSettleData()
@@ -52,7 +54,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
 
   async function fetchSettleData() {
     try {
-      const res = await fetch(`/api/projects/${id}/settle`)
+      const res = await authFetch(`/api/projects/${id}/settle`)
       if (res.ok) {
         const result = await res.json()
         setData(result)

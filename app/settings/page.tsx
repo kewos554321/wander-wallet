@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { signOut, useSession } from "next-auth/react"
+import { useLiff } from "@/components/auth/liff-provider"
 import { useTheme } from "@/components/system/theme-provider"
 import { LogOut, ChevronRight, ChevronDown, Sun, Moon, Monitor, User } from "lucide-react"
 import { AvatarDisplay, parseAvatarString } from "@/components/avatar-picker"
@@ -22,16 +22,13 @@ import { AvatarDisplay, parseAvatarString } from "@/components/avatar-picker"
 export default function SettingsPage() {
   const [open, setOpen] = useState(false)
   const [themeExpanded, setThemeExpanded] = useState(false)
-  const { data: session } = useSession()
-  const isCustomAvatar = parseAvatarString(session?.user?.image) !== null
+  const { user, logout } = useLiff()
+  const isCustomAvatar = parseAvatarString(user?.image) !== null
   const { theme, setTheme } = useTheme()
   const router = useRouter()
 
   async function handleLogout() {
-    await signOut({
-      redirect: true,
-      callbackUrl: "/login"
-    })
+    await logout()
   }
 
   const themeOptions = [
@@ -50,10 +47,10 @@ export default function SettingsPage() {
         >
           <CardContent className="flex items-center gap-4">
             {isCustomAvatar ? (
-              <AvatarDisplay avatarString={session?.user?.image} size="md" />
-            ) : session?.user?.image ? (
+              <AvatarDisplay avatarString={user?.image} size="md" />
+            ) : user?.image ? (
               <Image
-                src={session.user.image}
+                src={user.image}
                 alt="頭像"
                 width={48}
                 height={48}
@@ -66,10 +63,10 @@ export default function SettingsPage() {
             )}
             <div className="flex-1 min-w-0">
               <p className="font-medium truncate">
-                {session?.user?.name || "使用者"}
+                {user?.name || "使用者"}
               </p>
               <p className="text-sm text-muted-foreground truncate">
-                {session?.user?.email || ""}
+                LINE 用戶
               </p>
             </div>
             <ChevronRight className="size-5 text-muted-foreground" />

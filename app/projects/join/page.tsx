@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AppLayout } from "@/components/layout/app-layout"
+import { useAuthFetch } from "@/components/auth/liff-provider"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,6 +16,7 @@ function JoinForm() {
   const [shareCode, setShareCode] = useState(codeFromUrl.toUpperCase())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const authFetch = useAuthFetch()
 
   async function handleJoin(e: React.FormEvent) {
     e.preventDefault()
@@ -28,7 +30,7 @@ function JoinForm() {
     setLoading(true)
 
     try {
-      const res = await fetch("/api/projects/join", {
+      const res = await authFetch("/api/projects/join", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { Plus, Trash2, User } from "lucide-react"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
+import { useAuthFetch } from "@/components/auth/liff-provider"
 
 interface Member {
   id: string
@@ -51,6 +52,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
   const [loading, setLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const authFetch = useAuthFetch()
 
   useEffect(() => {
     fetchExpenses()
@@ -59,7 +61,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
 
   async function fetchExpenses() {
     try {
-      const res = await fetch(`/api/projects/${id}/expenses`)
+      const res = await authFetch(`/api/projects/${id}/expenses`)
       if (res.ok) {
         const data = await res.json()
         setExpenses(data)
@@ -76,7 +78,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
 
     setDeleting(true)
     try {
-      const res = await fetch(`/api/projects/${id}/expenses/${deleteId}`, {
+      const res = await authFetch(`/api/projects/${id}/expenses/${deleteId}`, {
         method: "DELETE",
       })
 

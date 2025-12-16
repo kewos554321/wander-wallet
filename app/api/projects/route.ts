@@ -1,52 +1,38 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth, signOut } from "@/auth"
+import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { randomBytes } from "crypto"
+
+// 開發模式檢測
+const DEV_MODE = !process.env.NEXT_PUBLIC_LIFF_ID
 
 // 生成唯一的分享碼
 function generateShareCode(): string {
   return randomBytes(8).toString("base64url").slice(0, 12).toUpperCase()
 }
 
-// 自動登出無效的 session
-async function logout() {
-  try {
-    await signOut({ redirect: false })
-  } catch (error) {
-    console.error("登出失敗:", error)
-  }
-}
-
 // 創建新專案
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) {
+    const authUser = await getAuthUser(req)
+    if (!authUser) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
     // 驗證用戶是否存在於資料庫中
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: authUser.id },
     })
 
     if (!user) {
-      console.error("用戶不存在:", session.user.id)
-      // 自動登出無效的 session
-      await logout()
+      console.error("用戶不存在:", authUser.id)
       return NextResponse.json(
-        { 
+        {
           error: "用戶不存在",
-          details: "已自動登出，請重新登入",
+          details: "請重新登入",
           requiresLogout: true,
-          hint: "數據庫可能已重置，請重新登入以創建用戶記錄",
         },
-        { 
-          status: 401,
-          headers: {
-            "Clear-Site-Data": '"cache", "cookies", "storage"',
-          },
-        }
+        { status: 401 }
       )
     }
 
@@ -101,11 +87,11 @@ export async function POST(req: NextRequest) {
         startDate: startDateObj,
         endDate: endDateObj,
         shareCode,
-        createdBy: session.user.id,
+        createdBy: authUser.id,
         members: {
           create: {
-            userId: session.user.id,
-            displayName: user.name || user.email.split("@")[0],
+            userId: authUser.id,
+            displayName: user.name || user.lineUserId.slice(0, 8),
             role: "owner",
             claimedAt: new Date(),
           },
@@ -159,23 +145,14 @@ export async function POST(req: NextRequest) {
 
     // 如果是外鍵約束錯誤，說明用戶不存在
     if (prismaError?.code === "P2003") {
-      // 自動登出無效的 session
-      await logout()
-      
       return NextResponse.json(
-        { 
+        {
           error: "用戶記錄不存在",
-          details: "已自動登出，請重新登入",
+          details: "請重新登入",
           requiresLogout: true,
           code: prismaError?.code,
-          hint: "數據庫可能已重置，請重新登入系統。",
         },
-        { 
-          status: 401,
-          headers: {
-            "Clear-Site-Data": '"cache", "cookies", "storage"',
-          },
-        }
+        { status: 401 }
       )
     }
     
@@ -191,42 +168,18 @@ export async function POST(req: NextRequest) {
 }
 
 // 獲取用戶的所有專案
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) {
+    const authUser = await getAuthUser(req)
+    if (!authUser) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
-    }
-
-    // 驗證用戶是否存在於資料庫中
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-    })
-
-    if (!user) {
-      console.error("用戶不存在:", session.user.id)
-      // 自動登出無效的 session
-      await logout()
-      return NextResponse.json(
-        {
-          error: "用戶不存在",
-          details: "已自動登出，請重新登入",
-          requiresLogout: true,
-        },
-        {
-          status: 401,
-          headers: {
-            "Clear-Site-Data": '"cache", "cookies", "storage"',
-          },
-        }
-      )
     }
 
     const projects = await prisma.project.findMany({
       where: {
         members: {
           some: {
-            userId: session.user.id,
+            userId: authUser.id,
           },
         },
       },

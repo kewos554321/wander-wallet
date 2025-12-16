@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { AppLayout } from "@/components/layout/app-layout"
+import { useAuthFetch } from "@/components/auth/liff-provider"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -48,6 +49,7 @@ const CATEGORIES = [
 export default function NewExpense({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { id } = use(params)
+  const authFetch = useAuthFetch()
 
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
@@ -68,7 +70,7 @@ export default function NewExpense({ params }: { params: Promise<{ id: string }>
 
   async function fetchMembers() {
     try {
-      const res = await fetch(`/api/projects/${id}/members`)
+      const res = await authFetch(`/api/projects/${id}/members`)
       if (res.ok) {
         const data = await res.json()
         // 取得所有成員（包含未認領的）
@@ -166,7 +168,7 @@ export default function NewExpense({ params }: { params: Promise<{ id: string }>
 
     setSubmitting(true)
     try {
-      const res = await fetch(`/api/projects/${id}/expenses`, {
+      const res = await authFetch(`/api/projects/${id}/expenses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

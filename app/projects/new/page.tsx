@@ -3,8 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { signOut } from "next-auth/react"
 import { AppLayout } from "@/components/layout/app-layout"
+import { useAuthFetch } from "@/components/auth/liff-provider"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -32,7 +32,8 @@ export default function NewProjectPage() {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [loading, setLoading] = useState(false)
-  
+  const authFetch = useAuthFetch()
+
   const [startDate, setStartDate] = useState<string | null>(null)
   const [endDate, setEndDate] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
@@ -54,7 +55,7 @@ export default function NewProjectPage() {
     setLoading(true)
 
     try {
-      const res = await fetch("/api/projects", {
+      const res = await authFetch("/api/projects", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -70,17 +71,8 @@ export default function NewProjectPage() {
       if (!res.ok) {
         const error = await res.json()
         console.error("建立專案失敗:", error)
-        
-        // 如果需要登出，自動執行登出並重定向
-        if (error.requiresLogout) {
-          await signOut({ 
-            redirect: true, 
-            callbackUrl: "/login?error=session_invalid" 
-          })
-          return
-        }
-        
-        const errorMessage = error.details 
+
+        const errorMessage = error.details
           ? `${error.error || "建立專案失敗"}\n詳情: ${error.details}`
           : error.error || "建立專案失敗"
         alert(errorMessage)

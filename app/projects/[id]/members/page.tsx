@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { useLiff, useAuthFetch } from "@/components/auth/liff-provider"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -46,7 +46,8 @@ interface Project {
 
 export default function MembersPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
-  const { data: session } = useSession()
+  const { user } = useLiff()
+  const authFetch = useAuthFetch()
   const { id } = use(params)
 
   const [project, setProject] = useState<Project | null>(null)
@@ -67,7 +68,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
 
   async function fetchProject() {
     try {
-      const res = await fetch(`/api/projects/${id}`)
+      const res = await authFetch(`/api/projects/${id}`)
       if (res.ok) {
         const data = await res.json()
         setProject(data)
@@ -122,7 +123,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
     setAdding(true)
     setAddError("")
     try {
-      const res = await fetch(`/api/projects/${id}/members`, {
+      const res = await authFetch(`/api/projects/${id}/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newMemberName.trim() }),
@@ -148,7 +149,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
 
     setRemoving(memberId)
     try {
-      const res = await fetch(`/api/projects/${id}/members`, {
+      const res = await authFetch(`/api/projects/${id}/members`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId }),
@@ -172,7 +173,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
 
     setClaiming(memberId)
     try {
-      const res = await fetch(`/api/projects/${id}/members/claim`, {
+      const res = await authFetch(`/api/projects/${id}/members/claim`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId }),
@@ -207,7 +208,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
     )
   }
 
-  const isOwner = project.creator?.id === session?.user?.id
+  const isOwner = project.creator?.id === user?.id
   const shareUrl = `${window.location.origin}/projects/join?code=${project.shareCode}`
 
   return (
@@ -250,8 +251,8 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
             <CardContent className="p-0 divide-y">
               {project.members.map((member) => {
                 const isUnclaimed = !member.userId
-                const isCurrentUser = member.user?.id === session?.user?.id
-                const canClaim = isUnclaimed && !project.members.some(m => m.user?.id === session?.user?.id)
+                const isCurrentUser = member.user?.id === user?.id
+                const canClaim = isUnclaimed && !project.members.some(m => m.user?.id === user?.id)
                 const avatarData = parseAvatarString(member.user?.image)
                 const isCustomAvatar = avatarData !== null
                 const hasExternalImage = member.user?.image && !member.user.image.startsWith("avatar:")

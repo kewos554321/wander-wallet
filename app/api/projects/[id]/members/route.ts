@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/auth"
+import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
 // 獲取專案成員列表
@@ -9,8 +9,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const session = await auth()
-    if (!session?.user?.id) {
+    const authUser = await getAuthUser(req)
+    if (!authUser) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
@@ -18,7 +18,7 @@ export async function GET(
     const membership = await prisma.projectMember.findFirst({
       where: {
         projectId: id,
-        userId: session.user.id,
+        userId: authUser.id,
       },
     })
 
@@ -62,8 +62,8 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const session = await auth()
-    if (!session?.user?.id) {
+    const authUser = await getAuthUser(req)
+    if (!authUser) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
@@ -71,7 +71,7 @@ export async function POST(
     const membership = await prisma.projectMember.findFirst({
       where: {
         projectId: id,
-        userId: session.user.id,
+        userId: authUser.id,
       },
     })
 
@@ -128,8 +128,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const session = await auth()
-    if (!session?.user?.id) {
+    const authUser = await getAuthUser(req)
+    if (!authUser) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
@@ -150,7 +150,7 @@ export async function DELETE(
     }
 
     // 只有創建者可以移除成員
-    if (project.createdBy !== session.user.id) {
+    if (project.createdBy !== authUser.id) {
       return NextResponse.json({ error: "只有創建者可以移除成員" }, { status: 403 })
     }
 
@@ -164,7 +164,7 @@ export async function DELETE(
     }
 
     // 不能移除自己
-    if (member.userId === session.user.id) {
+    if (member.userId === authUser.id) {
       return NextResponse.json({ error: "不能移除自己" }, { status: 400 })
     }
 

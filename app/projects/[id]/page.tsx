@@ -1,18 +1,21 @@
 "use client"
 
-import { use, useEffect, useState } from "react"
+import { use, useEffect, useState, useMemo } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { StatCard } from "@/components/dashboard/stat-card"
+import { TrendAreaChart } from "@/components/dashboard/trend-area-chart"
+import { CategoryPieChart } from "@/components/dashboard/category-pie-chart"
+import { BalanceBarChart } from "@/components/dashboard/balance-bar-chart"
+import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import {
   Plus,
   Share2,
-  User,
-  Calculator,
   Users,
+  Calculator,
   Receipt,
   Utensils,
   Car,
@@ -20,8 +23,6 @@ import {
   Gamepad2,
   ShoppingBag,
   ChevronRight,
-  ArrowUpRight,
-  ArrowDownLeft
 } from "lucide-react"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 
@@ -40,6 +41,7 @@ interface ProjectMember {
 interface ExpenseParticipant {
   id: string
   memberId: string
+  shareAmount: number
 }
 
 interface Expense {
@@ -75,28 +77,6 @@ interface Project {
   expenses: Expense[]
 }
 
-// 根據日期分組支出
-function groupExpensesByDate(expenses: Expense[]): Record<string, Expense[]> {
-  const groups: Record<string, Expense[]> = {}
-
-  const sorted = [...expenses].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  )
-
-  sorted.forEach((expense) => {
-    const date = new Date(expense.createdAt).toLocaleDateString("zh-TW", {
-      month: "long",
-      day: "numeric",
-    })
-    if (!groups[date]) {
-      groups[date] = []
-    }
-    groups[date].push(expense)
-  })
-
-  return groups
-}
-
 // 類別圖標
 function getCategoryIcon(category: string | null) {
   switch (category) {
@@ -115,21 +95,21 @@ function getCategoryIcon(category: string | null) {
   }
 }
 
-// 類別顏色 - 更柔和的配色
+// 類別顏色
 function getCategoryColor(category: string | null) {
   switch (category) {
     case "food":
-      return "bg-orange-50 text-orange-500"
+      return "bg-orange-50 text-orange-500 dark:bg-orange-950 dark:text-orange-400"
     case "transport":
-      return "bg-blue-50 text-blue-500"
+      return "bg-blue-50 text-blue-500 dark:bg-blue-950 dark:text-blue-400"
     case "accommodation":
-      return "bg-violet-50 text-violet-500"
+      return "bg-violet-50 text-violet-500 dark:bg-violet-950 dark:text-violet-400"
     case "entertainment":
-      return "bg-pink-50 text-pink-500"
+      return "bg-pink-50 text-pink-500 dark:bg-pink-950 dark:text-pink-400"
     case "shopping":
-      return "bg-amber-50 text-amber-500"
+      return "bg-amber-50 text-amber-500 dark:bg-amber-950 dark:text-amber-400"
     default:
-      return "bg-slate-50 text-slate-500"
+      return "bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
   }
 }
 
@@ -138,6 +118,8 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
   const { id } = use(params)
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
+  const authFetch = useAuthFetch()
+  const { user } = useLiff()
 
   useEffect(() => {
     if (id) {
@@ -148,7 +130,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
 
   async function fetchProject() {
     try {
-      const res = await fetch(`/api/projects/${id}`)
+      const res = await authFetch(`/api/projects/${id}`)
       if (!res.ok) {
         if (res.status === 404) {
           router.push("/projects")
@@ -185,6 +167,90 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
     }
   }
 
+  // 計算用戶的餘額
+  const userBalance = useMemo(() => {
+    if (!project || !user) return 0
+
+    const membership = project.members.find((m) => m.user?.id === user.id)
+    if (!membership) return 0
+
+    let paid = 0
+    let owed = 0
+
+    project.expenses.forEach((expense) => {
+      if (expense.payer.id === membership.id) {
+        paid += Number(expense.amount)
+      }
+      const participant = expense.participants.find((p) => p.memberId === membership.id)
+      if (participant) {
+        owed += Number(participant.shareAmount)
+      }
+    })
+
+    return paid - owed
+  }, [project, user])
+
+  // 按日期分組的支出趨勢數據
+  const trendData = useMemo(() => {
+    if (!project) return []
+
+    const dateMap = new Map<string, number>()
+    project.expenses.forEach((expense) => {
+      const date = new Date(expense.createdAt).toLocaleDateString("zh-TW", {
+        month: "numeric",
+        day: "numeric",
+      })
+      dateMap.set(date, (dateMap.get(date) || 0) + Number(expense.amount))
+    })
+
+    return Array.from(dateMap.entries())
+      .map(([date, amount]) => ({ date, amount }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(-7)
+  }, [project])
+
+  // 類別統計數據
+  const categoryData = useMemo(() => {
+    if (!project) return []
+
+    const categoryMap = new Map<string, number>()
+    project.expenses.forEach((expense) => {
+      const cat = expense.category || "other"
+      categoryMap.set(cat, (categoryMap.get(cat) || 0) + Number(expense.amount))
+    })
+
+    return Array.from(categoryMap.entries())
+      .map(([name, value]) => ({ name, value, color: "" }))
+      .sort((a, b) => b.value - a.value)
+  }, [project])
+
+  // 成員付款比較數據
+  const memberBalanceData = useMemo(() => {
+    if (!project) return []
+
+    return project.members.map((member) => {
+      let paid = 0
+      let share = 0
+
+      project.expenses.forEach((expense) => {
+        if (expense.payer.id === member.id) {
+          paid += Number(expense.amount)
+        }
+        const participant = expense.participants.find((p) => p.memberId === member.id)
+        if (participant) {
+          share += Number(participant.shareAmount)
+        }
+      })
+
+      return {
+        name: member.displayName.slice(0, 4),
+        paid,
+        share,
+        balance: paid - share,
+      }
+    })
+  }, [project])
+
   if (loading) {
     return (
       <AppLayout title="載入中..." showBack>
@@ -203,114 +269,89 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
 
   const totalAmount = project.expenses.reduce((sum, e) => sum + Number(e.amount), 0)
   const perPerson = project.members.length > 0 ? totalAmount / project.members.length : 0
-  const groupedExpenses = groupExpensesByDate(project.expenses)
 
   return (
     <AppLayout title={project.name} showBack>
-      <div className="pb-24 space-y-6">
-        {/* 總覽卡片 - Clean Minimal 風格 */}
-        <Card className="border-0 shadow-sm bg-white">
-          <CardContent className="p-6">
-            <div className="text-center space-y-1">
-              <p className="text-sm text-muted-foreground">總支出</p>
-              <p className="text-4xl font-semibold tracking-tight">
-                ${totalAmount.toLocaleString("zh-TW")}
+      <div className="pb-24 space-y-4 px-4">
+        {/* 統計卡片 */}
+        <div className="grid grid-cols-2 gap-3">
+          <StatCard title="總支出" value={`$${totalAmount.toLocaleString("zh-TW")}`} />
+          <StatCard
+            title="平均每人"
+            value={`$${Math.round(perPerson).toLocaleString("zh-TW")}`}
+          />
+        </div>
+
+        {/* 你的餘額 */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                你的餘額
               </p>
-              <p className="text-sm text-muted-foreground">
-                平均每人 ${Math.round(perPerson).toLocaleString("zh-TW")}
+              <p
+                className={`text-2xl font-bold ${
+                  userBalance >= 0 ? "text-emerald-500" : "text-red-500"
+                }`}
+              >
+                {userBalance >= 0 ? "+" : ""}${Math.abs(userBalance).toLocaleString("zh-TW")}
+              </p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                {userBalance > 0
+                  ? "有人需要付你錢"
+                  : userBalance < 0
+                  ? "你需要付給別人"
+                  : "已結清"}
               </p>
             </div>
-
-            {/* 成員頭像列 */}
-            <div className="flex justify-center mt-4 -space-x-2">
-              {project.members.slice(0, 5).map((member) => {
-                const avatarData = parseAvatarString(member.user?.image)
-                const isCustomAvatar = avatarData !== null
-                const hasExternalImage = member.user?.image && !member.user.image.startsWith("avatar:")
-
-                if (isCustomAvatar) {
-                  const Icon = getAvatarIcon(avatarData.iconId)
-                  const color = getAvatarColor(avatarData.colorId)
-                  return (
-                    <div
-                      key={member.id}
-                      className="h-8 w-8 rounded-full border-2 border-white flex items-center justify-center"
-                      style={{ backgroundColor: color }}
-                      title={member.displayName}
-                    >
-                      <Icon className="size-4 text-white" />
-                    </div>
-                  )
-                }
-
-                return (
-                  <div
-                    key={member.id}
-                    className="h-8 w-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center overflow-hidden"
-                    title={member.displayName}
-                  >
-                    {hasExternalImage ? (
-                      <Image
-                        src={member.user!.image!}
-                        alt=""
-                        width={32}
-                        height={32}
-                        className="object-cover"
-                      />
-                    ) : (
-                      <span className="text-xs font-medium text-slate-500">
-                        {member.displayName.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
-              {project.members.length > 5 && (
-                <div className="h-8 w-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center">
-                  <span className="text-xs text-slate-500">+{project.members.length - 5}</span>
-                </div>
-              )}
+            <div className="h-12 w-12 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center text-2xl">
+              {userBalance >= 0 ? "💰" : "💸"}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* 快速操作 - 橫向卡片 */}
+        {/* 消費趨勢圖 */}
+        {trendData.length > 0 && <TrendAreaChart data={trendData} />}
+
+        {/* 分類統計 */}
+        {categoryData.length > 0 && <CategoryPieChart data={categoryData} />}
+
+        {/* 成員付款比較 */}
+        {memberBalanceData.length > 0 && <BalanceBarChart data={memberBalanceData} />}
+
+        {/* 快速操作 */}
         <div className="grid grid-cols-2 gap-3">
           <Link href={`/projects/${id}/settle`}>
-            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                  <Calculator className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-sm">結算</p>
-                  <p className="text-xs text-muted-foreground">查看誰欠誰</p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </CardContent>
-            </Card>
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex items-center gap-3 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center">
+                <Calculator className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">結算</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">查看誰欠誰</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-slate-400" />
+            </div>
           </Link>
 
           <Link href={`/projects/${id}/members`}>
-            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                  <Users className="h-5 w-5 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-sm">成員</p>
-                  <p className="text-xs text-muted-foreground">{project.members.length} 人</p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </CardContent>
-            </Card>
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex items-center gap-3 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
+                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">成員</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{project.members.length} 人</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-slate-400" />
+            </div>
           </Link>
         </div>
 
         {/* 邀請按鈕 */}
         <button
           onClick={handleShare}
-          className="w-full py-3 px-4 rounded-xl border border-dashed border-slate-200 text-sm text-muted-foreground hover:border-slate-300 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
+          className="w-full py-3 px-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400 hover:border-slate-300 hover:bg-slate-50 dark:hover:border-slate-600 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
         >
           <Share2 className="h-4 w-4" />
           邀請朋友加入 · {project.shareCode}
@@ -319,71 +360,62 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
         {/* 最近支出 */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">最近支出</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-slate-100">最近支出</h2>
             <Link
               href={`/projects/${id}/expenses`}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
             >
               查看全部
             </Link>
           </div>
 
           {project.expenses.length === 0 ? (
-            <Card className="border-0 shadow-sm">
-              <CardContent className="py-12 text-center">
-                <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3">
-                  <Receipt className="h-6 w-6 text-slate-300" />
-                </div>
-                <p className="text-muted-foreground mb-4">還沒有支出記錄</p>
-                <Link href={`/projects/${id}/expenses/new`}>
-                  <Button variant="outline" size="sm">
-                    <Plus className="h-4 w-4 mr-1" />
-                    新增第一筆
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 py-12 text-center">
+              <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
+                <Receipt className="h-6 w-6 text-slate-400" />
+              </div>
+              <p className="text-slate-500 dark:text-slate-400 mb-4">還沒有支出記錄</p>
+              <Link href={`/projects/${id}/expenses/new`}>
+                <Button variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-1" />
+                  新增第一筆
+                </Button>
+              </Link>
+            </div>
           ) : (
-            <Card className="border-0 shadow-sm overflow-hidden">
-              <CardContent className="p-0 divide-y divide-slate-100">
-                {Object.entries(groupedExpenses).slice(0, 3).map(([date, expenses]) => (
-                  expenses.slice(0, 3).map((expense) => (
-                    <Link
-                      key={expense.id}
-                      href={`/projects/${id}/expenses`}
-                      className="flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors"
-                    >
-                      {/* 類別圖標 */}
-                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${getCategoryColor(expense.category)}`}>
-                        {getCategoryIcon(expense.category)}
-                      </div>
-                      {/* 描述和付款人 */}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">
-                          {expense.description || "支出"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {expense.payer?.user?.name || expense.payer?.displayName || "未知"} 付款 · {expense.participants?.length || 0} 人分攤
-                        </p>
-                      </div>
-                      {/* 金額 */}
-                      <p className="font-semibold tabular-nums">
-                        ${Number(expense.amount).toLocaleString("zh-TW")}
-                      </p>
-                    </Link>
-                  ))
-                ))}
-              </CardContent>
-            </Card>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+              {project.expenses.slice(0, 5).map((expense) => (
+                <Link
+                  key={expense.id}
+                  href={`/projects/${id}/expenses`}
+                  className="flex items-center gap-3 p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div
+                    className={`h-10 w-10 rounded-xl flex items-center justify-center ${getCategoryColor(expense.category)}`}
+                  >
+                    {getCategoryIcon(expense.category)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate">
+                      {expense.description || "支出"}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {expense.payer?.user?.name || expense.payer?.displayName || "未知"} 付款 ·{" "}
+                      {expense.participants?.length || 0} 人分攤
+                    </p>
+                  </div>
+                  <p className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+                    ${Number(expense.amount).toLocaleString("zh-TW")}
+                  </p>
+                </Link>
+              ))}
+            </div>
           )}
         </div>
       </div>
 
       {/* 浮動新增按鈕 */}
-      <Link
-        href={`/projects/${id}/expenses/new`}
-        className="fixed bottom-24 right-4 z-50"
-      >
+      <Link href={`/projects/${id}/expenses/new`} className="fixed bottom-24 right-4 z-50">
         <Button size="lg" className="h-14 px-6 rounded-full shadow-lg gap-2">
           <Plus className="h-5 w-5" />
           新增支出

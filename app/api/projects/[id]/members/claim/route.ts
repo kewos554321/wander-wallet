@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/auth"
+import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
 // 認領佔位成員
@@ -9,8 +9,8 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const session = await auth()
-    if (!session?.user?.id) {
+    const authUser = await getAuthUser(req)
+    if (!authUser) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
@@ -25,7 +25,7 @@ export async function POST(
     const existingMembership = await prisma.projectMember.findFirst({
       where: {
         projectId: id,
-        userId: session.user.id,
+        userId: authUser.id,
       },
     })
 
@@ -52,7 +52,7 @@ export async function POST(
 
     // 獲取用戶資料
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: authUser.id },
     })
 
     if (!user) {
@@ -63,8 +63,8 @@ export async function POST(
     const claimedMember = await prisma.projectMember.update({
       where: { id: memberId },
       data: {
-        userId: session.user.id,
-        displayName: user.name || user.email.split("@")[0],
+        userId: authUser.id,
+        displayName: user.name || user.lineUserId.slice(0, 8),
         claimedAt: new Date(),
       },
       include: {

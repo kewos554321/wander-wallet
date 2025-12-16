@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { useSession } from "next-auth/react"
+import { useLiff, useAuthFetch } from "@/components/auth/liff-provider"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { User, Mail, Calendar, Pencil } from "lucide-react"
@@ -14,18 +14,19 @@ import {
 } from "@/components/avatar-picker"
 
 export default function SettingsProfilePage() {
-  const { data: session, update } = useSession()
+  const { user, refreshSession } = useLiff()
+  const authFetch = useAuthFetch()
   const [pickerOpen, setPickerOpen] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  const avatarData = parseAvatarString(session?.user?.image)
+  const avatarData = parseAvatarString(user?.image)
 
   async function handleAvatarSelect(iconId: string, colorId: string) {
     setSaving(true)
     try {
       const avatarString = generateAvatarString(iconId, colorId)
 
-      const res = await fetch("/api/users/profile", {
+      const res = await authFetch("/api/users/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: avatarString }),
@@ -35,7 +36,7 @@ export default function SettingsProfilePage() {
         throw new Error("儲存失敗")
       }
 
-      await update()
+      await refreshSession()
       setPickerOpen(false)
     } catch (error) {
       console.error("更新頭像失敗:", error)
@@ -48,9 +49,9 @@ export default function SettingsProfilePage() {
   // 判斷是否為自訂頭像、外部圖片或無頭像
   const isCustomAvatar = avatarData !== null
   const hasExternalImage =
-    session?.user?.image &&
-    !session.user.image.startsWith("avatar:") &&
-    !session.user.image.startsWith("data:")
+    user?.image &&
+    !user.image.startsWith("avatar:") &&
+    !user.image.startsWith("data:")
 
   return (
     <AppLayout title="個人資料" showBack>
@@ -63,12 +64,12 @@ export default function SettingsProfilePage() {
           >
             {isCustomAvatar ? (
               <AvatarDisplay
-                avatarString={session?.user?.image}
+                avatarString={user?.image}
                 size="lg"
               />
             ) : hasExternalImage ? (
               <Image
-                src={session!.user!.image!}
+                src={user!.image!}
                 alt="頭像"
                 width={96}
                 height={96}
@@ -85,7 +86,7 @@ export default function SettingsProfilePage() {
           </button>
           <p className="text-xs text-muted-foreground">點擊更換頭像</p>
           <h2 className="text-xl font-semibold">
-            {session?.user?.name || "使用者"}
+            {user?.name || "使用者"}
           </h2>
         </div>
 
@@ -98,7 +99,7 @@ export default function SettingsProfilePage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">名稱</p>
-                <p className="font-medium">{session?.user?.name || "未設定"}</p>
+                <p className="font-medium">{user?.name || "未設定"}</p>
               </div>
             </div>
 
@@ -107,8 +108,8 @@ export default function SettingsProfilePage() {
                 <Mail className="size-5 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">電子郵件</p>
-                <p className="font-medium">{session?.user?.email || "未設定"}</p>
+                <p className="text-sm text-muted-foreground">帳號類型</p>
+                <p className="font-medium">LINE 用戶</p>
               </div>
             </div>
 
@@ -118,9 +119,7 @@ export default function SettingsProfilePage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">登入方式</p>
-                <p className="font-medium">
-                  {session?.user?.email?.includes("@gmail.com") ? "Google 帳號" : "電子郵件"}
-                </p>
+                <p className="font-medium">LINE 帳號</p>
               </div>
             </div>
           </CardContent>

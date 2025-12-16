@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/auth"
+import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
 // 獲取單個專案詳情
@@ -9,8 +9,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const session = await auth()
-    if (!session?.user?.id) {
+    const authUser = await getAuthUser(req)
+    if (!authUser) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
@@ -19,7 +19,7 @@ export async function GET(
         id: id,
         members: {
           some: {
-            userId: session.user.id,
+            userId: authUser.id,
           },
         },
       },
@@ -107,8 +107,8 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
-    const session = await auth()
-    if (!session?.user?.id) {
+    const authUser = await getAuthUser(req)
+    if (!authUser) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
@@ -116,7 +116,7 @@ export async function PUT(
     const membership = await prisma.projectMember.findFirst({
       where: {
         projectId: id,
-        userId: session.user.id,
+        userId: authUser.id,
       },
     })
 
@@ -224,8 +224,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const session = await auth()
-    if (!session?.user?.id) {
+    const authUser = await getAuthUser(req)
+    if (!authUser) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
@@ -238,7 +238,7 @@ export async function DELETE(
     }
 
     // 只有創建者可以刪除專案
-    if (project.createdBy !== session.user.id) {
+    if (project.createdBy !== authUser.id) {
       return NextResponse.json({ error: "只有創建者可以刪除專案" }, { status: 403 })
     }
 

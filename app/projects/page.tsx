@@ -4,8 +4,8 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { signOut } from "next-auth/react"
 import { AppLayout } from "@/components/layout/app-layout"
+import { useAuthFetch } from "@/components/auth/liff-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -61,35 +61,17 @@ export default function ProjectsPage() {
   const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const authFetch = useAuthFetch()
 
   useEffect(() => {
     fetchProjects()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function fetchProjects() {
     try {
-      const res = await fetch("/api/projects")
+      const res = await authFetch("/api/projects")
       if (!res.ok) {
-        // 檢查是否需要登出
-        if (res.status === 401) {
-          try {
-            const error = await res.json()
-            if (error.requiresLogout) {
-              await signOut({ 
-                redirect: true, 
-                callbackUrl: "/login?error=session_invalid" 
-              })
-              return
-            }
-          } catch {
-            // 如果解析錯誤失敗，仍然嘗試登出
-            await signOut({ 
-              redirect: true, 
-              callbackUrl: "/login?error=session_invalid" 
-            })
-            return
-          }
-        }
         const errorData = await res.json().catch(() => ({}))
         console.error("獲取專案失敗:", res.status, errorData)
         return
@@ -109,7 +91,7 @@ export default function ProjectsPage() {
     }
 
     try {
-      const res = await fetch(`/api/projects/${projectId}`, {
+      const res = await authFetch(`/api/projects/${projectId}`, {
         method: "DELETE",
       })
 

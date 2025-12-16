@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/auth"
+import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
 export async function PUT(request: NextRequest) {
-  const session = await auth()
+  const authUser = await getAuthUser(request)
 
-  if (!session?.user?.id) {
+  if (!authUser) {
     return NextResponse.json({ error: "未登入" }, { status: 401 })
   }
 
@@ -16,8 +16,8 @@ export async function PUT(request: NextRequest) {
     const updateData: { image?: string; name?: string } = {}
 
     if (image !== undefined) {
-      // 驗證圖片格式：支援 base64 或自訂頭像格式 (avatar:icon:color)
-      if (image && !image.startsWith("data:image/") && !image.startsWith("avatar:")) {
+      // 驗證圖片格式：支援 URL 或自訂頭像格式 (avatar:icon:color)
+      if (image && !image.startsWith("http") && !image.startsWith("avatar:")) {
         return NextResponse.json({ error: "無效的圖片格式" }, { status: 400 })
       }
       updateData.image = image
@@ -28,12 +28,12 @@ export async function PUT(request: NextRequest) {
     }
 
     const user = await prisma.user.update({
-      where: { id: session.user.id },
+      where: { id: authUser.id },
       data: updateData,
       select: {
         id: true,
+        lineUserId: true,
         name: true,
-        email: true,
         image: true,
       },
     })

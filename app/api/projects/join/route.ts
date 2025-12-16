@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/auth"
+import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
 // 通過分享碼加入專案
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) {
+    const authUser = await getAuthUser(req)
+    if (!authUser) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
     // 獲取用戶資料
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: authUser.id },
     })
 
     if (!user) {
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
     // 檢查是否已經是成員（已綁定帳號的成員）
     const isAlreadyMember = project.members.some(
-      (member: { userId: string | null }) => member.userId === session.user.id
+      (member: { userId: string | null }) => member.userId === authUser.id
     )
 
     if (isAlreadyMember) {
@@ -55,8 +55,8 @@ export async function POST(req: NextRequest) {
     await prisma.projectMember.create({
       data: {
         projectId: project.id,
-        userId: session.user.id,
-        displayName: user.name || user.email.split("@")[0],
+        userId: authUser.id,
+        displayName: user.name || user.lineUserId.slice(0, 8),
         role: "member",
         claimedAt: new Date(),
       },
