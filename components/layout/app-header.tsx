@@ -8,12 +8,24 @@ import { ArrowLeft, Bell, Search } from "lucide-react"
 interface AppHeaderProps {
   title?: string
   showBack?: boolean
+  backHref?: string
   onBack?: () => void
   rightAction?: React.ReactNode
 }
 
-export function AppHeader({ title = "Wander Wallet", showBack = false, onBack, rightAction }: AppHeaderProps) {
+export function AppHeader({ title = "Wander Wallet", showBack = false, backHref, onBack, rightAction }: AppHeaderProps) {
   const router = useRouter()
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack()
+    } else if (backHref) {
+      router.push(backHref)
+    } else {
+      router.back()
+    }
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4">
@@ -22,7 +34,7 @@ export function AppHeader({ title = "Wander Wallet", showBack = false, onBack, r
             <Button
               variant="ghost"
               size="icon"
-              onClick={onBack ?? (() => router.back())}
+              onClick={handleBack}
               className="h-8 w-8 -ml-2"
             >
               <ArrowLeft className="h-4 w-4" />

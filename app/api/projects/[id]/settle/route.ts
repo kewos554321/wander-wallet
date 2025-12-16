@@ -26,8 +26,11 @@ interface Settlement {
 // 最優結算算法：最小化轉帳次數
 function calculateOptimalSettlements(balances: Balance[]): Settlement[] {
   const settlements: Settlement[] = []
-  const debts: Balance[] = balances.filter((b) => b.balance < 0) // 欠錢的人
-  const credits: Balance[] = balances.filter((b) => b.balance > 0) // 應該收錢的人
+
+  // 深拷貝餘額物件，避免修改原始資料
+  const balancesCopy = balances.map((b) => ({ ...b }))
+  const debts: Balance[] = balancesCopy.filter((b) => b.balance < 0) // 欠錢的人
+  const credits: Balance[] = balancesCopy.filter((b) => b.balance > 0) // 應該收錢的人
 
   // 簡化版本：貪心算法
   // 對於每個欠錢的人，找到應該收錢最多的人來結算

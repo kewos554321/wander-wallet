@@ -9,8 +9,10 @@ import { Settings, Image, Calendar, FileText, Trash2, ArrowLeft } from "lucide-r
 export default function SettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
 
+  const backHref = `/projects/${id}`
+
   return (
-    <AppLayout title="專案設定" showBack>
+    <AppLayout title="專案設定" showBack backHref={backHref}>
       <div className="px-4 py-8">
         <div className="max-w-md mx-auto text-center">
           {/* 圖標 */}

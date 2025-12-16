@@ -9,8 +9,10 @@ import { ArrowRightLeft, RefreshCw, Globe, TrendingUp, ArrowLeft } from "lucide-
 export default function CurrencyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
 
+  const backHref = `/projects/${id}`
+
   return (
-    <AppLayout title="幣種轉換" showBack>
+    <AppLayout title="幣種轉換" showBack backHref={backHref}>
       <div className="px-4 py-8">
         <div className="max-w-md mx-auto text-center">
           {/* 圖標 */}

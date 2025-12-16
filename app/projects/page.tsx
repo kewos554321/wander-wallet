@@ -15,7 +15,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical, Plus, Share2, Trash2, Edit, Folder } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { MoreVertical, Users, Plus, Share2, Trash2, Edit, ChevronRight, Folder, UserPlus } from "lucide-react"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { getProjectShareUrl } from "@/lib/utils"
 import { parseCover, getPresetCover } from "@/lib/covers"
@@ -64,6 +72,10 @@ export default function ProjectsPage() {
   const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const [joinDialogOpen, setJoinDialogOpen] = useState(false)
+  const [shareCode, setShareCode] = useState("")
+  const [joining, setJoining] = useState(false)
+  const [joinError, setJoinError] = useState<string | null>(null)
   const authFetch = useAuthFetch()
 
   useEffect(() => {
@@ -136,6 +148,46 @@ export default function ProjectsPage() {
     return expenses.reduce((sum, expense) => sum + Number(expense.amount), 0)
   }
 
+  async function handleJoinProject(e: React.FormEvent) {
+    e.preventDefault()
+    setJoinError(null)
+
+    if (!shareCode.trim()) {
+      setJoinError("請輸入專案碼")
+      return
+    }
+
+    setJoining(true)
+
+    try {
+      const res = await authFetch("/api/projects/join", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          shareCode: shareCode.trim().toUpperCase(),
+        }),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        setJoinError(errorData.error || "加入專案失敗")
+        setJoining(false)
+        return
+      }
+
+      const project = await res.json()
+      setJoinDialogOpen(false)
+      setShareCode("")
+      router.push(`/projects/${project.id}`)
+    } catch (error) {
+      console.error("加入專案錯誤:", error)
+      setJoinError("加入專案失敗，請稍後再試")
+      setJoining(false)
+    }
+  }
+
   return (
     <AppLayout title="專案">
       <div className="space-y-6 pb-20">
@@ -144,17 +196,28 @@ export default function ProjectsPage() {
         ) : projects.length === 0 ? (
           <Card className="border-0 shadow-sm">
             <CardContent className="py-16 text-center">
-              <div className="h-16 w-16 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-4">
-                <Folder className="h-8 w-8 text-slate-300" />
+              <div className="h-16 w-16 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+                <Folder className="h-8 w-8 text-slate-300 dark:text-slate-600" />
               </div>
               <h3 className="font-semibold text-lg mb-2">還沒有專案</h3>
-              <p className="text-muted-foreground text-sm mb-6">建立一個專案來開始記錄旅行花費</p>
-              <Link href="/projects/new">
-                <Button size="lg" className="rounded-full px-6">
-                  <Plus className="h-4 w-4 mr-2" />
-                  建立專案
+              <p className="text-muted-foreground text-sm mb-6">建立一個專案或加入其他人的專案</p>
+              <div className="flex gap-3 justify-center">
+                <Link href="/projects/new">
+                  <Button size="lg" className="rounded-full px-6">
+                    <Plus className="h-4 w-4 mr-2" />
+                    建立專案
+                  </Button>
+                </Link>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="rounded-full px-6"
+                  onClick={() => setJoinDialogOpen(true)}
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  加入專案
                 </Button>
-              </Link>
+              </div>
             </CardContent>
           </Card>
         ) : (
@@ -361,16 +424,82 @@ export default function ProjectsPage() {
               })}
             </div>
 
-            {/* 新增專案按鈕 */}
-            <Link href="/projects/new" className="block">
-              <button className="w-full py-4 px-4 rounded-xl border border-dashed border-slate-200 text-sm text-muted-foreground hover:border-slate-300 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
-                <Plus className="h-4 w-4" />
-                新增專案
+            {/* 按鈕區 */}
+            <div className="grid grid-cols-2 gap-3">
+              <Link href="/projects/new" className="block">
+                <button className="w-full py-4 px-4 rounded-xl border border-dashed border-slate-200 text-sm text-muted-foreground hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:hover:border-slate-600 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  新增專案
+                </button>
+              </Link>
+              <button
+                onClick={() => setJoinDialogOpen(true)}
+                className="w-full py-4 px-4 rounded-xl border border-dashed border-slate-200 text-sm text-muted-foreground hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:hover:border-slate-600 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+              >
+                <UserPlus className="h-4 w-4" />
+                加入專案
               </button>
-            </Link>
+            </div>
           </>
         )}
       </div>
+
+      {/* 加入專案對話框 */}
+      <Dialog open={joinDialogOpen} onOpenChange={(open) => {
+        setJoinDialogOpen(open)
+        if (!open) {
+          setShareCode("")
+          setJoinError(null)
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              加入專案
+            </DialogTitle>
+            <DialogDescription>
+              輸入專案分享碼以加入其他人的旅行專案
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleJoinProject} className="space-y-4">
+            <div className="space-y-2">
+              <Input
+                placeholder="輸入專案碼，例如：ABC123XYZ456"
+                value={shareCode}
+                onChange={(e) => {
+                  setShareCode(e.target.value.toUpperCase())
+                  setJoinError(null)
+                }}
+                disabled={joining}
+                className="font-mono text-lg tracking-wider"
+                autoFocus
+              />
+              {joinError && (
+                <p className="text-sm text-destructive">{joinError}</p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => setJoinDialogOpen(false)}
+                disabled={joining}
+              >
+                取消
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={joining || !shareCode.trim()}
+              >
+                {joining ? "加入中..." : "加入專案"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   )
 }

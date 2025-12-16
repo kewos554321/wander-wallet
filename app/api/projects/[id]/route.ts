@@ -61,6 +61,7 @@ export async function GET(
               select: {
                 id: true,
                 memberId: true,
+                shareAmount: true,
               },
             },
           },

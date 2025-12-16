@@ -261,9 +261,11 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
     setSelectedMembers(new Set())
   }
 
+  const backHref = `/projects/${id}`
+
   if (loading) {
     return (
-      <AppLayout title="成員" showBack>
+      <AppLayout title="成員" showBack backHref={backHref}>
         <div className="text-center py-8 text-muted-foreground">載入中...</div>
       </AppLayout>
     )
@@ -271,7 +273,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
 
   if (!project) {
     return (
-      <AppLayout title="成員" showBack>
+      <AppLayout title="成員" showBack backHref={backHref}>
         <div className="text-center py-8 text-muted-foreground">專案不存在</div>
       </AppLayout>
     )
@@ -297,7 +299,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
   )
 
   return (
-    <AppLayout title="成員管理" showBack>
+    <AppLayout title="成員管理" showBack backHref={backHref}>
       <div className="space-y-4 pb-20">
         {/* 操作列 */}
         <div className="flex items-center justify-between">

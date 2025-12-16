@@ -7,6 +7,7 @@ interface AppLayoutProps {
   children: React.ReactNode
   title?: string
   showBack?: boolean
+  backHref?: string
   onBack?: () => void
   rightAction?: React.ReactNode
 }
@@ -15,12 +16,13 @@ export function AppLayout({
   children,
   title,
   showBack = false,
+  backHref,
   onBack,
   rightAction
 }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader title={title} showBack={showBack} onBack={onBack} rightAction={rightAction} />
+      <AppHeader title={title} showBack={showBack} backHref={backHref} onBack={onBack} rightAction={rightAction} />
       
       <main className="pb-16 pt-14">
         <div className="container mx-auto max-w-screen-2xl px-4">
