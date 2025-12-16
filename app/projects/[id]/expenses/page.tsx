@@ -239,17 +239,29 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
         )}
 
         {/* 總計摘要 */}
-        <div className="bg-gradient-to-r from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 rounded-2xl p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">總支出</p>
-              <p className="text-2xl font-bold">
-                ${totalAmount.toLocaleString("zh-TW", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-              </p>
+        <div
+          className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800"
+          style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}
+        >
+          {/* 總金額 */}
+          <div className="text-center mb-4">
+            <p className="text-sm text-muted-foreground mb-1">總支出</p>
+            <p className="text-4xl font-bold tabular-nums tracking-tight">
+              ${totalAmount.toLocaleString("zh-TW")}
+            </p>
+          </div>
+
+          {/* 統計數據 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center">
+              <p className="text-2xl font-bold tabular-nums">{expenses.length}</p>
+              <p className="text-xs text-muted-foreground">筆支出</p>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">共</p>
-              <p className="text-2xl font-bold">{expenses.length} <span className="text-sm font-normal text-muted-foreground">筆</span></p>
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center">
+              <p className="text-2xl font-bold text-primary tabular-nums">
+                ${expenses.length > 0 ? Math.round(totalAmount / expenses.length).toLocaleString("zh-TW") : 0}
+              </p>
+              <p className="text-xs text-muted-foreground">平均每筆</p>
             </div>
           </div>
         </div>
@@ -456,7 +468,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
         {/* 新增按鈕 */}
         {expenses.length > 0 && !selectMode && (
           <Link href={`/projects/${id}/expenses/new`} className="block">
-            <button className="w-full py-4 px-4 rounded-xl border border-dashed border-slate-200 text-sm text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 dark:border-slate-700 dark:hover:border-primary transition-colors flex items-center justify-center gap-2">
+            <button className="w-full py-4 px-4 rounded-xl border border-dashed border-slate-200 text-sm text-muted-foreground hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:hover:border-slate-600 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2">
               <Plus className="h-4 w-4" />
               新增支出
             </button>
