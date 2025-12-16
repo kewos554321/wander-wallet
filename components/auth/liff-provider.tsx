@@ -47,7 +47,7 @@ const DEV_SESSION_KEY = "wander_wallet_dev_session"
 
 // 開發模式的模擬用戶
 const DEV_USER: AuthUser = {
-  id: "dev-user-id",
+  id: "00000000-0000-0000-0000-000000000001",
   lineUserId: "U1234567890dev",
   name: "開發測試用戶",
   image: null,
