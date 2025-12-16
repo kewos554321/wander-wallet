@@ -5,7 +5,7 @@ import Image from "next/image"
 import { AppLayout } from "@/components/layout/app-layout"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { ArrowRight, CheckCircle2, AlertCircle, TrendingUp, TrendingDown, User } from "lucide-react"
+import { ArrowRight, CheckCircle2, AlertCircle, TrendingUp, TrendingDown, User, Receipt, Wallet, Users } from "lucide-react"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 
 interface Balance {
@@ -70,9 +70,11 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
     }
   }
 
+  const backHref = `/projects/${id}`
+
   if (loading) {
     return (
-      <AppLayout title="結算" showBack>
+      <AppLayout title="結算" showBack backHref={backHref}>
         <div className="text-center py-8 text-muted-foreground">載入中...</div>
       </AppLayout>
     )
@@ -80,7 +82,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
 
   if (error) {
     return (
-      <AppLayout title="結算" showBack>
+      <AppLayout title="結算" showBack backHref={backHref}>
         <div className="text-center py-8">
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
           <p className="text-destructive">{error}</p>
@@ -91,7 +93,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
 
   if (!data) {
     return (
-      <AppLayout title="結算" showBack>
+      <AppLayout title="結算" showBack backHref={backHref}>
         <div className="text-center py-8 text-muted-foreground">無結算數據</div>
       </AppLayout>
     )
@@ -105,7 +107,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
   const settled = balances.filter((b) => Math.abs(b.balance) <= 0.01)
 
   return (
-    <AppLayout title="結算" showBack>
+    <AppLayout title="結算" showBack backHref={backHref}>
       <div className="space-y-6 pb-20">
         {/* 總覽 */}
         <Card>
@@ -113,25 +115,47 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
             <CardTitle>總覽</CardTitle>
             <CardDescription>專案支出統計</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">總支出筆數</span>
-              <span className="font-medium">{summary.totalExpenses} 筆</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">總金額</span>
-              <span className="font-bold text-lg">
-                ${summary.totalAmount.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-            </div>
-            {summary.totalExpenses > 0 && balances.length > 0 && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">人均支出</span>
-                <span className="font-medium">
-                  ${(summary.totalAmount / balances.length).toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <CardContent>
+            <div className="grid grid-cols-3 gap-3">
+              {/* 總支出筆數 */}
+              <div className="flex flex-col items-center p-4 rounded-xl bg-blue-50 dark:bg-blue-950/50">
+                <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mb-2">
+                  <Receipt className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {summary.totalExpenses}
                 </span>
+                <span className="text-xs text-muted-foreground mt-1">支出筆數</span>
               </div>
-            )}
+
+              {/* 總金額 */}
+              <div className="flex flex-col items-center p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/50">
+                <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center mb-2">
+                  <Wallet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                  ${summary.totalAmount >= 10000
+                    ? (summary.totalAmount / 1000).toFixed(1) + 'k'
+                    : summary.totalAmount.toLocaleString("zh-TW", { maximumFractionDigits: 0 })}
+                </span>
+                <span className="text-xs text-muted-foreground mt-1">總金額</span>
+              </div>
+
+              {/* 人均支出 */}
+              <div className="flex flex-col items-center p-4 rounded-xl bg-purple-50 dark:bg-purple-950/50">
+                <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center mb-2">
+                  <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                  {balances.length > 0
+                    ? `$${(summary.totalAmount / balances.length) >= 10000
+                        ? ((summary.totalAmount / balances.length) / 1000).toFixed(1) + 'k'
+                        : (summary.totalAmount / balances.length).toLocaleString("zh-TW", { maximumFractionDigits: 0 })}`
+                    : '$0'}
+                </span>
+                <span className="text-xs text-muted-foreground mt-1">人均支出</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

@@ -154,9 +154,11 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
     })
   }, [project])
 
+  const backHref = `/projects/${id}`
+
   if (loading) {
     return (
-      <AppLayout title="統計" showBack>
+      <AppLayout title="統計" showBack backHref={backHref}>
         <div className="text-center py-8 text-muted-foreground">載入中...</div>
       </AppLayout>
     )
@@ -164,7 +166,7 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
 
   if (!project) {
     return (
-      <AppLayout title="統計" showBack>
+      <AppLayout title="統計" showBack backHref={backHref}>
         <div className="text-center py-8 text-muted-foreground">專案不存在或無權限訪問</div>
       </AppLayout>
     )
@@ -175,7 +177,7 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
   const hasData = project.expenses.length > 0
 
   return (
-    <AppLayout title="統計" showBack>
+    <AppLayout title="統計" showBack backHref={backHref}>
       <div className="pb-8 space-y-4 px-4">
         {/* 總覽卡片 */}
         <div className="grid grid-cols-3 gap-2">
