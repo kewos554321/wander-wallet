@@ -171,6 +171,8 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const authUser = await getAuthUser(req)
+    console.log("GET /api/projects - authUser:", authUser?.id || "null")
+
     if (!authUser) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
@@ -223,8 +225,9 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(projects)
   } catch (error: unknown) {
+    console.error("獲取專案錯誤 - 完整錯誤:", error)
     const prismaError = error as { message?: string; code?: string; meta?: unknown }
-    console.error("獲取專案錯誤:", {
+    console.error("獲取專案錯誤 - 詳細:", {
       message: prismaError?.message,
       code: prismaError?.code,
       meta: prismaError?.meta,
@@ -232,7 +235,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         error: "獲取專案失敗",
-        details: prismaError?.message,
+        details: prismaError?.message || String(error),
         code: prismaError?.code,
       },
       { status: 500 }

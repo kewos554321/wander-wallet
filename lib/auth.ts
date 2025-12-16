@@ -46,11 +46,46 @@ export async function getAuthUser(req: NextRequest): Promise<AuthUser | null> {
 
   // 開發模式：接受 dev-session-token
   if (DEV_MODE && token === "dev-session-token") {
-    return DEV_USER
+    try {
+      // 確保開發用戶存在於資料庫中
+      let existingDevUser = await prisma.user.findUnique({
+        where: { id: DEV_USER.id },
+      })
+      if (!existingDevUser) {
+        // 檢查是否有相同 lineUserId 的用戶
+        existingDevUser = await prisma.user.findUnique({
+          where: { lineUserId: DEV_USER.lineUserId },
+        })
+        if (existingDevUser) {
+          // 使用已存在的用戶
+          return {
+            id: existingDevUser.id,
+            lineUserId: existingDevUser.lineUserId,
+            name: existingDevUser.name,
+            image: existingDevUser.image,
+          }
+        }
+        // 創建新的開發用戶
+        await prisma.user.create({
+          data: {
+            id: DEV_USER.id,
+            lineUserId: DEV_USER.lineUserId,
+            name: DEV_USER.name,
+            image: DEV_USER.image,
+          },
+        })
+        console.log("Dev user created in database")
+      }
+      return DEV_USER
+    } catch (error) {
+      console.error("Dev user setup error:", error)
+      return DEV_USER
+    }
   }
 
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET)
+    console.log("JWT verified, payload.sub:", payload.sub)
 
     const user = await prisma.user.findUnique({
       where: { id: payload.sub as string },
@@ -62,8 +97,12 @@ export async function getAuthUser(req: NextRequest): Promise<AuthUser | null> {
       },
     })
 
-    if (!user) return null
+    if (!user) {
+      console.log("User not found in database for id:", payload.sub)
+      return null
+    }
 
+    console.log("User found:", user.id)
     return {
       id: user.id,
       lineUserId: user.lineUserId,
