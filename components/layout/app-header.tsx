@@ -9,9 +9,10 @@ interface AppHeaderProps {
   title?: string
   showBack?: boolean
   onBack?: () => void
+  rightAction?: React.ReactNode
 }
 
-export function AppHeader({ title = "Wander Wallet", showBack = false, onBack }: AppHeaderProps) {
+export function AppHeader({ title = "Wander Wallet", showBack = false, onBack, rightAction }: AppHeaderProps) {
   const router = useRouter()
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -29,15 +30,21 @@ export function AppHeader({ title = "Wander Wallet", showBack = false, onBack }:
           )}
           <h1 className="text-lg font-semibold">{title}</h1>
         </div>
-        
+
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Search className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Bell className="h-4 w-4" />
-          </Button>
-          <ModeToggle />
+          {rightAction ? (
+            rightAction
+          ) : (
+            <>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Search className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Bell className="h-4 w-4" />
+              </Button>
+              <ModeToggle />
+            </>
+          )}
         </div>
       </div>
     </header>

@@ -8,17 +8,19 @@ interface AppLayoutProps {
   title?: string
   showBack?: boolean
   onBack?: () => void
+  rightAction?: React.ReactNode
 }
 
-export function AppLayout({ 
-  children, 
-  title, 
-  showBack = false, 
-  onBack 
+export function AppLayout({
+  children,
+  title,
+  showBack = false,
+  onBack,
+  rightAction
 }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader title={title} showBack={showBack} onBack={onBack} />
+      <AppHeader title={title} showBack={showBack} onBack={onBack} rightAction={rightAction} />
       
       <main className="pb-16 pt-14">
         <div className="container mx-auto max-w-screen-2xl px-4">

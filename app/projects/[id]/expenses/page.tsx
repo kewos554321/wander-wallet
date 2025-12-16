@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Pencil, Plus, Trash2, User } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 
@@ -52,6 +53,9 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
   const [loading, setLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState(false)
   const authFetch = useAuthFetch()
 
   useEffect(() => {
@@ -97,6 +101,57 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
     }
   }
 
+  async function handleBatchDelete() {
+    if (selectedIds.size === 0) return
+
+    setDeleting(true)
+    try {
+      const res = await authFetch(`/api/projects/${id}/expenses/batch`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ expenseIds: Array.from(selectedIds) }),
+      })
+
+      if (res.ok) {
+        setExpenses(expenses.filter((e) => !selectedIds.has(e.id)))
+        setSelectedIds(new Set())
+        setSelectMode(false)
+        setShowBatchDeleteDialog(false)
+      } else {
+        const data = await res.json()
+        alert(data.error || "刪除失敗")
+      }
+    } catch (error) {
+      console.error("批量刪除支出錯誤:", error)
+      alert("刪除失敗")
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  function toggleSelect(expenseId: string) {
+    const newSelected = new Set(selectedIds)
+    if (newSelected.has(expenseId)) {
+      newSelected.delete(expenseId)
+    } else {
+      newSelected.add(expenseId)
+    }
+    setSelectedIds(newSelected)
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === expenses.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(expenses.map((e) => e.id)))
+    }
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
   function formatDate(dateStr: string) {
     const date = new Date(dateStr)
     const now = new Date()
@@ -137,8 +192,44 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
   }
 
   return (
-    <AppLayout title="支出列表" showBack>
+    <AppLayout
+      title={selectMode ? `已選 ${selectedIds.size} 筆` : "支出列表"}
+      showBack={!selectMode}
+      rightAction={
+        expenses.length > 0 && !selectMode ? (
+          <Button variant="ghost" size="sm" onClick={() => setSelectMode(true)}>
+            選擇
+          </Button>
+        ) : selectMode ? (
+          <Button variant="ghost" size="sm" onClick={exitSelectMode}>
+            取消
+          </Button>
+        ) : undefined
+      }
+    >
       <div className="space-y-4 pb-20">
+        {/* 多選模式工具列 */}
+        {selectMode && (
+          <div className="flex items-center justify-between p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={selectedIds.size === expenses.length && expenses.length > 0}
+                onCheckedChange={toggleSelectAll}
+              />
+              <span className="text-sm">全選</span>
+            </label>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={selectedIds.size === 0}
+              onClick={() => setShowBatchDeleteDialog(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              刪除 {selectedIds.size > 0 ? `${selectedIds.size} 筆` : ""}
+            </Button>
+          </div>
+        )}
+
         {/* 總計 */}
         <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg">
           <span className="text-sm text-muted-foreground">總支出</span>
@@ -160,76 +251,141 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
           </div>
         ) : (
           <div className="space-y-3">
-            {expenses.map((expense) => (
-              <Card key={expense.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">
-                          {expense.description || "無描述"}
-                        </span>
-                        {getCategoryLabel(expense.category) && (
-                          <span className="text-xs bg-secondary px-2 py-0.5 rounded">
-                            {getCategoryLabel(expense.category)}
+            {expenses.map((expense) => {
+              const isSelected = selectedIds.has(expense.id)
+              const CardWrapper = selectMode ? "div" : Link
+              const cardProps = selectMode
+                ? {
+                    onClick: () => toggleSelect(expense.id),
+                  }
+                : {
+                    href: `/projects/${id}/expenses/${expense.id}/edit`,
+                  }
+
+              return (
+                <CardWrapper key={expense.id} {...(cardProps as Record<string, unknown>)}>
+                  <Card className={`transition-colors cursor-pointer ${
+                    selectMode
+                      ? isSelected
+                        ? "bg-primary/10 border-primary"
+                        : "hover:bg-accent/50"
+                      : "hover:bg-accent/50"
+                  }`}>
+                    <CardContent className="px-3 py-2.5">
+                      {/* 第一行：Checkbox/金額 + 類別 + 操作按鈕 */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {selectMode && (
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => toggleSelect(expense.id)}
+                              className="h-5 w-5"
+                            />
+                          )}
+                          <span className="text-lg font-bold text-red-600">
+                            -${Number(expense.amount).toLocaleString("zh-TW", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                           </span>
+                          {getCategoryLabel(expense.category) && (
+                            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">
+                              {getCategoryLabel(expense.category)}
+                            </span>
+                          )}
+                        </div>
+                        {!selectMode && (
+                          <div className="flex items-center">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-primary"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                              }}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                setDeleteId(expense.id)
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         )}
                       </div>
-                      <div className="text-sm text-muted-foreground mt-1">
+
+                    {/* 第二行：描述 + 時間 */}
+                    <div className="flex items-center justify-between mt-0.5">
+                      <p className="text-sm font-medium text-foreground truncate flex-1">
+                        {expense.description || "無描述"}
+                      </p>
+                      <span className="text-xs text-muted-foreground ml-2 shrink-0">
                         {formatDate(expense.createdAt)}
-                      </div>
-                      <div className="flex items-center gap-2 mt-2">
+                      </span>
+                    </div>
+
+                    {/* 第三行：付款人 + 分擔者 */}
+                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/40">
+                      {/* 付款人 */}
+                      <div className="flex items-center gap-1.5">
                         {(() => {
                           const avatarData = parseAvatarString(expense.payer?.user?.image)
                           if (avatarData) {
                             const Icon = getAvatarIcon(avatarData.iconId)
                             return (
                               <div
-                                className="h-6 w-6 rounded-full flex items-center justify-center"
+                                className="h-5 w-5 rounded-full flex items-center justify-center"
                                 style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
                               >
-                                <Icon className="h-3 w-3 text-white" />
+                                <Icon className="h-2.5 w-2.5 text-white" />
                               </div>
                             )
                           }
                           const hasExternalImage = expense.payer?.user?.image && !expense.payer.user.image.startsWith("avatar:")
                           return (
-                            <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                            <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
                               {hasExternalImage ? (
                                 <Image
                                   src={expense.payer!.user!.image!}
                                   alt={expense.payer!.displayName}
-                                  width={24}
-                                  height={24}
+                                  width={20}
+                                  height={20}
                                   className="rounded-full object-cover"
                                 />
                               ) : (
-                                <User className="h-3 w-3 text-primary" />
+                                <User className="h-2.5 w-2.5 text-primary" />
                               )}
                             </div>
                           )
                         })()}
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-xs text-muted-foreground">
                           {expense.payer.displayName} 代付
-                          {!expense.payer.userId && <span className="text-xs ml-1">(未認領)</span>}
+                          {!expense.payer.userId && " (未認領)"}
                         </span>
                       </div>
+
+                      {/* 分擔者 */}
                       {expense.participants.length > 0 && (
-                        <div className="flex items-center gap-1 mt-2">
-                          <span className="text-xs text-muted-foreground">分擔者：</span>
+                        <div className="flex items-center gap-1 pl-2 border-l border-border/40">
                           <div className="flex -space-x-1">
-                            {expense.participants.slice(0, 5).map((p) => {
+                            {expense.participants.slice(0, 3).map((p) => {
                               const avatarData = parseAvatarString(p.member.user?.image)
                               if (avatarData) {
                                 const Icon = getAvatarIcon(avatarData.iconId)
                                 return (
                                   <div
                                     key={p.id}
-                                    className="h-5 w-5 rounded-full flex items-center justify-center border-2 border-background"
+                                    className="h-4 w-4 rounded-full flex items-center justify-center border border-background"
                                     style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
                                     title={`${p.member.displayName}: $${p.shareAmount}`}
                                   >
-                                    <Icon className="h-2.5 w-2.5 text-white" />
+                                    <Icon className="h-2 w-2 text-white" />
                                   </div>
                                 )
                               }
@@ -237,65 +393,47 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                               return (
                                 <div
                                   key={p.id}
-                                  className="h-5 w-5 rounded-full bg-secondary flex items-center justify-center overflow-hidden border-2 border-background"
+                                  className="h-4 w-4 rounded-full bg-secondary flex items-center justify-center overflow-hidden border border-background"
                                   title={`${p.member.displayName}: $${p.shareAmount}`}
                                 >
                                   {hasExternalImage ? (
                                     <Image
                                       src={p.member.user!.image!}
                                       alt={p.member.displayName}
-                                      width={20}
-                                      height={20}
+                                      width={16}
+                                      height={16}
                                       className="rounded-full object-cover"
                                     />
                                   ) : (
-                                    <span className="text-[10px]">
+                                    <span className="text-[8px] font-medium">
                                       {p.member.displayName[0]?.toUpperCase()}
                                     </span>
                                   )}
                                 </div>
                               )
                             })}
-                            {expense.participants.length > 5 && (
-                              <div className="h-5 w-5 rounded-full bg-secondary flex items-center justify-center text-[10px] border-2 border-background">
-                                +{expense.participants.length - 5}
+                            {expense.participants.length > 3 && (
+                              <div className="h-4 w-4 rounded-full bg-muted flex items-center justify-center text-[8px] font-medium border border-background">
+                                +{expense.participants.length - 3}
                               </div>
                             )}
                           </div>
+                          <span className="text-[10px] text-muted-foreground">
+                            {expense.participants.length}人
+                          </span>
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-bold text-red-600">
-                        -${Number(expense.amount).toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
-                      <Link href={`/projects/${id}/expenses/${expense.id}/edit`}>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-primary"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => setDeleteId(expense.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    </CardContent>
+                  </Card>
+                </CardWrapper>
+              )
+            })}
           </div>
         )}
 
         {/* 新增按鈕 */}
-        {expenses.length > 0 && (
+        {expenses.length > 0 && !selectMode && (
           <Link href={`/projects/${id}/expenses/new`}>
             <Button className="w-full">
               <Plus className="h-4 w-4 mr-2" />
@@ -305,7 +443,8 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
         )}
       </div>
 
-      {/* 刪除確認對話框 */}
+
+      {/* 單筆刪除確認對話框 */}
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent>
           <DialogHeader>
@@ -324,6 +463,30 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
               disabled={deleting}
             >
               {deleting ? "刪除中..." : "刪除"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 批量刪除確認對話框 */}
+      <Dialog open={showBatchDeleteDialog} onOpenChange={setShowBatchDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>確認批量刪除</DialogTitle>
+            <DialogDescription>
+              確定要刪除選取的 {selectedIds.size} 筆支出嗎？此操作無法復原。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBatchDeleteDialog(false)}>
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleBatchDelete}
+              disabled={deleting}
+            >
+              {deleting ? "刪除中..." : `刪除 ${selectedIds.size} 筆`}
             </Button>
           </DialogFooter>
         </DialogContent>
