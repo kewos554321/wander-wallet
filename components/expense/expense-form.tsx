@@ -8,17 +8,10 @@ import { AppLayout } from "@/components/layout/app-layout"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
-import { shareExpenseToLine, isShareTargetPickerAvailable } from "@/lib/liff"
-import { Send, Check, Utensils, Car, Home, Gamepad2, ShoppingBag, MoreHorizontal, User, Calculator, Delete, Ticket, Heart, Coffee, Gift } from "lucide-react"
+import { sendExpenseNotificationToChat } from "@/lib/liff"
+import { Check, Utensils, Car, Home, Gamepad2, ShoppingBag, MoreHorizontal, User, Calculator, Delete, Ticket, Heart, Coffee, Gift } from "lucide-react"
 
 interface Member {
   id: string
@@ -86,15 +79,6 @@ const CATEGORIES = [
   { value: "other", label: "其他", icon: MoreHorizontal, color: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" },
 ]
 
-interface CreatedExpense {
-  projectName: string
-  payerName: string
-  amount: number
-  description?: string
-  category?: string
-  participantCount: number
-}
-
 interface ExpenseFormProps {
   projectId: string
   expenseId?: string
@@ -104,7 +88,7 @@ interface ExpenseFormProps {
 export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const router = useRouter()
   const authFetch = useAuthFetch()
-  const { isDevMode } = useLiff()
+  const { isDevMode, canSendMessages } = useLiff()
 
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
@@ -118,10 +102,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const [splitMode, setSplitMode] = useState<"equal" | "custom">("equal")
   const [customShares, setCustomShares] = useState<Record<string, string>>({})
 
-  // 分享相關狀態 (只在新增模式使用)
-  const [showShareDialog, setShowShareDialog] = useState(false)
-  const [createdExpense, setCreatedExpense] = useState<CreatedExpense | null>(null)
-  const [sharing, setSharing] = useState(false)
+  // LINE 通知相關狀態
+  const [notifyLine, setNotifyLine] = useState(true)
   const [projectName, setProjectName] = useState("")
 
   // 計算機狀態
@@ -168,14 +150,20 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
 
   async function fetchExpenseData() {
     try {
-      const [expenseRes, membersRes] = await Promise.all([
+      const [expenseRes, membersRes, projectRes] = await Promise.all([
         authFetch(`/api/projects/${projectId}/expenses/${expenseId}`),
         authFetch(`/api/projects/${projectId}/members`),
+        authFetch(`/api/projects/${projectId}`),
       ])
 
       if (membersRes.ok) {
         const membersData = await membersRes.json()
         setMembers(membersData)
+      }
+
+      if (projectRes.ok) {
+        const projectData = await projectRes.json()
+        setProjectName(projectData.name)
       }
 
       if (expenseRes.ok) {
@@ -319,27 +307,30 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       })
 
       if (res.ok) {
-        if (mode === "create") {
+        // 如果勾選了通知且可以發送訊息，則發送通知
+        if (notifyLine && canSendMessages && !isDevMode) {
           const payerMember = members.find((m) => m.id === paidBy)
           const payerName = payerMember?.displayName || "未知"
-          const canShare = !isDevMode && isShareTargetPickerAvailable()
+          const operationType: "create" | "update" = mode === "create" ? "create" : "update"
 
-          if (canShare) {
-            setCreatedExpense({
-              projectName,
-              payerName,
-              amount: amountNum,
-              description: description.trim() || undefined,
-              category: category || undefined,
-              participantCount: participants.length,
-            })
-            setShowShareDialog(true)
-          } else {
-            router.push(`/projects/${projectId}/expenses`)
-          }
-        } else {
-          router.push(`/projects/${projectId}/expenses`)
+          console.log("[ExpenseForm] 發送 LINE 通知...")
+          sendExpenseNotificationToChat({
+            operationType,
+            projectName,
+            projectId,
+            payerName,
+            amount: amountNum,
+            description: description.trim() || undefined,
+            category: category || undefined,
+            participantCount: participants.length,
+          }).then((sent) => {
+            console.log("[ExpenseForm] 發送結果:", sent)
+          }).catch((err) => {
+            console.error("[ExpenseForm] 發送失敗:", err)
+          })
         }
+
+        router.push(`/projects/${projectId}/expenses`)
       } else {
         const data = await res.json()
         alert(data.error || (mode === "create" ? "新增失敗" : "更新失敗"))
@@ -350,28 +341,6 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     } finally {
       setSubmitting(false)
     }
-  }
-
-  async function handleShareToLine() {
-    if (!createdExpense) return
-
-    setSharing(true)
-    try {
-      await shareExpenseToLine({
-        ...createdExpense,
-        projectId,
-      })
-    } catch (error) {
-      console.error("分享失敗:", error)
-    } finally {
-      setSharing(false)
-      router.push(`/projects/${projectId}/expenses`)
-    }
-  }
-
-  function handleSkipShare() {
-    setShowShareDialog(false)
-    router.push(`/projects/${projectId}/expenses`)
   }
 
   // 計算機功能
@@ -796,6 +765,22 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           )}
         </div>
 
+        {/* LINE 通知選項 - 只在可以發送時顯示 */}
+        {canSendMessages && !isDevMode && (
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <Checkbox
+                checked={notifyLine}
+                onCheckedChange={(checked) => setNotifyLine(checked === true)}
+              />
+              <div>
+                <span className="text-sm font-medium">通知 LINE 群組</span>
+                <p className="text-xs text-muted-foreground">儲存後自動發送通知到群組</p>
+              </div>
+            </label>
+          </div>
+        )}
+
         {/* 固定在底部的按鈕 */}
         {!showCalculator && (
           <div className="fixed bottom-14 left-0 right-0 p-4 bg-background/95 backdrop-blur border-t border-slate-200 dark:border-slate-800">
@@ -812,69 +797,6 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           </div>
         )}
       </form>
-
-      {/* 分享到 LINE 對話框 (只在新增模式顯示) */}
-      {mode === "create" && (
-        <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Check className="h-5 w-5 text-green-500" />
-                新增成功
-              </DialogTitle>
-              <DialogDescription>
-                要分享這筆消費到 LINE 群組嗎？
-              </DialogDescription>
-            </DialogHeader>
-            {createdExpense && (
-              <div className="bg-muted rounded-lg p-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">付款人</span>
-                  <span>{createdExpense.payerName}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">金額</span>
-                  <span className="font-bold">
-                    {new Intl.NumberFormat("zh-TW", {
-                      style: "currency",
-                      currency: "TWD",
-                      minimumFractionDigits: 0,
-                    }).format(createdExpense.amount)}
-                  </span>
-                </div>
-                {createdExpense.description && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">備註</span>
-                    <span>{createdExpense.description}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">分攤人數</span>
-                  <span>{createdExpense.participantCount} 人</span>
-                </div>
-              </div>
-            )}
-            <div className="flex gap-2 mt-4">
-              <Button
-                onClick={handleShareToLine}
-                disabled={sharing}
-                className="flex-1"
-              >
-                <Send className="h-4 w-4 mr-2" />
-                {sharing ? "分享中..." : "分享到 LINE"}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleSkipShare}
-                disabled={sharing}
-                className="flex-1"
-              >
-                略過
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
     </AppLayout>
   )
 }

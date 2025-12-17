@@ -91,8 +91,10 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  console.log("[創建費用 API] 收到請求")
   try {
     const { id } = await params
+    console.log("[創建費用 API] 專案 ID:", id)
     const authUser = await getAuthUser(req)
     if (!authUser) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })
@@ -227,6 +229,10 @@ export async function POST(
         },
       },
     })
+
+    console.log("[創建費用 API] 費用創建成功, expenseId:", expense.id)
+
+    // 通知改由前端使用 LIFF sendMessages API 發送（以用戶身份）
 
     return NextResponse.json(expense, { status: 201 })
   } catch (error) {

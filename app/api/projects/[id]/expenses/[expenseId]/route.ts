@@ -257,6 +257,8 @@ export async function PUT(
       },
     })
 
+    // 通知改由前端使用 LIFF sendMessages API 發送（以用戶身份）
+
     return NextResponse.json(expense)
   } catch (error) {
     console.error("更新費用錯誤:", error)
@@ -291,10 +293,19 @@ export async function DELETE(
       return NextResponse.json({ error: "無權限訪問此專案" }, { status: 403 })
     }
 
+    // 獲取費用詳情（用於通知）
     const expense = await prisma.expense.findFirst({
       where: {
         id: expenseId,
         projectId: id,
+      },
+      include: {
+        payer: {
+          select: {
+            displayName: true,
+          },
+        },
+        participants: true,
       },
     })
 
@@ -305,6 +316,8 @@ export async function DELETE(
     await prisma.expense.delete({
       where: { id: expenseId },
     })
+
+    // 通知改由前端使用 LIFF sendMessages API 發送（以用戶身份）
 
     return NextResponse.json({ message: "費用已刪除" })
   } catch (error) {

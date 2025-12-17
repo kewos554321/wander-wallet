@@ -139,7 +139,6 @@ export default function ProjectsPage() {
     }
   }
 
-
   async function handleJoinProject(e: React.FormEvent) {
     e.preventDefault()
     setJoinError(null)
