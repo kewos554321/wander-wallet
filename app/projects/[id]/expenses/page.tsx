@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Trash2, User, Utensils, Car, Home, Gamepad2, ShoppingBag, MoreHorizontal, Coffee, Ticket, Gift, Heart, Receipt } from "lucide-react"
+import { Plus, Trash2, User, Utensils, Car, Home, Gamepad2, ShoppingBag, MoreHorizontal, Coffee, Ticket, Gift, Heart, Receipt, CheckSquare, X } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { useAuthFetch } from "@/components/auth/liff-provider"
@@ -205,12 +205,12 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
       backHref={backHref}
       rightAction={
         expenses.length > 0 && !selectMode ? (
-          <Button variant="ghost" size="sm" onClick={() => setSelectMode(true)}>
-            選擇
+          <Button variant="outline" size="icon" onClick={() => setSelectMode(true)} title="批次管理">
+            <CheckSquare className="h-4 w-4" />
           </Button>
         ) : selectMode ? (
-          <Button variant="ghost" size="sm" onClick={exitSelectMode}>
-            取消
+          <Button variant="outline" size="icon" onClick={exitSelectMode} title="取消批次">
+            <X className="h-4 w-4" />
           </Button>
         ) : undefined
       }
@@ -218,7 +218,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
       <div className="flex flex-col gap-5 pb-24">
         {/* 多選模式工具列 */}
         {selectMode && (
-          <div className="flex items-center justify-between p-3 bg-destructive/10 rounded-xl border border-destructive/20">
+          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl border border-border">
             <label className="flex items-center gap-2 cursor-pointer">
               <Checkbox
                 checked={selectedIds.size === expenses.length && expenses.length > 0}

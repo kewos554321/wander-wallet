@@ -12,10 +12,11 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { User, Copy, Share2, UserMinus, Check, UserPlus, Search, Trash2, X } from "lucide-react"
+import { User, Copy, Share2, UserMinus, Check, UserPlus, Search, Trash2, X, CheckSquare } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { getProjectShareUrl } from "@/lib/utils"
@@ -65,6 +66,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set())
   const [batchMode, setBatchMode] = useState(false)
+  const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState(false)
 
   useEffect(() => {
     fetchProject()
@@ -200,9 +202,9 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
   // 批次刪除成員
   async function handleBatchRemove() {
     if (selectedMembers.size === 0) return
-    if (!confirm(`確定要移除這 ${selectedMembers.size} 位成員嗎？`)) return
 
     setRemoving("batch")
+    setShowBatchDeleteDialog(false)
     try {
       const memberIds = Array.from(selectedMembers)
       const results = await Promise.all(
@@ -307,12 +309,12 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
           <div className="flex gap-2">
             {isOwner && (
               <Button
-                variant={batchMode ? "secondary" : "outline"}
+                variant="outline"
                 size="icon"
                 onClick={() => batchMode ? exitBatchMode() : setBatchMode(true)}
                 title={batchMode ? "取消批次" : "批次管理"}
               >
-                {batchMode ? <X className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+                {batchMode ? <X className="h-4 w-4" /> : <CheckSquare className="h-4 w-4" />}
               </Button>
             )}
             <Button
@@ -357,27 +359,22 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
 
         {/* 批次操作列 */}
         {batchMode && (
-          <div className="flex items-center justify-between bg-secondary/50 rounded-lg px-3 py-2">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl border border-border">
+            <label className="flex items-center gap-2 cursor-pointer">
               <Checkbox
                 checked={selectableMembers.length > 0 && selectableMembers.every(m => selectedMembers.has(m.id))}
                 onCheckedChange={() => toggleSelectAll(selectableMembers)}
               />
-              <span className="text-sm">
-                {selectedMembers.size > 0
-                  ? `已選擇 ${selectedMembers.size} 位`
-                  : "全選"
-                }
-              </span>
-            </div>
+              <span className="text-sm font-medium">全選</span>
+            </label>
             <Button
               variant="destructive"
               size="sm"
-              onClick={handleBatchRemove}
+              onClick={() => setShowBatchDeleteDialog(true)}
               disabled={selectedMembers.size === 0 || removing === "batch"}
             >
               <Trash2 className="h-4 w-4 mr-1" />
-              {removing === "batch" ? "移除中..." : "移除"}
+              移除 {selectedMembers.size > 0 ? `(${selectedMembers.size})` : ""}
             </Button>
           </div>
         )}
@@ -594,6 +591,34 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 批次刪除確認對話框 */}
+      <Dialog open={showBatchDeleteDialog} onOpenChange={setShowBatchDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>確認批量移除</DialogTitle>
+            <DialogDescription>
+              確定要移除選取的 {selectedMembers.size} 位成員嗎？此操作無法復原。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowBatchDeleteDialog(false)}
+            >
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleBatchRemove}
+              disabled={removing === "batch"}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              {removing === "batch" ? "移除中..." : `移除 (${selectedMembers.size})`}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </AppLayout>
