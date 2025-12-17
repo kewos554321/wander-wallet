@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { AppLayout } from "@/components/layout/app-layout"
@@ -16,8 +16,22 @@ import {
 } from "@/components/ui/dialog"
 import { useLiff } from "@/components/auth/liff-provider"
 import { useTheme } from "@/components/system/theme-provider"
-import { LogOut, ChevronRight, ChevronDown, Sun, Moon, Monitor, User } from "lucide-react"
+import { LogOut, ChevronRight, ChevronDown, Sun, Moon, Monitor, User, Download, CheckCircle2 } from "lucide-react"
 import { AvatarDisplay, parseAvatarString } from "@/components/avatar-picker"
+
+// PWA Install types
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
+type NavigatorWithStandalone = Navigator & { standalone?: boolean };
+const hasStandalone = (n: Navigator): n is NavigatorWithStandalone => "standalone" in n;
+
+type WindowWithMSStream = Window & { MSStream?: unknown };
+const hasMSStream = (w: Window): w is WindowWithMSStream => "MSStream" in w;
+
+const NEVER_SHOW_KEY = "install-prompt-never-show";
 
 export default function SettingsPage() {
   const [open, setOpen] = useState(false)
@@ -26,6 +40,58 @@ export default function SettingsPage() {
   const isCustomAvatar = parseAvatarString(user?.image) !== null
   const { theme, setTheme } = useTheme()
   const router = useRouter()
+
+  // PWA Install states
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
+  const [isStandalone, setIsStandalone] = useState(false)
+  const [isInstalling, setIsInstalling] = useState(false)
+
+  const isiOS = useMemo(() => {
+    if (typeof navigator === "undefined" || typeof window === "undefined") return false
+    const isiOSUA = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    const noMS = !hasMSStream(window)
+    return isiOSUA && noMS
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const mediaStandalone = window.matchMedia("(display-mode: standalone)").matches
+    const iosStandalone = hasStandalone(window.navigator) && window.navigator.standalone === true
+    setIsStandalone(mediaStandalone || iosStandalone)
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault()
+      setDeferredPrompt(e as BeforeInstallPromptEvent)
+    }
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt as EventListener)
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt as EventListener)
+    }
+  }, [])
+
+  async function handleInstall() {
+    if (!deferredPrompt) return
+    setIsInstalling(true)
+    try {
+      await deferredPrompt.prompt()
+      const { outcome } = await deferredPrompt.userChoice
+      if (outcome === "accepted") {
+        setIsStandalone(true)
+        // 清除永不顯示設定，因為已安裝
+        localStorage.removeItem(NEVER_SHOW_KEY)
+      }
+    } finally {
+      setIsInstalling(false)
+      setDeferredPrompt(null)
+    }
+  }
+
+  function resetInstallPrompt() {
+    localStorage.removeItem(NEVER_SHOW_KEY)
+    alert("已重置安裝提示設定，下次進入時會再次顯示安裝提示")
+  }
 
   async function handleLogout() {
     await logout()
@@ -110,6 +176,48 @@ export default function SettingsPage() {
                   )
                 })}
               </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 安裝應用程式 */}
+        <Card>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {isStandalone ? (
+                  <CheckCircle2 className="size-5 text-green-500" />
+                ) : (
+                  <Download className="size-5 text-muted-foreground" />
+                )}
+                <div>
+                  <p className="font-medium">安裝應用程式</p>
+                  <p className="text-sm text-muted-foreground">
+                    {isStandalone
+                      ? "已安裝到主畫面"
+                      : isiOS
+                      ? "點擊分享按鈕 ⎋ 後選擇「加入主畫面」"
+                      : "安裝到主畫面享受更好的體驗"}
+                  </p>
+                </div>
+              </div>
+              {!isStandalone && !isiOS && deferredPrompt && (
+                <Button
+                  size="sm"
+                  onClick={handleInstall}
+                  disabled={isInstalling}
+                >
+                  {isInstalling ? "安裝中..." : "安裝"}
+                </Button>
+              )}
+            </div>
+            {!isStandalone && (
+              <button
+                onClick={resetInstallPrompt}
+                className="text-sm text-muted-foreground hover:text-foreground underline"
+              >
+                重新顯示安裝提示
+              </button>
             )}
           </CardContent>
         </Card>

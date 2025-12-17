@@ -40,11 +40,6 @@ interface ProjectMember {
   role: string
 }
 
-interface Expense {
-  id: string
-  amount: number
-}
-
 interface Project {
   id: string
   name: string
@@ -61,7 +56,7 @@ interface Project {
     email: string
   }
   members: ProjectMember[]
-  expenses: Expense[]
+  totalAmount: number
   _count: {
     expenses: number
     members: number
@@ -144,9 +139,6 @@ export default function ProjectsPage() {
     }
   }
 
-  function calculateTotalAmount(expenses: Expense[]): number {
-    return expenses.reduce((sum, expense) => sum + Number(expense.amount), 0)
-  }
 
   async function handleJoinProject(e: React.FormEvent) {
     e.preventDefault()
@@ -225,9 +217,9 @@ export default function ProjectsPage() {
             {/* 專案列表 */}
             <div className="space-y-3">
               {projects.map((project) => {
-                const totalAmount = calculateTotalAmount(project.expenses)
+                const totalAmount = project.totalAmount
                 const memberCount = project._count.members || project.members.length
-                const expenseCount = project._count.expenses || project.expenses.length
+                const expenseCount = project._count.expenses
                 const perPerson = memberCount > 0 ? totalAmount / memberCount : 0
 
                 // 格式化日期

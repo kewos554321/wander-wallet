@@ -206,6 +206,11 @@ export async function GET(req: NextRequest) {
             },
           },
         },
+        expenses: {
+          select: {
+            amount: true,
+          },
+        },
         _count: {
           select: {
             expenses: true,
@@ -218,7 +223,17 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    return NextResponse.json(projects)
+    // 計算每個專案的總金額並加到回應中（避免前端重複計算）
+    const projectsWithTotal = projects.map((project) => ({
+      ...project,
+      totalAmount: project.expenses.reduce(
+        (sum, expense) => sum + Number(expense.amount),
+        0
+      ),
+      expenses: undefined, // 移除 expenses 陣列，只保留 totalAmount
+    }))
+
+    return NextResponse.json(projectsWithTotal)
   } catch (error: unknown) {
     console.error("獲取專案錯誤 - 完整錯誤:", error)
     const prismaError = error as { message?: string; code?: string; meta?: unknown }

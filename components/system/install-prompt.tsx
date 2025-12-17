@@ -14,6 +14,8 @@ const hasStandalone = (n: Navigator): n is NavigatorWithStandalone => "standalon
 type WindowWithMSStream = Window & { MSStream?: unknown };
 const hasMSStream = (w: Window): w is WindowWithMSStream => "MSStream" in w;
 
+const NEVER_SHOW_KEY = "install-prompt-never-show";
+
 import { X } from "lucide-react";
 
 export default function InstallPrompt() {
@@ -21,6 +23,8 @@ export default function InstallPrompt() {
   const [isStandalone, setIsStandalone] = useState(false);
   const [hasPrompted, setHasPrompted] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [neverShow, setNeverShow] = useState(false);
+  const [neverShowChecked, setNeverShowChecked] = useState(false);
 
   const isiOS = useMemo(() => {
     if (typeof navigator === "undefined" || typeof window === "undefined") return false;
@@ -31,6 +35,13 @@ export default function InstallPrompt() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    // 檢查是否設定為永不顯示
+    const savedNeverShow = localStorage.getItem(NEVER_SHOW_KEY);
+    if (savedNeverShow === "true") {
+      setNeverShow(true);
+      return;
+    }
 
     const mediaStandalone = window.matchMedia("(display-mode: standalone)").matches;
     const iosStandalone = hasStandalone(window.navigator) && window.navigator.standalone === true; // iOS Safari
@@ -47,7 +58,15 @@ export default function InstallPrompt() {
     };
   }, []);
 
-  if (isStandalone || isDismissed) return null;
+  const handleDismiss = () => {
+    if (neverShowChecked) {
+      localStorage.setItem(NEVER_SHOW_KEY, "true");
+      setNeverShow(true);
+    }
+    setIsDismissed(true);
+  };
+
+  if (isStandalone || isDismissed || neverShow) return null;
 
   const canPrompt = !!deferredPrompt && !hasPrompted && !isiOS;
   
@@ -56,20 +75,20 @@ export default function InstallPrompt() {
   return (
     <div className="fixed top-4 left-4 right-4 z-50 p-4 rounded-md border bg-background shadow-lg">
       <div className="flex justify-between items-start mb-2">
-        <h3 className="font-medium">Install App</h3>
-        <button 
-          onClick={() => setIsDismissed(true)}
+        <h3 className="font-medium">安裝應用程式</h3>
+        <button
+          onClick={handleDismiss}
           className="text-muted-foreground hover:text-foreground"
         >
           <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
+          <span className="sr-only">關閉</span>
         </button>
       </div>
-      
+
       <p className="text-sm text-muted-foreground mb-4">
-        Install Wander Wallet for a better experience, offline access, and quick access to your budget.
+        安裝 Wander Wallet 享受更好的體驗、離線存取，以及快速開啟應用程式。
       </p>
-      
+
       {canPrompt && (
         <button
           className="px-3 py-2 rounded bg-black text-white dark:bg-white dark:text-black w-full sm:w-auto"
@@ -84,15 +103,25 @@ export default function InstallPrompt() {
             }
           }}
         >
-          Add to Home Screen
+          加入主畫面
         </button>
       )}
 
       {isiOS && (
         <p className="text-sm text-muted-foreground">
-          To install on iOS, tap the share button ⎋ and then &quot;Add to Home Screen&quot; ➕.
+          在 iOS 上安裝：點擊分享按鈕 ⎋ 然後選擇「加入主畫面」➕
         </p>
       )}
+
+      <label className="flex items-center gap-2 mt-4 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={neverShowChecked}
+          onChange={(e) => setNeverShowChecked(e.target.checked)}
+          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+        />
+        <span className="text-sm text-muted-foreground">不再顯示此提示</span>
+      </label>
     </div>
   );
 }
