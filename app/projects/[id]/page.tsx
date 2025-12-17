@@ -225,13 +225,13 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
 
   return (
     <AppLayout title={project.name} showBack>
-      <div className="pb-24 space-y-6 px-4">
+      <div className="pb-24 space-y-6 px-3 sm:px-4">
         {/* 功能 */}
         <div>
           <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">功能</h2>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             <Link href={`/projects/${id}/settle`}>
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center">
                   <Calculator className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
@@ -240,7 +240,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
             </Link>
 
             <Link href={`/projects/${id}/members`}>
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
                   <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
@@ -249,7 +249,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
             </Link>
 
             <Link href={`/projects/${id}/stats`}>
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="h-10 w-10 rounded-xl bg-violet-50 dark:bg-violet-950 flex items-center justify-center">
                   <BarChart3 className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                 </div>
@@ -257,7 +257,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
               </div>
             </Link>
 
-            <button onClick={handleShare} className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+            <button onClick={handleShare} className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
               <div className="h-10 w-10 rounded-xl bg-orange-50 dark:bg-orange-950 flex items-center justify-center">
                 <Share2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />
               </div>
@@ -265,7 +265,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
             </button>
 
             <Link href={`/projects/${id}/export`}>
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="h-10 w-10 rounded-xl bg-cyan-50 dark:bg-cyan-950 flex items-center justify-center">
                   <Download className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
                 </div>
@@ -274,7 +274,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
             </Link>
 
             <Link href={`/projects/${id}/currency`}>
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="h-10 w-10 rounded-xl bg-amber-50 dark:bg-amber-950 flex items-center justify-center">
                   <ArrowRightLeft className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                 </div>
@@ -283,7 +283,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
             </Link>
 
             <Link href={`/projects/${id}/settings`}>
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                   <Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                 </div>
@@ -292,7 +292,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
             </Link>
 
             <Link href={`/projects/${id}/notes`}>
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="h-10 w-10 rounded-xl bg-yellow-50 dark:bg-yellow-950 flex items-center justify-center">
                   <StickyNote className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                 </div>
@@ -332,7 +332,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
               </TooltipContent>
             </Tooltip>
           </div>
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between">
               <div>
                 <p
