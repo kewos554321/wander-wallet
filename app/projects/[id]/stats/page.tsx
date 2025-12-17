@@ -2,12 +2,37 @@
 
 import { use, useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import dynamic from "next/dynamic"
 import { AppLayout } from "@/components/layout/app-layout"
-import { TrendAreaChart } from "@/components/dashboard/trend-area-chart"
-import { CategoryPieChart } from "@/components/dashboard/category-pie-chart"
-import { BalanceBarChart } from "@/components/dashboard/balance-bar-chart"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { Receipt } from "lucide-react"
+
+// 圖表 loading skeleton
+function ChartSkeleton({ height = 160 }: { height?: number }) {
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+      <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mb-4" />
+      <div
+        className="bg-slate-100 dark:bg-slate-800 rounded animate-pulse"
+        style={{ height }}
+      />
+    </div>
+  )
+}
+
+// 動態載入圖表元件（減少首次載入 bundle 約 270KB）
+const TrendAreaChart = dynamic(
+  () => import("@/components/dashboard/trend-area-chart").then(mod => mod.TrendAreaChart),
+  { loading: () => <ChartSkeleton height={140} />, ssr: false }
+)
+const CategoryPieChart = dynamic(
+  () => import("@/components/dashboard/category-pie-chart").then(mod => mod.CategoryPieChart),
+  { loading: () => <ChartSkeleton height={100} />, ssr: false }
+)
+const BalanceBarChart = dynamic(
+  () => import("@/components/dashboard/balance-bar-chart").then(mod => mod.BalanceBarChart),
+  { loading: () => <ChartSkeleton height={160} />, ssr: false }
+)
 
 interface ProjectMember {
   id: string

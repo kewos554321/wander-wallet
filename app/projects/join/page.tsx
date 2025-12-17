@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useState } from "react"
+import { Suspense, useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AppLayout } from "@/components/layout/app-layout"
 import { useAuthFetch } from "@/components/auth/liff-provider"
@@ -15,8 +15,42 @@ function JoinForm() {
   const codeFromUrl = searchParams.get("code") || ""
   const [shareCode, setShareCode] = useState(codeFromUrl.toUpperCase())
   const [loading, setLoading] = useState(false)
+  const [checking, setChecking] = useState(!!codeFromUrl)
   const [error, setError] = useState<string | null>(null)
   const authFetch = useAuthFetch()
+
+  // 如果 URL 有 code，自動檢查並嘗試加入
+  useEffect(() => {
+    if (!codeFromUrl) return
+
+    async function autoJoin() {
+      try {
+        const res = await authFetch("/api/projects/join", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ shareCode: codeFromUrl.toUpperCase() }),
+        })
+
+        const data = await res.json()
+
+        if (res.ok) {
+          // 成功加入或已是成員，直接跳轉
+          router.replace(`/projects/${data.id}`)
+          return
+        }
+
+        // 其他錯誤，顯示表單讓用戶手動處理
+        setError(data.error || "加入專案失敗")
+      } catch (err) {
+        console.error("自動加入錯誤:", err)
+        setError("加入專案失敗，請稍後再試")
+      } finally {
+        setChecking(false)
+      }
+    }
+
+    autoJoin()
+  }, [codeFromUrl, authFetch, router])
 
   async function handleJoin(e: React.FormEvent) {
     e.preventDefault()
@@ -40,21 +74,37 @@ function JoinForm() {
         }),
       })
 
+      const data = await res.json()
+
       if (!res.ok) {
-        const errorData = await res.json()
-        setError(errorData.error || "加入專案失敗")
+        setError(data.error || "加入專案失敗")
         setLoading(false)
         return
       }
 
-      const project = await res.json()
-      // 導航到加入的專案
-      router.push(`/projects/${project.id}`)
+      // 成功加入或已是成員，導航到專案
+      router.push(`/projects/${data.id}`)
     } catch (error) {
       console.error("加入專案錯誤:", error)
       setError("加入專案失敗，請稍後再試")
       setLoading(false)
     }
+  }
+
+  // 正在自動檢查中，顯示 loading
+  if (checking) {
+    return (
+      <AppLayout title="加入專案" showBack>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center gap-3">
+              <span className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              <p className="text-sm text-muted-foreground">正在加入專案...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </AppLayout>
+    )
   }
 
   return (

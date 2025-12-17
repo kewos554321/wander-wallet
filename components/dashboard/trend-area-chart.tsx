@@ -1,24 +1,12 @@
 "use client"
 
-import dynamic from "next/dynamic"
-
-const ResponsiveContainer = dynamic(
-  () => import("recharts").then((mod) => mod.ResponsiveContainer),
-  { ssr: false }
-)
-const AreaChart = dynamic(
-  () => import("recharts").then((mod) => mod.AreaChart),
-  { ssr: false }
-)
-const Area = dynamic(() => import("recharts").then((mod) => mod.Area), {
-  ssr: false,
-})
-const XAxis = dynamic(() => import("recharts").then((mod) => mod.XAxis), {
-  ssr: false,
-})
-const Tooltip = dynamic(() => import("recharts").then((mod) => mod.Tooltip), {
-  ssr: false,
-})
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  Tooltip,
+} from "recharts"
 
 interface DataPoint {
   date: string

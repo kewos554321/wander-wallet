@@ -206,12 +206,6 @@ export async function GET(req: NextRequest) {
             },
           },
         },
-        expenses: {
-          select: {
-            id: true,
-            amount: true,
-          },
-        },
         _count: {
           select: {
             expenses: true,

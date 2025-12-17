@@ -43,6 +43,7 @@ model Project {
   members    ProjectMember[]
   expenses   Expense[]
 
+  @@index([createdBy])
   @@map("projects")
 }
 
@@ -62,6 +63,8 @@ model ProjectMember {
   paidExpenses        Expense[]            @relation("ExpensePayer")
   expenseParticipants ExpenseParticipant[] @relation("ExpenseParticipant")
 
+  @@index([projectId])
+  @@index([userId])
   @@unique([projectId, userId])
   @@map("project_members")
 }
@@ -81,6 +84,9 @@ model Expense {
   payer         ProjectMember        @relation("ExpensePayer", fields: [paidByMemberId], references: [id], onDelete: Cascade)
   participants  ExpenseParticipant[]
 
+  @@index([projectId])
+  @@index([paidByMemberId])
+  @@index([projectId, createdAt(sort: Desc)])
   @@map("expenses")
 }
 
@@ -94,6 +100,7 @@ model ExpenseParticipant {
   expense Expense       @relation(fields: [expenseId], references: [id], onDelete: Cascade)
   member  ProjectMember @relation("ExpenseParticipant", fields: [memberId], references: [id], onDelete: Cascade)
 
+  @@index([memberId])
   @@unique([expenseId, memberId])
   @@map("expense_participants")
 }
