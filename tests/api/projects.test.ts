@@ -29,6 +29,7 @@ const mockUser = {
   name: "Test User",
   email: "test@example.com",
   lineUserId: "line-user-123",
+  image: null,
 }
 
 const mockProject = {
@@ -42,7 +43,9 @@ const mockProject = {
   createdAt: new Date(),
   updatedAt: new Date(),
   members: [],
+  expenses: [{ amount: 100 }, { amount: 200 }], // 用於計算 totalAmount
   creator: { id: "user-123", name: "Test User", email: "test@example.com" },
+  _count: { members: 0 },
 }
 
 describe("GET /api/projects", () => {
@@ -72,6 +75,8 @@ describe("GET /api/projects", () => {
     expect(response.status).toBe(200)
     expect(data).toHaveLength(1)
     expect(data[0].name).toBe("Test Project")
+    expect(data[0].totalAmount).toBe(300) // 100 + 200
+    expect(data[0].expenses).toBeUndefined() // expenses 被移除
   })
 
   it("should return empty array when user has no projects", async () => {
