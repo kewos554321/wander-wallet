@@ -136,24 +136,30 @@ export interface ExpenseNotificationData {
  * 發送支出通知到當前聊天室（以用戶身份）
  */
 export async function sendExpenseNotificationToChat(data: ExpenseNotificationData): Promise<boolean> {
-  const categoryLabels: Record<string, string> = {
-    food: "餐飲",
-    drinks: "飲品",
-    transport: "交通",
-    accommodation: "住宿",
-    entertainment: "娛樂",
-    shopping: "購物",
-    ticket: "票券",
-    gift: "禮物",
-    medical: "醫療",
-    other: "其他",
+  const categoryEmojis: Record<string, string> = {
+    food: "🍽️",
+    drinks: "🥤",
+    transport: "🚗",
+    accommodation: "🏨",
+    entertainment: "🎬",
+    shopping: "🛍️",
+    ticket: "🎫",
+    gift: "🎁",
+    medical: "💊",
+    other: "📝",
   }
 
-  const operationLabels = {
-    create: "新增消費",
-    update: "更新消費",
-    delete: "刪除消費",
+  const operationConfig = {
+    create: { label: "新增花費", color: "#5CB87A" },
+    update: { label: "更新花費", color: "#E09855" },
+    delete: { label: "刪除花費", color: "#D97B7B" },
   }
+
+  const config = operationConfig[data.operationType]
+  const categoryEmoji = categoryEmojis[data.category || "other"] || "📝"
+  const displayText = data.description
+    ? `${categoryEmoji} ${data.description}`
+    : categoryEmoji
 
   const formattedAmount = new Intl.NumberFormat("zh-TW", {
     style: "currency",
@@ -161,81 +167,76 @@ export async function sendExpenseNotificationToChat(data: ExpenseNotificationDat
     minimumFractionDigits: 0,
   }).format(data.amount)
 
+  const perPersonAmount = new Intl.NumberFormat("zh-TW", {
+    style: "currency",
+    currency: "TWD",
+    minimumFractionDigits: 0,
+  }).format(Math.round(data.amount / data.participantCount))
+
   const liffUrl = process.env.NEXT_PUBLIC_LIFF_URL || ""
   const projectUrl = `${liffUrl}/projects/${data.projectId}`
 
+  // 刪除時金額加上刪除線
+  const amountDecoration = data.operationType === "delete" ? "line-through" as const : "none" as const
+
   const flexMessage = {
     type: "flex" as const,
-    altText: `${data.payerName} ${operationLabels[data.operationType]}了一筆 ${formattedAmount}`,
+    altText: `${config.label}：${data.description || "消費"} ${formattedAmount}`,
     contents: {
       type: "bubble" as const,
+      size: "kilo" as const,
+      header: {
+        type: "box" as const,
+        layout: "horizontal" as const,
+        contents: [
+          {
+            type: "text" as const,
+            text: data.projectName,
+            size: "xs" as const,
+            color: "#ffffff",
+            weight: "bold" as const,
+            flex: 3,
+          },
+          {
+            type: "text" as const,
+            text: config.label,
+            size: "xs" as const,
+            color: "#ffffff",
+            align: "end" as const,
+            flex: 2,
+          },
+        ],
+        backgroundColor: config.color,
+        paddingAll: "lg" as const,
+      },
       body: {
         type: "box" as const,
         layout: "vertical" as const,
         contents: [
           {
             type: "text" as const,
-            text: data.projectName,
-            size: "sm" as const,
-            color: "#888888",
+            text: displayText,
+            size: "lg" as const,
+            weight: "bold" as const,
+            color: "#4A4A4A",
+            wrap: true as const,
           },
           {
             type: "text" as const,
-            text: operationLabels[data.operationType],
+            text: formattedAmount,
+            size: "xxl" as const,
             weight: "bold" as const,
-            size: "xl" as const,
+            color: config.color,
+            margin: "sm" as const,
+            decoration: amountDecoration,
           },
           {
-            type: "separator" as const,
-            margin: "lg" as const,
-          },
-          {
-            type: "box" as const,
-            layout: "vertical" as const,
-            margin: "lg" as const,
-            spacing: "sm" as const,
-            contents: [
-              {
-                type: "box" as const,
-                layout: "horizontal" as const,
-                contents: [
-                  { type: "text" as const, text: "付款人", size: "sm" as const, color: "#888888", flex: 2 },
-                  { type: "text" as const, text: data.payerName, size: "sm" as const, align: "end" as const, flex: 3 },
-                ],
-              },
-              {
-                type: "box" as const,
-                layout: "horizontal" as const,
-                contents: [
-                  { type: "text" as const, text: "金額", size: "sm" as const, color: "#888888", flex: 2 },
-                  { type: "text" as const, text: formattedAmount, size: "sm" as const, weight: "bold" as const, align: "end" as const, flex: 3 },
-                ],
-              },
-              {
-                type: "box" as const,
-                layout: "horizontal" as const,
-                contents: [
-                  { type: "text" as const, text: "類別", size: "sm" as const, color: "#888888", flex: 2 },
-                  { type: "text" as const, text: categoryLabels[data.category || "other"] || "其他", size: "sm" as const, align: "end" as const, flex: 3 },
-                ],
-              },
-              {
-                type: "box" as const,
-                layout: "horizontal" as const,
-                contents: [
-                  { type: "text" as const, text: "分攤人數", size: "sm" as const, color: "#888888", flex: 2 },
-                  { type: "text" as const, text: `${data.participantCount} 人`, size: "sm" as const, align: "end" as const, flex: 3 },
-                ],
-              },
-              ...(data.description ? [{
-                type: "box" as const,
-                layout: "horizontal" as const,
-                contents: [
-                  { type: "text" as const, text: "備註", size: "sm" as const, color: "#888888", flex: 2 },
-                  { type: "text" as const, text: data.description, size: "sm" as const, align: "end" as const, wrap: true, flex: 3 },
-                ],
-              }] : []),
-            ],
+            type: "text" as const,
+            text: `${data.participantCount}人分攤 · 每人 ${perPersonAmount}`,
+            size: "sm" as const,
+            color: "#9E9E9E",
+            margin: "md" as const,
+            style: "italic" as const,
           },
         ],
         paddingAll: "lg" as const,
@@ -248,14 +249,18 @@ export async function sendExpenseNotificationToChat(data: ExpenseNotificationDat
             type: "button" as const,
             action: {
               type: "uri" as const,
-              label: "查看專案",
+              label: "查看明細",
               uri: projectUrl,
             },
             style: "primary" as const,
             height: "sm" as const,
+            color: config.color,
           },
         ],
-        paddingAll: "md" as const,
+        paddingTop: "none" as const,
+        paddingBottom: "md" as const,
+        paddingStart: "lg" as const,
+        paddingEnd: "lg" as const,
       },
     },
   }
