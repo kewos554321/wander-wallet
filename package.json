@@ -15,7 +15,9 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:push": "prisma db push",
+    "db:export": "export $(grep -E '^DATABASE_URL=' .env | xargs) && echo $DATABASE_URL"
   },
   "dependencies": {
     "@line/liff": "^2.27.3",

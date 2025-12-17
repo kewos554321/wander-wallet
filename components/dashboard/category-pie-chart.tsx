@@ -21,17 +21,21 @@ const CATEGORY_LABELS: Record<string, string> = {
   food: "餐飲",
   transport: "交通",
   accommodation: "住宿",
-  entertainment: "娛樂",
+  ticket: "票券",
   shopping: "購物",
+  entertainment: "娛樂",
+  gift: "禮品",
   other: "其他",
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
   food: "#f97316",
   transport: "#3b82f6",
-  accommodation: "#8b5cf6",
+  accommodation: "#7c3aed",
+  ticket: "#06b6d4",
+  shopping: "#10b981",
   entertainment: "#ec4899",
-  shopping: "#f59e0b",
+  gift: "#f59e0b",
   other: "#64748b",
 }
 

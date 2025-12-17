@@ -399,7 +399,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
                 .map((expense) => (
                 <Link
                   key={expense.id}
-                  href={`/projects/${id}/expenses`}
+                  href={`/projects/${id}/expenses/${expense.id}/edit`}
                   className="flex items-center gap-3 p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 >
                   <div

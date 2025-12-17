@@ -563,9 +563,10 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
               <label className="text-sm font-medium mb-2 block">名稱</label>
               <Input
                 type="text"
-                placeholder="例：小明"
+                placeholder="例：小明（最多15字）"
                 value={newMemberName}
                 onChange={(e) => setNewMemberName(e.target.value)}
+                maxLength={15}
                 disabled={adding}
               />
               {addError && (

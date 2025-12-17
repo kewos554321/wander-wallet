@@ -9,9 +9,13 @@ import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { format } from "date-fns"
+import { zhTW } from "date-fns/locale"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { sendExpenseNotificationToChat } from "@/lib/liff"
-import { Check, Utensils, Car, Home, Gamepad2, ShoppingBag, MoreHorizontal, User, Calculator, Delete, Ticket, Heart, Coffee, Gift } from "lucide-react"
+import { Check, Utensils, Car, Home, Gamepad2, ShoppingBag, MoreHorizontal, User, Calculator, Delete, Ticket, Gift, CalendarIcon } from "lucide-react"
 
 interface Member {
   id: string
@@ -47,6 +51,7 @@ interface Expense {
   amount: number
   description: string | null
   category: string | null
+  expenseDate: string
   paidByMemberId: string
   payer: {
     id: string
@@ -68,14 +73,12 @@ interface ParticipantShare {
 
 const CATEGORIES = [
   { value: "food", label: "餐飲", icon: Utensils, color: "bg-orange-100 text-orange-600 dark:bg-orange-950 dark:text-orange-400" },
-  { value: "drinks", label: "飲品", icon: Coffee, color: "bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400" },
   { value: "transport", label: "交通", icon: Car, color: "bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400" },
-  { value: "accommodation", label: "住宿", icon: Home, color: "bg-purple-100 text-purple-600 dark:bg-purple-950 dark:text-purple-400" },
-  { value: "entertainment", label: "娛樂", icon: Gamepad2, color: "bg-pink-100 text-pink-600 dark:bg-pink-950 dark:text-pink-400" },
+  { value: "accommodation", label: "住宿", icon: Home, color: "bg-violet-100 text-violet-600 dark:bg-violet-950 dark:text-violet-400" },
+  { value: "ticket", label: "票券", icon: Ticket, color: "bg-cyan-100 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400" },
   { value: "shopping", label: "購物", icon: ShoppingBag, color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400" },
-  { value: "ticket", label: "票券", icon: Ticket, color: "bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400" },
-  { value: "gift", label: "禮物", icon: Gift, color: "bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400" },
-  { value: "medical", label: "醫療", icon: Heart, color: "bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400" },
+  { value: "entertainment", label: "娛樂", icon: Gamepad2, color: "bg-pink-100 text-pink-600 dark:bg-pink-950 dark:text-pink-400" },
+  { value: "gift", label: "禮品", icon: Gift, color: "bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400" },
   { value: "other", label: "其他", icon: MoreHorizontal, color: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" },
 ]
 
@@ -97,7 +100,9 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const [description, setDescription] = useState("")
   const [amount, setAmount] = useState("")
   const [category, setCategory] = useState("")
+  const [customCategory, setCustomCategory] = useState("")
   const [paidBy, setPaidBy] = useState("")
+  const [expenseDate, setExpenseDate] = useState<Date>(new Date())
   const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set())
   const [splitMode, setSplitMode] = useState<"equal" | "custom">("equal")
   const [customShares, setCustomShares] = useState<Record<string, string>>({})
@@ -171,8 +176,16 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
 
         setDescription(expense.description || "")
         setAmount(String(expense.amount))
-        setCategory(expense.category || "")
+        // 檢查是否為預設類別，如果不是則設為「其他」並填入自訂值
+        const predefinedCategories = CATEGORIES.map(c => c.value)
+        if (expense.category && !predefinedCategories.includes(expense.category)) {
+          setCategory("other")
+          setCustomCategory(expense.category)
+        } else {
+          setCategory(expense.category || "")
+        }
         setPaidBy(expense.payer.id)
+        setExpenseDate(expense.expenseDate ? new Date(expense.expenseDate) : new Date())
 
         const participantIds = new Set<string>(expense.participants.map(p => p.member.id))
         setSelectedParticipants(participantIds)
@@ -294,6 +307,11 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         ? `/api/projects/${projectId}/expenses`
         : `/api/projects/${projectId}/expenses/${expenseId}`
 
+      // 如果選擇「其他」且有自訂類別，使用自訂類別
+      const finalCategory = category === "other" && customCategory.trim()
+        ? customCategory.trim()
+        : category || null
+
       const res = await authFetch(url, {
         method: mode === "create" ? "POST" : "PUT",
         headers: { "Content-Type": "application/json" },
@@ -301,7 +319,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           paidByMemberId: paidBy,
           amount: amountNum,
           description: description.trim() || null,
-          category: category || null,
+          category: finalCategory,
+          expenseDate: expenseDate.toISOString(),
           participants,
         }),
       })
@@ -321,7 +340,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
             payerName,
             amount: amountNum,
             description: description.trim() || undefined,
-            category: category || undefined,
+            category: finalCategory || undefined,
             participantCount: participants.length,
           }).then((sent) => {
             console.log("[ExpenseForm] 發送結果:", sent)
@@ -541,10 +560,34 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           />
         </div>
 
+        {/* 日期 */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+          <label className="block text-xs font-medium text-muted-foreground mb-2">支出日期</label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-2 text-base w-full text-left"
+              >
+                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                <span>{format(expenseDate, "yyyy/MM/dd (EEEE)", { locale: zhTW })}</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={expenseDate}
+                onSelect={(date) => date && setExpenseDate(date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
         {/* 類別 */}
         <div>
           <label className="block text-sm font-medium mb-3">類別</label>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {CATEGORIES.map((cat) => {
               const Icon = cat.icon
               const isSelected = category === cat.value
@@ -552,8 +595,15 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                 <button
                   key={cat.value}
                   type="button"
-                  onClick={() => setCategory(category === cat.value ? "" : cat.value)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full transition-all ${
+                  onClick={() => {
+                    if (category === cat.value) {
+                      setCategory("")
+                      if (cat.value === "other") setCustomCategory("")
+                    } else {
+                      setCategory(cat.value)
+                    }
+                  }}
+                  className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-full transition-all ${
                     isSelected
                       ? "bg-primary text-primary-foreground shadow-md"
                       : `${cat.color} hover:opacity-80`
@@ -565,6 +615,18 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
               )
             })}
           </div>
+          {category === "other" && (
+            <div className="mt-3">
+              <Input
+                placeholder="輸入自訂類別（最多4字）"
+                value={customCategory}
+                onChange={(e) => setCustomCategory(e.target.value)}
+                maxLength={4}
+                className="h-10"
+                autoFocus
+              />
+            </div>
+          )}
         </div>
 
         {/* 付款人 */}

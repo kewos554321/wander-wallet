@@ -112,7 +112,7 @@ export async function PUT(
     }
 
     const body = await req.json()
-    const { paidByMemberId, amount, description, category, participants } = body
+    const { paidByMemberId, amount, description, category, participants, expenseDate } = body
 
     // 獲取現有費用
     const existingExpense = await prisma.expense.findFirst({
@@ -184,11 +184,13 @@ export async function PUT(
       amount?: number
       description?: string | null
       category?: string | null
+      expenseDate?: Date
     } = {}
     if (paidByMemberId !== undefined) updateData.paidByMemberId = paidByMemberId
     if (amount !== undefined) updateData.amount = Number(amount)
     if (description !== undefined) updateData.description = description?.trim() || null
     if (category !== undefined) updateData.category = category?.trim() || null
+    if (expenseDate !== undefined) updateData.expenseDate = new Date(expenseDate)
 
     await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       if (participants && Array.isArray(participants)) {

@@ -113,7 +113,7 @@ export async function POST(
     }
 
     const body = await req.json()
-    const { paidByMemberId, amount, description, category, participants } = body
+    const { paidByMemberId, amount, description, category, participants, expenseDate } = body
 
     // 驗證必填欄位
     if (!paidByMemberId || !amount || !participants || !Array.isArray(participants)) {
@@ -185,6 +185,7 @@ export async function POST(
         amount: amountNum,
         description: description?.trim() || null,
         category: category?.trim() || null,
+        expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
         participants: {
           create: participants.map((p: Participant) => ({
             memberId: p.memberId,
