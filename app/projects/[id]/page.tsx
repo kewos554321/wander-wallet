@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
 import { StatCard } from "@/components/dashboard/stat-card"
-import { useAuthFetch, useLiff, useBindGroupToProject } from "@/components/auth/liff-provider"
+import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import {
   Plus,
   Share2,
@@ -128,9 +128,6 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true)
   const authFetch = useAuthFetch()
   const { user } = useLiff()
-
-  // 如果從 LINE 群組開啟，自動綁定群組到專案
-  useBindGroupToProject(id)
 
   useEffect(() => {
     if (id) {

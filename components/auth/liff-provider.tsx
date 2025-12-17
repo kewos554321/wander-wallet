@@ -15,7 +15,7 @@ import {
   login as liffLogin,
   logout as liffLogout,
   getAccessToken,
-  getGroupId,
+  isSendMessagesAvailable,
   LiffUser,
 } from "@/lib/liff"
 
@@ -36,7 +36,7 @@ interface LiffContextType {
   isAuthenticated: boolean
   sessionToken: string | null
   isDevMode: boolean
-  lineGroupId: string | null // LINE 群組 ID（如果從群組開啟）
+  canSendMessages: boolean // 是否可以發送訊息到當前聊天室
   login: () => void
   logout: () => void
   refreshSession: () => Promise<void>
@@ -67,7 +67,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
   const [liffProfile, setLiffProfile] = useState<LiffUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [sessionToken, setSessionToken] = useState<string | null>(null)
-  const [lineGroupId, setLineGroupId] = useState<string | null>(null)
+  const [canSendMessages, setCanSendMessages] = useState(false)
 
   const authenticateWithBackend = useCallback(async (accessToken: string) => {
     try {
@@ -128,14 +128,12 @@ export function LiffProvider({ children }: { children: ReactNode }) {
       try {
         await initLiff()
 
-        // 取得 LIFF 開啟環境（檢查是否從群組開啟）
-        const groupId = getGroupId()
-        if (groupId) {
-          setLineGroupId(groupId)
-          console.log("LIFF opened from LINE group:", groupId)
-        }
+        // 檢查 sendMessages API 是否可用
+        const sendMessagesAvailable = isSendMessagesAvailable()
+        setCanSendMessages(sendMessagesAvailable)
 
-        console.log("LIFF initialized, isLoggedIn:", isLoggedIn())
+        console.log("[LIFF] 初始化完成, sendMessages 可用:", sendMessagesAvailable)
+        console.log("[LIFF] isLoggedIn:", isLoggedIn())
 
         if (isLoggedIn()) {
           // 取得 LINE 用戶資料
@@ -203,7 +201,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!user,
     sessionToken,
     isDevMode: DEV_MODE,
-    lineGroupId,
+    canSendMessages,
     login,
     logout,
     refreshSession,
@@ -259,39 +257,3 @@ export function useAuthFetch() {
   return authFetch
 }
 
-/**
- * Custom hook to bind LINE group to a project
- * Should be called when accessing a project page
- */
-export function useBindGroupToProject(projectId: string | null) {
-  const { lineGroupId, sessionToken } = useLiff()
-  const [bound, setBound] = useState(false)
-
-  useEffect(() => {
-    async function bindGroup() {
-      if (!lineGroupId || !projectId || !sessionToken || bound) return
-
-      try {
-        const response = await fetch(`/api/projects/${projectId}/bind-group`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${sessionToken}`,
-          },
-          body: JSON.stringify({ lineGroupId }),
-        })
-
-        if (response.ok) {
-          console.log("Successfully bound LINE group to project")
-          setBound(true)
-        }
-      } catch (error) {
-        console.error("Failed to bind group to project:", error)
-      }
-    }
-
-    bindGroup()
-  }, [lineGroupId, projectId, sessionToken, bound])
-
-  return { lineGroupId, bound }
-}

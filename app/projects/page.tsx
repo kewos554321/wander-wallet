@@ -144,7 +144,8 @@ export default function ProjectsPage() {
     }
   }
 
-  function calculateTotalAmount(expenses: Expense[]): number {
+  function calculateTotalAmount(expenses?: Expense[]): number {
+    if (!expenses || expenses.length === 0) return 0
     return expenses.reduce((sum, expense) => sum + Number(expense.amount), 0)
   }
 
@@ -226,8 +227,8 @@ export default function ProjectsPage() {
             <div className="space-y-3">
               {projects.map((project) => {
                 const totalAmount = calculateTotalAmount(project.expenses)
-                const memberCount = project._count.members || project.members.length
-                const expenseCount = project._count.expenses || project.expenses.length
+                const memberCount = project._count?.members || project.members?.length || 0
+                const expenseCount = project._count?.expenses || project.expenses?.length || 0
                 const perPerson = memberCount > 0 ? totalAmount / memberCount : 0
 
                 // 格式化日期
