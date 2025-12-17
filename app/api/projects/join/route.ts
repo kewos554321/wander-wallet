@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
-// 通過分享碼加入專案
+// 通過專案 ID 或分享碼加入專案（一律建立新成員）
 export async function POST(req: NextRequest) {
   try {
     const authUser = await getAuthUser(req)
@@ -20,54 +20,43 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { shareCode } = body
+    const { projectId, shareCode } = body
 
-    if (!shareCode || typeof shareCode !== "string") {
-      return NextResponse.json({ error: "分享碼必填" }, { status: 400 })
+    // 支援兩種方式：projectId 或 shareCode
+    let project
+    if (projectId) {
+      project = await prisma.project.findUnique({
+        where: { id: projectId },
+        include: {
+          members: true,
+        },
+      })
+    } else if (shareCode) {
+      project = await prisma.project.findUnique({
+        where: { shareCode: shareCode.toUpperCase().trim() },
+        include: {
+          members: true,
+        },
+      })
+    } else {
+      return NextResponse.json({ error: "專案 ID 或分享碼必填" }, { status: 400 })
     }
-
-    // 查找專案（包含完整資料以避免重複查詢）
-    const project = await prisma.project.findUnique({
-      where: { shareCode: shareCode.toUpperCase().trim() },
-      include: {
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                image: true,
-              },
-            },
-          },
-        },
-      },
-    })
 
     if (!project) {
-      return NextResponse.json({ error: "無效的分享碼" }, { status: 404 })
+      return NextResponse.json({ error: "專案不存在" }, { status: 404 })
     }
 
-    // 檢查是否已經是成員（已綁定帳號的成員）
+    // 檢查是否已經是成員
     const isAlreadyMember = project.members.some(
-      (member: { userId: string | null }) => member.userId === authUser.id
+      (member) => member.userId === authUser.id
     )
 
-    // 如果已是成員，返回專案資訊讓前端直接跳轉
     if (isAlreadyMember) {
       return NextResponse.json({ id: project.id, alreadyMember: true }, { status: 200 })
     }
 
-    // 加入專案並返回新成員資料
-    const newMember = await prisma.projectMember.create({
+    // 建立新成員
+    await prisma.projectMember.create({
       data: {
         projectId: project.id,
         userId: authUser.id,
@@ -75,25 +64,9 @@ export async function POST(req: NextRequest) {
         role: "member",
         claimedAt: new Date(),
       },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-          },
-        },
-      },
     })
 
-    // 重用第一次查詢的資料，加入新成員後返回（避免重複查詢）
-    const updatedProject = {
-      ...project,
-      members: [...project.members, newMember],
-    }
-
-    return NextResponse.json(updatedProject, { status: 201 })
+    return NextResponse.json({ id: project.id, joined: true }, { status: 201 })
   } catch (error) {
     console.error("加入專案錯誤:", error)
     return NextResponse.json(

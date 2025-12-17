@@ -104,3 +104,4 @@ model ExpenseParticipant {
   @@unique([expenseId, memberId])
   @@map("expense_participants")
 }
+

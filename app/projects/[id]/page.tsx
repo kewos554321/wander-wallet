@@ -31,6 +31,14 @@ import {
   StickyNote,
 } from "lucide-react"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { getProjectShareUrl } from "@/lib/utils"
 
@@ -129,6 +137,11 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
   const authFetch = useAuthFetch()
   const { user } = useLiff()
 
+  // 非成員加入相關狀態
+  const [showJoinDialog, setShowJoinDialog] = useState(false)
+  const [projectBasicInfo, setProjectBasicInfo] = useState<{ name: string; description: string | null } | null>(null)
+  const [joining, setJoining] = useState(false)
+
   useEffect(() => {
     if (id) {
       fetchProject()
@@ -147,6 +160,16 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
         return
       }
       const data = await res.json()
+
+      // 檢查是否為成員
+      if (data.isMember === false) {
+        // 非成員，顯示加入 Dialog
+        setProjectBasicInfo({ name: data.name, description: data.description })
+        setShowJoinDialog(true)
+        setLoading(false)
+        return
+      }
+
       setProject(data)
     } catch {
       console.error("獲取專案錯誤")
@@ -155,15 +178,43 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
     }
   }
 
+  async function handleJoinProject() {
+    setJoining(true)
+    try {
+      const res = await authFetch("/api/projects/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: id }),
+      })
+
+      if (res.ok) {
+        setShowJoinDialog(false)
+        // 重新獲取完整專案資料
+        const projectRes = await authFetch(`/api/projects/${id}`)
+        if (projectRes.ok) {
+          const data = await projectRes.json()
+          setProject(data)
+        }
+      } else {
+        const data = await res.json()
+        alert(data.error || "加入失敗")
+      }
+    } catch {
+      alert("加入失敗")
+    } finally {
+      setJoining(false)
+    }
+  }
+
   async function handleShare() {
     if (!project) return
-    const shareUrl = getProjectShareUrl(project.shareCode)
+    const shareUrl = getProjectShareUrl(project.id)
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `加入 ${project.name}`,
-          text: `分享碼：${project.shareCode}`,
+          title: `加入「${project.name}」`,
+          text: "點擊連結加入旅行專案",
           url: shareUrl,
         })
       } catch {
@@ -171,7 +222,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
       }
     } else {
       await navigator.clipboard.writeText(shareUrl)
-      alert(`已複製分享連結`)
+      alert("已複製分享連結")
     }
   }
 
@@ -207,10 +258,48 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
     )
   }
 
+  // 顯示加入 Dialog（非成員）
+  if (showJoinDialog && projectBasicInfo) {
+    return (
+      <AppLayout title={projectBasicInfo.name} showBack>
+        <Dialog open={showJoinDialog} onOpenChange={() => router.push("/projects")}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>加入「{projectBasicInfo.name}」</DialogTitle>
+              <DialogDescription>
+                你將以新成員身份加入此專案
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-sm text-muted-foreground">
+                加入後可以查看支出記錄、新增支出，並參與分帳。
+              </p>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => router.push("/projects")}
+                disabled={joining}
+              >
+                取消
+              </Button>
+              <Button
+                onClick={handleJoinProject}
+                disabled={joining}
+              >
+                {joining ? "加入中..." : "確認加入"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </AppLayout>
+    )
+  }
+
   if (!project) {
     return (
       <AppLayout title="專案不存在" showBack>
-        <div className="text-center py-8 text-muted-foreground">專案不存在或無權限訪問</div>
+        <div className="text-center py-8 text-muted-foreground">專案不存在</div>
       </AppLayout>
     )
   }

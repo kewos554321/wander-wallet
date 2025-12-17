@@ -119,23 +119,22 @@ export default function ProjectsPage() {
     }
   }
 
-  async function handleShare(shareCode: string) {
-    const shareUrl = getProjectShareUrl(shareCode)
+  async function handleShare(projectId: string, projectName: string) {
+    const shareUrl = getProjectShareUrl(projectId)
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "加入我的旅行專案",
-          text: "透過分享碼加入這個旅行專案",
+          title: `加入「${projectName}」`,
+          text: "點擊連結加入旅行專案",
           url: shareUrl,
         })
       } catch {
         // 用戶取消分享
       }
     } else {
-      // 複製到剪貼板
       await navigator.clipboard.writeText(shareUrl)
-      alert(`分享連結已複製：${shareCode}`)
+      alert("分享連結已複製")
     }
   }
 
@@ -276,7 +275,7 @@ export default function ProjectsPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShare(project.shareCode) }}>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShare(project.id, project.name) }}>
                                 <Share2 className="h-4 w-4 mr-2" />
                                 分享專案
                               </DropdownMenuItem>
@@ -357,7 +356,7 @@ export default function ProjectsPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShare(project.shareCode) }}>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShare(project.id, project.name) }}>
                                 <Share2 className="h-4 w-4 mr-2" />
                                 分享專案
                               </DropdownMenuItem>

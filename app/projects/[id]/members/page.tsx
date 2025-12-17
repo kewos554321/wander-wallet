@@ -39,6 +39,7 @@ interface Project {
   id: string
   name: string
   shareCode: string
+  createdBy: string
   creator: {
     id: string
     name: string | null
@@ -62,7 +63,6 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
   const [newMemberName, setNewMemberName] = useState("")
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState("")
-  const [claiming, setClaiming] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set())
   const [batchMode, setBatchMode] = useState(false)
@@ -91,7 +91,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
 
   async function handleCopyLink() {
     if (!project) return
-    const shareUrl = getProjectShareUrl(project.shareCode)
+    const shareUrl = getProjectShareUrl(project.id)
     await navigator.clipboard.writeText(shareUrl)
     setCopiedType("link")
     setTimeout(() => setCopiedType(null), 2000)
@@ -106,13 +106,13 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
 
   async function handleShare() {
     if (!project) return
-    const shareUrl = getProjectShareUrl(project.shareCode)
+    const shareUrl = getProjectShareUrl(project.id)
 
     if (navigator.share) {
       try {
         await navigator.share({
           title: `加入「${project.name}」`,
-          text: `使用分享碼 ${project.shareCode} 加入旅行專案`,
+          text: "點擊連結加入旅行專案",
           url: shareUrl,
         })
       } catch {
@@ -172,30 +172,6 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
       alert("移除失敗")
     } finally {
       setRemoving(null)
-    }
-  }
-
-  async function handleClaimMember(memberId: string) {
-    if (!confirm("確定要認領這個身份嗎？認領後此成員的所有費用記錄將與你的帳號關聯。")) return
-
-    setClaiming(memberId)
-    try {
-      const res = await authFetch(`/api/projects/${id}/members/claim`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId }),
-      })
-
-      if (res.ok) {
-        fetchProject()
-      } else {
-        const data = await res.json()
-        alert(data.error || "認領失敗")
-      }
-    } catch {
-      alert("認領失敗")
-    } finally {
-      setClaiming(null)
     }
   }
 
@@ -281,8 +257,8 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
     )
   }
 
-  const isOwner = project.creator?.id === user?.id
-  const shareUrl = getProjectShareUrl(project.shareCode)
+  const isOwner = project.createdBy === user?.id || project.creator?.id === user?.id
+  const shareUrl = getProjectShareUrl(project.id)
 
   // 過濾成員（搜尋）
   const filteredMembers = project.members.filter(member => {
@@ -389,7 +365,6 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
             ) : filteredMembers.map((member) => {
                 const isUnclaimed = !member.userId
                 const isCurrentUser = member.user?.id === user?.id
-                const canClaim = isUnclaimed && !project.members.some(m => m.user?.id === user?.id)
                 const avatarData = parseAvatarString(member.user?.image)
                 const isCustomAvatar = avatarData !== null
                 const hasExternalImage = member.user?.image && !member.user.image.startsWith("avatar:")
@@ -461,20 +436,10 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
                         )}
                       </div>
                       <div className="text-sm text-muted-foreground truncate">
-                        {member.user?.email || '等待認領...'}
+                        {member.user?.email || ''}
                       </div>
                     </div>
                     <div className="flex gap-1">
-                      {canClaim && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleClaimMember(member.id)}
-                          disabled={claiming === member.id}
-                        >
-                          {claiming === member.id ? "認領中..." : "認領"}
-                        </Button>
-                      )}
                       {isOwner && !isCurrentUser && (
                         <Button
                           variant="ghost"
@@ -622,6 +587,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </AppLayout>
   )
 }

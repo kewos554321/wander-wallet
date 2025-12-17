@@ -18,9 +18,9 @@ export function getShareBaseUrl(): string {
 }
 
 /**
- * 產生專案分享連結
+ * 產生專案分享連結（直接連到專案頁面）
  */
-export function getProjectShareUrl(shareCode: string): string {
+export function getProjectShareUrl(projectId: string): string {
   const baseUrl = getShareBaseUrl()
-  return `${baseUrl}/projects/join?code=${shareCode}`
+  return `${baseUrl}/projects/${projectId}`
 }

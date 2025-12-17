@@ -14,15 +14,9 @@ export async function GET(
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
-    const project = await prisma.project.findFirst({
-      where: {
-        id: id,
-        members: {
-          some: {
-            userId: authUser.id,
-          },
-        },
-      },
+    // 先查詢專案基本資訊
+    const project = await prisma.project.findUnique({
+      where: { id },
       include: {
         creator: {
           select: {
@@ -79,10 +73,35 @@ export async function GET(
     })
 
     if (!project) {
-      return NextResponse.json({ error: "專案不存在或無權限訪問" }, { status: 404 })
+      return NextResponse.json({ error: "專案不存在" }, { status: 404 })
     }
 
-    return NextResponse.json(project)
+    // 檢查用戶是否為專案成員
+    const isMember = project.members.some(
+      (member) => member.userId === authUser.id
+    )
+
+    if (isMember) {
+      // 是成員，返回完整資料
+      return NextResponse.json({ ...project, isMember: true })
+    } else {
+      // 非成員，只返回基本資訊（用於加入流程）
+      const unclaimedMembers = project.members
+        .filter((member) => !member.userId)
+        .map((member) => ({
+          id: member.id,
+          displayName: member.displayName,
+        }))
+
+      return NextResponse.json({
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        isMember: false,
+        unclaimedMembers,
+        memberCount: project._count.members,
+      })
+    }
   } catch (error: unknown) {
     const prismaError = error as { message?: string; code?: string; meta?: unknown }
     console.error("獲取專案錯誤:", {
