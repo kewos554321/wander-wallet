@@ -89,16 +89,24 @@ export function CoverPicker({ value, onChange, disabled }: CoverPickerProps) {
           style={{ background: presetCover.gradient }}
         >
           <span className="text-4xl">{presetCover.emoji}</span>
-          <button
-            type="button"
+          <div
+            role="button"
+            tabIndex={0}
             onClick={(e) => {
               e.stopPropagation()
               handleRemove()
             }}
-            className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white transition-colors"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                e.stopPropagation()
+                handleRemove()
+              }
+            }}
+            className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white transition-colors cursor-pointer"
           >
             <X className="h-3.5 w-3.5" />
-          </button>
+          </div>
         </div>
       )
     }
@@ -112,16 +120,24 @@ export function CoverPicker({ value, onChange, disabled }: CoverPickerProps) {
             fill
             className="object-cover"
           />
-          <button
-            type="button"
+          <div
+            role="button"
+            tabIndex={0}
             onClick={(e) => {
               e.stopPropagation()
               handleRemove()
             }}
-            className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white transition-colors"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                e.stopPropagation()
+                handleRemove()
+              }
+            }}
+            className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white transition-colors cursor-pointer"
           >
             <X className="h-3.5 w-3.5" />
-          </button>
+          </div>
         </div>
       )
     }

@@ -423,7 +423,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
                         )}
                         {isUnclaimed && (
                           <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
-                            未認領
+                            佔位成員
                           </span>
                         )}
                       </div>
@@ -497,7 +497,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
           <DialogHeader>
             <DialogTitle>新增成員</DialogTitle>
             <DialogDescription>
-              輸入成員名稱，之後他們可以透過分享連結加入並認領身份
+              建立佔位成員，可用於記錄尚未加入或不使用 App 的旅伴支出
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleAddMember} className="space-y-4">

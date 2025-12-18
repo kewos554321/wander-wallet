@@ -410,7 +410,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
                 <p className="font-medium">餘額 = 你付的錢 − 你應付的錢</p>
                 <p className="text-slate-400 mt-1.5">正數 = 有人欠你錢</p>
                 <p className="text-slate-400">負數 = 你欠別人錢</p>
-                <p className="text-slate-400 mt-1.5 text-[10px]">若顯示 $0，可能是你不在支出的分攤名單中，或帳號尚未認領成員</p>
+                <p className="text-slate-400 mt-1.5 text-[10px]">若顯示 $0，可能是你不在支出的分攤名單中，或帳號尚未綁定佔位成員</p>
               </TooltipContent>
             </Tooltip>
           </div>
