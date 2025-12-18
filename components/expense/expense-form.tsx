@@ -941,7 +941,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
 
         {/* 固定在底部的按鈕 */}
         {!showCalculator && (
-          <div className="fixed bottom-14 left-0 right-0 p-4 bg-background/95 backdrop-blur border-t border-slate-200 dark:border-slate-800">
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur border-t border-slate-200 dark:border-slate-800">
             <div className="max-w-screen-2xl mx-auto flex gap-3">
               <Link href={backHref} className="flex-1">
                 <Button type="button" variant="outline" className="w-full h-12">
