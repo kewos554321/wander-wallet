@@ -773,7 +773,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
               沒有成員，請先新增成員
             </p>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {members.map((member) => {
                 const avatarData = parseAvatarString(member.user?.image)
                 const hasExternalImage = member.user?.image && !member.user.image.startsWith("avatar:")
@@ -783,7 +783,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                     key={member.id}
                     type="button"
                     onClick={() => setPaidBy(member.id)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all ${
                       isSelected
                         ? "bg-primary text-primary-foreground shadow-md"
                         : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-primary/50"
@@ -791,27 +791,27 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                   >
                     {avatarData ? (
                       <div
-                        className="h-6 w-6 rounded-full flex items-center justify-center"
+                        className="h-5 w-5 rounded-full flex items-center justify-center"
                         style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.3)' : getAvatarColor(avatarData.colorId) }}
                       >
-                        {(() => { const Icon = getAvatarIcon(avatarData.iconId); return <Icon className="h-3 w-3 text-white" /> })()}
+                        {(() => { const Icon = getAvatarIcon(avatarData.iconId); return <Icon className="h-2.5 w-2.5 text-white" /> })()}
                       </div>
                     ) : (
-                      <div className={`h-6 w-6 rounded-full flex items-center justify-center overflow-hidden ${isSelected ? 'bg-white/30' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                      <div className={`h-5 w-5 rounded-full flex items-center justify-center overflow-hidden ${isSelected ? 'bg-white/30' : 'bg-slate-100 dark:bg-slate-800'}`}>
                         {hasExternalImage ? (
                           <Image
                             src={member.user!.image!}
                             alt={member.displayName}
-                            width={24}
-                            height={24}
+                            width={20}
+                            height={20}
                             className="rounded-full object-cover"
                           />
                         ) : (
-                          <User className={`h-3 w-3 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
+                          <User className={`h-2.5 w-2.5 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
                         )}
                       </div>
                     )}
-                    <span className="text-sm font-medium">{member.displayName}</span>
+                    <span className="text-xs font-medium">{member.displayName}</span>
                   </button>
                 )
               })}
