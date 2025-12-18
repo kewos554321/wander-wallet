@@ -1,28 +1,30 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useMemo } from "react"
 import { useLiff } from "@/components/auth/liff-provider"
 import liff from "@line/liff"
 
 export default function LiffDebugPage() {
   const { user, liffProfile, isLoading, isAuthenticated, isDevMode, canSendMessages } = useLiff()
-  const [liffContext, setLiffContext] = useState<Record<string, unknown> | null>(null)
-  const [liffOs, setLiffOs] = useState<string | undefined>(undefined)
-  const [isInClient, setIsInClient] = useState<boolean | null>(null)
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
 
-  useEffect(() => {
-    if (!isDevMode && !isLoading) {
-      try {
-        setLiffContext(liff.getContext() as Record<string, unknown> | null)
-        setLiffOs(liff.getOS())
-        setIsInClient(liff.isInClient())
-        setIsLoggedIn(liff.isLoggedIn())
-      } catch (e) {
-        console.error("Failed to get LIFF info:", e)
+  // 使用 useMemo 來獲取 LIFF 資訊，避免在 effect 中 setState
+  const liffInfo = useMemo(() => {
+    if (isDevMode || isLoading) {
+      return { context: null, os: undefined, inClient: null, loggedIn: null }
+    }
+    try {
+      return {
+        context: liff.getContext() as Record<string, unknown> | null,
+        os: liff.getOS(),
+        inClient: liff.isInClient(),
+        loggedIn: liff.isLoggedIn(),
       }
+    } catch {
+      return { context: null, os: undefined, inClient: null, loggedIn: null }
     }
   }, [isDevMode, isLoading])
+
+  const { context: liffContext, os: liffOs, inClient: isInClient, loggedIn: isLoggedIn } = liffInfo
 
   if (isLoading) {
     return (

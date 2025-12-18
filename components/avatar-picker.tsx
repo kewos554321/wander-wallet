@@ -110,8 +110,8 @@ export function AvatarPicker({
   const [selectedIcon, setSelectedIcon] = useState(currentIcon)
   const [selectedColor, setSelectedColor] = useState(currentColor)
 
-  const SelectedIconComponent = getAvatarIcon(selectedIcon)
   const selectedColorHex = getAvatarColor(selectedColor)
+  const selectedIconData = AVATAR_ICONS.find((i) => i.id === selectedIcon)
 
   function handleSave() {
     onSelect(selectedIcon, selectedColor)
@@ -131,7 +131,7 @@ export function AvatarPicker({
               className="size-24 rounded-full flex items-center justify-center"
               style={{ backgroundColor: selectedColorHex }}
             >
-              <SelectedIconComponent className="size-12 text-white" />
+              {selectedIconData && <selectedIconData.icon className="size-12 text-white" />}
             </div>
           </div>
 
@@ -210,8 +210,12 @@ export function AvatarDisplay({
     return null
   }
 
-  const Icon = getAvatarIcon(parsed.iconId)
+  const iconData = AVATAR_ICONS.find((i) => i.id === parsed.iconId)
   const colorHex = getAvatarColor(parsed.colorId)
+
+  if (!iconData) {
+    return null
+  }
 
   const sizeClasses = {
     sm: "size-10",
@@ -230,7 +234,7 @@ export function AvatarDisplay({
       className={`${sizeClasses[size]} rounded-full flex items-center justify-center ${className}`}
       style={{ backgroundColor: colorHex }}
     >
-      <Icon className={`${iconSizes[size]} text-white`} />
+      <iconData.icon className={`${iconSizes[size]} text-white`} />
     </div>
   )
 }

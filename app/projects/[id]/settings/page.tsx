@@ -4,7 +4,7 @@ import { use } from "react"
 import Link from "next/link"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
-import { Settings, Image, Calendar, FileText, Trash2, ArrowLeft } from "lucide-react"
+import { Settings, ImageIcon, Calendar, FileText, Trash2, ArrowLeft } from "lucide-react"
 
 export default function SettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -39,7 +39,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                 <span><strong>專案名稱</strong> - 修改專案名稱，讓標題更清楚</span>
               </li>
               <li className="flex items-start gap-3">
-                <Image className="h-5 w-5 text-pink-500 shrink-0 mt-0.5" />
+                <ImageIcon className="h-5 w-5 text-pink-500 shrink-0 mt-0.5" />
                 <span><strong>專案封面</strong> - 設定專案封面圖片，一眼辨識不同旅程</span>
               </li>
               <li className="flex items-start gap-3">
