@@ -76,6 +76,7 @@ model Expense {
   amount      Decimal  @db.Decimal(10, 2)
   description String?
   category    String?
+  image       String?  @db.Text // 收據/消費圖片：base64 data URL
   expenseDate DateTime @default(now()) @map("expense_date")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")

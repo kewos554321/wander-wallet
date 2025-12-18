@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
@@ -15,7 +15,7 @@ import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { sendExpenseNotificationToChat } from "@/lib/liff"
-import { Check, Utensils, Car, Home, Gamepad2, ShoppingBag, MoreHorizontal, User, Calculator, Delete, Ticket, Gift, CalendarIcon } from "lucide-react"
+import { Check, Utensils, Car, Home, Gamepad2, ShoppingBag, MoreHorizontal, User, Calculator, Delete, Ticket, Gift, CalendarIcon, ImagePlus, X } from "lucide-react"
 
 interface Member {
   id: string
@@ -51,6 +51,7 @@ interface Expense {
   amount: number
   description: string | null
   category: string | null
+  image: string | null
   expenseDate: string
   paidByMemberId: string
   payer: {
@@ -106,6 +107,11 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set())
   const [splitMode, setSplitMode] = useState<"equal" | "custom">("equal")
   const [customShares, setCustomShares] = useState<Record<string, string>>({})
+
+  // 圖片上傳相關狀態
+  const [image, setImage] = useState<string | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // LINE 通知相關狀態
   const [notifyLine, setNotifyLine] = useState(true)
@@ -176,6 +182,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
 
         setDescription(expense.description || "")
         setAmount(String(expense.amount))
+        setImage(expense.image || null)
         // 檢查是否為預設類別，如果不是則設為「其他」並填入自訂值
         const predefinedCategories = CATEGORIES.map(c => c.value)
         if (expense.category && !predefinedCategories.includes(expense.category)) {
@@ -320,6 +327,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           amount: amountNum,
           description: description.trim() || null,
           category: finalCategory,
+          image: image || null,
           expenseDate: expenseDate.toISOString(),
           participants,
         }),
@@ -424,6 +432,47 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       setShowCalculator(false)
       setCalcExpression("")
       setCalcResult(null)
+    }
+  }
+
+  // 圖片上傳處理
+  async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // 驗證檔案類型
+    if (!file.type.startsWith("image/")) {
+      alert("請選擇圖片檔案")
+      return
+    }
+
+    // 限制檔案大小 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("圖片大小不能超過 5MB")
+      return
+    }
+
+    setUploadingImage(true)
+
+    try {
+      // 壓縮並轉換為 base64
+      const compressedBase64 = await compressImage(file, 1200, 1200, 0.8)
+      setImage(compressedBase64)
+    } catch (error) {
+      console.error("圖片處理失敗:", error)
+      alert("圖片處理失敗，請重試")
+    } finally {
+      setUploadingImage(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+    }
+  }
+
+  function handleRemoveImage() {
+    setImage(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
     }
   }
 
@@ -623,6 +672,56 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                 autoFocus
               />
             </div>
+          )}
+        </div>
+
+        {/* 收據/消費圖片 */}
+        <div>
+          <label className="block text-sm font-medium mb-3">收據/消費圖片（選填）</label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageSelect}
+            className="hidden"
+          />
+          {image ? (
+            <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+              <Image
+                src={image}
+                alt="消費圖片"
+                width={400}
+                height={300}
+                className="w-full h-auto max-h-48 object-contain bg-slate-50 dark:bg-slate-900"
+              />
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingImage}
+              className="w-full h-32 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary/50 dark:hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground"
+            >
+              {uploadingImage ? (
+                <>
+                  <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm">處理中...</span>
+                </>
+              ) : (
+                <>
+                  <ImagePlus className="h-6 w-6" />
+                  <span className="text-sm">點擊上傳圖片</span>
+                  <span className="text-xs text-muted-foreground">支援 JPG、PNG，最大 5MB</span>
+                </>
+              )}
+            </button>
           )}
         </div>
 
@@ -858,4 +957,47 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       </form>
     </AppLayout>
   )
+}
+
+// 壓縮圖片並轉為 base64
+async function compressImage(
+  file: File,
+  maxWidth: number,
+  maxHeight: number,
+  quality: number
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = document.createElement("img")
+      img.onload = () => {
+        const canvas = document.createElement("canvas")
+        let { width, height } = img
+
+        // 計算縮放比例
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height)
+          width = Math.round(width * ratio)
+          height = Math.round(height * ratio)
+        }
+
+        canvas.width = width
+        canvas.height = height
+
+        const ctx = canvas.getContext("2d")
+        if (!ctx) {
+          reject(new Error("無法取得 canvas context"))
+          return
+        }
+
+        ctx.drawImage(img, 0, 0, width, height)
+        const base64 = canvas.toDataURL("image/jpeg", quality)
+        resolve(base64)
+      }
+      img.onerror = () => reject(new Error("圖片載入失敗"))
+      img.src = e.target?.result as string
+    }
+    reader.onerror = () => reject(new Error("檔案讀取失敗"))
+    reader.readAsDataURL(file)
+  })
 }

@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Trash2, User, Utensils, Car, Home, Gamepad2, ShoppingBag, MoreHorizontal, Coffee, Ticket, Gift, Heart, Receipt, CheckSquare, X } from "lucide-react"
+import { Plus, Trash2, User, Utensils, Car, Home, Gamepad2, ShoppingBag, MoreHorizontal, Coffee, Ticket, Gift, Heart, Receipt, CheckSquare, X, ImageIcon } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { useAuthFetch } from "@/components/auth/liff-provider"
@@ -41,6 +41,7 @@ interface Expense {
   amount: number
   description: string | null
   category: string | null
+  image: string | null
   createdAt: string
   payer: Member
   participants: ExpenseParticipant[]
@@ -55,6 +56,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState(false)
+  const [viewingImage, setViewingImage] = useState<string | null>(null)
   const authFetch = useAuthFetch()
 
   useEffect(() => {
@@ -330,7 +332,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                             </p>
                           </div>
 
-                          {/* 第二行：付款人 + 類別 + 時間 */}
+                          {/* 第二行：付款人 + 類別 + 圖片標記 + 時間 */}
                           <div className="flex items-center gap-2 mt-1.5 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               {(() => {
@@ -369,6 +371,22 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                             {categoryInfo && (
                               <>
                                 <span>{categoryInfo.label}</span>
+                                <span className="text-slate-300 dark:text-slate-600">·</span>
+                              </>
+                            )}
+                            {expense.image && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    setViewingImage(expense.image)
+                                  }}
+                                  className="flex items-center gap-0.5 text-primary hover:text-primary/80 transition-colors"
+                                >
+                                  <ImageIcon className="h-3.5 w-3.5" />
+                                </button>
                                 <span className="text-slate-300 dark:text-slate-600">·</span>
                               </>
                             )}
@@ -522,6 +540,26 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
               {deleting ? "刪除中..." : `刪除 ${selectedIds.size} 筆`}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 圖片檢視對話框 */}
+      <Dialog open={!!viewingImage} onOpenChange={() => setViewingImage(null)}>
+        <DialogContent className="max-w-3xl p-2">
+          <DialogHeader className="sr-only">
+            <DialogTitle>消費圖片</DialogTitle>
+          </DialogHeader>
+          {viewingImage && (
+            <div className="relative w-full">
+              <Image
+                src={viewingImage}
+                alt="消費圖片"
+                width={800}
+                height={600}
+                className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
