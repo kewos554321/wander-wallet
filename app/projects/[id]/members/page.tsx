@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { User, Copy, Share2, UserMinus, Check, UserPlus, Search, Trash2, X, CheckSquare } from "lucide-react"
+import { User, Copy, Share2, UserMinus, Check, UserPlus, Search, Trash2, X, CheckSquare, MessageCircle, Link2, MoreHorizontal } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { getProjectShareUrl } from "@/lib/utils"
@@ -58,6 +58,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
   const [showInvite, setShowInvite] = useState(false)
   const [showAddMember, setShowAddMember] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [canNativeShare, setCanNativeShare] = useState(false)
   const [removing, setRemoving] = useState<string | null>(null)
   const [newMemberName, setNewMemberName] = useState("")
   const [adding, setAdding] = useState(false)
@@ -66,6 +67,10 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set())
   const [batchMode, setBatchMode] = useState(false)
   const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState(false)
+
+  useEffect(() => {
+    setCanNativeShare(typeof navigator !== "undefined" && !!navigator.share)
+  }, [])
 
   useEffect(() => {
     fetchProject()
@@ -96,7 +101,15 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
     setTimeout(() => setCopied(false), 2000)
   }
 
-  async function handleShare() {
+  function handleShareToLine() {
+    if (!project) return
+    const shareUrl = getProjectShareUrl(project.id)
+    const text = `一起來分帳吧！加入「${project.name}」\n${shareUrl}`
+    const lineShareUrl = `https://line.me/R/share?text=${encodeURIComponent(text)}`
+    window.open(lineShareUrl, "_blank")
+  }
+
+  async function handleNativeShare() {
     if (!project) return
     const shareUrl = getProjectShareUrl(project.id)
 
@@ -457,30 +470,50 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
           <DialogHeader>
             <DialogTitle>邀請成員加入</DialogTitle>
             <DialogDescription>
-              分享以下連結給你的朋友
+              選擇分享方式邀請朋友加入專案
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {/* 分享連結 */}
-            <div>
-              <label className="text-sm font-medium mb-2 block">分享連結</label>
-              <div className="flex gap-2">
-                <Input
-                  value={shareUrl}
-                  readOnly
-                  className="text-sm"
-                />
-                <Button variant="outline" onClick={handleCopyLink}>
-                  {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
+            {/* 平台分享按鈕 */}
+            <div className={`grid gap-3 ${canNativeShare ? "grid-cols-3" : "grid-cols-2"}`}>
+              <button
+                onClick={handleShareToLine}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                <div className="h-12 w-12 rounded-full bg-[#06C755] flex items-center justify-center">
+                  <MessageCircle className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-sm font-medium">LINE</span>
+              </button>
+
+              <button
+                onClick={handleCopyLink}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                <div className="h-12 w-12 rounded-full bg-slate-500 flex items-center justify-center">
+                  {copied ? <Check className="h-6 w-6 text-white" /> : <Link2 className="h-6 w-6 text-white" />}
+                </div>
+                <span className="text-sm font-medium">{copied ? "已複製" : "複製連結"}</span>
+              </button>
+
+              {canNativeShare && (
+                <button
+                  onClick={handleNativeShare}
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center">
+                    <MoreHorizontal className="h-6 w-6 text-white" />
+                  </div>
+                  <span className="text-sm font-medium">更多</span>
+                </button>
+              )}
             </div>
 
-            {/* 分享按鈕 */}
-            <Button className="w-full" onClick={handleShare}>
-              <Share2 className="h-4 w-4 mr-2" />
-              分享給朋友
-            </Button>
+            {/* 連結預覽 */}
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">分享連結</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300 break-all">{shareUrl}</p>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
