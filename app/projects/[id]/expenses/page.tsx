@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Trash2, User, Utensils, Car, Home, Gamepad2, ShoppingBag, Wallet, Coffee, Ticket, Gift, Heart, Receipt, CheckSquare, X, ImageIcon, Search, Filter, ChevronDown } from "lucide-react"
+import { Plus, Trash2, User, Utensils, Car, Home, Gamepad2, ShoppingBag, Wallet, Coffee, Ticket, Gift, Heart, Receipt, CheckSquare, X, ImageIcon, Search, Filter, ChevronDown, MapPin } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +52,9 @@ interface Expense {
   description: string | null
   category: string | null
   image: string | null
+  location: string | null
+  latitude: number | null
+  longitude: number | null
   expenseDate: string
   createdAt: string
   payer: Member
@@ -654,6 +657,18 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                           <div className="text-xs text-muted-foreground mt-0.5">
                             建立 {formatCreatedDate(expense.createdAt)}
                           </div>
+
+                          {/* 第四行：位置（如果有） */}
+                          {expense.location && (
+                            <div className="flex items-start gap-1 mt-1.5">
+                              <MapPin className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+                              <span className="text-xs text-muted-foreground line-clamp-1">
+                                {expense.location.length > 40
+                                  ? expense.location.substring(0, 40) + "..."
+                                  : expense.location}
+                              </span>
+                            </div>
+                          )}
 
                           {/* 圖片縮圖 - 絕對定位右下角 */}
                           {expense.image && (

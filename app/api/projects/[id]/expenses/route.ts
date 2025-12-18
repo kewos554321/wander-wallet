@@ -111,7 +111,7 @@ export async function POST(
     }
 
     const body = await req.json()
-    const { paidByMemberId, amount, description, category, image, participants, expenseDate } = body
+    const { paidByMemberId, amount, description, category, image, location, latitude, longitude, participants, expenseDate } = body
 
     // 驗證必填欄位
     if (!paidByMemberId || amount === undefined || amount === null || !participants || !Array.isArray(participants)) {
@@ -184,6 +184,9 @@ export async function POST(
         description: description?.trim() || null,
         category: category?.trim() || null,
         image: image || null,
+        location: location?.trim() || null,
+        latitude: latitude ? Number(latitude) : null,
+        longitude: longitude ? Number(longitude) : null,
         expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
         participants: {
           create: participants.map((p: Participant) => ({

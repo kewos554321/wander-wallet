@@ -15,6 +15,7 @@ import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { sendExpenseNotificationToChat } from "@/lib/liff"
+import { LocationPicker } from "@/components/location-picker"
 import { Check, Utensils, Car, Home, Gamepad2, ShoppingBag, Wallet, User, Calculator, Delete, Ticket, Gift, CalendarIcon, ImagePlus, X } from "lucide-react"
 
 interface Member {
@@ -52,6 +53,9 @@ interface Expense {
   description: string | null
   category: string | null
   image: string | null
+  location: string | null
+  latitude: number | null
+  longitude: number | null
   expenseDate: string
   paidByMemberId: string
   payer: {
@@ -112,6 +116,13 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const [image, setImage] = useState<string | null>(null)
   const [uploadingImage, setUploadingImage] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // 位置相關狀態
+  const [locationData, setLocationData] = useState<{
+    location: string | null
+    latitude: number | null
+    longitude: number | null
+  }>({ location: null, latitude: null, longitude: null })
 
   // LINE 通知相關狀態
   const [notifyLine, setNotifyLine] = useState(true)
@@ -183,6 +194,11 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         setDescription(expense.description || "")
         setAmount(String(expense.amount))
         setImage(expense.image || null)
+        setLocationData({
+          location: expense.location || null,
+          latitude: expense.latitude || null,
+          longitude: expense.longitude || null,
+        })
         // 檢查是否為預設類別，如果不是則設為「其他」並填入自訂值
         const predefinedCategories = CATEGORIES.map(c => c.value)
         if (expense.category && !predefinedCategories.includes(expense.category)) {
@@ -328,6 +344,9 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           description: description.trim() || null,
           category: finalCategory,
           image: image || null,
+          location: locationData.location,
+          latitude: locationData.latitude,
+          longitude: locationData.longitude,
           expenseDate: expenseDate.toISOString(),
           participants,
         }),
@@ -735,6 +754,15 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
               )}
             </button>
           )}
+        </div>
+
+        {/* 消費地點 */}
+        <div>
+          <label className="block text-sm font-medium mb-3">消費地點（選填）</label>
+          <LocationPicker
+            value={locationData}
+            onChange={setLocationData}
+          />
         </div>
 
         {/* 付款人 */}
