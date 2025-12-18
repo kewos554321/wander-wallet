@@ -123,8 +123,8 @@ export async function POST(
 
     // 驗證金額
     const amountNum = Number(amount)
-    if (isNaN(amountNum) || amountNum <= 0) {
-      return NextResponse.json({ error: "金額必須大於0" }, { status: 400 })
+    if (isNaN(amountNum) || amountNum < 0) {
+      return NextResponse.json({ error: "金額不可為負數" }, { status: 400 })
     }
 
     // 驗證參與者

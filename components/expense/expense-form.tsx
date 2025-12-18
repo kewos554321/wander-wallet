@@ -285,7 +285,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     e.preventDefault()
 
     const amountNum = Number(amount)
-    if (!amountNum || amountNum <= 0) {
+    if (isNaN(amountNum) || amountNum < 0) {
       alert("請輸入有效金額")
       return
     }

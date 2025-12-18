@@ -129,8 +129,8 @@ export async function PUT(
     // 驗證金額
     if (amount !== undefined) {
       const amountNum = Number(amount)
-      if (isNaN(amountNum) || amountNum <= 0) {
-        return NextResponse.json({ error: "金額必須大於0" }, { status: 400 })
+      if (isNaN(amountNum) || amountNum < 0) {
+        return NextResponse.json({ error: "金額不可為負數" }, { status: 400 })
       }
     }
 

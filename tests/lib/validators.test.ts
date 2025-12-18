@@ -24,18 +24,18 @@ describe("validators", () => {
       expect(result.value).toBe(150.5)
     })
 
-    it("should reject zero", () => {
+    it("should accept zero", () => {
       const result = validators.amount(0)
 
-      expect(result.valid).toBe(false)
-      expect(result.error).toBe("金額必須大於0")
+      expect(result.valid).toBe(true)
+      expect(result.value).toBe(0)
     })
 
     it("should reject negative numbers", () => {
       const result = validators.amount(-50)
 
       expect(result.valid).toBe(false)
-      expect(result.error).toBe("金額必須大於0")
+      expect(result.error).toBe("金額不可為負數")
     })
 
     it("should reject NaN", () => {

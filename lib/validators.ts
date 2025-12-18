@@ -47,8 +47,8 @@ export const validators = {
       return { valid: false, error: "金額必須為數字" }
     }
 
-    if (num <= 0) {
-      return { valid: false, error: "金額必須大於0" }
+    if (num < 0) {
+      return { valid: false, error: "金額不可為負數" }
     }
 
     return { valid: true, value: num }
