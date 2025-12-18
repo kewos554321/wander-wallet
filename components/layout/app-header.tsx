@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { ModeToggle } from "@/components/system/mode-toggle"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Bell, Search } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 
 interface AppHeaderProps {
   title?: string
@@ -44,19 +44,7 @@ export function AppHeader({ title = "Wander Wallet", showBack = false, backHref,
         </div>
 
         <div className="flex items-center gap-1">
-          {rightAction ? (
-            rightAction
-          ) : (
-            <>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Search className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Bell className="h-4 w-4" />
-              </Button>
-              <ModeToggle />
-            </>
-          )}
+          {rightAction ? rightAction : <ModeToggle />}
         </div>
       </div>
     </header>
