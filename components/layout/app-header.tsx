@@ -10,10 +10,9 @@ interface AppHeaderProps {
   showBack?: boolean
   backHref?: string
   onBack?: () => void
-  rightAction?: React.ReactNode
 }
 
-export function AppHeader({ title = "Wander Wallet", showBack = false, backHref, onBack, rightAction }: AppHeaderProps) {
+export function AppHeader({ title = "Wander Wallet", showBack = false, backHref, onBack }: AppHeaderProps) {
   const router = useRouter()
 
   const handleBack = () => {
@@ -44,7 +43,7 @@ export function AppHeader({ title = "Wander Wallet", showBack = false, backHref,
         </div>
 
         <div className="flex items-center gap-1">
-          {rightAction ? rightAction : <ModeToggle />}
+          <ModeToggle />
         </div>
       </div>
     </header>

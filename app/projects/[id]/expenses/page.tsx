@@ -205,19 +205,24 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
       title={selectMode ? `已選 ${selectedIds.size} 筆` : "支出列表"}
       showBack={!selectMode}
       backHref={backHref}
-      rightAction={
-        expenses.length > 0 && !selectMode ? (
-          <Button variant="outline" size="icon" onClick={() => setSelectMode(true)} title="批次管理">
-            <CheckSquare className="h-4 w-4" />
-          </Button>
-        ) : selectMode ? (
-          <Button variant="outline" size="icon" onClick={exitSelectMode} title="取消批次">
-            <X className="h-4 w-4" />
-          </Button>
-        ) : undefined
-      }
     >
       <div className="flex flex-col gap-5 pb-24">
+        {/* 批次管理按鈕 */}
+        {expenses.length > 0 && (
+          <div className="flex justify-end">
+            {!selectMode ? (
+              <Button variant="outline" size="sm" onClick={() => setSelectMode(true)} className="gap-1.5">
+                <CheckSquare className="h-4 w-4" />
+                批次管理
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" onClick={exitSelectMode} className="gap-1.5">
+                <X className="h-4 w-4" />
+                取消
+              </Button>
+            )}
+          </div>
+        )}
         {/* 多選模式工具列 */}
         {selectMode && (
           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl border border-border">
