@@ -51,6 +51,7 @@ interface Expense {
   description: string | null
   category: string | null
   image: string | null
+  expenseDate: string
   createdAt: string
   payer: Member
   participants: ExpenseParticipant[]
@@ -165,21 +166,16 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
     setSelectedIds(new Set())
   }
 
-  function formatDate(dateStr: string) {
+  function formatExpenseDate(dateStr: string) {
     const date = new Date(dateStr)
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+    return date.toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" }) +
+      " " + date.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })
+  }
 
-    if (days === 0) {
-      return `今天 ${date.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}`
-    } else if (days === 1) {
-      return `昨天 ${date.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}`
-    } else if (days < 7) {
-      return `${days} 天前`
-    } else {
-      return date.toLocaleDateString("zh-TW", { month: "short", day: "numeric" })
-    }
+  function formatCreatedDate(dateStr: string) {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" }) +
+      " " + date.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })
   }
 
   const CATEGORY_CONFIG: Record<string, { label: string; icon: typeof Utensils; color: string }> = {
@@ -482,7 +478,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                     {/* 主內容區 */}
                     <div className="p-4">
                       <div className="flex gap-3">
-                        {/* 左側：Checkbox 或 類別圖標 */}
+                        {/* 左側：Checkbox 或 類別圖標+標籤 */}
                         {selectMode ? (
                           <div className="pt-0.5">
                             <Checkbox
@@ -492,106 +488,117 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                             />
                           </div>
                         ) : (
-                          <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${categoryInfo?.color || "bg-slate-100 text-slate-600"}`}>
-                            <CategoryIcon className="h-6 w-6" />
+                          <div className="flex flex-col items-center shrink-0">
+                            <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${categoryInfo?.color || "bg-slate-100 text-slate-600"}`}>
+                              <CategoryIcon className="h-6 w-6" />
+                            </div>
+                            <span className="text-[10px] text-muted-foreground mt-1">
+                              {categoryInfo?.label || "其他"}
+                            </span>
                           </div>
                         )}
 
-                        {/* 右側內容 */}
-                        <div className="flex-1 min-w-0">
+                        {/* 中間內容 */}
+                        <div className="flex-1 min-w-0 relative">
                           {/* 第一行：描述 + 金額 */}
                           <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              <h3 className="font-semibold text-base truncate">
-                                {expense.description || "無描述"}
-                              </h3>
-                            </div>
+                            <h3 className="font-semibold text-base truncate flex-1 min-w-0">
+                              {expense.description || "無描述"}
+                            </h3>
                             <p className="font-bold text-lg tabular-nums shrink-0">
                               ${Number(expense.amount).toLocaleString("zh-TW")}
                             </p>
                           </div>
 
-                          {/* 第二行：付款人 + 類別 + 圖片標記 + 時間 */}
-                          <div className="flex items-center gap-2 mt-1.5 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              {(() => {
-                                const avatarData = parseAvatarString(expense.payer?.user?.image)
-                                if (avatarData) {
-                                  const Icon = getAvatarIcon(avatarData.iconId)
-                                  return (
-                                    <div
-                                      className="h-4 w-4 rounded-full flex items-center justify-center"
-                                      style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
-                                    >
-                                      <Icon className="h-2 w-2 text-white" />
-                                    </div>
-                                  )
-                                }
-                                const hasExternalImage = expense.payer?.user?.image && !expense.payer.user.image.startsWith("avatar:")
-                                return (
-                                  <div className="h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
-                                    {hasExternalImage ? (
-                                      <Image
-                                        src={expense.payer!.user!.image!}
-                                        alt={expense.payer!.displayName}
-                                        width={16}
-                                        height={16}
-                                        className="rounded-full object-cover"
-                                      />
-                                    ) : (
-                                      <User className="h-2 w-2 text-slate-500" />
-                                    )}
-                                  </div>
-                                )
-                              })()}
-                              <span>{expense.payer.displayName}</span>
-                            </div>
-                            <span className="text-slate-300 dark:text-slate-600">·</span>
-                            {categoryInfo && (
-                              <>
-                                <span>{categoryInfo.label}</span>
-                                <span className="text-slate-300 dark:text-slate-600">·</span>
-                              </>
-                            )}
-                            {expense.image && (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    setViewingImage(expense.image)
-                                  }}
-                                  className="flex items-center gap-0.5 text-primary hover:text-primary/80 transition-colors"
-                                >
-                                  <ImageIcon className="h-3.5 w-3.5" />
-                                </button>
-                                <span className="text-slate-300 dark:text-slate-600">·</span>
-                              </>
-                            )}
-                            <span>{formatDate(expense.createdAt)}</span>
+                          {/* 第二行：付款時間 */}
+                          <div className="text-xs text-muted-foreground mt-1">
+                            付款 {formatExpenseDate(expense.expenseDate)}
                           </div>
+
+                          {/* 第三行：建立時間 */}
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            建立 {formatCreatedDate(expense.createdAt)}
+                          </div>
+
+                          {/* 圖片縮圖 - 絕對定位右下角 */}
+                          {expense.image && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                setViewingImage(expense.image)
+                              }}
+                              className="absolute right-0 bottom-0 h-10 w-10 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 hover:border-primary transition-colors"
+                            >
+                              <Image
+                                src={expense.image}
+                                alt="收據"
+                                width={40}
+                                height={40}
+                                className="object-cover w-full h-full"
+                              />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
 
-                    {/* 底部：分擔者區域 */}
+                    {/* 底部：付款人 + 分擔者 */}
                     {expense.participants.length > 0 && (
                       <div className="mx-4 mb-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="flex -space-x-2">
-                            {expense.participants.slice(0, 5).map((p) => {
+                          {/* 付款人 */}
+                          <div className="flex items-center gap-1.5">
+                            {(() => {
+                              const avatarData = parseAvatarString(expense.payer?.user?.image)
+                              if (avatarData) {
+                                const Icon = getAvatarIcon(avatarData.iconId)
+                                return (
+                                  <div
+                                    className="h-6 w-6 rounded-full flex items-center justify-center"
+                                    style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
+                                  >
+                                    <Icon className="h-3 w-3 text-white" />
+                                  </div>
+                                )
+                              }
+                              const hasExternalImage = expense.payer?.user?.image && !expense.payer.user.image.startsWith("avatar:")
+                              return (
+                                <div className="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
+                                  {hasExternalImage ? (
+                                    <Image
+                                      src={expense.payer!.user!.image!}
+                                      alt={expense.payer!.displayName}
+                                      width={24}
+                                      height={24}
+                                      className="rounded-full object-cover"
+                                    />
+                                  ) : (
+                                    <User className="h-3 w-3 text-slate-500" />
+                                  )}
+                                </div>
+                              )
+                            })()}
+                            <span className="text-sm font-medium">{expense.payer.displayName}</span>
+                          </div>
+
+                          <span className="text-slate-300 dark:text-slate-600">·</span>
+
+                          {/* 分擔者頭像 */}
+                          <div className="flex -space-x-1.5">
+                            {expense.participants.slice(0, 4).map((p) => {
                               const avatarData = parseAvatarString(p.member.user?.image)
                               if (avatarData) {
                                 const Icon = getAvatarIcon(avatarData.iconId)
                                 return (
                                   <div
                                     key={p.id}
-                                    className="h-6 w-6 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900"
+                                    className="h-5 w-5 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900"
                                     style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
                                     title={`${p.member.displayName}: $${p.shareAmount}`}
                                   >
-                                    <Icon className="h-3 w-3 text-white" />
+                                    <Icon className="h-2.5 w-2.5 text-white" />
                                   </div>
                                 )
                               }
@@ -599,33 +606,33 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                               return (
                                 <div
                                   key={p.id}
-                                  className="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center overflow-hidden border-2 border-white dark:border-slate-900"
+                                  className="h-5 w-5 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center overflow-hidden border-2 border-white dark:border-slate-900"
                                   title={`${p.member.displayName}: $${p.shareAmount}`}
                                 >
                                   {hasExternalImage ? (
                                     <Image
                                       src={p.member.user!.image!}
                                       alt={p.member.displayName}
-                                      width={24}
-                                      height={24}
+                                      width={20}
+                                      height={20}
                                       className="rounded-full object-cover"
                                     />
                                   ) : (
-                                    <span className="text-[10px] font-medium text-slate-500 dark:text-slate-300">
+                                    <span className="text-[9px] font-medium text-slate-500 dark:text-slate-300">
                                       {p.member.displayName[0]?.toUpperCase()}
                                     </span>
                                   )}
                                 </div>
                               )
                             })}
-                            {expense.participants.length > 5 && (
-                              <div className="h-6 w-6 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center text-[10px] font-medium border-2 border-white dark:border-slate-900">
-                                +{expense.participants.length - 5}
+                            {expense.participants.length > 4 && (
+                              <div className="h-5 w-5 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center text-[9px] font-medium border-2 border-white dark:border-slate-900">
+                                +{expense.participants.length - 4}
                               </div>
                             )}
                           </div>
                           <span className="text-xs text-muted-foreground">
-                            {expense.participants.length} 人分擔
+                            {expense.participants.length}人
                           </span>
                         </div>
 
