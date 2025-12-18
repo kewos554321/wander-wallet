@@ -268,6 +268,37 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
       backHref={backHref}
     >
       <div className="flex flex-col gap-5 pb-24">
+        {/* 總計摘要 */}
+        <div
+          className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800"
+          style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}
+        >
+          {/* 總金額 */}
+          <div className="text-center mb-4">
+            <p className="text-sm text-muted-foreground mb-1">總支出</p>
+            <p className="text-4xl font-bold tabular-nums tracking-tight">
+              ${totalAmount.toLocaleString("zh-TW")}
+            </p>
+          </div>
+
+          {/* 統計數據 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center">
+              <p className="text-2xl font-bold tabular-nums">{filteredExpenses.length}</p>
+              <p className="text-xs text-muted-foreground">筆支出</p>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center">
+              <p className="text-2xl font-bold text-primary tabular-nums">
+                ${filteredExpenses.length > 0 ? Math.round(totalAmount / filteredExpenses.length).toLocaleString("zh-TW") : 0}
+              </p>
+              <p className="text-xs text-muted-foreground">平均每筆</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 分隔線 */}
+        <div className="border-t border-slate-200 dark:border-slate-700" />
+
         {/* 搜尋與篩選 */}
         {expenses.length > 0 && (
           <div className="space-y-3">
@@ -382,6 +413,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
             )}
           </div>
         )}
+
         {/* 多選模式工具列 */}
         {selectMode && (
           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl border border-border">
@@ -403,34 +435,6 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
             </Button>
           </div>
         )}
-
-        {/* 總計摘要 */}
-        <div
-          className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800"
-          style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}
-        >
-          {/* 總金額 */}
-          <div className="text-center mb-4">
-            <p className="text-sm text-muted-foreground mb-1">總支出</p>
-            <p className="text-4xl font-bold tabular-nums tracking-tight">
-              ${totalAmount.toLocaleString("zh-TW")}
-            </p>
-          </div>
-
-          {/* 統計數據 */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center">
-              <p className="text-2xl font-bold tabular-nums">{filteredExpenses.length}</p>
-              <p className="text-xs text-muted-foreground">筆支出</p>
-            </div>
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center">
-              <p className="text-2xl font-bold text-primary tabular-nums">
-                ${filteredExpenses.length > 0 ? Math.round(totalAmount / filteredExpenses.length).toLocaleString("zh-TW") : 0}
-              </p>
-              <p className="text-xs text-muted-foreground">平均每筆</p>
-            </div>
-          </div>
-        </div>
 
         {/* 支出列表 */}
         {expenses.length === 0 ? (
