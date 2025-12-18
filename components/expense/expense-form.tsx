@@ -314,10 +314,10 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         ? `/api/projects/${projectId}/expenses`
         : `/api/projects/${projectId}/expenses/${expenseId}`
 
-      // 如果選擇「其他」且有自訂類別，使用自訂類別
+      // 如果選擇「其他」且有自訂類別，使用自訂類別；未選擇類別預設為 other
       const finalCategory = category === "other" && customCategory.trim()
         ? customCategory.trim()
-        : category || null
+        : category || "other"
 
       const res = await authFetch(url, {
         method: mode === "create" ? "POST" : "PUT",

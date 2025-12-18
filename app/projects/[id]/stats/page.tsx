@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import dynamic from "next/dynamic"
 import { AppLayout } from "@/components/layout/app-layout"
 import { useAuthFetch } from "@/components/auth/liff-provider"
-import { Receipt } from "lucide-react"
+import { Receipt, TrendingUp, Crown } from "lucide-react"
 
 // 圖表 loading skeleton
 function ChartSkeleton({ height = 160 }: { height?: number }) {
@@ -200,26 +200,43 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
   const perPerson = project.members.length > 0 ? totalAmount / project.members.length : 0
   const hasData = project.expenses.length > 0
 
+  // 計算每日平均（根據有支出的天數）
+  const uniqueDays = new Set(
+    project.expenses.map((e) => new Date(e.createdAt).toDateString())
+  ).size
+  const dailyAverage = uniqueDays > 0 ? totalAmount / uniqueDays : 0
+
+  // 找出最高單筆支出
+  const highestExpense = project.expenses.length > 0
+    ? project.expenses.reduce((max, e) => Number(e.amount) > Number(max.amount) ? e : max)
+    : null
+
   return (
     <AppLayout title="統計" showBack backHref={backHref}>
       <div className="pb-8 space-y-4 px-4">
         {/* 總覽卡片 */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
             <p className="text-xs text-slate-500 dark:text-slate-400">總支出</p>
-            <p className="text-base font-bold text-slate-900 dark:text-slate-100 truncate">
+            <p className="text-lg font-bold text-slate-900 dark:text-slate-100 truncate">
               ${totalAmount.toLocaleString("zh-TW")}
             </p>
           </div>
           <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
             <p className="text-xs text-slate-500 dark:text-slate-400">平均每人</p>
-            <p className="text-base font-bold text-slate-900 dark:text-slate-100 truncate">
+            <p className="text-lg font-bold text-slate-900 dark:text-slate-100 truncate">
               ${Math.round(perPerson).toLocaleString("zh-TW")}
             </p>
           </div>
           <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
+            <p className="text-xs text-slate-500 dark:text-slate-400">每日平均</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-slate-100 truncate">
+              ${Math.round(dailyAverage).toLocaleString("zh-TW")}
+            </p>
+          </div>
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
             <p className="text-xs text-slate-500 dark:text-slate-400">支出筆數</p>
-            <p className="text-base font-bold text-slate-900 dark:text-slate-100">
+            <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
               {project.expenses.length}
             </p>
           </div>
@@ -245,6 +262,31 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
 
             {/* 成員付款比較 */}
             {memberBalanceData.length > 0 && <BalanceBarChart data={memberBalanceData} />}
+
+            {/* 最高單筆支出 */}
+            {highestExpense && (
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-2 mb-3">
+                  <Crown className="h-4 w-4 text-amber-500" />
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    最高單筆支出
+                  </p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-900 dark:text-slate-100 truncate">
+                      {highestExpense.description || "支出"}
+                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {highestExpense.payer?.user?.name || highestExpense.payer?.displayName || "未知"} · {new Date(highestExpense.createdAt).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" })}
+                    </p>
+                  </div>
+                  <p className="text-xl font-bold text-amber-500 ml-4">
+                    ${Number(highestExpense.amount).toLocaleString("zh-TW")}
+                  </p>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

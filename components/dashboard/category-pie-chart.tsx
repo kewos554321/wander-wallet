@@ -40,10 +40,12 @@ const CATEGORY_COLORS: Record<string, string> = {
 }
 
 export function CategoryPieChart({ data }: CategoryPieChartProps) {
+  const total = data.reduce((sum, item) => sum + item.value, 0)
   const chartData = data.map((item) => ({
     ...item,
     name: CATEGORY_LABELS[item.name] || item.name,
     color: CATEGORY_COLORS[item.name] || item.color || "#64748b",
+    percentage: total > 0 ? Math.round((item.value / total) * 100) : 0,
   }))
 
   return (
@@ -82,6 +84,9 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
                 />
                 <span className="text-slate-500 dark:text-slate-400">
                   {cat.name}
+                </span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">
+                  {cat.percentage}%
                 </span>
               </div>
               <span className="font-semibold text-slate-900 dark:text-slate-100">
