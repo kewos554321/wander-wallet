@@ -126,7 +126,7 @@ export default function ProjectsPage() {
   }
 
   return (
-    <AppLayout title="專案">
+    <AppLayout title="所有專案">
       <div className="space-y-6 pb-20">
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">載入中...</div>
