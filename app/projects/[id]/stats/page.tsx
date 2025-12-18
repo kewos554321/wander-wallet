@@ -393,92 +393,114 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
             {/* 成員付款比較 */}
             {memberBalanceData.length > 0 && <BalanceBarChart data={memberBalanceData} />}
 
-            {/* 最高單筆支出 */}
-            {highestExpense && (
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
-                <div className="flex items-center gap-2 mb-3">
-                  <Crown className="h-4 w-4 text-amber-500" />
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    最高單筆支出
-                  </p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-900 dark:text-slate-100 truncate">
-                      {highestExpense.description || "支出"}
-                    </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {highestExpense.payer?.user?.name || highestExpense.payer?.displayName || "未知"} · {new Date(highestExpense.expenseDate).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" })}
-                    </p>
-                  </div>
-                  <p className="text-xl font-bold text-amber-500 ml-4">
-                    ${Number(highestExpense.amount).toLocaleString("zh-TW")}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* S8 & S9: 付款/消費排行榜 */}
-            {memberBalanceData.length > 0 && (
+            {/* 排行榜（整合最高單筆支出、付款王、消費王） */}
+            {(highestExpense || memberBalanceData.length > 0) && (
               <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-2 mb-3">
                   <Crown className="h-4 w-4 text-amber-500" />
                   <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                     排行榜
                   </p>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                        <Info className="h-3.5 w-3.5" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" sideOffset={4} className="w-auto max-w-[240px] p-3 text-xs space-y-2">
+                      <p><span className="font-semibold text-emerald-600">付款王</span>：誰先墊付最多錢</p>
+                      <p><span className="font-semibold text-blue-600">消費王</span>：誰的分擔金額最高</p>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="space-y-4">
-                  {/* 付款王 */}
-                  <div>
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <Wallet className="h-3.5 w-3.5 text-emerald-500" />
-                      <span className="text-xs text-slate-500 dark:text-slate-400">付款王</span>
-                    </div>
-                    <div className="space-y-1.5">
-                      {paymentRanking.map((member, idx) => (
-                        <div key={member.id} className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className={`w-5 text-xs font-bold ${idx === 0 ? "text-amber-500" : idx === 1 ? "text-slate-400" : "text-amber-700"}`}>
-                              #{idx + 1}
-                            </span>
+                  {/* 最高單筆支出 */}
+                  {highestExpense && (
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Receipt className="h-3.5 w-3.5 text-amber-500" />
+                        <span className="text-xs text-slate-500 dark:text-slate-400">最高單筆</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 text-xs font-bold text-amber-500">#1</span>
+                          <div className="min-w-0">
                             <span className="text-sm text-slate-700 dark:text-slate-300">
-                              {member.name}
+                              {highestExpense.description || "支出"}
+                            </span>
+                            <p className="text-xs text-slate-400">
+                              {highestExpense.payer?.user?.name || highestExpense.payer?.displayName || "未知"} · {new Date(highestExpense.expenseDate).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" })}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-sm font-semibold text-amber-500 ml-2">
+                          ${Number(highestExpense.amount).toLocaleString("zh-TW")}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {highestExpense && memberBalanceData.length > 0 && (
+                    <div className="border-t border-slate-100 dark:border-slate-800" />
+                  )}
+
+                  {/* 付款王 */}
+                  {memberBalanceData.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Wallet className="h-3.5 w-3.5 text-emerald-500" />
+                        <span className="text-xs text-slate-500 dark:text-slate-400">付款王</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {paymentRanking.map((member, idx) => (
+                          <div key={member.id} className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className={`w-5 text-xs font-bold ${idx === 0 ? "text-amber-500" : idx === 1 ? "text-slate-400" : "text-amber-700"}`}>
+                                #{idx + 1}
+                              </span>
+                              <span className="text-sm text-slate-700 dark:text-slate-300">
+                                {member.name}
+                              </span>
+                            </div>
+                            <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                              ${member.paid.toLocaleString()}
                             </span>
                           </div>
-                          <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                            ${member.paid.toLocaleString()}
-                          </span>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  <div className="border-t border-slate-100 dark:border-slate-800" />
+                  {memberBalanceData.length > 0 && (
+                    <div className="border-t border-slate-100 dark:border-slate-800" />
+                  )}
 
                   {/* 消費王 */}
-                  <div>
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <TrendingUp className="h-3.5 w-3.5 text-blue-500" />
-                      <span className="text-xs text-slate-500 dark:text-slate-400">消費王</span>
-                    </div>
-                    <div className="space-y-1.5">
-                      {spendingRanking.map((member, idx) => (
-                        <div key={member.id} className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className={`w-5 text-xs font-bold ${idx === 0 ? "text-amber-500" : idx === 1 ? "text-slate-400" : "text-amber-700"}`}>
-                              #{idx + 1}
-                            </span>
-                            <span className="text-sm text-slate-700 dark:text-slate-300">
-                              {member.name}
+                  {memberBalanceData.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <TrendingUp className="h-3.5 w-3.5 text-blue-500" />
+                        <span className="text-xs text-slate-500 dark:text-slate-400">消費王</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {spendingRanking.map((member, idx) => (
+                          <div key={member.id} className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className={`w-5 text-xs font-bold ${idx === 0 ? "text-amber-500" : idx === 1 ? "text-slate-400" : "text-amber-700"}`}>
+                                #{idx + 1}
+                              </span>
+                              <span className="text-sm text-slate-700 dark:text-slate-300">
+                                {member.name}
+                              </span>
+                            </div>
+                            <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                              ${member.share.toLocaleString()}
                             </span>
                           </div>
-                          <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                            ${member.share.toLocaleString()}
-                          </span>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}

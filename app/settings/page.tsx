@@ -38,7 +38,7 @@ export default function SettingsPage() {
   ] as const
 
   return (
-    <AppLayout title="設定">
+    <AppLayout title="設定" showBack onBack={() => router.back()}>
       <div className="space-y-4">
         {/* 用戶資料預覽 */}
         <Card
