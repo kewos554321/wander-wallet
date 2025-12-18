@@ -8,6 +8,7 @@ interface AppLayoutProps {
   showBack?: boolean
   backHref?: string
   onBack?: () => void
+  projectHref?: string
 }
 
 export function AppLayout({
@@ -16,10 +17,11 @@ export function AppLayout({
   showBack = false,
   backHref,
   onBack,
+  projectHref,
 }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader title={title} showBack={showBack} backHref={backHref} onBack={onBack} />
+      <AppHeader title={title} showBack={showBack} backHref={backHref} onBack={onBack} projectHref={projectHref} />
 
       <main className="pt-14">
         <div className="container mx-auto max-w-screen-2xl px-4">
