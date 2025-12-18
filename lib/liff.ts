@@ -55,20 +55,8 @@ export function getAccessToken(): string | null {
   return liff.getAccessToken()
 }
 
-export function getIdToken(): string | null {
-  return liff.getIDToken()
-}
-
 export function isInClient(): boolean {
   return liff.isInClient()
-}
-
-export function getOS(): "ios" | "android" | "web" | undefined {
-  return liff.getOS()
-}
-
-export function closeWindow(): void {
-  liff.closeWindow()
 }
 
 /**
@@ -95,8 +83,7 @@ export function isSendMessagesAvailable(): boolean {
     // utou = 1對1聊天, room = 多人聊天室, group = 群組
     const validTypes = ["utou", "room", "group"]
     return validTypes.includes(context.type)
-  } catch (error) {
-    console.warn("[LIFF] 檢查 sendMessages 可用性失敗:", error)
+  } catch {
     return false
   }
 }
@@ -107,16 +94,13 @@ export function isSendMessagesAvailable(): boolean {
  */
 export async function sendMessagesToChat(messages: Parameters<typeof liff.sendMessages>[0]): Promise<boolean> {
   if (!isSendMessagesAvailable()) {
-    console.warn("[LIFF] sendMessages API 不可用（可能不是從聊天室開啟）")
     return false
   }
 
   try {
     await liff.sendMessages(messages)
-    console.log("[LIFF] 訊息已發送到聊天室")
     return true
-  } catch (error) {
-    console.error("[LIFF] 發送訊息失敗:", error)
+  } catch {
     return false
   }
 }

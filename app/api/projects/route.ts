@@ -3,9 +3,6 @@ import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { randomBytes } from "crypto"
 
-// 開發模式檢測
-const DEV_MODE = !process.env.NEXT_PUBLIC_LIFF_ID
-
 // 生成唯一的分享碼
 function generateShareCode(): string {
   return randomBytes(8).toString("base64url").slice(0, 12).toUpperCase()
@@ -172,7 +169,6 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const authUser = await getAuthUser(req)
-    console.log("GET /api/projects - authUser:", authUser?.id || "null")
 
     if (!authUser) {
       return NextResponse.json({ error: "未授權" }, { status: 401 })

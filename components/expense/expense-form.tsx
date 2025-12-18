@@ -332,7 +332,6 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           const payerName = payerMember?.displayName || "未知"
           const operationType: "create" | "update" = mode === "create" ? "create" : "update"
 
-          console.log("[ExpenseForm] 發送 LINE 通知...")
           sendExpenseNotificationToChat({
             operationType,
             projectName,
@@ -342,10 +341,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
             description: description.trim() || undefined,
             category: finalCategory || undefined,
             participantCount: participants.length,
-          }).then((sent) => {
-            console.log("[ExpenseForm] 發送結果:", sent)
-          }).catch((err) => {
-            console.error("[ExpenseForm] 發送失敗:", err)
+          }).catch(() => {
+            // 發送失敗時靜默處理，不影響使用者體驗
           })
         }
 

@@ -74,7 +74,6 @@ export async function getAuthUser(req: NextRequest): Promise<AuthUser | null> {
             image: DEV_USER.image,
           },
         })
-        console.log("Dev user created in database")
       }
       return DEV_USER
     } catch (error) {
@@ -85,7 +84,6 @@ export async function getAuthUser(req: NextRequest): Promise<AuthUser | null> {
 
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET)
-    console.log("JWT verified, payload.sub:", payload.sub)
 
     const user = await prisma.user.findUnique({
       where: { id: payload.sub as string },
@@ -98,11 +96,9 @@ export async function getAuthUser(req: NextRequest): Promise<AuthUser | null> {
     })
 
     if (!user) {
-      console.log("User not found in database for id:", payload.sub)
       return null
     }
 
-    console.log("User found:", user.id)
     return {
       id: user.id,
       lineUserId: user.lineUserId,
@@ -183,7 +179,6 @@ export async function getLineProfile(accessToken: string): Promise<{
     }
 
     const profile = await response.json()
-    console.log("LINE profile API success:", profile.userId, profile.displayName)
     return profile
   } catch (error) {
     console.error("Failed to get LINE profile:", error)

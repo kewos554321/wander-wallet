@@ -111,8 +111,6 @@ export function LiffProvider({ children }: { children: ReactNode }) {
     async function initialize() {
       // 開發模式：使用模擬數據
       if (DEV_MODE) {
-        console.warn("LIFF DEV MODE: Using mock data. Set NEXT_PUBLIC_LIFF_ID for production.")
-
         // 檢查是否有已保存的開發 session
         const savedDevSession = localStorage.getItem(DEV_SESSION_KEY)
         if (savedDevSession) {
@@ -132,32 +130,23 @@ export function LiffProvider({ children }: { children: ReactNode }) {
         const sendMessagesAvailable = isSendMessagesAvailable()
         setCanSendMessages(sendMessagesAvailable)
 
-        console.log("[LIFF] 初始化完成, sendMessages 可用:", sendMessagesAvailable)
-        console.log("[LIFF] isLoggedIn:", isLoggedIn())
-
         if (isLoggedIn()) {
           // 取得 LINE 用戶資料
           const profile = await getProfile()
-          console.log("LIFF profile:", profile)
           setLiffProfile(profile)
 
           // 取得 access token 並向後端驗證
           const accessToken = getAccessToken()
-          console.log("LIFF accessToken:", accessToken ? "exists" : "null")
 
           if (accessToken) {
             const authData = await authenticateWithBackend(accessToken)
-            console.log("Backend auth result:", authData ? "success" : "failed")
             if (authData) {
               setUser(authData.user)
               setSessionToken(authData.sessionToken)
               localStorage.setItem(SESSION_TOKEN_KEY, authData.sessionToken)
             }
-          } else {
-            console.warn("No access token available, cannot authenticate with backend")
           }
         } else {
-          console.log("Not logged in, redirecting to LINE login...")
           // 自動登入（在 LINE App 內或外部瀏覽器都會跳轉到 LINE Login）
           liffLogin()
         }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { createSessionToken, getLineProfile, verifyLiffAccessToken } from "@/lib/auth"
+import { createSessionToken, getLineProfile } from "@/lib/auth"
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,16 +36,13 @@ export async function POST(req: NextRequest) {
     }
 
     // 直接用 access token 取得 LINE 用戶資料（同時驗證 token 有效性）
-    console.log("Getting LINE profile with access token...")
     const profile = await getLineProfile(accessToken)
     if (!profile) {
-      console.error("Failed to get LINE profile - token may be invalid")
       return NextResponse.json(
         { error: "Invalid access token or failed to get LINE profile" },
         { status: 401 }
       )
     }
-    console.log("LINE profile received:", profile.userId)
 
     // 查找或建立用戶
     let user = await prisma.user.findUnique({
