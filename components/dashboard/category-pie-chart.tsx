@@ -6,7 +6,6 @@ import {
   Pie,
   Cell,
   Tooltip,
-  TooltipProps,
 } from "recharts"
 
 interface CategoryData {
@@ -23,10 +22,15 @@ interface ChartCategoryData extends CategoryData {
   percentage: number
 }
 
-function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
+interface CustomTooltipProps {
+  active?: boolean
+  payload?: Array<{ payload: ChartCategoryData }>
+}
+
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) return null
 
-  const data = payload[0].payload as ChartCategoryData
+  const data = payload[0].payload
 
   return (
     <div className="bg-slate-900 rounded-lg p-3 text-white text-xs shadow-lg">

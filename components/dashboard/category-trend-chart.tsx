@@ -7,7 +7,6 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  TooltipProps,
 } from "recharts"
 
 interface CategoryTrendData {
@@ -18,6 +17,18 @@ interface CategoryTrendData {
 interface CategoryTrendChartProps {
   data: CategoryTrendData[]
   categories: string[]
+}
+
+interface CustomTooltipPayloadItem {
+  value: number
+  dataKey: string
+  color: string
+}
+
+interface CustomTooltipProps {
+  active?: boolean
+  payload?: CustomTooltipPayloadItem[]
+  label?: string
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -42,10 +53,10 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: "#64748b",
 }
 
-function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
+function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) return null
 
-  const total = payload.reduce((sum, entry) => sum + (Number(entry.value) || 0), 0)
+  const total = payload.reduce((sum, entry) => sum + (entry.value || 0), 0)
 
   return (
     <div className="bg-slate-900 rounded-lg p-3 text-white text-xs shadow-lg">
@@ -58,9 +69,9 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
                 className="w-2 h-2 rounded-sm"
                 style={{ backgroundColor: entry.color }}
               />
-              <span>{CATEGORY_LABELS[entry.dataKey as string] || entry.dataKey}</span>
+              <span>{CATEGORY_LABELS[entry.dataKey] || entry.dataKey}</span>
             </div>
-            <span className="font-semibold">${Number(entry.value).toLocaleString()}</span>
+            <span className="font-semibold">${entry.value.toLocaleString()}</span>
           </div>
         ))}
         <div className="border-t border-slate-700 pt-1 mt-1 flex justify-between">

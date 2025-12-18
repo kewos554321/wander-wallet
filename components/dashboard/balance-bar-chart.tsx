@@ -7,7 +7,6 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  TooltipProps,
 } from "recharts"
 
 interface MemberBalance {
@@ -22,10 +21,15 @@ interface BalanceBarChartProps {
   height?: number
 }
 
-function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
+interface CustomTooltipProps {
+  active?: boolean
+  payload?: Array<{ payload: MemberBalance }>
+}
+
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) return null
 
-  const data = payload[0].payload as MemberBalance
+  const data = payload[0].payload
   const balance = data.balance
 
   return (

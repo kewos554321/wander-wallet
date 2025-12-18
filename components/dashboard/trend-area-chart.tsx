@@ -6,7 +6,6 @@ import {
   Area,
   XAxis,
   Tooltip,
-  TooltipProps,
 } from "recharts"
 import { Info } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
@@ -21,10 +20,16 @@ interface TrendAreaChartProps {
   height?: number
 }
 
-function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
+interface CustomTooltipProps {
+  active?: boolean
+  payload?: Array<{ value: number }>
+  label?: string
+}
+
+function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) return null
 
-  const amount = payload[0].value as number
+  const amount = payload[0].value
 
   return (
     <div className="bg-slate-900 rounded-lg p-3 text-white text-xs shadow-lg">

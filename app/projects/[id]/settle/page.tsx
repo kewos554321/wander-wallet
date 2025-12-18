@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { ArrowRight, CheckCircle2, AlertCircle, TrendingUp, TrendingDown, User, Receipt, Wallet, Users, Share2, Copy, Check, Bell } from "lucide-react"
+import { ArrowRight, CheckCircle2, AlertCircle, TrendingUp, TrendingDown, User, Receipt, Wallet, Users, Share2, Copy, Check } from "lucide-react"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 
 interface Balance {
@@ -55,20 +55,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
-  const [completedSettlements, setCompletedSettlements] = useState<Set<string>>(new Set())
   const authFetch = useAuthFetch()
-
-  // 從 localStorage 載入已完成的結算記錄
-  useEffect(() => {
-    const stored = localStorage.getItem(`settle-completed-${id}`)
-    if (stored) {
-      try {
-        setCompletedSettlements(new Set(JSON.parse(stored)))
-      } catch {
-        // ignore parse error
-      }
-    }
-  }, [id])
 
   useEffect(() => {
     fetchSettleData()
@@ -135,48 +122,6 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
     // 使用 LINE URL scheme 分享文字
     window.open(`https://social-plugins.line.me/lineit/share?text=${encodedText}`, "_blank")
     setShareDialogOpen(false)
-  }
-
-  // 生成結算項目的唯一 ID
-  function getSettlementKey(s: Settlement): string {
-    return `${s.from.memberId}-${s.to.memberId}-${s.amount}`
-  }
-
-  // 切換結算完成狀態
-  function toggleSettlementComplete(settlement: Settlement) {
-    const key = getSettlementKey(settlement)
-    setCompletedSettlements(prev => {
-      const next = new Set(prev)
-      if (next.has(key)) {
-        next.delete(key)
-      } else {
-        next.add(key)
-      }
-      // 儲存到 localStorage
-      localStorage.setItem(`settle-completed-${id}`, JSON.stringify([...next]))
-      return next
-    })
-  }
-
-  // 檢查結算項目是否已完成
-  function isSettlementComplete(settlement: Settlement): boolean {
-    return completedSettlements.has(getSettlementKey(settlement))
-  }
-
-  // 發送結算提醒
-  function sendReminder(settlement: Settlement) {
-    const message = `💸 結算提醒
-
-Hi ${settlement.from.displayName}，
-
-提醒您有一筆待付款項：
-付給：${settlement.to.displayName}
-金額：$${settlement.amount.toLocaleString("zh-TW")}
-
-請盡快完成轉帳，謝謝！🙏`
-
-    const encodedText = encodeURIComponent(message)
-    window.open(`https://social-plugins.line.me/lineit/share?text=${encodedText}`, "_blank")
   }
 
   const backHref = `/projects/${id}`
@@ -326,13 +271,7 @@ Hi ${settlement.from.displayName}，
             <CardTitle>結算建議</CardTitle>
             <CardDescription>
               {settlements.length > 0
-                ? (() => {
-                    const completedCount = settlements.filter(s => isSettlementComplete(s)).length
-                    if (completedCount === settlements.length) {
-                      return "🎉 所有轉帳都已完成！"
-                    }
-                    return `已完成 ${completedCount}/${settlements.length} 筆轉帳`
-                  })()
+                ? `需要 ${settlements.length} 筆轉帳來完成結算`
                 : "目前沒有需要結算的項目"}
             </CardDescription>
           </CardHeader>
@@ -351,15 +290,10 @@ Hi ${settlement.from.displayName}，
                   const toAvatarData = parseAvatarString(s.to.userImage)
                   const fromHasExternalImage = s.from.userImage && !s.from.userImage.startsWith("avatar:")
                   const toHasExternalImage = s.to.userImage && !s.to.userImage.startsWith("avatar:")
-                  const isComplete = isSettlementComplete(s)
                   return (
                     <div
                       key={idx}
-                      className={`flex items-center justify-between p-4 rounded-lg transition-all ${
-                        isComplete
-                          ? "bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800"
-                          : "bg-secondary/50"
-                      }`}
+                      className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
                     >
                       <div className="flex items-center gap-3 flex-1">
                         <div className="flex flex-col items-center gap-1">
@@ -420,35 +354,10 @@ Hi ${settlement.from.displayName}，
                           <div className="text-xs text-muted-foreground">收款</div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-right">
-                          <div className={`font-bold ${isComplete ? "text-green-600 dark:text-green-400 line-through" : "text-primary"}`}>
-                            ${s.amount.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </div>
-                          {isComplete && (
-                            <div className="text-xs text-green-600 dark:text-green-400">已完成</div>
-                          )}
+                      <div className="text-right">
+                        <div className="font-bold text-primary">
+                          ${s.amount.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
-                        {!isComplete && (
-                          <button
-                            onClick={() => sendReminder(s)}
-                            className="h-8 w-8 rounded-full flex items-center justify-center bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900 transition-all"
-                            title="發送提醒"
-                          >
-                            <Bell className="h-4 w-4" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => toggleSettlementComplete(s)}
-                          className={`h-8 w-8 rounded-full flex items-center justify-center transition-all ${
-                            isComplete
-                              ? "bg-green-500 text-white"
-                              : "bg-slate-200 dark:bg-slate-700 text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-600"
-                          }`}
-                          title={isComplete ? "取消完成" : "標記完成"}
-                        >
-                          <Check className="h-4 w-4" />
-                        </button>
                       </div>
                     </div>
                   )
