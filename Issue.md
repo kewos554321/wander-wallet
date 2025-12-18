@@ -1,4 +1,82 @@
-# Wander Wallet - 待實作功能
+# Wander Wallet - 功能清單
+
+---
+
+## AI 語音記帳功能
+
+**狀態**: ✅ 已完成
+**優先級**: 高
+**入口**: 專案頁面右下角麥克風按鈕
+
+### 一、功能範圍
+
+| 功能 | 說明 |
+|------|------|
+| 文字輸入 | 直接輸入消費描述，如「午餐吃拉麵 280 元」 |
+| 語音輸入 | 使用 Web Speech API 語音轉文字 |
+| AI 解析 | 使用 Gemini Flash + LangChain 解析費用內容 |
+| 結構化輸出 | 自動提取金額、描述、類別、付款人、分擔者 |
+| 確認編輯 | 解析結果可編輯後再儲存 |
+
+### 二、技術架構
+
+```
+lib/ai/
+├── gemini.ts          # Gemini 模型初始化
+└── expense-parser.ts  # 費用解析 Chain（Zod Schema + Prompt）
+
+lib/
+└── speech.ts          # Web Speech API Hook
+
+components/voice/
+└── voice-expense-dialog.tsx  # 語音記帳 Dialog
+
+app/api/voice/parse/
+└── route.ts           # AI 解析 API
+```
+
+### 三、使用的技術
+
+| 技術 | 用途 |
+|------|------|
+| Web Speech API | 瀏覽器原生語音轉文字（免費） |
+| LangChain | AI 應用框架 |
+| @langchain/google-genai | Gemini 整合 |
+| Zod | Schema 驗證 + 結構化輸出 |
+| Gemini 2.0 Flash | AI 模型（有免費額度） |
+
+### 四、LangChain 實作細節
+
+```typescript
+// Zod Schema 定義結構化輸出
+const ParsedExpenseSchema = z.object({
+  amount: z.number(),
+  description: z.string(),
+  category: z.enum(EXPENSE_CATEGORIES),
+  payerName: z.string(),
+  participantNames: z.array(z.string()),
+  splitMode: z.enum(["equal", "custom"]),
+  confidence: z.number().min(0).max(1),
+})
+
+// 建立 Chain
+const model = createGeminiModel()
+const structuredModel = model.withStructuredOutput(ParsedExpenseSchema)
+const chain = EXPENSE_PARSER_PROMPT.pipe(structuredModel)
+```
+
+### 五、環境變數
+
+```env
+GEMINI_API_KEY=your_api_key_here
+```
+
+### 六、未來擴展
+
+- [ ] 加入 Memory 記住用戶消費習慣
+- [ ] 加入 Tools 讓 AI 查詢即時匯率
+- [ ] 加入 RAG 讀取歷史消費資料
+- [ ] 支援多語言語音辨識
 
 ---
 
