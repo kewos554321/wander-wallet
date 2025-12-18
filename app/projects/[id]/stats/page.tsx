@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import dynamic from "next/dynamic"
 import { AppLayout } from "@/components/layout/app-layout"
 import { useAuthFetch } from "@/components/auth/liff-provider"
-import { Receipt, Crown, Info } from "lucide-react"
+import { Receipt, Crown, Info, ArrowRight, TrendingUp, Wallet } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 
 // 圖表 loading skeleton
@@ -33,6 +33,10 @@ const CategoryPieChart = dynamic(
 const BalanceBarChart = dynamic(
   () => import("@/components/dashboard/balance-bar-chart").then(mod => mod.BalanceBarChart),
   { loading: () => <ChartSkeleton height={160} />, ssr: false }
+)
+const CategoryTrendChart = dynamic(
+  () => import("@/components/dashboard/category-trend-chart").then(mod => mod.CategoryTrendChart),
+  { loading: () => <ChartSkeleton height={180} />, ssr: false }
 )
 
 interface ProjectMember {
@@ -179,12 +183,109 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
       })
 
       return {
+        id: member.id,
         name: member.displayName.slice(0, 8),
+        fullName: member.displayName,
         paid,
         share,
         balance: paid - share,
       }
     })
+  }, [project])
+
+  // S8: 付款排行榜（誰付最多）
+  const paymentRanking = useMemo(() => {
+    return [...memberBalanceData]
+      .sort((a, b) => b.paid - a.paid)
+      .slice(0, 3)
+  }, [memberBalanceData])
+
+  // S9: 消費排行榜（誰花最多）
+  const spendingRanking = useMemo(() => {
+    return [...memberBalanceData]
+      .sort((a, b) => b.share - a.share)
+      .slice(0, 3)
+  }, [memberBalanceData])
+
+  // S7: 結算預覽（誰欠誰多少）
+  const settlements = useMemo(() => {
+    if (!project || memberBalanceData.length === 0) return []
+
+    // 複製 balance 數據
+    const balances = memberBalanceData.map(m => ({
+      id: m.id,
+      name: m.fullName,
+      balance: m.balance,
+    }))
+
+    const result: { from: string; to: string; amount: number }[] = []
+
+    // 貪婪演算法：讓最大債務人付給最大債權人
+    while (true) {
+      // 找最大債務人（balance 最小，即欠最多）
+      const debtor = balances.reduce((min, curr) =>
+        curr.balance < min.balance ? curr : min
+      )
+      // 找最大債權人（balance 最大，即被欠最多）
+      const creditor = balances.reduce((max, curr) =>
+        curr.balance > max.balance ? curr : max
+      )
+
+      // 如果都接近 0 就結束
+      if (Math.abs(debtor.balance) < 1 || Math.abs(creditor.balance) < 1) break
+
+      const amount = Math.min(Math.abs(debtor.balance), creditor.balance)
+      if (amount < 1) break
+
+      result.push({
+        from: debtor.name,
+        to: creditor.name,
+        amount: Math.round(amount),
+      })
+
+      debtor.balance += amount
+      creditor.balance -= amount
+    }
+
+    return result.slice(0, 5) // 最多顯示 5 筆
+  }, [project, memberBalanceData])
+
+  // S11: 類別趨勢數據（按日期分組的各類別支出）
+  const { categoryTrendData, trendCategories } = useMemo(() => {
+    if (!project || project.expenses.length === 0) {
+      return { categoryTrendData: [], trendCategories: [] }
+    }
+
+    // 收集所有使用的類別
+    const usedCategories = new Set<string>()
+    const dateMap = new Map<string, { timestamp: number; categories: Record<string, number> }>()
+
+    project.expenses.forEach((expense) => {
+      const expenseDate = new Date(expense.expenseDate)
+      const dateKey = expenseDate.toLocaleDateString("zh-TW", {
+        month: "numeric",
+        day: "numeric",
+      })
+      const cat = expense.category || "other"
+      usedCategories.add(cat)
+
+      const existing = dateMap.get(dateKey) || { timestamp: expenseDate.getTime(), categories: {} }
+      existing.categories[cat] = (existing.categories[cat] || 0) + Number(expense.amount)
+      dateMap.set(dateKey, existing)
+    })
+
+    const categories = Array.from(usedCategories)
+    const data = Array.from(dateMap.entries())
+      .map(([date, { timestamp, categories: cats }]) => ({
+        date,
+        timestamp,
+        ...categories.reduce((acc, cat) => ({ ...acc, [cat]: cats[cat] || 0 }), {}),
+      }))
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .slice(-7)
+      .map(({ timestamp, ...rest }) => rest)
+
+    return { categoryTrendData: data, trendCategories: categories }
   }, [project])
 
   const backHref = `/projects/${id}`
@@ -246,7 +347,7 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
               ${totalAmount.toLocaleString("zh-TW")}
             </p>
           </div>
-          <div className="flex justify-around mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
             <div className="text-center">
               <p className="text-xs text-slate-500 dark:text-slate-400">筆數</p>
               <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{project.expenses.length}</p>
@@ -258,6 +359,10 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
             <div className="text-center">
               <p className="text-xs text-slate-500 dark:text-slate-400">日均</p>
               <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">${Math.round(dailyAverage).toLocaleString("zh-TW")}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-slate-500 dark:text-slate-400">單筆</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">${Math.round(project.expenses.length > 0 ? totalAmount / project.expenses.length : 0).toLocaleString("zh-TW")}</p>
             </div>
           </div>
         </div>
@@ -279,6 +384,11 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
 
             {/* 分類統計 */}
             {categoryData.length > 0 && <CategoryPieChart data={categoryData} />}
+
+            {/* S11: 類別趨勢 */}
+            {categoryTrendData.length >= 2 && (
+              <CategoryTrendChart data={categoryTrendData} categories={trendCategories} />
+            )}
 
             {/* 成員付款比較 */}
             {memberBalanceData.length > 0 && <BalanceBarChart data={memberBalanceData} />}
@@ -304,6 +414,109 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
                   <p className="text-xl font-bold text-amber-500 ml-4">
                     ${Number(highestExpense.amount).toLocaleString("zh-TW")}
                   </p>
+                </div>
+              </div>
+            )}
+
+            {/* S8 & S9: 付款/消費排行榜 */}
+            {memberBalanceData.length > 0 && (
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-2 mb-3">
+                  <Crown className="h-4 w-4 text-amber-500" />
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    排行榜
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  {/* 付款王 */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Wallet className="h-3.5 w-3.5 text-emerald-500" />
+                      <span className="text-xs text-slate-500 dark:text-slate-400">付款王</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {paymentRanking.map((member, idx) => (
+                        <div key={member.id} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-5 text-xs font-bold ${idx === 0 ? "text-amber-500" : idx === 1 ? "text-slate-400" : "text-amber-700"}`}>
+                              #{idx + 1}
+                            </span>
+                            <span className="text-sm text-slate-700 dark:text-slate-300">
+                              {member.name}
+                            </span>
+                          </div>
+                          <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                            ${member.paid.toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-100 dark:border-slate-800" />
+
+                  {/* 消費王 */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <TrendingUp className="h-3.5 w-3.5 text-blue-500" />
+                      <span className="text-xs text-slate-500 dark:text-slate-400">消費王</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {spendingRanking.map((member, idx) => (
+                        <div key={member.id} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-5 text-xs font-bold ${idx === 0 ? "text-amber-500" : idx === 1 ? "text-slate-400" : "text-amber-700"}`}>
+                              #{idx + 1}
+                            </span>
+                            <span className="text-sm text-slate-700 dark:text-slate-300">
+                              {member.name}
+                            </span>
+                          </div>
+                          <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                            ${member.share.toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* S7: 結算預覽 */}
+            {settlements.length > 0 && (
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    結算預覽
+                  </p>
+                  <button
+                    onClick={() => router.push(`/projects/${id}/settle`)}
+                    className="text-xs text-blue-500 hover:text-blue-600"
+                  >
+                    查看詳情
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {settlements.map((s, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0"
+                    >
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-slate-700 dark:text-slate-300 font-medium">
+                          {s.from}
+                        </span>
+                        <ArrowRight className="h-3 w-3 text-slate-400" />
+                        <span className="text-slate-700 dark:text-slate-300 font-medium">
+                          {s.to}
+                        </span>
+                      </div>
+                      <span className="text-sm font-semibold text-red-500">
+                        ${s.amount.toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
