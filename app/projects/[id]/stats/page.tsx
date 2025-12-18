@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation"
 import dynamic from "next/dynamic"
 import { AppLayout } from "@/components/layout/app-layout"
 import { useAuthFetch } from "@/components/auth/liff-provider"
-import { Receipt, TrendingUp, Crown } from "lucide-react"
+import { Receipt, Crown, Info } from "lucide-react"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 
 // 圖表 loading skeleton
 function ChartSkeleton({ height = 160 }: { height?: number }) {
@@ -58,6 +59,7 @@ interface Expense {
   description: string | null
   category: string | null
   createdAt: string
+  expenseDate: string
   payer: {
     id: string
     displayName: string
@@ -121,19 +123,26 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
   const trendData = useMemo(() => {
     if (!project) return []
 
-    const dateMap = new Map<string, number>()
+    const dateMap = new Map<string, { amount: number; timestamp: number }>()
     project.expenses.forEach((expense) => {
-      const date = new Date(expense.createdAt).toLocaleDateString("zh-TW", {
+      // 使用 expenseDate（實際消費日期）而非 createdAt（記錄建立時間）
+      const expenseDate = new Date(expense.expenseDate)
+      const dateKey = expenseDate.toLocaleDateString("zh-TW", {
         month: "numeric",
         day: "numeric",
       })
-      dateMap.set(date, (dateMap.get(date) || 0) + Number(expense.amount))
+      const existing = dateMap.get(dateKey)
+      dateMap.set(dateKey, {
+        amount: (existing?.amount || 0) + Number(expense.amount),
+        timestamp: expenseDate.getTime(),
+      })
     })
 
     return Array.from(dateMap.entries())
-      .map(([date, amount]) => ({ date, amount }))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .map(([date, { amount, timestamp }]) => ({ date, amount, timestamp }))
+      .sort((a, b) => a.timestamp - b.timestamp)
       .slice(-7)
+      .map(({ date, amount }) => ({ date, amount }))
   }, [project])
 
   // 類別統計數據
@@ -170,7 +179,7 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
       })
 
       return {
-        name: member.displayName.slice(0, 4),
+        name: member.displayName.slice(0, 8),
         paid,
         share,
         balance: paid - share,
@@ -200,9 +209,9 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
   const perPerson = project.members.length > 0 ? totalAmount / project.members.length : 0
   const hasData = project.expenses.length > 0
 
-  // 計算每日平均（根據有支出的天數）
+  // 計算每日平均（根據有支出的天數，使用 expenseDate）
   const uniqueDays = new Set(
-    project.expenses.map((e) => new Date(e.createdAt).toDateString())
+    project.expenses.map((e) => new Date(e.expenseDate).toDateString())
   ).size
   const dailyAverage = uniqueDays > 0 ? totalAmount / uniqueDays : 0
 
@@ -215,30 +224,41 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
     <AppLayout title="統計" showBack backHref={backHref}>
       <div className="pb-8 space-y-4 px-4">
         {/* 總覽卡片 */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
-            <p className="text-xs text-slate-500 dark:text-slate-400">總支出</p>
-            <p className="text-lg font-bold text-slate-900 dark:text-slate-100 truncate">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-1.5 mb-3">
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              總覽
+            </p>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                  <Info className="h-3.5 w-3.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" sideOffset={4} className="w-auto p-2 text-sm">
+                統計數據依據「消費日期」計算
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="text-center py-2">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">總支出</p>
+            <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">
               ${totalAmount.toLocaleString("zh-TW")}
             </p>
           </div>
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
-            <p className="text-xs text-slate-500 dark:text-slate-400">平均每人</p>
-            <p className="text-lg font-bold text-slate-900 dark:text-slate-100 truncate">
-              ${Math.round(perPerson).toLocaleString("zh-TW")}
-            </p>
-          </div>
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
-            <p className="text-xs text-slate-500 dark:text-slate-400">每日平均</p>
-            <p className="text-lg font-bold text-slate-900 dark:text-slate-100 truncate">
-              ${Math.round(dailyAverage).toLocaleString("zh-TW")}
-            </p>
-          </div>
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
-            <p className="text-xs text-slate-500 dark:text-slate-400">支出筆數</p>
-            <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
-              {project.expenses.length}
-            </p>
+          <div className="flex justify-around mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="text-center">
+              <p className="text-xs text-slate-500 dark:text-slate-400">筆數</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{project.expenses.length}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-slate-500 dark:text-slate-400">每人</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">${Math.round(perPerson).toLocaleString("zh-TW")}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-slate-500 dark:text-slate-400">日均</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">${Math.round(dailyAverage).toLocaleString("zh-TW")}</p>
+            </div>
           </div>
         </div>
 
@@ -278,7 +298,7 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
                       {highestExpense.description || "支出"}
                     </p>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {highestExpense.payer?.user?.name || highestExpense.payer?.displayName || "未知"} · {new Date(highestExpense.createdAt).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" })}
+                      {highestExpense.payer?.user?.name || highestExpense.payer?.displayName || "未知"} · {new Date(highestExpense.expenseDate).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" })}
                     </p>
                   </div>
                   <p className="text-xl font-bold text-amber-500 ml-4">

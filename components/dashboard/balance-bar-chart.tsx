@@ -7,6 +7,7 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  TooltipProps,
 } from "recharts"
 
 interface MemberBalance {
@@ -19,6 +20,35 @@ interface MemberBalance {
 interface BalanceBarChartProps {
   data: MemberBalance[]
   height?: number
+}
+
+function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
+  if (!active || !payload || !payload.length) return null
+
+  const data = payload[0].payload as MemberBalance
+  const balance = data.balance
+
+  return (
+    <div className="bg-slate-900 rounded-lg p-3 text-white text-xs shadow-lg">
+      <p className="font-semibold mb-2">{data.name}</p>
+      <div className="space-y-1">
+        <div className="flex justify-between gap-4">
+          <span className="text-slate-400">已付</span>
+          <span className="text-emerald-400">${data.paid.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between gap-4">
+          <span className="text-slate-400">應付</span>
+          <span>${data.share.toLocaleString()}</span>
+        </div>
+        <div className="border-t border-slate-700 pt-1 mt-1 flex justify-between gap-4">
+          <span className="text-slate-400">結餘</span>
+          <span className={balance >= 0 ? "text-emerald-400" : "text-red-400"}>
+            {balance >= 0 ? "+" : ""}${balance.toLocaleString()}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function BalanceBarChart({ data, height = 160 }: BalanceBarChartProps) {
@@ -38,16 +68,7 @@ export function BalanceBarChart({ data, height = 160 }: BalanceBarChartProps) {
             tick={{ fontSize: 12, fill: "#64748b" }}
             width={50}
           />
-          <Tooltip
-            contentStyle={{
-              background: "#0f172a",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "12px",
-              color: "#fff",
-            }}
-            formatter={(value) => [`$${Number(value).toLocaleString()}`, ""]}
-          />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(0,0,0,0.05)" }} />
           <Bar
             dataKey="paid"
             fill="#22c55e"

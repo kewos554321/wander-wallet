@@ -5,6 +5,8 @@ import {
   PieChart,
   Pie,
   Cell,
+  Tooltip,
+  TooltipProps,
 } from "recharts"
 
 interface CategoryData {
@@ -15,6 +17,32 @@ interface CategoryData {
 
 interface CategoryPieChartProps {
   data: CategoryData[]
+}
+
+interface ChartCategoryData extends CategoryData {
+  percentage: number
+}
+
+function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
+  if (!active || !payload || !payload.length) return null
+
+  const data = payload[0].payload as ChartCategoryData
+
+  return (
+    <div className="bg-slate-900 rounded-lg p-3 text-white text-xs shadow-lg">
+      <div className="flex items-center gap-2 mb-1">
+        <div
+          className="w-2.5 h-2.5 rounded-sm"
+          style={{ backgroundColor: data.color }}
+        />
+        <span className="font-semibold">{data.name}</span>
+      </div>
+      <div className="flex items-baseline gap-2">
+        <span className="text-lg font-semibold">${data.value.toLocaleString()}</span>
+        <span className="text-slate-400">{data.percentage}%</span>
+      </div>
+    </div>
+  )
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -69,6 +97,11 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
                 <Cell key={index} fill={entry.color} />
               ))}
             </Pie>
+            <Tooltip
+              content={<CustomTooltip />}
+              wrapperStyle={{ zIndex: 100 }}
+              allowEscapeViewBox={{ x: true, y: true }}
+            />
           </PieChart>
         </ResponsiveContainer>
         <div className="flex-1 flex flex-col gap-2">
