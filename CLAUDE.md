@@ -44,7 +44,6 @@ User → createdProjects (Project[])
 Project → creator (User)
         → members (ProjectMember[])
         → expenses (Expense[])
-        → shareCode (unique 12-char code)
 
 ProjectMember → project, user (optional for placeholders), role (owner/member)
 

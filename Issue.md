@@ -82,7 +82,7 @@
 - UI 調整 Flex Message 模板
 
 ### #6 分享連結統一 (低)
-- 現有 shareCode 機制完整
+- 使用 projectId (UUID) 作為分享連結
 - 主要是 routing 調整
 - 改變 join 流程的跳轉邏輯
 

@@ -38,7 +38,6 @@ interface ProjectMember {
 interface Project {
   id: string
   name: string
-  shareCode: string
   createdBy: string
   creator: {
     id: string
@@ -58,7 +57,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
   const [loading, setLoading] = useState(true)
   const [showInvite, setShowInvite] = useState(false)
   const [showAddMember, setShowAddMember] = useState(false)
-  const [copiedType, setCopiedType] = useState<"code" | "link" | null>(null)
+  const [copied, setCopied] = useState(false)
   const [removing, setRemoving] = useState<string | null>(null)
   const [newMemberName, setNewMemberName] = useState("")
   const [adding, setAdding] = useState(false)
@@ -93,15 +92,8 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
     if (!project) return
     const shareUrl = getProjectShareUrl(project.id)
     await navigator.clipboard.writeText(shareUrl)
-    setCopiedType("link")
-    setTimeout(() => setCopiedType(null), 2000)
-  }
-
-  async function handleCopyCode() {
-    if (!project) return
-    await navigator.clipboard.writeText(project.shareCode)
-    setCopiedType("code")
-    setTimeout(() => setCopiedType(null), 2000)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   async function handleShare() {
@@ -465,25 +457,10 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
           <DialogHeader>
             <DialogTitle>邀請成員加入</DialogTitle>
             <DialogDescription>
-              分享以下連結或分享碼給你的朋友
+              分享以下連結給你的朋友
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {/* 分享碼 */}
-            <div>
-              <label className="text-sm font-medium mb-2 block">分享碼</label>
-              <div className="flex gap-2">
-                <div className="flex-1 bg-secondary rounded-lg px-4 py-3 text-center">
-                  <span className="text-2xl font-mono font-bold tracking-wider">
-                    {project.shareCode}
-                  </span>
-                </div>
-                <Button variant="outline" onClick={handleCopyCode}>
-                  {copiedType === "code" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-
             {/* 分享連結 */}
             <div>
               <label className="text-sm font-medium mb-2 block">分享連結</label>
@@ -494,7 +471,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
                   className="text-sm"
                 />
                 <Button variant="outline" onClick={handleCopyLink}>
-                  {copiedType === "link" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
             </div>

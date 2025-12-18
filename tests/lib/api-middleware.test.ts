@@ -53,7 +53,6 @@ const mockProject = {
   id: "project-123",
   name: "Test Project",
   description: "Test Description",
-  shareCode: "ABC123DEF456",
   createdBy: "user-123",
   startDate: null,
   endDate: null,

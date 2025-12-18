@@ -75,7 +75,6 @@ interface Project {
   description: string | null
   startDate: string | null
   endDate: string | null
-  shareCode: string
   creator: {
     id: string
     name: string | null
