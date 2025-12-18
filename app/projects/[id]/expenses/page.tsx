@@ -71,8 +71,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set())
   const [selectedPayers, setSelectedPayers] = useState<Set<string>>(new Set())
-  const [minAmount, setMinAmount] = useState("")
-  const [maxAmount, setMaxAmount] = useState("")
+  const [amountRange, setAmountRange] = useState<[number, number]>([0, 0])
   const [notifyLineOnDelete, setNotifyLineOnDelete] = useState(true)
   const [projectName, setProjectName] = useState("")
   const authFetch = useAuthFetch()
@@ -276,16 +275,16 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
 
     // Amount filter
     const expenseAmount = Number(expense.amount)
-    const min = minAmount ? parseFloat(minAmount) : null
-    const max = maxAmount ? parseFloat(maxAmount) : null
-    const matchesMinAmount = min === null || expenseAmount >= min
-    const matchesMaxAmount = max === null || expenseAmount <= max
+    const [minVal, maxVal] = amountRange
+    const matchesMinAmount = minVal === 0 || expenseAmount >= minVal
+    const matchesMaxAmount = maxVal === 0 || expenseAmount <= maxVal
 
     return matchesSearch && matchesCategory && matchesPayer && matchesMinAmount && matchesMaxAmount
   })
 
   const totalAmount = filteredExpenses.reduce((sum, e) => sum + Number(e.amount), 0)
-  const hasActiveFilters = searchQuery !== "" || selectedCategories.size > 0 || selectedPayers.size > 0 || minAmount !== "" || maxAmount !== ""
+  const maxExpenseAmount = Math.max(...expenses.map(e => Number(e.amount)), 0)
+  const hasActiveFilters = searchQuery !== "" || selectedCategories.size > 0 || selectedPayers.size > 0 || amountRange[0] > 0 || amountRange[1] > 0
 
   function toggleCategory(category: string) {
     const newCategories = new Set(selectedCategories)
@@ -311,8 +310,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
     setSearchQuery("")
     setSelectedCategories(new Set())
     setSelectedPayers(new Set())
-    setMinAmount("")
-    setMaxAmount("")
+    setAmountRange([0, 0])
   }
 
   const backHref = `/projects/${id}`
@@ -429,7 +427,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                   <Button variant="outline" size="sm" className="w-full justify-between">
                     <span className="flex items-center gap-1.5">
                       $ 金額
-                      {(minAmount || maxAmount) && (
+                      {(amountRange[0] > 0 || amountRange[1] > 0) && (
                         <span className="px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
                           1
                         </span>
@@ -438,38 +436,54 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                     <ChevronDown className="h-3.5 w-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 p-3">
-                  <DropdownMenuLabel className="px-0 pb-2">金額範圍</DropdownMenuLabel>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground w-8">最低</span>
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        value={minAmount}
-                        onChange={(e) => setMinAmount(e.target.value)}
-                        className="h-8"
+                <DropdownMenuContent align="end" className="w-64 p-3">
+                  <DropdownMenuLabel className="px-0 pb-3">金額範圍</DropdownMenuLabel>
+                  <div className="space-y-4">
+                    {/* 顯示當前範圍 */}
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium">
+                        ${amountRange[0].toLocaleString()}
+                      </span>
+                      <span className="text-muted-foreground">~</span>
+                      <span className="font-medium">
+                        {amountRange[1] === 0 ? "不限" : `$${amountRange[1].toLocaleString()}`}
+                      </span>
+                    </div>
+
+                    {/* 最低金額滑桿 */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-muted-foreground">最低</label>
+                      <input
+                        type="range"
+                        min={0}
+                        max={maxExpenseAmount || 10000}
+                        step={Math.max(1, Math.floor((maxExpenseAmount || 10000) / 100))}
+                        value={amountRange[0]}
+                        onChange={(e) => setAmountRange([Number(e.target.value), amountRange[1]])}
+                        className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
                       />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground w-8">最高</span>
-                      <Input
-                        type="number"
-                        placeholder="不限"
-                        value={maxAmount}
-                        onChange={(e) => setMaxAmount(e.target.value)}
-                        className="h-8"
+
+                    {/* 最高金額滑桿 */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-muted-foreground">最高 (0 = 不限)</label>
+                      <input
+                        type="range"
+                        min={0}
+                        max={maxExpenseAmount || 10000}
+                        step={Math.max(1, Math.floor((maxExpenseAmount || 10000) / 100))}
+                        value={amountRange[1]}
+                        onChange={(e) => setAmountRange([amountRange[0], Number(e.target.value)])}
+                        className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
                       />
                     </div>
-                    {(minAmount || maxAmount) && (
+
+                    {(amountRange[0] > 0 || amountRange[1] > 0) && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full mt-1"
-                        onClick={() => {
-                          setMinAmount("")
-                          setMaxAmount("")
-                        }}
+                        className="w-full"
+                        onClick={() => setAmountRange([0, 0])}
                       >
                         清除金額篩選
                       </Button>
