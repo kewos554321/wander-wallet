@@ -33,7 +33,6 @@ model Project {
   cover       String?   // 封面圖片：preset:1-6 或 base64 data URL
   startDate   DateTime? @map("start_date")
   endDate     DateTime? @map("end_date")
-  shareCode   String    @unique @map("share_code")
   createdBy   String    @map("created_by") @db.Uuid
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")

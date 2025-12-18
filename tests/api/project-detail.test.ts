@@ -36,7 +36,6 @@ const mockProjectAsMember = {
   id: "project-123",
   name: "Test Project",
   description: "Test Description",
-  shareCode: "ABC123DEF456",
   createdBy: "owner-123",
   creator: { id: "owner-123", name: "Owner", email: "owner@example.com" },
   members: [
@@ -56,7 +55,6 @@ const mockProjectAsNonMember = {
   id: "project-456",
   name: "Other Project",
   description: "Other Description",
-  shareCode: "XYZ789ABC123",
   createdBy: "owner-456",
   creator: { id: "owner-456", name: "Other Owner", email: "other@example.com" },
   members: [

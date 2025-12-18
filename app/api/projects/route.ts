@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { randomBytes } from "crypto"
-
-// 生成唯一的分享碼
-function generateShareCode(): string {
-  return randomBytes(8).toString("base64url").slice(0, 12).toUpperCase()
-}
 
 // 創建新專案
 export async function POST(req: NextRequest) {
@@ -63,19 +57,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "結束日期需晚於出發日期" }, { status: 400 })
     }
 
-    // 生成唯一的分享碼
-    let shareCode = generateShareCode()
-    let existingProject = await prisma.project.findUnique({
-      where: { shareCode },
-    })
-    // 如果分享碼已存在，重新生成
-    while (existingProject) {
-      shareCode = generateShareCode()
-      existingProject = await prisma.project.findUnique({
-        where: { shareCode },
-      })
-    }
-
     // 創建專案並將創建者加入成員
     const project = await prisma.project.create({
       data: {
@@ -84,7 +65,6 @@ export async function POST(req: NextRequest) {
         cover: cover || null,
         startDate: startDateObj,
         endDate: endDateObj,
-        shareCode,
         createdBy: authUser.id,
         members: {
           create: {
