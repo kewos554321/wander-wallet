@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Trash2, User, Utensils, Car, Home, Gamepad2, ShoppingBag, MoreHorizontal, Coffee, Ticket, Gift, Heart, Receipt, CheckSquare, X, ImageIcon, Search, Filter, ChevronDown } from "lucide-react"
+import { Plus, Trash2, User, Utensils, Car, Home, Gamepad2, ShoppingBag, Wallet, Coffee, Ticket, Gift, Heart, Receipt, CheckSquare, X, ImageIcon, Search, Filter, ChevronDown } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,6 +70,8 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set())
   const [selectedPayers, setSelectedPayers] = useState<Set<string>>(new Set())
+  const [minAmount, setMinAmount] = useState("")
+  const [maxAmount, setMaxAmount] = useState("")
   const authFetch = useAuthFetch()
 
   useEffect(() => {
@@ -188,7 +190,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
     ticket: { label: "票券", icon: Ticket, color: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400" },
     gift: { label: "禮物", icon: Gift, color: "bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400" },
     medical: { label: "醫療", icon: Heart, color: "bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400" },
-    other: { label: "其他", icon: MoreHorizontal, color: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400" },
+    other: { label: "其他", icon: Wallet, color: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400" },
   }
 
   function getCategoryInfo(category: string | null) {
@@ -215,11 +217,18 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
     const matchesPayer = selectedPayers.size === 0 ||
       selectedPayers.has(expense.payer.id)
 
-    return matchesSearch && matchesCategory && matchesPayer
+    // Amount filter
+    const expenseAmount = Number(expense.amount)
+    const min = minAmount ? parseFloat(minAmount) : null
+    const max = maxAmount ? parseFloat(maxAmount) : null
+    const matchesMinAmount = min === null || expenseAmount >= min
+    const matchesMaxAmount = max === null || expenseAmount <= max
+
+    return matchesSearch && matchesCategory && matchesPayer && matchesMinAmount && matchesMaxAmount
   })
 
   const totalAmount = filteredExpenses.reduce((sum, e) => sum + Number(e.amount), 0)
-  const hasActiveFilters = searchQuery !== "" || selectedCategories.size > 0 || selectedPayers.size > 0
+  const hasActiveFilters = searchQuery !== "" || selectedCategories.size > 0 || selectedPayers.size > 0 || minAmount !== "" || maxAmount !== ""
 
   function toggleCategory(category: string) {
     const newCategories = new Set(selectedCategories)
@@ -245,6 +254,8 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
     setSearchQuery("")
     setSelectedCategories(new Set())
     setSelectedPayers(new Set())
+    setMinAmount("")
+    setMaxAmount("")
   }
 
   const backHref = `/projects/${id}`
@@ -263,28 +274,23 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
       showBack={!selectMode}
       backHref={backHref}
     >
-      <div className="flex flex-col gap-5 pb-24">
-        {/* 總計摘要 */}
-        <div
-          className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800"
-          style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}
-        >
-          {/* 總金額 */}
-          <div className="text-center mb-4">
-            <p className="text-sm text-muted-foreground mb-1">總支出</p>
-            <p className="text-4xl font-bold tabular-nums tracking-tight">
+      <div className="flex flex-col gap-4 pb-24">
+        {/* 總計摘要 - 緊湊版 */}
+        <div className="flex items-center justify-between py-2">
+          <div>
+            <p className="text-xs text-muted-foreground">總支出</p>
+            <p className="text-2xl font-bold tabular-nums">
               ${totalAmount.toLocaleString("zh-TW")}
             </p>
           </div>
-
-          {/* 統計數據 */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center">
-              <p className="text-2xl font-bold tabular-nums">{filteredExpenses.length}</p>
+          <div className="flex items-center gap-4 text-right">
+            <div>
+              <p className="text-lg font-semibold tabular-nums">{filteredExpenses.length}</p>
               <p className="text-xs text-muted-foreground">筆支出</p>
             </div>
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center">
-              <p className="text-2xl font-bold text-primary tabular-nums">
+            <div className="w-px h-8 bg-slate-200 dark:bg-slate-700" />
+            <div>
+              <p className="text-lg font-semibold tabular-nums text-primary">
                 ${filteredExpenses.length > 0 ? Math.round(totalAmount / filteredExpenses.length).toLocaleString("zh-TW") : 0}
               </p>
               <p className="text-xs text-muted-foreground">平均每筆</p>
@@ -292,44 +298,24 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
           </div>
         </div>
 
-        {/* 分隔線 */}
-        <div className="border-t border-slate-200 dark:border-slate-700" />
-
         {/* 搜尋與篩選 */}
         {expenses.length > 0 && (
           <div className="space-y-3">
-            {/* 搜尋輸入框 */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="搜尋支出描述..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-9"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            {/* 篩選按鈕列 */}
-            <div className="flex items-center gap-2 flex-wrap">
+            {/* 第一行：篩選按鈕 */}
+            <div className="grid grid-cols-3 gap-2">
               {/* 類別篩選 */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1.5">
-                    <Filter className="h-3.5 w-3.5" />
-                    類別
-                    {selectedCategories.size > 0 && (
-                      <span className="ml-1 px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
-                        {selectedCategories.size}
-                      </span>
-                    )}
+                  <Button variant="outline" size="sm" className="w-full justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Filter className="h-3.5 w-3.5" />
+                      類別
+                      {selectedCategories.size > 0 && (
+                        <span className="px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+                          {selectedCategories.size}
+                        </span>
+                      )}
+                    </span>
                     <ChevronDown className="h-3.5 w-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -352,14 +338,16 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
               {/* 付款人篩選 */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1.5">
-                    <User className="h-3.5 w-3.5" />
-                    付款人
-                    {selectedPayers.size > 0 && (
-                      <span className="ml-1 px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
-                        {selectedPayers.size}
-                      </span>
-                    )}
+                  <Button variant="outline" size="sm" className="w-full justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5" />
+                      付款人
+                      {selectedPayers.size > 0 && (
+                        <span className="px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+                          {selectedPayers.size}
+                        </span>
+                      )}
+                    </span>
                     <ChevronDown className="h-3.5 w-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -378,33 +366,109 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                 </DropdownMenuContent>
               </DropdownMenu>
 
+              {/* 金額篩選 */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-between">
+                    <span className="flex items-center gap-1.5">
+                      $ 金額
+                      {(minAmount || maxAmount) && (
+                        <span className="px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+                          1
+                        </span>
+                      )}
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 p-3">
+                  <DropdownMenuLabel className="px-0 pb-2">金額範圍</DropdownMenuLabel>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground w-8">最低</span>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={minAmount}
+                        onChange={(e) => setMinAmount(e.target.value)}
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground w-8">最高</span>
+                      <Input
+                        type="number"
+                        placeholder="不限"
+                        value={maxAmount}
+                        onChange={(e) => setMaxAmount(e.target.value)}
+                        className="h-8"
+                      />
+                    </div>
+                    {(minAmount || maxAmount) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full mt-1"
+                        onClick={() => {
+                          setMinAmount("")
+                          setMaxAmount("")
+                        }}
+                      >
+                        清除金額篩選
+                      </Button>
+                    )}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              </div>
+
+            {/* 第二行：搜尋 + 批次管理 + 清除篩選 */}
+            <div className="flex items-center gap-2">
+              {/* 搜尋輸入框 */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="搜尋支出描述..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-9"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
               {/* 清除篩選 */}
               {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-muted-foreground">
-                  清除篩選
+                <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-muted-foreground shrink-0">
+                  清除
                 </Button>
               )}
 
-              {/* 批次管理按鈕 */}
-              <div className="ml-auto">
-                {!selectMode ? (
-                  <Button variant="outline" size="sm" onClick={() => setSelectMode(true)} className="gap-1.5">
-                    <CheckSquare className="h-4 w-4" />
-                    批次管理
-                  </Button>
-                ) : (
-                  <Button variant="outline" size="sm" onClick={exitSelectMode} className="gap-1.5">
-                    <X className="h-4 w-4" />
-                    取消
-                  </Button>
-                )}
-              </div>
+              {/* 批次按鈕 */}
+              {!selectMode ? (
+                <Button variant="outline" size="sm" onClick={() => setSelectMode(true)} className="gap-1.5 shrink-0">
+                  <CheckSquare className="h-4 w-4" />
+                  批次
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" onClick={exitSelectMode} className="gap-1.5 shrink-0">
+                  <X className="h-4 w-4" />
+                  取消
+                </Button>
+              )}
             </div>
 
             {/* 篩選結果提示 */}
             {hasActiveFilters && (
-              <p className="text-sm text-muted-foreground">
-                顯示 {filteredExpenses.length} / {expenses.length} 筆支出
+              <p className="text-xs text-muted-foreground">
+                顯示 {filteredExpenses.length} / {expenses.length} 筆
               </p>
             )}
           </div>
@@ -503,7 +567,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                           {/* 第一行：描述 + 金額 */}
                           <div className="flex items-start justify-between gap-2">
                             <h3 className="font-semibold text-base truncate flex-1 min-w-0">
-                              {expense.description || "無描述"}
+                              {expense.description || "未知"}
                             </h3>
                             <p className="font-bold text-lg tabular-nums shrink-0">
                               ${Number(expense.amount).toLocaleString("zh-TW")}
@@ -669,17 +733,16 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
           </>
         )}
 
-        {/* 新增按鈕 */}
-        {filteredExpenses.length > 0 && !selectMode && (
-          <Link href={`/projects/${id}/expenses/new`} className="block">
-            <button className="w-full py-4 px-4 rounded-xl border border-dashed border-slate-200 text-sm text-muted-foreground hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:hover:border-slate-600 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2">
-              <Plus className="h-4 w-4" />
-              新增支出
-            </button>
-          </Link>
-        )}
-      </div>
+              </div>
 
+      {/* 浮動新增按鈕 */}
+      {!selectMode && (
+        <Link href={`/projects/${id}/expenses/new`} className="fixed bottom-6 right-4 z-50">
+          <Button size="icon" className="h-14 w-14 rounded-full shadow-xl shadow-black/25">
+            <Plus className="h-6 w-6" />
+          </Button>
+        </Link>
+      )}
 
       {/* 單筆刪除確認對話框 */}
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>

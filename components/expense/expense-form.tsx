@@ -15,7 +15,7 @@ import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { sendExpenseNotificationToChat } from "@/lib/liff"
-import { Check, Utensils, Car, Home, Gamepad2, ShoppingBag, MoreHorizontal, User, Calculator, Delete, Ticket, Gift, CalendarIcon, ImagePlus, X } from "lucide-react"
+import { Check, Utensils, Car, Home, Gamepad2, ShoppingBag, Wallet, User, Calculator, Delete, Ticket, Gift, CalendarIcon, ImagePlus, X } from "lucide-react"
 
 interface Member {
   id: string
@@ -80,7 +80,7 @@ const CATEGORIES = [
   { value: "shopping", label: "購物", icon: ShoppingBag, color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400" },
   { value: "entertainment", label: "娛樂", icon: Gamepad2, color: "bg-pink-100 text-pink-600 dark:bg-pink-950 dark:text-pink-400" },
   { value: "gift", label: "禮品", icon: Gift, color: "bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400" },
-  { value: "other", label: "其他", icon: MoreHorizontal, color: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" },
+  { value: "other", label: "其他", icon: Wallet, color: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" },
 ]
 
 interface ExpenseFormProps {

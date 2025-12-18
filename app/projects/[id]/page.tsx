@@ -31,6 +31,7 @@ import {
   Link2,
   MoreHorizontal,
   Check,
+  Wallet,
 } from "lucide-react"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import {
@@ -107,7 +108,7 @@ function getCategoryIcon(category: string | null) {
     case "shopping":
       return <ShoppingBag className="h-4 w-4" />
     default:
-      return <Receipt className="h-4 w-4" />
+      return <Wallet className="h-4 w-4" />
   }
 }
 
@@ -275,7 +276,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
 
   if (loading) {
     return (
-      <AppLayout title="載入中..." showBack>
+      <AppLayout title="專案" showBack>
         <div className="text-center py-8 text-muted-foreground">載入中...</div>
       </AppLayout>
     )
@@ -284,7 +285,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
   // 顯示加入 Dialog（非成員）
   if (showJoinDialog && projectBasicInfo) {
     return (
-      <AppLayout title={projectBasicInfo.name} showBack>
+      <AppLayout title="專案" showBack>
         <Dialog open={showJoinDialog} onOpenChange={() => router.push("/projects")}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -321,7 +322,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
 
   if (!project) {
     return (
-      <AppLayout title="專案不存在" showBack>
+      <AppLayout title="專案" showBack>
         <div className="text-center py-8 text-muted-foreground">專案不存在</div>
       </AppLayout>
     )
@@ -333,8 +334,16 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
   const displayBalance = isNaN(userBalance) ? 0 : userBalance
 
   return (
-    <AppLayout title={project.name} showBack>
+    <AppLayout title="專案" showBack>
       <div className="pb-24 space-y-6 px-3 sm:px-4">
+        {/* 專案標題 */}
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{project.name}</h1>
+          {project.description && (
+            <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
+          )}
+        </div>
+
         {/* 功能 */}
         <div>
           <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">功能</h2>
@@ -539,7 +548,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
       </div>
 
       {/* 浮動新增按鈕 */}
-      <Link href={`/projects/${id}/expenses/new`} className="fixed bottom-24 right-4 z-50">
+      <Link href={`/projects/${id}/expenses/new`} className="fixed bottom-6 right-4 z-50">
         <Button size="icon" className="h-14 w-14 rounded-full shadow-xl shadow-black/25">
           <Plus className="h-6 w-6" />
         </Button>
