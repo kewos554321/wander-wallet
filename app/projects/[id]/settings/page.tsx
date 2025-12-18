@@ -1,71 +1,402 @@
 "use client"
 
-import { use } from "react"
+import { use, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { AppLayout } from "@/components/layout/app-layout"
+import { useAuthFetch } from "@/components/auth/liff-provider"
+import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Settings, ImageIcon, Calendar, FileText, Trash2, ArrowLeft } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Calendar as CalendarIcon, Loader2, Trash2 } from "lucide-react"
+import type { DateRange } from "react-day-picker"
+import { CoverPicker } from "@/components/cover-picker"
+
+interface Project {
+  id: string
+  name: string
+  description: string | null
+  cover: string | null
+  budget: string | null
+  startDate: string | null
+  endDate: string | null
+  createdBy: string
+  creator: {
+    id: string
+    name: string | null
+    email: string
+  }
+}
+
+// Helper function to format date as YYYY-MM-DD in local timezone
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
+// Helper function to create a Date object from YYYY-MM-DD string in local timezone
+function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number)
+  return new Date(year, month - 1, day)
+}
+
+// Helper function to parse ISO date string to YYYY-MM-DD
+function isoToLocalDate(isoStr: string): string {
+  const date = new Date(isoStr)
+  return formatLocalDate(date)
+}
 
 export default function SettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const router = useRouter()
+  const authFetch = useAuthFetch()
+
+  const [project, setProject] = useState<Project | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+
+  // Form states
+  const [name, setName] = useState("")
+  const [description, setDescription] = useState("")
+  const [cover, setCover] = useState<string | null>(null)
+  const [budget, setBudget] = useState("")
+  const [startDate, setStartDate] = useState<string | null>(null)
+  const [endDate, setEndDate] = useState<string | null>(null)
+  const [dateRange, setDateRange] = useState<DateRange | undefined>()
 
   const backHref = `/projects/${id}`
 
+  useEffect(() => {
+    fetchProject()
+    fetchCurrentUser()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
+
+  async function fetchCurrentUser() {
+    try {
+      const res = await authFetch("/api/users/profile")
+      if (res.ok) {
+        const data = await res.json()
+        setCurrentUserId(data.id)
+      }
+    } catch (error) {
+      console.error("獲取用戶資料錯誤:", error)
+    }
+  }
+
+  async function fetchProject() {
+    try {
+      const res = await authFetch(`/api/projects/${id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setProject(data)
+
+        // Initialize form with project data
+        setName(data.name)
+        setDescription(data.description || "")
+        setCover(data.cover)
+        setBudget(data.budget ? String(Number(data.budget)) : "")
+
+        if (data.startDate) {
+          const start = isoToLocalDate(data.startDate)
+          setStartDate(start)
+          if (data.endDate) {
+            const end = isoToLocalDate(data.endDate)
+            setEndDate(end)
+            setDateRange({
+              from: parseLocalDate(start),
+              to: parseLocalDate(end),
+            })
+          } else {
+            setDateRange({
+              from: parseLocalDate(start),
+            })
+          }
+        }
+      }
+    } catch (error) {
+      console.error("獲取專案錯誤:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault()
+
+    if (!name.trim()) {
+      alert("請輸入專案名稱")
+      return
+    }
+
+    // 驗證日期
+    if (startDate && endDate && parseLocalDate(startDate) > parseLocalDate(endDate)) {
+      alert("結束日需晚於出發日")
+      return
+    }
+
+    setSaving(true)
+
+    try {
+      const res = await authFetch(`/api/projects/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          description: description.trim() || null,
+          cover: cover,
+          budget: budget ? Number(budget) : null,
+          startDate: startDate || null,
+          endDate: endDate || null,
+        }),
+      })
+
+      if (res.ok) {
+        router.push(`/projects/${id}`)
+      } else {
+        const error = await res.json()
+        alert(error.error || "更新失敗")
+      }
+    } catch (error) {
+      console.error("更新專案錯誤:", error)
+      alert("更新失敗")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDelete() {
+    setDeleting(true)
+
+    try {
+      const res = await authFetch(`/api/projects/${id}`, {
+        method: "DELETE",
+      })
+
+      if (res.ok) {
+        router.push("/projects")
+      } else {
+        const error = await res.json()
+        alert(error.error || "刪除失敗")
+      }
+    } catch (error) {
+      console.error("刪除專案錯誤:", error)
+      alert("刪除失敗")
+    } finally {
+      setDeleting(false)
+      setShowDeleteDialog(false)
+    }
+  }
+
+  function formatDateRange(start: string | null, end: string | null): string {
+    if (!start && !end) return "選擇日期"
+    if (start && !end) return `${start} 至 ...`
+    if (!start && end) return `... 至 ${end}`
+    return `${start} 至 ${end}`
+  }
+
+  const isCreator = currentUserId && project?.createdBy === currentUserId
+
+  if (loading) {
+    return (
+      <AppLayout title="專案設定" showBack backHref={backHref}>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </AppLayout>
+    )
+  }
+
+  if (!project) {
+    return (
+      <AppLayout title="專案設定" showBack backHref={backHref}>
+        <div className="px-4 py-20 text-center text-muted-foreground">
+          專案不存在
+        </div>
+      </AppLayout>
+    )
+  }
+
   return (
     <AppLayout title="專案設定" showBack backHref={backHref}>
-      <div className="px-4 py-8">
-        <div className="max-w-md mx-auto text-center">
-          {/* 圖標 */}
-          <div className="h-20 w-20 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-6">
-            <Settings className="h-10 w-10 text-slate-600 dark:text-slate-400" />
+      <form onSubmit={handleSave} className="space-y-6">
+        {/* 專案名稱 */}
+        <div className="space-y-2">
+          <label htmlFor="name" className="text-sm font-medium">
+            專案名稱 <span className="text-destructive">*</span>
+          </label>
+          <Input
+            id="name"
+            placeholder="例如：日本關西 5 天、歐洲自由行"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={saving}
+            required
+          />
+        </div>
+
+        {/* 封面圖片 */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">封面圖片</label>
+          <CoverPicker value={cover} onChange={setCover} disabled={saving} />
+        </div>
+
+        {/* 旅程日期 */}
+        <div className="space-y-2">
+          <label htmlFor="dates" className="text-sm font-medium">
+            出發日與結束日
+          </label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-full justify-start font-normal" type="button" disabled={saving}>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {formatDateRange(startDate, endDate)}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              sideOffset={8}
+              collisionPadding={16}
+              className="p-2 w-[calc(100vw-32px)] max-w-[360px]"
+            >
+              <div className="flex items-center justify-center">
+                <Calendar
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  className="p-2 [--cell-size:--spacing(10)] text-sm"
+                  onSelect={(range) => {
+                    setDateRange(range)
+                    if (range?.from && range?.to) {
+                      const from = formatLocalDate(range.from)
+                      const to = formatLocalDate(range.to)
+                      setStartDate(from)
+                      setEndDate(to)
+                    } else if (range?.from) {
+                      const from = formatLocalDate(range.from)
+                      setStartDate(from)
+                      setEndDate(null)
+                    } else {
+                      setStartDate(null)
+                      setEndDate(null)
+                    }
+                  }}
+                />
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* 預算設定 */}
+        <div className="space-y-2">
+          <label htmlFor="budget" className="text-sm font-medium">
+            旅程預算（選填）
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+            <Input
+              id="budget"
+              type="number"
+              placeholder="10000"
+              value={budget}
+              onChange={(e) => setBudget(e.target.value)}
+              disabled={saving}
+              className="pl-7"
+              min="0"
+              step="1"
+            />
           </div>
+          <p className="text-xs text-muted-foreground">設定預算後，可在專案頁面查看花費進度</p>
+        </div>
 
-          {/* 標題 */}
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-            專案設定
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 mb-8">
-            即將推出
-          </p>
+        {/* 專案描述 */}
+        <div className="space-y-2">
+          <label htmlFor="description" className="text-sm font-medium">
+            描述（選填）
+          </label>
+          <Textarea
+            id="description"
+            placeholder="記錄這次旅行的目的地、日期等資訊..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            disabled={saving}
+            rows={4}
+          />
+        </div>
 
-          {/* 功能說明 */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 text-left mb-6">
-            <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-4">
-              功能說明
-            </h2>
-            <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
-              <li className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
-                <span><strong>專案名稱</strong> - 修改專案名稱，讓標題更清楚</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <ImageIcon className="h-5 w-5 text-pink-500 shrink-0 mt-0.5" />
-                <span><strong>專案封面</strong> - 設定專案封面圖片，一眼辨識不同旅程</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <Calendar className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
-                <span><strong>旅程日期</strong> - 設定開始與結束日期，記錄旅程時間</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-violet-500 shrink-0 mt-0.5" />
-                <span><strong>專案描述</strong> - 新增描述，記錄旅程重點或備註</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <Trash2 className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-                <span><strong>刪除專案</strong> - 刪除整個專案及所有相關資料</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* 返回按鈕 */}
-          <Link href={`/projects/${id}`}>
-            <Button variant="outline" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              返回專案
+        {/* 儲存與取消按鈕 */}
+        <div className="flex gap-3 pt-4">
+          <Button type="submit" className="flex-1" disabled={saving}>
+            {saving ? "儲存中..." : "儲存變更"}
+          </Button>
+          <Link href={backHref} className="flex-1">
+            <Button type="button" variant="outline" className="w-full" disabled={saving}>
+              取消
             </Button>
           </Link>
         </div>
-      </div>
+
+        {/* 危險區域 - 刪除專案 */}
+        {isCreator && (
+          <div className="pt-6 border-t border-slate-200 dark:border-slate-800">
+            <div className="bg-red-50 dark:bg-red-950/30 rounded-xl p-4 border border-red-200 dark:border-red-900">
+              <h3 className="text-sm font-semibold text-red-600 dark:text-red-400 mb-1">
+                危險區域
+              </h3>
+              <p className="text-xs text-red-500 dark:text-red-400/80 mb-3">
+                刪除專案後，所有成員、支出紀錄都會永久移除，此操作無法復原。
+              </p>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={saving}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                刪除專案
+              </Button>
+            </div>
+          </div>
+        )}
+      </form>
+
+      {/* 刪除確認對話框 */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>確認刪除專案</DialogTitle>
+            <DialogDescription>
+              確定要刪除「{project.name}」嗎？所有成員、支出紀錄都會永久移除，此操作無法復原。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={deleting}>
+              取消
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? "刪除中..." : "確認刪除"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   )
 }

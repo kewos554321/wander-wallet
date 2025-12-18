@@ -145,12 +145,13 @@ export async function PUT(
     }
 
     const body = await req.json()
-    const { name, description, cover, startDate, endDate } = body
+    const { name, description, cover, budget, startDate, endDate } = body
 
     const updateData: {
       name?: string
       description?: string | null
       cover?: string | null
+      budget?: number | null
       startDate?: Date | null
       endDate?: Date | null
     } = {}
@@ -168,6 +169,19 @@ export async function PUT(
 
     if (cover !== undefined) {
       updateData.cover = cover || null
+    }
+
+    // 處理預算更新
+    if (budget !== undefined) {
+      if (budget === null) {
+        updateData.budget = null
+      } else {
+        const budgetNum = Number(budget)
+        if (isNaN(budgetNum) || budgetNum < 0) {
+          return NextResponse.json({ error: "預算金額必須為正數" }, { status: 400 })
+        }
+        updateData.budget = budgetNum
+      }
     }
 
     // 處理日期更新

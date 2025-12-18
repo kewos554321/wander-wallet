@@ -31,6 +31,7 @@ model Project {
   name        String
   description String?
   cover       String?   // 封面圖片：preset:1-6 或 base64 data URL
+  budget      Decimal?  @db.Decimal(12, 2) // 預算金額
   startDate   DateTime? @map("start_date")
   endDate     DateTime? @map("end_date")
   createdBy   String    @map("created_by") @db.Uuid

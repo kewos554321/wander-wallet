@@ -83,6 +83,7 @@ interface Project {
   id: string
   name: string
   description: string | null
+  budget: string | null
   startDate: string | null
   endDate: string | null
   creator: {
@@ -330,6 +331,9 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
 
   const totalAmount = project.expenses.reduce((sum, e) => sum + Number(e.amount), 0)
   const perPerson = project.members.length > 0 ? totalAmount / project.members.length : 0
+  const budget = project.budget ? Number(project.budget) : null
+  const budgetProgress = budget ? Math.min((totalAmount / budget) * 100, 100) : 0
+  const budgetRemaining = budget ? budget - totalAmount : null
 
   const displayBalance = isNaN(userBalance) ? 0 : userBalance
 
@@ -431,6 +435,56 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
             />
           </div>
         </div>
+
+        {/* 預算進度 - 只在設定預算時顯示 */}
+        {budget !== null && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold text-slate-900 dark:text-slate-100">預算進度</h2>
+              <Link
+                href={`/projects/${id}/settings`}
+                className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+              >
+                編輯預算
+              </Link>
+            </div>
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">
+                  已花費 ${totalAmount.toLocaleString("zh-TW")} / ${budget.toLocaleString("zh-TW")}
+                </span>
+                <span className={`text-sm font-medium ${budgetProgress >= 100 ? "text-red-500" : budgetProgress >= 80 ? "text-amber-500" : "text-emerald-500"}`}>
+                  {budgetProgress.toFixed(0)}%
+                </span>
+              </div>
+              <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    budgetProgress >= 100
+                      ? "bg-red-500"
+                      : budgetProgress >= 80
+                      ? "bg-amber-500"
+                      : "bg-emerald-500"
+                  }`}
+                  style={{ width: `${budgetProgress}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-xs text-muted-foreground">
+                  {budgetRemaining !== null && budgetRemaining >= 0
+                    ? `剩餘 $${budgetRemaining.toLocaleString("zh-TW")}`
+                    : `超支 $${Math.abs(budgetRemaining || 0).toLocaleString("zh-TW")}`}
+                </span>
+                {budgetProgress >= 100 && (
+                  <span className="text-xs text-red-500 font-medium">已超出預算</span>
+                )}
+                {budgetProgress >= 80 && budgetProgress < 100 && (
+                  <span className="text-xs text-amber-500 font-medium">接近預算上限</span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 我的餘額 */}
         <div>
