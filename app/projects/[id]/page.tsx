@@ -32,6 +32,7 @@ import {
   MoreHorizontal,
   Check,
   Wallet,
+  Mic,
 } from "lucide-react"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import {
@@ -43,6 +44,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { getProjectShareUrl } from "@/lib/utils"
+import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
 
 interface ProjectMember {
   id: string
@@ -148,6 +150,9 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
   const [showInvite, setShowInvite] = useState(false)
   const [copied, setCopied] = useState(false)
   const [canNativeShare, setCanNativeShare] = useState(false)
+
+  // AI 語音記帳相關狀態
+  const [showVoiceDialog, setShowVoiceDialog] = useState(false)
 
   useEffect(() => {
     setCanNativeShare(typeof navigator !== "undefined" && !!navigator.share)
@@ -601,12 +606,44 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      {/* 浮動新增按鈕 */}
-      <Link href={`/projects/${id}/expenses/new`} className="fixed bottom-6 right-4 z-50">
-        <Button size="icon" className="h-14 w-14 rounded-full shadow-xl shadow-black/25">
-          <Plus className="h-6 w-6" />
+      {/* 浮動按鈕群組 */}
+      <div className="fixed bottom-6 right-4 z-50 flex flex-col gap-3">
+        {/* AI 語音記帳按鈕 */}
+        <Button
+          size="icon"
+          variant="secondary"
+          className="h-12 w-12 rounded-full shadow-lg"
+          onClick={() => setShowVoiceDialog(true)}
+        >
+          <Mic className="h-5 w-5" />
         </Button>
-      </Link>
+
+        {/* 新增支出按鈕 */}
+        <Link href={`/projects/${id}/expenses/new`}>
+          <Button size="icon" className="h-14 w-14 rounded-full shadow-xl shadow-black/25">
+            <Plus className="h-6 w-6" />
+          </Button>
+        </Link>
+      </div>
+
+      {/* AI 語音記帳對話框 */}
+      {project && (
+        <VoiceExpenseDialog
+          open={showVoiceDialog}
+          onOpenChange={setShowVoiceDialog}
+          projectId={id}
+          members={project.members.map((m) => ({
+            id: m.id,
+            displayName: m.displayName,
+            userId: m.user?.id || null,
+            user: m.user,
+          }))}
+          currentUserMemberId={project.members.find((m) => m.user?.id === user?.id)?.id || ""}
+          onSuccess={() => {
+            fetchProject()
+          }}
+        />
+      )}
 
       {/* 邀請對話框 */}
       <Dialog open={showInvite} onOpenChange={setShowInvite}>
