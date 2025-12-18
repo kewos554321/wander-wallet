@@ -11,6 +11,7 @@
 | 1 | 串接 AI 模型，讓 user 可以提供未整理的文本，自動轉換為新的支出紀錄 | 高 | P2 | 待處理 | 2025-12-17 |
 | 5 | 支出可以增加地點，地點可以透過 Google Maps/Places 點選 | 中高 | P3 | 待處理 | 2025-12-17 |
 | 7 | 讓 user 點擊 project 頁面上的最近支出，可以直接到該筆明細編輯頁面 | 低 | P1 | 已完成 | 2025-12-17 |
+| 8 | 系統層級 Log 系統，用於生產環境追蹤 bug | 低 | P1 | 已完成 | 2025-12-18 |
 
 ---
 
@@ -52,6 +53,12 @@
 - DB schema 加地點欄位
 - Google API 計費考量
 - 地圖 UI 元件
+
+### #8 系統層級 Log 系統 (低)
+- 建立 `lib/logger.ts` 工具
+- 支援 log levels: debug/info/warn/error
+- 結構化 JSON 輸出，方便 Vercel 日誌查詢
+- API Route 專用 logger 附帶 requestId 追蹤
 
 ---
 

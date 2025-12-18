@@ -2,7 +2,6 @@
 
 import { use, useEffect, useState, useMemo } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
@@ -19,7 +18,6 @@ import {
   Home,
   Gamepad2,
   ShoppingBag,
-  ChevronRight,
   BarChart3,
   TrendingUp,
   TrendingDown,
@@ -39,7 +37,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { getProjectShareUrl } from "@/lib/utils"
 
 interface ProjectMember {

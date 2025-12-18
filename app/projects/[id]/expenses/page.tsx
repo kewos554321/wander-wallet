@@ -55,12 +55,10 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState(false)
-  const [projectName, setProjectName] = useState("")
   const authFetch = useAuthFetch()
 
   useEffect(() => {
     fetchExpenses()
-    fetchProjectInfo()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
@@ -75,18 +73,6 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
       console.error("獲取支出列表錯誤:", error)
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function fetchProjectInfo() {
-    try {
-      const res = await authFetch(`/api/projects/${id}`)
-      if (res.ok) {
-        const data = await res.json()
-        setProjectName(data.name || "")
-      }
-    } catch (error) {
-      console.error("獲取專案資訊錯誤:", error)
     }
   }
 

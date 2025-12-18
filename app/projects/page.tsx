@@ -23,7 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { MoreVertical, Users, Plus, Share2, Trash2, Edit, ChevronRight, Folder, UserPlus } from "lucide-react"
+import { MoreVertical, Plus, Share2, Trash2, Edit, Folder, UserPlus } from "lucide-react"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { getProjectShareUrl } from "@/lib/utils"
 import { parseCover, getPresetCover } from "@/lib/covers"
