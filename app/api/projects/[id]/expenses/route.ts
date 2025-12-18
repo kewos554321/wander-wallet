@@ -114,7 +114,7 @@ export async function POST(
     const { paidByMemberId, amount, description, category, image, participants, expenseDate } = body
 
     // 驗證必填欄位
-    if (!paidByMemberId || !amount || !participants || !Array.isArray(participants)) {
+    if (!paidByMemberId || amount === undefined || amount === null || !participants || !Array.isArray(participants)) {
       return NextResponse.json(
         { error: "付款人、金額和參與者必填" },
         { status: 400 }
