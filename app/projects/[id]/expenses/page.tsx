@@ -25,7 +25,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
-import { useAuthFetch } from "@/components/auth/liff-provider"
+import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
+import { sendExpenseNotificationToChat } from "@/lib/liff"
 
 interface Member {
   id: string
@@ -72,10 +73,14 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
   const [selectedPayers, setSelectedPayers] = useState<Set<string>>(new Set())
   const [minAmount, setMinAmount] = useState("")
   const [maxAmount, setMaxAmount] = useState("")
+  const [notifyLineOnDelete, setNotifyLineOnDelete] = useState(true)
+  const [projectName, setProjectName] = useState("")
   const authFetch = useAuthFetch()
+  const { isDevMode, canSendMessages } = useLiff()
 
   useEffect(() => {
     fetchExpenses()
+    fetchProjectName()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
@@ -93,8 +98,23 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
     }
   }
 
+  async function fetchProjectName() {
+    try {
+      const res = await authFetch(`/api/projects/${id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setProjectName(data.name)
+      }
+    } catch (error) {
+      console.error("獲取專案名稱錯誤:", error)
+    }
+  }
+
   async function handleDelete() {
     if (!deleteId) return
+
+    // 先取得要刪除的支出資料（用於通知）
+    const expenseToDelete = expenses.find((e) => e.id === deleteId)
 
     setDeleting(true)
     try {
@@ -103,6 +123,22 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
       })
 
       if (res.ok) {
+        // 發送 LINE 通知
+        if (notifyLineOnDelete && canSendMessages && !isDevMode && expenseToDelete) {
+          sendExpenseNotificationToChat({
+            operationType: "delete",
+            projectName,
+            projectId: id,
+            payerName: expenseToDelete.payer.displayName,
+            amount: expenseToDelete.amount,
+            description: expenseToDelete.description || undefined,
+            category: expenseToDelete.category || undefined,
+            participantCount: expenseToDelete.participants.length,
+          }).catch(() => {
+            // 發送失敗時靜默處理，不影響使用者體驗
+          })
+        }
+
         setExpenses(expenses.filter((e) => e.id !== deleteId))
         setDeleteId(null)
       } else {
@@ -120,6 +156,9 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
   async function handleBatchDelete() {
     if (selectedIds.size === 0) return
 
+    // 先取得要刪除的支出資料（用於通知）
+    const expensesToDelete = expenses.filter((e) => selectedIds.has(e.id))
+
     setDeleting(true)
     try {
       const res = await authFetch(`/api/projects/${id}/expenses/batch`, {
@@ -129,6 +168,24 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
       })
 
       if (res.ok) {
+        // 發送 LINE 通知（為每筆刪除的支出發送通知）
+        if (notifyLineOnDelete && canSendMessages && !isDevMode && expensesToDelete.length > 0) {
+          for (const expense of expensesToDelete) {
+            sendExpenseNotificationToChat({
+              operationType: "delete",
+              projectName,
+              projectId: id,
+              payerName: expense.payer.displayName,
+              amount: expense.amount,
+              description: expense.description || undefined,
+              category: expense.category || undefined,
+              participantCount: expense.participants.length,
+            }).catch(() => {
+              // 發送失敗時靜默處理，不影響使用者體驗
+            })
+          }
+        }
+
         setExpenses(expenses.filter((e) => !selectedIds.has(e.id)))
         setSelectedIds(new Set())
         setSelectMode(false)
@@ -753,6 +810,19 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
               確定要刪除這筆支出嗎？此操作無法復原。
             </DialogDescription>
           </DialogHeader>
+          {/* LINE 通知選項 - 只在可以發送時顯示 */}
+          {canSendMessages && !isDevMode && (
+            <label className="flex items-center gap-3 cursor-pointer py-2">
+              <Checkbox
+                checked={notifyLineOnDelete}
+                onCheckedChange={(checked) => setNotifyLineOnDelete(checked === true)}
+              />
+              <div>
+                <span className="text-sm font-medium">通知 LINE 群組</span>
+                <p className="text-xs text-muted-foreground">刪除後自動發送通知到群組</p>
+              </div>
+            </label>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteId(null)}>
               取消
@@ -777,6 +847,19 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
               確定要刪除選取的 {selectedIds.size} 筆支出嗎？此操作無法復原。
             </DialogDescription>
           </DialogHeader>
+          {/* LINE 通知選項 - 只在可以發送時顯示 */}
+          {canSendMessages && !isDevMode && (
+            <label className="flex items-center gap-3 cursor-pointer py-2">
+              <Checkbox
+                checked={notifyLineOnDelete}
+                onCheckedChange={(checked) => setNotifyLineOnDelete(checked === true)}
+              />
+              <div>
+                <span className="text-sm font-medium">通知 LINE 群組</span>
+                <p className="text-xs text-muted-foreground">刪除後自動發送通知到群組</p>
+              </div>
+            </label>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowBatchDeleteDialog(false)}>
               取消
