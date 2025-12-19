@@ -16,7 +16,8 @@ import { zhTW } from "date-fns/locale"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { sendExpenseNotificationToChat } from "@/lib/liff"
 import { LocationPicker } from "@/components/location-picker"
-import { Check, Utensils, Car, Home, Gamepad2, ShoppingBag, Wallet, User, Calculator, Delete, Ticket, Gift, CalendarIcon, ImagePlus, X } from "lucide-react"
+import { Check, User, Calculator, Delete, CalendarIcon, ImagePlus, X } from "lucide-react"
+import { CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
 
 interface Member {
   id: string
@@ -76,16 +77,6 @@ interface ParticipantShare {
   shareAmount: number
 }
 
-const CATEGORIES = [
-  { value: "food", label: "餐飲", icon: Utensils, color: "bg-orange-100 text-orange-600 dark:bg-orange-950 dark:text-orange-400" },
-  { value: "transport", label: "交通", icon: Car, color: "bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400" },
-  { value: "accommodation", label: "住宿", icon: Home, color: "bg-violet-100 text-violet-600 dark:bg-violet-950 dark:text-violet-400" },
-  { value: "ticket", label: "票券", icon: Ticket, color: "bg-cyan-100 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400" },
-  { value: "shopping", label: "購物", icon: ShoppingBag, color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400" },
-  { value: "entertainment", label: "娛樂", icon: Gamepad2, color: "bg-pink-100 text-pink-600 dark:bg-pink-950 dark:text-pink-400" },
-  { value: "gift", label: "禮品", icon: Gift, color: "bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400" },
-  { value: "other", label: "其他", icon: Wallet, color: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" },
-]
 
 interface ExpenseFormProps {
   projectId: string
@@ -200,8 +191,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           longitude: expense.longitude || null,
         })
         // 檢查是否為預設類別，如果不是則設為「其他」並填入自訂值
-        const predefinedCategories = CATEGORIES.map(c => c.value)
-        if (expense.category && !predefinedCategories.includes(expense.category)) {
+        const isValidCategory = expense.category && (EXPENSE_CATEGORIES as readonly string[]).includes(expense.category)
+        if (expense.category && !isValidCategory) {
           setCategory("other")
           setCustomCategory(expense.category)
         } else {

@@ -7,6 +7,7 @@ import {
   Cell,
   Tooltip,
 } from "recharts"
+import { getCategoryLabel, getCategoryColor } from "@/lib/constants/expenses"
 
 interface CategoryData {
   name: string
@@ -49,34 +50,12 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   )
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  food: "餐飲",
-  transport: "交通",
-  accommodation: "住宿",
-  ticket: "票券",
-  shopping: "購物",
-  entertainment: "娛樂",
-  gift: "禮品",
-  other: "其他",
-}
-
-const CATEGORY_COLORS: Record<string, string> = {
-  food: "#f97316",
-  transport: "#3b82f6",
-  accommodation: "#7c3aed",
-  ticket: "#06b6d4",
-  shopping: "#10b981",
-  entertainment: "#ec4899",
-  gift: "#f59e0b",
-  other: "#64748b",
-}
-
 export function CategoryPieChart({ data }: CategoryPieChartProps) {
   const total = data.reduce((sum, item) => sum + item.value, 0)
   const chartData = data.map((item) => ({
     ...item,
-    name: CATEGORY_LABELS[item.name] || item.name,
-    color: CATEGORY_COLORS[item.name] || item.color || "#64748b",
+    name: getCategoryLabel(item.name),
+    color: getCategoryColor(item.name),
     percentage: total > 0 ? Math.round((item.value / total) * 100) : 0,
   }))
 

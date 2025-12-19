@@ -8,6 +8,7 @@ import {
   YAxis,
   Tooltip,
 } from "recharts"
+import { getCategoryLabel, getCategoryColor } from "@/lib/constants/expenses"
 
 interface CategoryTrendData {
   date: string
@@ -31,28 +32,6 @@ interface CustomTooltipProps {
   label?: string
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  food: "餐飲",
-  transport: "交通",
-  accommodation: "住宿",
-  ticket: "票券",
-  shopping: "購物",
-  entertainment: "娛樂",
-  gift: "禮品",
-  other: "其他",
-}
-
-const CATEGORY_COLORS: Record<string, string> = {
-  food: "#f97316",
-  transport: "#3b82f6",
-  accommodation: "#7c3aed",
-  ticket: "#06b6d4",
-  shopping: "#10b981",
-  entertainment: "#ec4899",
-  gift: "#f59e0b",
-  other: "#64748b",
-}
-
 function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) return null
 
@@ -69,7 +48,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
                 className="w-2 h-2 rounded-sm"
                 style={{ backgroundColor: entry.color }}
               />
-              <span>{CATEGORY_LABELS[entry.dataKey] || entry.dataKey}</span>
+              <span>{getCategoryLabel(entry.dataKey)}</span>
             </div>
             <span className="font-semibold">${entry.value.toLocaleString()}</span>
           </div>
@@ -107,8 +86,8 @@ export function CategoryTrendChart({ data, categories }: CategoryTrendChartProps
               type="monotone"
               dataKey={cat}
               stackId="1"
-              stroke={CATEGORY_COLORS[cat] || "#64748b"}
-              fill={CATEGORY_COLORS[cat] || "#64748b"}
+              stroke={getCategoryColor(cat)}
+              fill={getCategoryColor(cat)}
               fillOpacity={0.6}
             />
           ))}
@@ -119,10 +98,10 @@ export function CategoryTrendChart({ data, categories }: CategoryTrendChartProps
           <div key={cat} className="flex items-center gap-1.5">
             <div
               className="w-2.5 h-2.5 rounded-sm"
-              style={{ backgroundColor: CATEGORY_COLORS[cat] || "#64748b" }}
+              style={{ backgroundColor: getCategoryColor(cat) }}
             />
             <span className="text-xs text-slate-500 dark:text-slate-400">
-              {CATEGORY_LABELS[cat] || cat}
+              {getCategoryLabel(cat)}
             </span>
           </div>
         ))}

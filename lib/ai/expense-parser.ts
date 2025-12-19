@@ -1,22 +1,9 @@
 import { z } from "zod"
 import { ChatPromptTemplate } from "@langchain/core/prompts"
 import { createDeepSeekModel } from "./deepseek"
+import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/lib/constants/expenses"
 
-/**
- * 費用類別列表
- */
-export const EXPENSE_CATEGORIES = [
-  "food",
-  "transport",
-  "accommodation",
-  "ticket",
-  "shopping",
-  "entertainment",
-  "gift",
-  "other",
-] as const
-
-export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number]
+export { EXPENSE_CATEGORIES, type ExpenseCategory }
 
 /**
  * 單筆費用 Schema（用於 AI 輸出）
