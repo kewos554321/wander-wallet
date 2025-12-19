@@ -5,10 +5,14 @@ import {
   AreaChart,
   Area,
   XAxis,
-  Tooltip,
+  Tooltip as RechartsTooltip,
 } from "recharts"
 import { Info } from "lucide-react"
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 interface DataPoint {
   date: string
@@ -54,7 +58,7 @@ export function TrendAreaChart({ data, height = 140 }: TrendAreaChartProps) {
               <Info className="h-3.5 w-3.5" />
             </button>
           </PopoverTrigger>
-          <PopoverContent align="start" sideOffset={4} className="w-auto p-2 text-sm">
+          <PopoverContent side="bottom" align="start" className="w-auto p-2 text-xs">
             依據「消費日期」顯示近 7 天趨勢
           </PopoverContent>
         </Popover>
@@ -73,7 +77,7 @@ export function TrendAreaChart({ data, height = 140 }: TrendAreaChartProps) {
             tickLine={false}
             tick={{ fontSize: 11, fill: "#94a3b8" }}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <RechartsTooltip content={<CustomTooltip />} />
           <Area
             type="monotone"
             dataKey="amount"

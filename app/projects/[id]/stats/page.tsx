@@ -6,7 +6,11 @@ import dynamic from "next/dynamic"
 import { AppLayout } from "@/components/layout/app-layout"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { Receipt, Crown, Info, ArrowRight, TrendingUp, Wallet } from "lucide-react"
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 // 圖表 loading skeleton
 function ChartSkeleton({ height = 160 }: { height?: number }) {
@@ -336,7 +340,7 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
                   <Info className="h-3.5 w-3.5" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent align="start" sideOffset={4} className="w-auto p-2 text-sm">
+              <PopoverContent side="bottom" align="start" className="w-auto p-2 text-xs">
                 統計數據依據「消費日期」計算
               </PopoverContent>
             </Popover>
@@ -407,7 +411,7 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
                         <Info className="h-3.5 w-3.5" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent align="start" sideOffset={4} className="w-auto max-w-[240px] p-3 text-xs space-y-2">
+                    <PopoverContent side="bottom" align="start" className="w-auto max-w-[240px] p-3 text-xs space-y-1">
                       <p><span className="font-semibold text-emerald-600">付款王</span>：誰先墊付最多錢</p>
                       <p><span className="font-semibold text-blue-600">消費王</span>：誰的分擔金額最高</p>
                     </PopoverContent>

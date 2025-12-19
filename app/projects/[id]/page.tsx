@@ -34,7 +34,7 @@ import {
   Wallet,
   Sparkles,
 } from "lucide-react"
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import {
   Dialog,
   DialogContent,
@@ -495,19 +495,19 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
         <div>
           <div className="flex items-center gap-1.5 mb-3">
             <h2 className="font-semibold text-slate-900 dark:text-slate-100">我的餘額</h2>
-            <Tooltip>
-              <TooltipTrigger asChild>
+            <Popover>
+              <PopoverTrigger asChild>
                 <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
                   <Info className="h-4 w-4" />
                 </button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-64">
+              </PopoverTrigger>
+              <PopoverContent side="bottom" align="start" className="w-auto max-w-64 p-3 text-xs">
                 <p className="font-medium">餘額 = 你付的錢 − 你應付的錢</p>
-                <p className="text-slate-400 mt-1.5">正數 = 有人欠你錢</p>
-                <p className="text-slate-400">負數 = 你欠別人錢</p>
-                <p className="text-slate-400 mt-1.5 text-[10px]">若顯示 $0，可能是你不在支出的分攤名單中，或帳號尚未綁定佔位成員</p>
-              </TooltipContent>
-            </Tooltip>
+                <p className="text-muted-foreground mt-1.5">正數 = 有人欠你錢</p>
+                <p className="text-muted-foreground">負數 = 你欠別人錢</p>
+                <p className="text-muted-foreground mt-1.5 text-[10px]">若顯示 $0，可能是你不在支出的分攤名單中，或帳號尚未綁定佔位成員</p>
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between">

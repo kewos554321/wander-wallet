@@ -28,11 +28,10 @@ import {
   Info,
 } from "lucide-react"
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { CATEGORIES, getCategoryInfo } from "@/lib/constants/expenses"
 
 interface Member {
@@ -406,24 +405,22 @@ export function VoiceExpenseDialog({
           <div className="space-y-4">
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <span>支援多筆消費和不同付款人</span>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button type="button" className="text-muted-foreground hover:text-foreground">
-                      <Info className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[280px] text-xs">
-                    <p className="font-medium mb-1">範例格式：</p>
-                    <ul className="space-y-0.5 text-muted-foreground">
-                      <li>• 早餐 50、午餐 60，我付</li>
-                      <li>• 晚餐 100，小明付</li>
-                      <li>• 交通 90，小美幫她跟小華付</li>
-                      <li>• 咖啡 120 我幫大家付</li>
-                    </ul>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button type="button" className="text-muted-foreground hover:text-foreground">
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="bottom" align="start" className="w-auto max-w-[280px] p-3 text-xs">
+                  <p className="font-medium mb-1">範例格式：</p>
+                  <ul className="space-y-0.5 text-muted-foreground">
+                    <li>• 早餐 50、午餐 60，我付</li>
+                    <li>• 晚餐 100，小明付</li>
+                    <li>• 交通 90，小美幫她跟小華付</li>
+                    <li>• 咖啡 120 我幫大家付</li>
+                  </ul>
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* 快速範例 - 按情境分類 */}
