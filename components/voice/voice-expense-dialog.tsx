@@ -24,7 +24,15 @@ import {
   RotateCcw,
   User,
   Trash2,
+  X,
+  Info,
 } from "lucide-react"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { CATEGORIES, getCategoryInfo } from "@/lib/constants/expenses"
 
 interface Member {
@@ -396,20 +404,78 @@ export function VoiceExpenseDialog({
         {/* Step 1: 輸入階段 */}
         {step === "input" && (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              支援多筆消費和不同付款人，例如：「早餐 50、午餐 60，我付；晚餐 100，小華付；交通 90，小美幫她跟小華付」
-            </p>
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <span>支援多筆消費和不同付款人</span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button type="button" className="text-muted-foreground hover:text-foreground">
+                      <Info className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[280px] text-xs">
+                    <p className="font-medium mb-1">範例格式：</p>
+                    <ul className="space-y-0.5 text-muted-foreground">
+                      <li>• 早餐 50、午餐 60，我付</li>
+                      <li>• 晚餐 100，小明付</li>
+                      <li>• 交通 90，小美幫她跟小華付</li>
+                      <li>• 咖啡 120 我幫大家付</li>
+                    </ul>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            {/* 快速範例 - 按情境分類 */}
+            <div className="flex flex-wrap gap-1">
+              {[
+                { label: "我付全", value: "早餐 100 我付" },
+                { label: "我付他", value: "早餐 100 我幫小明付" },
+                { label: "他付他", value: "早餐 100 小明幫小華付" },
+                { label: "他付全", value: "早餐 100 小明付" },
+                { label: "混合1", value: "早餐 50、午餐 80、飲料 35 我付" },
+                { label: "混合2", value: "早餐 50 我付、午餐 100 小明付" },
+                { label: "混合3", value: "高鐵 1490 我付、Uber 250 小明付、晚餐 600 大家分" },
+              ].map((item, index) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => {
+                    setTextInput(item.value)
+                    speech.resetTranscript()
+                  }}
+                  className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-primary-foreground rounded transition-colors"
+                >
+                  <span className="text-muted-foreground">#{index + 1}</span>
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </div>
 
             {/* 文字輸入 */}
-            <Textarea
-              placeholder="輸入消費內容..."
-              value={fullTranscript}
-              onChange={(e) => {
-                setTextInput(e.target.value)
-                speech.resetTranscript()
-              }}
-              className="min-h-[100px] resize-none"
-            />
+            <div className="relative">
+              <Textarea
+                placeholder="輸入消費內容..."
+                value={fullTranscript}
+                onChange={(e) => {
+                  setTextInput(e.target.value)
+                  speech.resetTranscript()
+                }}
+                className="min-h-[100px] resize-none pr-8"
+              />
+              {fullTranscript && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTextInput("")
+                    speech.resetTranscript()
+                  }}
+                  className="absolute top-2 right-2 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
 
             {/* 語音按鈕 */}
             <div className="flex items-center justify-center gap-4">
