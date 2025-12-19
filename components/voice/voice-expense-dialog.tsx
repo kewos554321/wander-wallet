@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import {
   Dialog,
@@ -82,6 +82,11 @@ export function VoiceExpenseDialog({
 }: VoiceExpenseDialogProps) {
   const authFetch = useAuthFetch()
   const speech = useSpeechRecognition()
+
+  // 拖拉狀態
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStartX, setDragStartX] = useState(0)
+  const [dragOffset, setDragOffset] = useState(0)
 
   const [step, setStep] = useState<Step>("input")
   const [textInput, setTextInput] = useState("")
@@ -195,9 +200,125 @@ export function VoiceExpenseDialog({
 
   // 切換到指定費用
   function goToExpense(index: number) {
-    if (index >= 0 && index < expenses.length) {
+    if (index >= 0 && index < expenses.length && index !== currentIndex) {
+      // 切換前先 blur，收起虛擬鍵盤
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur()
+      }
       setCurrentIndex(index)
     }
+  }
+
+  // 拖拉事件處理
+  const dragStartYRef = useRef(0)
+  const isHorizontalDragRef = useRef<boolean | null>(null)
+
+  function handleDragStart(e: React.TouchEvent) {
+    // 如果觸控的是 input 或 button，不啟動拖拉
+    const target = e.target as HTMLElement
+    if (target.tagName === "INPUT" || target.tagName === "BUTTON" || target.closest("button")) {
+      return
+    }
+
+    setIsDragging(true)
+    setDragStartX(e.touches[0].clientX)
+    dragStartYRef.current = e.touches[0].clientY
+    isHorizontalDragRef.current = null
+    setDragOffset(0)
+  }
+
+  function handleDragMove(e: React.TouchEvent) {
+    if (!isDragging) return
+
+    const deltaX = e.touches[0].clientX - dragStartX
+    const deltaY = e.touches[0].clientY - dragStartYRef.current
+
+    // 判斷是水平還是垂直滑動（只判斷一次）
+    if (isHorizontalDragRef.current === null) {
+      if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+        isHorizontalDragRef.current = Math.abs(deltaX) > Math.abs(deltaY)
+      }
+    }
+
+    // 只有水平滑動才更新 offset
+    if (isHorizontalDragRef.current) {
+      setDragOffset(deltaX)
+    }
+  }
+
+  function handleDragEnd() {
+    if (!isDragging) return
+    setIsDragging(false)
+
+    // 只有確認是水平拖拉才切換
+    if (isHorizontalDragRef.current) {
+      const threshold = 50
+      const willSwitch =
+        (dragOffset > threshold && currentIndex > 0) ||
+        (dragOffset < -threshold && currentIndex < expenses.length - 1)
+
+      if (willSwitch) {
+        // 切換前先 blur，收起虛擬鍵盤
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur()
+        }
+
+        if (dragOffset > threshold && currentIndex > 0) {
+          setCurrentIndex(currentIndex - 1)
+        } else if (dragOffset < -threshold && currentIndex < expenses.length - 1) {
+          setCurrentIndex(currentIndex + 1)
+        }
+      }
+    }
+
+    setDragOffset(0)
+    isHorizontalDragRef.current = null
+  }
+
+  // 測試用：直接進入預覽（開發模式）
+  function handleTestPreview() {
+    const allMemberIds = members.map((m) => m.id)
+    const mockExpenses = [
+      {
+        id: `test-${Date.now()}-1`,
+        amount: 50,
+        description: "早餐",
+        category: "food" as const,
+        payerId: currentUserMemberId,
+        participantIds: allMemberIds,
+        selected: true,
+      },
+      {
+        id: `test-${Date.now()}-2`,
+        amount: 60,
+        description: "午餐",
+        category: "food" as const,
+        payerId: currentUserMemberId,
+        participantIds: allMemberIds,
+        selected: true,
+      },
+      {
+        id: `test-${Date.now()}-3`,
+        amount: 100,
+        description: "晚餐",
+        category: "food" as const,
+        payerId: members[1]?.id || currentUserMemberId,
+        participantIds: allMemberIds,
+        selected: true,
+      },
+      {
+        id: `test-${Date.now()}-4`,
+        amount: 90,
+        description: "交通",
+        category: "transport" as const,
+        payerId: members[1]?.id || currentUserMemberId,
+        participantIds: members.slice(0, 2).map((m) => m.id),
+        selected: true,
+      },
+    ]
+    setExpenses(mockExpenses)
+    setCurrentIndex(0)
+    setStep("confirm")
   }
 
   // 計算總金額
@@ -285,7 +406,7 @@ export function VoiceExpenseDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-2rem)] max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
@@ -367,6 +488,19 @@ export function VoiceExpenseDialog({
                 {error || speech.error}
               </p>
             )}
+
+            {/* 開發測試按鈕 */}
+            {process.env.NODE_ENV === "development" && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full text-muted-foreground"
+                onClick={handleTestPreview}
+              >
+                🧪 測試預覽 (Dev)
+              </Button>
+            )}
           </div>
         )}
 
@@ -380,7 +514,7 @@ export function VoiceExpenseDialog({
 
         {/* Step 3: 確認階段 */}
         {step === "confirm" && (
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-hidden">
             {expenses.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <p>沒有解析到任何費用</p>
@@ -391,7 +525,7 @@ export function VoiceExpenseDialog({
             ) : (
               <>
                 {/* 費用卡片輪播 */}
-                <div className="relative">
+                <div className="relative overflow-hidden">
                   {/* 標題與頁數 */}
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-medium">
@@ -402,16 +536,27 @@ export function VoiceExpenseDialog({
                     </span>
                   </div>
 
-                  {/* 當前卡片 */}
-                  {(() => {
-                    const expense = expenses[currentIndex]
-                    if (!expense) return null
-                    const catInfo = getCategoryInfo(expense.category)
-                    return (
-                      <div className="w-full">
-                        <div className="bg-slate-50 dark:bg-slate-900 rounded-2xl p-4 space-y-4 border border-slate-200 dark:border-slate-800">
-                            {/* 頂部：類別與刪除 */}
-                            <div className="flex items-center justify-between">
+                  {/* 輪播容器 - 整個區域可拖拉 */}
+                  <div
+                    className="overflow-hidden w-full"
+                    onTouchStart={handleDragStart}
+                    onTouchMove={handleDragMove}
+                    onTouchEnd={handleDragEnd}
+                  >
+                    <div
+                      className="flex transition-transform ease-out w-full"
+                      style={{
+                        transform: `translateX(calc(-${currentIndex * 100}% + ${dragOffset}px))`,
+                        transitionDuration: isDragging ? "0ms" : "300ms",
+                      }}
+                    >
+                      {expenses.map((expense) => {
+                        const catInfo = getCategoryInfo(expense.category)
+                        return (
+                          <div key={expense.id} className="w-full flex-shrink-0 min-w-full">
+                            <div className="bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-4">
+                                {/* 頂部：類別與刪除 */}
+                                <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${catInfo.color}`}>
                                   {(() => { const Icon = catInfo.icon; return <Icon className="h-5 w-5" /> })()}
@@ -571,8 +716,10 @@ export function VoiceExpenseDialog({
                             </div>
                           </div>
                         </div>
-                    )
-                  })()}
+                        )
+                      })}
+                    </div>
+                  </div>
 
                   {/* 分頁指示器 */}
                   {expenses.length > 1 && (
