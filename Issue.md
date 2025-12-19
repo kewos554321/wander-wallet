@@ -191,3 +191,165 @@ const CURRENCIES = [
   - [ ] 更新統計與結算計算
 
 ---
+
+## 收據圖片 AI 分析功能
+
+**狀態**: 待實作
+**優先級**: 中
+**入口**: 專案頁面（與語音記帳整合或獨立按鈕）
+
+### 一、功能範圍
+
+| 功能 | 說明 |
+|------|------|
+| 拍照上傳 | 使用相機拍攝收據或從相簿選擇圖片 |
+| AI 圖片解析 | 使用視覺 AI 模型分析收據內容 |
+| 結構化輸出 | 自動提取金額、店家名稱、類別、日期 |
+| 確認編輯 | 解析結果可編輯後再儲存 |
+
+### 二、技術架構
+
+```
+lib/ai/
+├── gemini.ts              # 修改：初始化視覺模型
+├── expense-parser.ts      # 修改：新增圖片解析函數
+└── image-utils.ts         # 新增：圖片處理工具（壓縮、base64 轉換）
+
+components/
+├── voice/
+│   └── voice-expense-dialog.tsx  # 修改：加入拍照/上傳按鈕
+└── camera/
+    └── camera-capture.tsx        # 新增：相機拍照組件
+
+app/api/receipt/parse/
+└── route.ts               # 新增：收據解析 API
+```
+
+### 三、視覺模型選擇
+
+**推薦方案：Gemini 2.0 Flash**
+
+| 選項 | 優點 | 缺點 |
+|------|------|------|
+| **Gemini 2.0 Flash** (推薦) | 已有整合、免費額度高、支援視覺 | 需設定 API Key |
+| OpenAI GPT-4o | 視覺能力強 | 需新增依賴、成本較高 |
+| DeepSeek VL | 與現有模型同廠 | 需等待 LangChain 支援 |
+
+> ⚠️ 注意：目前使用的 DeepSeek V3 **不支援視覺**，需切換到 Gemini
+
+### 四、LangChain 視覺 API 實作
+
+```typescript
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { HumanMessage } from "@langchain/core/messages";
+
+const model = new ChatGoogleGenerativeAI({
+  model: "gemini-2.0-flash",
+});
+
+const result = await model.invoke([
+  new HumanMessage({
+    content: [
+      { type: "text", text: "從這張收據中提取費用資訊..." },
+      { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Image}` } }
+    ]
+  })
+]);
+```
+
+### 五、圖片解析 Prompt 設計
+
+```
+你是一個收據解析助手。請從這張收據/帳單圖片中提取以下資訊：
+
+1. **總金額**：數字，忽略貨幣符號
+2. **店家名稱/描述**：簡短概括，10 字以內
+3. **消費類別**：從以下選項中選擇
+   - food（餐飲）
+   - transport（交通）
+   - accommodation（住宿）
+   - ticket（門票）
+   - shopping（購物）
+   - entertainment（娛樂）
+   - gift（禮品）
+   - other（其他）
+4. **日期**：如果可見，格式 YYYY-MM-DD
+5. **明細項目**：如果清晰可見，列出各項目和金額
+
+如果某些資訊無法辨識，請標註為 null。
+```
+
+### 六、前端實作細節
+
+#### 6.1 相機拍照功能
+
+```typescript
+// 方案 A：使用 input file（簡單，推薦）
+<input
+  type="file"
+  accept="image/*"
+  capture="environment"  // 使用後鏡頭
+  onChange={handleImageCapture}
+/>
+
+// 方案 B：使用 MediaDevices API（自訂 UI）
+const stream = await navigator.mediaDevices.getUserMedia({
+  video: { facingMode: "environment" }
+});
+```
+
+#### 6.2 圖片壓縮
+
+```typescript
+// 使用 Canvas 壓縮圖片
+function compressImage(file: File, maxSize: number = 1024): Promise<string> {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    img.onload = () => {
+      // 計算縮放比例
+      const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.8));
+    };
+
+    img.src = URL.createObjectURL(file);
+  });
+}
+```
+
+### 七、實作順序
+
+- [ ] **Phase 1 - 基礎設施**
+  - [ ] 確認 `GEMINI_API_KEY` 環境變數已設定
+  - [ ] 修改 `gemini.ts` 確保視覺模型正確初始化
+  - [ ] 新增 `lib/ai/image-utils.ts` 圖片處理工具
+
+- [ ] **Phase 2 - 後端 API**
+  - [ ] 新增 `lib/ai/receipt-parser.ts` 收據解析邏輯
+  - [ ] 新增 `/api/receipt/parse` API route
+  - [ ] 定義 Zod Schema 和結構化輸出
+
+- [ ] **Phase 3 - 前端組件**
+  - [ ] 新增相機拍照/上傳組件
+  - [ ] 圖片預覽功能
+  - [ ] 圖片壓縮與 base64 轉換
+
+- [ ] **Phase 4 - 整合與測試**
+  - [ ] 整合到現有 `voice-expense-dialog.tsx` 或獨立入口
+  - [ ] 解析結果對接現有費用編輯流程
+  - [ ] 測試不同類型收據（發票、明細、手寫）
+
+### 八、待討論問題
+
+- [ ] **拍照入口位置**：要放在現有語音對話框內，還是獨立的按鈕？
+- [ ] **支援圖片類型**：只支援拍照，還是也要支援從相簿選擇？
+- [ ] **多張圖片**：是否需要一次解析多張收據？
+- [ ] **雲端存儲**：圖片是否需要保存？還是只解析後丟棄？
+
+---
