@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useSpeechRecognition } from "@/lib/speech"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
+import type { ExpenseItemResult, ParseExpensesResult } from "@/lib/ai/expense-parser"
 import {
   Mic,
   MicOff,
@@ -31,6 +32,7 @@ import {
   Wallet,
   Ticket,
   Gift,
+  Check,
 } from "lucide-react"
 
 interface Member {
@@ -43,16 +45,6 @@ interface Member {
     email: string
     image: string | null
   } | null
-}
-
-interface ParsedExpense {
-  amount: number
-  description: string
-  category: string
-  payerId: string | null
-  participantIds: string[]
-  splitMode: "equal" | "custom"
-  confidence: number
 }
 
 interface VoiceExpenseDialogProps {
@@ -75,6 +67,10 @@ const CATEGORIES = [
   { value: "other", label: "其他", icon: Wallet, color: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" },
 ]
 
+function getCategoryInfo(value: string) {
+  return CATEGORIES.find((c) => c.value === value) || CATEGORIES[CATEGORIES.length - 1]
+}
+
 type Step = "input" | "processing" | "confirm" | "saving"
 
 export function VoiceExpenseDialog({
@@ -92,23 +88,23 @@ export function VoiceExpenseDialog({
   const [textInput, setTextInput] = useState("")
   const [error, setError] = useState<string | null>(null)
 
-  // 解析後的資料（可編輯）
-  const [amount, setAmount] = useState("")
-  const [description, setDescription] = useState("")
-  const [category, setCategory] = useState("other")
+  // 多筆費用解析結果
+  const [expenses, setExpenses] = useState<ExpenseItemResult[]>([])
   const [payerId, setPayerId] = useState("")
   const [participantIds, setParticipantIds] = useState<Set<string>>(new Set())
+
+  // 儲存進度
+  const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0 })
 
   // 重置狀態
   function resetState() {
     setStep("input")
     setTextInput("")
     setError(null)
-    setAmount("")
-    setDescription("")
-    setCategory("other")
+    setExpenses([])
     setPayerId(currentUserMemberId)
     setParticipantIds(new Set(members.map((m) => m.id)))
+    setSaveProgress({ current: 0, total: 0 })
     speech.resetTranscript()
   }
 
@@ -151,14 +147,12 @@ export function VoiceExpenseDialog({
         throw new Error(data.error || "解析失敗")
       }
 
-      const parsed: ParsedExpense = data.data
+      const parsed: ParseExpensesResult = data.data
 
       // 填入解析結果
-      setAmount(String(parsed.amount))
-      setDescription(parsed.description)
-      setCategory(parsed.category)
-      setPayerId(parsed.payerId || currentUserMemberId)
-      setParticipantIds(new Set(parsed.participantIds))
+      setExpenses(parsed.expenses)
+      setPayerId(parsed.sharedContext.payerId || currentUserMemberId)
+      setParticipantIds(new Set(parsed.sharedContext.participantIds))
       setStep("confirm")
     } catch (err) {
       setError(err instanceof Error ? err.message : "解析失敗，請重試")
@@ -166,11 +160,32 @@ export function VoiceExpenseDialog({
     }
   }
 
-  // 儲存支出
+  // 切換費用選取狀態
+  function toggleExpenseSelection(expenseId: string) {
+    setExpenses((prev) =>
+      prev.map((e) =>
+        e.id === expenseId ? { ...e, selected: !e.selected } : e
+      )
+    )
+  }
+
+  // 更新費用金額
+  function updateExpenseAmount(expenseId: string, amount: number) {
+    setExpenses((prev) =>
+      prev.map((e) =>
+        e.id === expenseId ? { ...e, amount } : e
+      )
+    )
+  }
+
+  // 計算選中的費用
+  const selectedExpenses = expenses.filter((e) => e.selected)
+  const totalAmount = selectedExpenses.reduce((sum, e) => sum + e.amount, 0)
+
+  // 批次儲存支出
   async function handleSave() {
-    const amountNum = Number(amount)
-    if (isNaN(amountNum) || amountNum <= 0) {
-      setError("請輸入有效金額")
+    if (selectedExpenses.length === 0) {
+      setError("請選擇至少一筆費用")
       return
     }
 
@@ -186,36 +201,42 @@ export function VoiceExpenseDialog({
 
     setStep("saving")
     setError(null)
+    setSaveProgress({ current: 0, total: selectedExpenses.length })
 
     try {
-      // 計算均分金額
-      const shareAmount = Math.round((amountNum / participantIds.size) * 100) / 100
-      const participants = Array.from(participantIds).map((memberId, index) => {
-        // 處理餘數，讓第一個人承擔
-        const isFirst = index === 0
-        const remainder = Math.round((amountNum - shareAmount * participantIds.size) * 100) / 100
-        return {
-          memberId,
-          shareAmount: isFirst ? shareAmount + remainder : shareAmount,
+      // 逐筆儲存
+      for (let i = 0; i < selectedExpenses.length; i++) {
+        const expense = selectedExpenses[i]
+        setSaveProgress({ current: i + 1, total: selectedExpenses.length })
+
+        // 計算均分金額
+        const shareAmount = Math.round((expense.amount / participantIds.size) * 100) / 100
+        const participants = Array.from(participantIds).map((memberId, index) => {
+          const isFirst = index === 0
+          const remainder = Math.round((expense.amount - shareAmount * participantIds.size) * 100) / 100
+          return {
+            memberId,
+            shareAmount: isFirst ? shareAmount + remainder : shareAmount,
+          }
+        })
+
+        const res = await authFetch(`/api/projects/${projectId}/expenses`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            paidByMemberId: payerId,
+            amount: expense.amount,
+            description: expense.description.trim() || null,
+            category: expense.category,
+            expenseDate: new Date().toISOString(),
+            participants,
+          }),
+        })
+
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error || `儲存第 ${i + 1} 筆失敗`)
         }
-      })
-
-      const res = await authFetch(`/api/projects/${projectId}/expenses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          paidByMemberId: payerId,
-          amount: amountNum,
-          description: description.trim() || null,
-          category,
-          expenseDate: new Date().toISOString(),
-          participants,
-        }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || "儲存失敗")
       }
 
       onSuccess()
@@ -260,7 +281,7 @@ export function VoiceExpenseDialog({
         {step === "input" && (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              輸入或說出消費內容，例如：「午餐吃拉麵 280 元，我先付，大家平分」
+              輸入或說出消費內容，支援多筆：「午餐 280、計程車 150、咖啡 80，我付大家分」
             </p>
 
             {/* 文字輸入 */}
@@ -344,60 +365,64 @@ export function VoiceExpenseDialog({
         {/* Step 3: 確認階段 */}
         {step === "confirm" && (
           <div className="space-y-4">
-            {/* 金額 */}
+            {/* 費用列表 */}
             <div>
-              <label className="block text-sm font-medium mb-2">金額</label>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold">$</span>
-                <Input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="text-xl font-bold"
-                  placeholder="0"
-                />
-              </div>
-            </div>
-
-            {/* 描述 */}
-            <div>
-              <label className="block text-sm font-medium mb-2">描述</label>
-              <Input
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="消費描述"
-              />
-            </div>
-
-            {/* 類別 */}
-            <div>
-              <label className="block text-sm font-medium mb-2">類別</label>
-              <div className="grid grid-cols-4 gap-2">
-                {CATEGORIES.map((cat) => {
-                  const Icon = cat.icon
-                  const isSelected = category === cat.value
+              <label className="block text-sm font-medium mb-2">
+                解析到 {expenses.length} 筆支出
+              </label>
+              <div className="space-y-2">
+                {expenses.map((expense) => {
+                  const catInfo = getCategoryInfo(expense.category)
+                  const Icon = catInfo.icon
                   return (
-                    <button
-                      key={cat.value}
-                      type="button"
-                      onClick={() => setCategory(cat.value)}
-                      className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${
-                        isSelected
-                          ? "bg-primary text-primary-foreground"
-                          : `${cat.color} hover:opacity-80`
+                    <div
+                      key={expense.id}
+                      className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                        expense.selected
+                          ? "border-primary bg-primary/5"
+                          : "border-slate-200 dark:border-slate-800 opacity-50"
                       }`}
                     >
-                      <Icon className="h-4 w-4" />
-                      <span className="text-xs">{cat.label}</span>
-                    </button>
+                      <Checkbox
+                        checked={expense.selected}
+                        onCheckedChange={() => toggleExpenseSelection(expense.id)}
+                      />
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${catInfo.color}`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{expense.description}</p>
+                        <p className="text-xs text-muted-foreground">{catInfo.label}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm text-muted-foreground">$</span>
+                        <Input
+                          type="number"
+                          value={expense.amount}
+                          onChange={(e) => updateExpenseAmount(expense.id, Number(e.target.value))}
+                          className="w-20 text-right font-bold"
+                          disabled={!expense.selected}
+                        />
+                      </div>
+                    </div>
                   )
                 })}
               </div>
+              {selectedExpenses.length > 0 && (
+                <div className="flex justify-end mt-2 text-sm">
+                  <span className="text-muted-foreground">
+                    已選 {selectedExpenses.length} 筆，合計{" "}
+                  </span>
+                  <span className="font-bold text-primary ml-1">
+                    ${totalAmount.toLocaleString()}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* 付款人 */}
             <div>
-              <label className="block text-sm font-medium mb-2">付款人</label>
+              <label className="block text-sm font-medium mb-2">付款人（共用）</label>
               <div className="flex flex-wrap gap-2">
                 {members.map((member) => {
                   const avatarData = parseAvatarString(member.user?.image)
@@ -418,7 +443,7 @@ export function VoiceExpenseDialog({
                           className="h-5 w-5 rounded-full flex items-center justify-center"
                           style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.3)' : getAvatarColor(avatarData.colorId) }}
                         >
-                          {(() => { const Icon = getAvatarIcon(avatarData.iconId); return <Icon className="h-2.5 w-2.5 text-white" /> })()}
+                          {(() => { const IconComp = getAvatarIcon(avatarData.iconId); return <IconComp className="h-2.5 w-2.5 text-white" /> })()}
                         </div>
                       ) : member.user?.image ? (
                         <Image
@@ -443,12 +468,15 @@ export function VoiceExpenseDialog({
             {/* 分擔者 */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                分擔者（均分）
+                分擔者（共用・均分）
               </label>
               <div className="space-y-2">
                 {members.map((member) => {
                   const isSelected = participantIds.has(member.id)
                   const avatarData = parseAvatarString(member.user?.image)
+                  const perPersonAmount = isSelected && participantIds.size > 0
+                    ? totalAmount / participantIds.size
+                    : 0
                   return (
                     <label
                       key={member.id}
@@ -463,7 +491,7 @@ export function VoiceExpenseDialog({
                           className="h-6 w-6 rounded-full flex items-center justify-center"
                           style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
                         >
-                          {(() => { const Icon = getAvatarIcon(avatarData.iconId); return <Icon className="h-3 w-3 text-white" /> })()}
+                          {(() => { const IconComp = getAvatarIcon(avatarData.iconId); return <IconComp className="h-3 w-3 text-white" /> })()}
                         </div>
                       ) : member.user?.image ? (
                         <Image
@@ -479,9 +507,9 @@ export function VoiceExpenseDialog({
                         </div>
                       )}
                       <span className="text-sm flex-1">{member.displayName}</span>
-                      {isSelected && Number(amount) > 0 && (
+                      {isSelected && perPersonAmount > 0 && (
                         <span className="text-sm text-primary font-medium">
-                          ${(Number(amount) / participantIds.size).toFixed(0)}
+                          ${perPersonAmount.toFixed(0)}
                         </span>
                       )}
                     </label>
@@ -510,9 +538,10 @@ export function VoiceExpenseDialog({
                 type="button"
                 className="flex-1 gap-2"
                 onClick={handleSave}
+                disabled={selectedExpenses.length === 0}
               >
                 <Send className="h-4 w-4" />
-                確認新增
+                新增 {selectedExpenses.length} 筆
               </Button>
             </div>
           </div>
@@ -522,7 +551,18 @@ export function VoiceExpenseDialog({
         {step === "saving" && (
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="text-muted-foreground">儲存中...</p>
+            <p className="text-muted-foreground">
+              儲存中... ({saveProgress.current}/{saveProgress.total})
+            </p>
+            {/* 進度條 */}
+            <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2">
+              <div
+                className="bg-primary h-2 rounded-full transition-all"
+                style={{
+                  width: `${(saveProgress.current / saveProgress.total) * 100}%`,
+                }}
+              />
+            </div>
           </div>
         )}
       </DialogContent>

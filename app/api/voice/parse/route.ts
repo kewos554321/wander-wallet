@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
-import { parseExpense, type MemberInfo } from "@/lib/ai/expense-parser"
+import { parseExpenses, type MemberInfo } from "@/lib/ai/expense-parser"
 
 interface RequestBody {
   transcript: string
@@ -43,8 +43,8 @@ export async function POST(req: NextRequest) {
     const currentMember = members.find((m) => m.id === currentUserMemberId)
     const currentUserName = currentMember?.displayName || "我"
 
-    // 使用 LangChain 解析
-    const result = await parseExpense({
+    // 使用 LangChain 解析（支援多筆）
+    const result = await parseExpenses({
       transcript,
       members,
       currentUserName,

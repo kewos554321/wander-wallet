@@ -32,7 +32,7 @@ import {
   MoreHorizontal,
   Check,
   Wallet,
-  Mic,
+  Sparkles,
 } from "lucide-react"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import {
@@ -615,7 +615,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
           className="h-12 w-12 rounded-full shadow-lg"
           onClick={() => setShowVoiceDialog(true)}
         >
-          <Mic className="h-5 w-5" />
+          <Sparkles className="h-5 w-5" />
         </Button>
 
         {/* 新增支出按鈕 */}

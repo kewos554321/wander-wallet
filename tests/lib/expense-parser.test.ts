@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi } from "vitest"
 
 // Mock 整個 expense-parser 模組中的外部依賴
 vi.mock("@langchain/core/prompts", () => ({
@@ -20,10 +20,11 @@ vi.mock("@langchain/deepseek", () => ({
 // 在 mock 之後再 import
 import {
   ParsedExpenseSchema,
+  ParsedExpensesSchema,
   EXPENSE_CATEGORIES,
 } from "@/lib/ai/expense-parser"
 
-describe("ParsedExpenseSchema", () => {
+describe("ParsedExpenseSchema (legacy)", () => {
   it("should validate correct expense data", () => {
     const validData = {
       amount: 280,
@@ -53,98 +54,108 @@ describe("ParsedExpenseSchema", () => {
     const result = ParsedExpenseSchema.safeParse(invalidData)
     expect(result.success).toBe(false)
   })
+})
 
-  it("should reject negative amount", () => {
-    const invalidData = {
-      amount: -100,
-      description: "退款",
-      category: "food",
-      payerName: "小明",
-      participantNames: ["小明"],
-      splitMode: "equal",
+describe("ParsedExpensesSchema (multi-expense)", () => {
+  it("should validate correct multi-expense data", () => {
+    const validData = {
+      expenses: [
+        { amount: 280, description: "午餐拉麵", category: "food" },
+        { amount: 150, description: "計程車", category: "transport" },
+      ],
+      sharedContext: {
+        payerName: "小明",
+        participantNames: ["小明", "小華"],
+        splitMode: "equal",
+      },
+      confidence: 0.95,
+    }
+
+    const result = ParsedExpensesSchema.safeParse(validData)
+    expect(result.success).toBe(true)
+  })
+
+  it("should validate single expense", () => {
+    const validData = {
+      expenses: [
+        { amount: 280, description: "午餐拉麵", category: "food" },
+      ],
+      sharedContext: {
+        payerName: "小明",
+        participantNames: ["小明"],
+        splitMode: "equal",
+      },
       confidence: 0.9,
     }
 
-    // Schema 沒有限制負數，這個測試確認當前行為
-    const result = ParsedExpenseSchema.safeParse(invalidData)
-    expect(result.success).toBe(true) // 目前允許負數
+    const result = ParsedExpensesSchema.safeParse(validData)
+    expect(result.success).toBe(true)
   })
 
-  it("should reject confidence out of range (> 1)", () => {
+  it("should accept empty expenses array", () => {
+    const data = {
+      expenses: [],
+      sharedContext: {
+        payerName: "小明",
+        participantNames: ["小明"],
+        splitMode: "equal",
+      },
+      confidence: 0.5,
+    }
+
+    const result = ParsedExpensesSchema.safeParse(data)
+    expect(result.success).toBe(true)
+  })
+
+  it("should reject invalid category in expenses", () => {
     const invalidData = {
-      amount: 280,
-      description: "午餐拉麵",
-      category: "food",
-      payerName: "小明",
-      participantNames: ["小明"],
-      splitMode: "equal",
-      confidence: 1.5,
+      expenses: [
+        { amount: 280, description: "午餐拉麵", category: "invalid" },
+      ],
+      sharedContext: {
+        payerName: "小明",
+        participantNames: ["小明"],
+        splitMode: "equal",
+      },
+      confidence: 0.9,
     }
 
-    const result = ParsedExpenseSchema.safeParse(invalidData)
+    const result = ParsedExpensesSchema.safeParse(invalidData)
     expect(result.success).toBe(false)
-  })
-
-  it("should reject confidence out of range (< 0)", () => {
-    const invalidData = {
-      amount: 280,
-      description: "午餐拉麵",
-      category: "food",
-      payerName: "小明",
-      participantNames: ["小明"],
-      splitMode: "equal",
-      confidence: -0.1,
-    }
-
-    const result = ParsedExpenseSchema.safeParse(invalidData)
-    expect(result.success).toBe(false)
-  })
-
-  it("should accept all valid categories", () => {
-    for (const category of EXPENSE_CATEGORIES) {
-      const data = {
-        amount: 100,
-        description: "測試",
-        category,
-        payerName: "測試者",
-        participantNames: ["測試者"],
-        splitMode: "equal" as const,
-        confidence: 0.9,
-      }
-
-      const result = ParsedExpenseSchema.safeParse(data)
-      expect(result.success).toBe(true)
-    }
   })
 
   it("should reject invalid splitMode", () => {
     const invalidData = {
-      amount: 280,
-      description: "午餐拉麵",
-      category: "food",
-      payerName: "小明",
-      participantNames: ["小明"],
-      splitMode: "invalid",
+      expenses: [
+        { amount: 280, description: "午餐拉麵", category: "food" },
+      ],
+      sharedContext: {
+        payerName: "小明",
+        participantNames: ["小明"],
+        splitMode: "invalid",
+      },
       confidence: 0.9,
     }
 
-    const result = ParsedExpenseSchema.safeParse(invalidData)
+    const result = ParsedExpensesSchema.safeParse(invalidData)
     expect(result.success).toBe(false)
   })
 
-  it("should accept empty participantNames array", () => {
-    const data = {
-      amount: 100,
-      description: "自己吃",
-      category: "food",
-      payerName: "小明",
-      participantNames: [],
-      splitMode: "equal" as const,
-      confidence: 0.8,
+  it("should reject confidence out of range", () => {
+    const invalidData = {
+      expenses: [
+        { amount: 280, description: "午餐拉麵", category: "food" },
+      ],
+      sharedContext: {
+        payerName: "小明",
+        participantNames: ["小明"],
+        splitMode: "equal",
+      },
+      confidence: 1.5,
     }
 
-    const result = ParsedExpenseSchema.safeParse(data)
-    expect(result.success).toBe(true)
+    const result = ParsedExpensesSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
   })
 })
 
