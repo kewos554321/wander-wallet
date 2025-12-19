@@ -27,6 +27,12 @@ const ExpenseItemSchema = z.object({
   category: z
     .enum(EXPENSE_CATEGORIES)
     .describe("分類：food=餐飲, transport=交通, accommodation=住宿, ticket=票券, shopping=購物, entertainment=娛樂, gift=禮品, other=其他"),
+  payerName: z
+    .string()
+    .describe("這筆費用的付款人名字，如果說「我付」「我先付」則填入目前用戶名字"),
+  participantNames: z
+    .array(z.string())
+    .describe("這筆費用的分擔者名字陣列，如果說「大家」「全部」則填入所有成員"),
 })
 
 /**
@@ -35,18 +41,7 @@ const ExpenseItemSchema = z.object({
 export const ParsedExpensesSchema = z.object({
   expenses: z
     .array(ExpenseItemSchema)
-    .describe("解析出的費用列表，每個消費項目一筆"),
-  sharedContext: z.object({
-    payerName: z
-      .string()
-      .describe("付款人名字，如果說「我付」「我先付」則填入目前用戶名字"),
-    participantNames: z
-      .array(z.string())
-      .describe("分擔者名字陣列，如果說「大家」「全部」「一起」則填入所有成員"),
-    splitMode: z
-      .enum(["equal", "custom"])
-      .describe("分帳方式：equal=均分, custom=自訂金額"),
-  }).describe("所有費用共用的付款與分擔資訊"),
+    .describe("解析出的費用列表，每個消費項目一筆，每筆費用有獨立的付款人和分擔者"),
   confidence: z
     .number()
     .min(0)
@@ -81,6 +76,8 @@ export interface ExpenseItemResult {
   amount: number
   description: string
   category: ExpenseCategory
+  payerId: string // 這筆費用的付款人 ID
+  participantIds: string[] // 這筆費用的分擔者 ID 陣列
   selected: boolean // 是否選中要儲存
 }
 
@@ -89,11 +86,6 @@ export interface ExpenseItemResult {
  */
 export interface ParseExpensesResult {
   expenses: ExpenseItemResult[]
-  sharedContext: {
-    payerId: string | null
-    participantIds: string[]
-    splitMode: "equal" | "custom"
-  }
   confidence: number
 }
 
@@ -137,17 +129,22 @@ const EXPENSES_PARSER_PROMPT = ChatPromptTemplate.fromMessages([
 
 4. 類別：根據內容判斷最適合的分類
 
-5. 付款人（共用）：
-   - 如果說「我付」「我先付」「我請」→ 填入目前用戶名字
-   - 如果提到其他成員名字 → 填入該成員名字
+5. 每筆費用的付款人（payerName）：
+   - 特別注意：每筆費用可以有不同的付款人！
+   - 如果說「我付」「我先付」「我幫大家付」→ 填入目前用戶名字
+   - 如果說「XXX 付」「XXX 幫大家付」→ 填入 XXX
+   - 若多筆費用連續出現且只有最後提到付款人，則這些費用共用該付款人
+   - 例如「早餐50、午餐60，我幫大家先付」→ 兩筆費用，付款人都是目前用戶
+   - 例如「晚餐100，tommy幫大家付」→ 一筆費用，付款人是 tommy
    - 如果沒提到 → 預設為目前用戶
 
-6. 分擔者（共用）：
-   - 如果說「大家」「全部」「一起分」「AA」→ 填入所有成員
-   - 如果提到特定人名 → 只填入提到的人
-   - 如果沒提到 → 預設所有成員
-
-7. 分帳方式：預設為 equal（均分）`,
+6. 每筆費用的分擔者（participantNames）：
+   - 特別注意：每筆費用可以有不同的分擔者！
+   - 如果說「大家」「全部」「一起分」「AA」「大家分」→ 填入所有成員
+   - 如果說「XXX 幫 A 跟 B 付」→ 分擔者是 A 和 B
+   - 如果說「XXX 幫她自己跟 YYY 付」→ 分擔者是 XXX 和 YYY
+   - 例如「交通 90, monica 幫她自己跟 tommy 付」→ 分擔者是 monica 和 tommy
+   - 如果沒提到分擔者 → 預設所有成員`,
   ],
   ["human", "{transcript}"],
 ])
@@ -191,37 +188,38 @@ export async function parseExpenses(
     currentUserName,
   })
 
-  // 將名字轉換為 ID
-  const payerId = findMemberIdByName(
-    parsed.sharedContext.payerName,
-    members,
-    currentUserName
-  )
-  const participantIds = mapNamesToIds(
-    parsed.sharedContext.participantNames,
-    members
-  )
+  // 找出目前用戶的 ID 作為預設付款人
+  const currentUserMember = members.find((m) => m.displayName === currentUserName)
+  const defaultPayerId = currentUserMember?.id || members[0]?.id || ""
+  const allMemberIds = members.map((m) => m.id)
 
-  // 如果沒有找到任何分擔者，預設全部成員
-  const finalParticipantIds =
-    participantIds.length > 0 ? participantIds : members.map((m) => m.id)
+  // 轉換費用項目，每筆費用有獨立的付款人和分擔者
+  const expenses: ExpenseItemResult[] = parsed.expenses.map((expense, index) => {
+    // 將付款人名字轉換為 ID
+    const payerId = findMemberIdByName(
+      expense.payerName,
+      members,
+      currentUserName
+    ) || defaultPayerId
 
-  // 轉換費用項目，加上臨時 ID
-  const expenses: ExpenseItemResult[] = parsed.expenses.map((expense, index) => ({
-    id: `temp-${Date.now()}-${index}`,
-    amount: expense.amount,
-    description: expense.description,
-    category: expense.category,
-    selected: true, // 預設全部選中
-  }))
+    // 將分擔者名字轉換為 ID
+    const participantIds = mapNamesToIds(expense.participantNames, members)
+    // 如果沒有找到任何分擔者，預設全部成員
+    const finalParticipantIds = participantIds.length > 0 ? participantIds : allMemberIds
+
+    return {
+      id: `temp-${Date.now()}-${index}`,
+      amount: expense.amount,
+      description: expense.description,
+      category: expense.category,
+      payerId,
+      participantIds: finalParticipantIds,
+      selected: true, // 預設全部選中
+    }
+  })
 
   return {
     expenses,
-    sharedContext: {
-      payerId,
-      participantIds: finalParticipantIds,
-      splitMode: parsed.sharedContext.splitMode,
-    },
     confidence: parsed.confidence,
   }
 }
@@ -248,9 +246,9 @@ export async function parseExpense(
     amount: firstExpense.amount,
     description: firstExpense.description,
     category: firstExpense.category,
-    payerId: result.sharedContext.payerId,
-    participantIds: result.sharedContext.participantIds,
-    splitMode: result.sharedContext.splitMode,
+    payerId: firstExpense.payerId,
+    participantIds: firstExpense.participantIds,
+    splitMode: "equal",
     confidence: result.confidence,
   }
 }

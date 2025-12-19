@@ -611,11 +611,10 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
         {/* AI 語音記帳按鈕 */}
         <Button
           size="icon"
-          variant="secondary"
-          className="h-12 w-12 rounded-full shadow-lg"
+          className="h-14 w-14 rounded-full shadow-xl shadow-black/25 bg-gradient-to-br from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white"
           onClick={() => setShowVoiceDialog(true)}
         >
-          <Sparkles className="h-5 w-5" />
+          <Sparkles className="h-6 w-6" />
         </Button>
 
         {/* 新增支出按鈕 */}

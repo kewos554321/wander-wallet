@@ -55,8 +55,11 @@ describe.skipIf(SKIP_INTEGRATION)("parseExpenses Integration (multi-expense)", (
     })
 
     expect(result.expenses.length).toBeGreaterThanOrEqual(2)
-    expect(result.sharedContext.payerId).toBe("member-2") // 小華
-    expect(result.sharedContext.participantIds).toHaveLength(3) // 全部成員
+    // 每筆費用都應該有小華作為付款人
+    result.expenses.forEach(expense => {
+      expect(expense.payerId).toBe("member-2") // 小華
+      expect(expense.participantIds).toHaveLength(3) // 全部成員
+    })
   }, 30000)
 
   it("should parse expenses with specific participants", async () => {
@@ -67,8 +70,50 @@ describe.skipIf(SKIP_INTEGRATION)("parseExpenses Integration (multi-expense)", (
     })
 
     expect(result.expenses.length).toBeGreaterThanOrEqual(2)
-    expect(result.sharedContext.participantIds).toContain("member-1") // 小明
-    expect(result.sharedContext.participantIds).toContain("member-3") // 小美
+    // 每筆費用都應該有小明和小美作為分擔者
+    result.expenses.forEach(expense => {
+      expect(expense.participantIds).toContain("member-1") // 小明
+      expect(expense.participantIds).toContain("member-3") // 小美
+    })
+  }, 30000)
+
+  it("should parse expenses with different payers per expense", async () => {
+    const result = await parseExpenses({
+      transcript: "早餐 50、午餐 60，我幫大家先付。晚餐 100，小華幫大家付",
+      members,
+      currentUserName: "小明",
+    })
+
+    expect(result.expenses.length).toBeGreaterThanOrEqual(2)
+
+    // 找出各筆費用
+    const breakfast = result.expenses.find(e => e.amount === 50)
+    const lunch = result.expenses.find(e => e.amount === 60)
+    const dinner = result.expenses.find(e => e.amount === 100)
+
+    // 早餐和午餐應該是小明付的
+    if (breakfast) expect(breakfast.payerId).toBe("member-1")
+    if (lunch) expect(lunch.payerId).toBe("member-1")
+    // 晚餐應該是小華付的
+    if (dinner) expect(dinner.payerId).toBe("member-2")
+  }, 30000)
+
+  it("should parse expenses with different participants per expense", async () => {
+    const result = await parseExpenses({
+      transcript: "交通 90, 小美幫她自己跟小華付",
+      members,
+      currentUserName: "小明",
+    })
+
+    expect(result.expenses.length).toBeGreaterThanOrEqual(1)
+
+    const transport = result.expenses.find(e => e.amount === 90)
+    if (transport) {
+      expect(transport.payerId).toBe("member-3") // 小美
+      expect(transport.participantIds).toContain("member-3") // 小美
+      expect(transport.participantIds).toContain("member-2") // 小華
+      expect(transport.participantIds).not.toContain("member-1") // 不包含小明
+    }
   }, 30000)
 })
 

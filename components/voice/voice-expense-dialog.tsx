@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { useSpeechRecognition } from "@/lib/speech"
 import { useAuthFetch } from "@/components/auth/liff-provider"
@@ -32,7 +31,7 @@ import {
   Wallet,
   Ticket,
   Gift,
-  Check,
+  Trash2,
 } from "lucide-react"
 
 interface Member {
@@ -88,10 +87,9 @@ export function VoiceExpenseDialog({
   const [textInput, setTextInput] = useState("")
   const [error, setError] = useState<string | null>(null)
 
-  // 多筆費用解析結果
+  // 多筆費用解析結果（每筆費用有獨立的 payerId 和 participantIds）
   const [expenses, setExpenses] = useState<ExpenseItemResult[]>([])
-  const [payerId, setPayerId] = useState("")
-  const [participantIds, setParticipantIds] = useState<Set<string>>(new Set())
+  const [currentIndex, setCurrentIndex] = useState(0)
 
   // 儲存進度
   const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0 })
@@ -102,8 +100,7 @@ export function VoiceExpenseDialog({
     setTextInput("")
     setError(null)
     setExpenses([])
-    setPayerId(currentUserMemberId)
-    setParticipantIds(new Set(members.map((m) => m.id)))
+    setCurrentIndex(0)
     setSaveProgress({ current: 0, total: 0 })
     speech.resetTranscript()
   }
@@ -149,10 +146,9 @@ export function VoiceExpenseDialog({
 
       const parsed: ParseExpensesResult = data.data
 
-      // 填入解析結果
+      // 填入解析結果（每筆費用已包含獨立的 payerId 和 participantIds）
       setExpenses(parsed.expenses)
-      setPayerId(parsed.sharedContext.payerId || currentUserMemberId)
-      setParticipantIds(new Set(parsed.sharedContext.participantIds))
+      setCurrentIndex(0)
       setStep("confirm")
     } catch (err) {
       setError(err instanceof Error ? err.message : "解析失敗，請重試")
@@ -160,60 +156,91 @@ export function VoiceExpenseDialog({
     }
   }
 
-  // 切換費用選取狀態
-  function toggleExpenseSelection(expenseId: string) {
+  // 更新費用欄位
+  function updateExpense(expenseId: string, field: keyof ExpenseItemResult, value: string | number | string[]) {
     setExpenses((prev) =>
       prev.map((e) =>
-        e.id === expenseId ? { ...e, selected: !e.selected } : e
+        e.id === expenseId ? { ...e, [field]: value } : e
       )
     )
   }
 
-  // 更新費用金額
-  function updateExpenseAmount(expenseId: string, amount: number) {
+  // 切換單筆費用的分擔者
+  function toggleExpenseParticipant(expenseId: string, memberId: string) {
     setExpenses((prev) =>
-      prev.map((e) =>
-        e.id === expenseId ? { ...e, amount } : e
-      )
+      prev.map((e) => {
+        if (e.id !== expenseId) return e
+        const current = new Set(e.participantIds)
+        if (current.has(memberId)) {
+          current.delete(memberId)
+        } else {
+          current.add(memberId)
+        }
+        return { ...e, participantIds: Array.from(current) }
+      })
     )
   }
 
-  // 計算選中的費用
-  const selectedExpenses = expenses.filter((e) => e.selected)
-  const totalAmount = selectedExpenses.reduce((sum, e) => sum + e.amount, 0)
+  // 刪除費用
+  function removeExpense(expenseId: string) {
+    setExpenses((prev) => {
+      const newExpenses = prev.filter((e) => e.id !== expenseId)
+      // 調整 currentIndex
+      if (currentIndex >= newExpenses.length && newExpenses.length > 0) {
+        setCurrentIndex(newExpenses.length - 1)
+      }
+      return newExpenses
+    })
+  }
+
+  // 切換到指定費用
+  function goToExpense(index: number) {
+    if (index >= 0 && index < expenses.length) {
+      setCurrentIndex(index)
+    }
+  }
+
+  // 計算總金額
+  const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0)
 
   // 批次儲存支出
   async function handleSave() {
-    if (selectedExpenses.length === 0) {
-      setError("請選擇至少一筆費用")
+    if (expenses.length === 0) {
+      setError("沒有要儲存的費用")
       return
     }
 
-    if (!payerId) {
-      setError("請選擇付款人")
-      return
-    }
-
-    if (participantIds.size === 0) {
-      setError("請選擇至少一位分擔者")
-      return
+    // 檢查每筆費用是否都有付款人和分擔者
+    for (let i = 0; i < expenses.length; i++) {
+      const expense = expenses[i]
+      if (!expense.payerId) {
+        setError(`第 ${i + 1} 筆費用請選擇付款人`)
+        setCurrentIndex(i)
+        return
+      }
+      if (expense.participantIds.length === 0) {
+        setError(`第 ${i + 1} 筆費用請選擇至少一位分擔者`)
+        setCurrentIndex(i)
+        return
+      }
     }
 
     setStep("saving")
     setError(null)
-    setSaveProgress({ current: 0, total: selectedExpenses.length })
+    setSaveProgress({ current: 0, total: expenses.length })
 
     try {
-      // 逐筆儲存
-      for (let i = 0; i < selectedExpenses.length; i++) {
-        const expense = selectedExpenses[i]
-        setSaveProgress({ current: i + 1, total: selectedExpenses.length })
+      // 逐筆儲存，每筆使用獨立的 payerId 和 participantIds
+      for (let i = 0; i < expenses.length; i++) {
+        const expense = expenses[i]
+        setSaveProgress({ current: i + 1, total: expenses.length })
 
+        const participantCount = expense.participantIds.length
         // 計算均分金額
-        const shareAmount = Math.round((expense.amount / participantIds.size) * 100) / 100
-        const participants = Array.from(participantIds).map((memberId, index) => {
-          const isFirst = index === 0
-          const remainder = Math.round((expense.amount - shareAmount * participantIds.size) * 100) / 100
+        const shareAmount = Math.round((expense.amount / participantCount) * 100) / 100
+        const participants = expense.participantIds.map((memberId, idx) => {
+          const isFirst = idx === 0
+          const remainder = Math.round((expense.amount - shareAmount * participantCount) * 100) / 100
           return {
             memberId,
             shareAmount: isFirst ? shareAmount + remainder : shareAmount,
@@ -224,7 +251,7 @@ export function VoiceExpenseDialog({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            paidByMemberId: payerId,
+            paidByMemberId: expense.payerId,
             amount: expense.amount,
             description: expense.description.trim() || null,
             category: expense.category,
@@ -256,17 +283,6 @@ export function VoiceExpenseDialog({
     }
   }
 
-  // 切換分擔者
-  function toggleParticipant(memberId: string) {
-    const newSet = new Set(participantIds)
-    if (newSet.has(memberId)) {
-      newSet.delete(memberId)
-    } else {
-      newSet.add(memberId)
-    }
-    setParticipantIds(newSet)
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100%-2rem)] max-w-md max-h-[90vh] overflow-y-auto">
@@ -281,7 +297,7 @@ export function VoiceExpenseDialog({
         {step === "input" && (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              輸入或說出消費內容，支援多筆：「午餐 280、計程車 150、咖啡 80，我付大家分」
+              支援多筆消費和不同付款人，例如：「早餐 50、午餐 60，我付；晚餐 100，小華付；交通 90，小美幫她跟小華付」
             </p>
 
             {/* 文字輸入 */}
@@ -365,185 +381,256 @@ export function VoiceExpenseDialog({
         {/* Step 3: 確認階段 */}
         {step === "confirm" && (
           <div className="space-y-4">
-            {/* 費用列表 */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                解析到 {expenses.length} 筆支出
-              </label>
-              <div className="space-y-2">
-                {expenses.map((expense) => {
-                  const catInfo = getCategoryInfo(expense.category)
-                  const Icon = catInfo.icon
-                  return (
-                    <div
-                      key={expense.id}
-                      className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                        expense.selected
-                          ? "border-primary bg-primary/5"
-                          : "border-slate-200 dark:border-slate-800 opacity-50"
-                      }`}
-                    >
-                      <Checkbox
-                        checked={expense.selected}
-                        onCheckedChange={() => toggleExpenseSelection(expense.id)}
-                      />
-                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${catInfo.color}`}>
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{expense.description}</p>
-                        <p className="text-xs text-muted-foreground">{catInfo.label}</p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm text-muted-foreground">$</span>
-                        <Input
-                          type="number"
-                          value={expense.amount}
-                          onChange={(e) => updateExpenseAmount(expense.id, Number(e.target.value))}
-                          className="w-20 text-right font-bold"
-                          disabled={!expense.selected}
-                        />
-                      </div>
-                    </div>
-                  )
-                })}
+            {expenses.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>沒有解析到任何費用</p>
+                <Button variant="outline" className="mt-4" onClick={resetState}>
+                  重新輸入
+                </Button>
               </div>
-              {selectedExpenses.length > 0 && (
-                <div className="flex justify-end mt-2 text-sm">
-                  <span className="text-muted-foreground">
-                    已選 {selectedExpenses.length} 筆，合計{" "}
+            ) : (
+              <>
+                {/* 費用卡片輪播 */}
+                <div className="relative">
+                  {/* 標題與頁數 */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium">
+                      支出明細
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {currentIndex + 1} / {expenses.length}
+                    </span>
+                  </div>
+
+                  {/* 當前卡片 */}
+                  {(() => {
+                    const expense = expenses[currentIndex]
+                    if (!expense) return null
+                    const catInfo = getCategoryInfo(expense.category)
+                    return (
+                      <div className="w-full">
+                        <div className="bg-slate-50 dark:bg-slate-900 rounded-2xl p-4 space-y-4 border border-slate-200 dark:border-slate-800">
+                            {/* 頂部：類別與刪除 */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${catInfo.color}`}>
+                                  {(() => { const Icon = catInfo.icon; return <Icon className="h-5 w-5" /> })()}
+                                </div>
+                                <span className="font-medium">{catInfo.label}</span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => removeExpense(expense.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+
+                            {/* 金額 */}
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1">金額</label>
+                              <div className="flex items-center gap-2">
+                                <span className="text-2xl font-bold">$</span>
+                                <Input
+                                  type="number"
+                                  value={expense.amount}
+                                  onChange={(e) => updateExpense(expense.id, "amount", Number(e.target.value))}
+                                  className="text-2xl font-bold h-12"
+                                />
+                              </div>
+                            </div>
+
+                            {/* 描述 */}
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1">描述</label>
+                              <Input
+                                value={expense.description}
+                                onChange={(e) => updateExpense(expense.id, "description", e.target.value)}
+                                placeholder="消費描述"
+                              />
+                            </div>
+
+                            {/* 類別選擇 */}
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-2">類別</label>
+                              <div className="grid grid-cols-4 gap-1.5">
+                                {CATEGORIES.map((cat) => {
+                                  const Icon = cat.icon
+                                  const isSelected = expense.category === cat.value
+                                  return (
+                                    <button
+                                      key={cat.value}
+                                      type="button"
+                                      onClick={() => updateExpense(expense.id, "category", cat.value)}
+                                      className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-all ${
+                                        isSelected
+                                          ? "bg-primary text-primary-foreground"
+                                          : `${cat.color} hover:opacity-80`
+                                      }`}
+                                    >
+                                      <Icon className="h-4 w-4" />
+                                      <span className="text-[10px]">{cat.label}</span>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+
+                            {/* 付款人 */}
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-2">付款人</label>
+                              <div className="flex flex-wrap gap-1.5">
+                                {members.map((member) => {
+                                  const avatarData = parseAvatarString(member.user?.image)
+                                  const isSelected = expense.payerId === member.id
+                                  return (
+                                    <button
+                                      key={member.id}
+                                      type="button"
+                                      onClick={() => updateExpense(expense.id, "payerId", member.id)}
+                                      className={`flex items-center gap-1 px-2 py-1 rounded-full transition-all text-xs ${
+                                        isSelected
+                                          ? "bg-primary text-primary-foreground"
+                                          : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                      }`}
+                                    >
+                                      {avatarData ? (
+                                        <div
+                                          className="h-4 w-4 rounded-full flex items-center justify-center"
+                                          style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.3)' : getAvatarColor(avatarData.colorId) }}
+                                        >
+                                          {(() => { const IconComp = getAvatarIcon(avatarData.iconId); return <IconComp className="h-2 w-2 text-white" /> })()}
+                                        </div>
+                                      ) : member.user?.image ? (
+                                        <Image
+                                          src={member.user.image}
+                                          alt={member.displayName}
+                                          width={16}
+                                          height={16}
+                                          className="rounded-full"
+                                        />
+                                      ) : (
+                                        <div className={`h-4 w-4 rounded-full flex items-center justify-center ${isSelected ? 'bg-white/30' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                                          <User className="h-2 w-2" />
+                                        </div>
+                                      )}
+                                      <span className="font-medium">{member.displayName}</span>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+
+                            {/* 分擔者 */}
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-2">
+                                分擔者（{expense.participantIds.length}人均分 · 每人 ${expense.participantIds.length > 0 ? Math.round(expense.amount / expense.participantIds.length) : 0}）
+                              </label>
+                              <div className="flex flex-wrap gap-1.5">
+                                {members.map((member) => {
+                                  const avatarData = parseAvatarString(member.user?.image)
+                                  const isSelected = expense.participantIds.includes(member.id)
+                                  return (
+                                    <button
+                                      key={member.id}
+                                      type="button"
+                                      onClick={() => toggleExpenseParticipant(expense.id, member.id)}
+                                      className={`flex items-center gap-1 px-2 py-1 rounded-full transition-all text-xs ${
+                                        isSelected
+                                          ? "bg-emerald-500 text-white"
+                                          : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                      }`}
+                                    >
+                                      {avatarData ? (
+                                        <div
+                                          className="h-4 w-4 rounded-full flex items-center justify-center"
+                                          style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.3)' : getAvatarColor(avatarData.colorId) }}
+                                        >
+                                          {(() => { const IconComp = getAvatarIcon(avatarData.iconId); return <IconComp className="h-2 w-2 text-white" /> })()}
+                                        </div>
+                                      ) : member.user?.image ? (
+                                        <Image
+                                          src={member.user.image}
+                                          alt={member.displayName}
+                                          width={16}
+                                          height={16}
+                                          className="rounded-full"
+                                        />
+                                      ) : (
+                                        <div className={`h-4 w-4 rounded-full flex items-center justify-center ${isSelected ? 'bg-white/30' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                                          <User className="h-2 w-2" />
+                                        </div>
+                                      )}
+                                      <span className="font-medium">{member.displayName}</span>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                    )
+                  })()}
+
+                  {/* 分頁指示器 */}
+                  {expenses.length > 1 && (
+                    <div className="flex items-center justify-center gap-1.5 mt-3">
+                      {expenses.map((_, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => goToExpense(index)}
+                          className={`h-2 rounded-full transition-all ${
+                            index === currentIndex
+                              ? "w-6 bg-primary"
+                              : "w-2 bg-slate-300 dark:bg-slate-700"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 總計 */}
+                <div className="flex items-center justify-between py-2 px-3 bg-primary/5 rounded-xl">
+                  <span className="text-sm text-muted-foreground">
+                    共 {expenses.length} 筆
                   </span>
-                  <span className="font-bold text-primary ml-1">
+                  <span className="text-lg font-bold text-primary">
                     ${totalAmount.toLocaleString()}
                   </span>
                 </div>
-              )}
-            </div>
 
-            {/* 付款人 */}
-            <div>
-              <label className="block text-sm font-medium mb-2">付款人（共用）</label>
-              <div className="flex flex-wrap gap-2">
-                {members.map((member) => {
-                  const avatarData = parseAvatarString(member.user?.image)
-                  const isSelected = payerId === member.id
-                  return (
-                    <button
-                      key={member.id}
-                      type="button"
-                      onClick={() => setPayerId(member.id)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all ${
-                        isSelected
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700"
-                      }`}
-                    >
-                      {avatarData ? (
-                        <div
-                          className="h-5 w-5 rounded-full flex items-center justify-center"
-                          style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.3)' : getAvatarColor(avatarData.colorId) }}
-                        >
-                          {(() => { const IconComp = getAvatarIcon(avatarData.iconId); return <IconComp className="h-2.5 w-2.5 text-white" /> })()}
-                        </div>
-                      ) : member.user?.image ? (
-                        <Image
-                          src={member.user.image}
-                          alt={member.displayName}
-                          width={20}
-                          height={20}
-                          className="rounded-full"
-                        />
-                      ) : (
-                        <div className={`h-5 w-5 rounded-full flex items-center justify-center ${isSelected ? 'bg-white/30' : 'bg-slate-200 dark:bg-slate-700'}`}>
-                          <User className="h-2.5 w-2.5" />
-                        </div>
-                      )}
-                      <span className="text-xs font-medium">{member.displayName}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
+                {/* 錯誤訊息 */}
+                {error && (
+                  <p className="text-sm text-destructive text-center">{error}</p>
+                )}
 
-            {/* 分擔者 */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                分擔者（共用・均分）
-              </label>
-              <div className="space-y-2">
-                {members.map((member) => {
-                  const isSelected = participantIds.has(member.id)
-                  const avatarData = parseAvatarString(member.user?.image)
-                  const perPersonAmount = isSelected && participantIds.size > 0
-                    ? totalAmount / participantIds.size
-                    : 0
-                  return (
-                    <label
-                      key={member.id}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
-                    >
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => toggleParticipant(member.id)}
-                      />
-                      {avatarData ? (
-                        <div
-                          className="h-6 w-6 rounded-full flex items-center justify-center"
-                          style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
-                        >
-                          {(() => { const IconComp = getAvatarIcon(avatarData.iconId); return <IconComp className="h-3 w-3 text-white" /> })()}
-                        </div>
-                      ) : member.user?.image ? (
-                        <Image
-                          src={member.user.image}
-                          alt={member.displayName}
-                          width={24}
-                          height={24}
-                          className="rounded-full"
-                        />
-                      ) : (
-                        <div className="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                          <User className="h-3 w-3" />
-                        </div>
-                      )}
-                      <span className="text-sm flex-1">{member.displayName}</span>
-                      {isSelected && perPersonAmount > 0 && (
-                        <span className="text-sm text-primary font-medium">
-                          ${perPersonAmount.toFixed(0)}
-                        </span>
-                      )}
-                    </label>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* 錯誤訊息 */}
-            {error && (
-              <p className="text-sm text-destructive text-center">{error}</p>
+                {/* 按鈕 */}
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 gap-2"
+                    onClick={resetState}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    重新輸入
+                  </Button>
+                  <Button
+                    type="button"
+                    className="flex-1 gap-2"
+                    onClick={handleSave}
+                    disabled={expenses.length === 0}
+                  >
+                    <Send className="h-4 w-4" />
+                    新增 {expenses.length} 筆
+                  </Button>
+                </div>
+              </>
             )}
-
-            {/* 按鈕 */}
-            <div className="flex gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 gap-2"
-                onClick={resetState}
-              >
-                <RotateCcw className="h-4 w-4" />
-                重新輸入
-              </Button>
-              <Button
-                type="button"
-                className="flex-1 gap-2"
-                onClick={handleSave}
-                disabled={selectedExpenses.length === 0}
-              >
-                <Send className="h-4 w-4" />
-                新增 {selectedExpenses.length} 筆
-              </Button>
-            </div>
           </div>
         )}
 
