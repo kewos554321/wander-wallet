@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Trash2, User, Utensils, Car, Home, Gamepad2, ShoppingBag, Wallet, Coffee, Ticket, Gift, Heart, Receipt, CheckSquare, X, ImageIcon, Search, Filter, ChevronDown, MapPin } from "lucide-react"
+import { Plus, Trash2, User, Utensils, Car, Home, Gamepad2, ShoppingBag, Wallet, Ticket, Gift, Receipt, CheckSquare, X, Search, Filter, ChevronDown, MapPin } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -241,14 +241,12 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
 
   const CATEGORY_CONFIG: Record<string, { label: string; icon: typeof Utensils; color: string }> = {
     food: { label: "餐飲", icon: Utensils, color: "bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-400" },
-    drinks: { label: "飲品", icon: Coffee, color: "bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400" },
     transport: { label: "交通", icon: Car, color: "bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400" },
     accommodation: { label: "住宿", icon: Home, color: "bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400" },
-    entertainment: { label: "娛樂", icon: Gamepad2, color: "bg-pink-100 text-pink-600 dark:bg-pink-900/50 dark:text-pink-400" },
-    shopping: { label: "購物", icon: ShoppingBag, color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400" },
     ticket: { label: "票券", icon: Ticket, color: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400" },
-    gift: { label: "禮物", icon: Gift, color: "bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400" },
-    medical: { label: "醫療", icon: Heart, color: "bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400" },
+    shopping: { label: "購物", icon: ShoppingBag, color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400" },
+    entertainment: { label: "娛樂", icon: Gamepad2, color: "bg-pink-100 text-pink-600 dark:bg-pink-900/50 dark:text-pink-400" },
+    gift: { label: "禮品", icon: Gift, color: "bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400" },
     other: { label: "其他", icon: Wallet, color: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400" },
   }
 

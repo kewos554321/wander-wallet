@@ -116,23 +116,39 @@ export interface ExpenseNotificationData {
   participantCount: number
 }
 
+export interface BatchExpenseItem {
+  amount: number
+  description?: string
+  category?: string
+  payerName: string
+  participantCount: number
+}
+
+export interface BatchExpenseNotificationData {
+  projectName: string
+  projectId: string
+  expenses: BatchExpenseItem[]
+}
+
+/**
+ * 類別對應的 emoji（對應 Lucide icons）
+ * @see components/expense/expense-form.tsx CATEGORIES
+ */
+const CATEGORY_EMOJIS: Record<string, string> = {
+  food: "🍴",         // Utensils - 餐飲
+  transport: "🚗",    // Car - 交通
+  accommodation: "🏠", // Home - 住宿
+  ticket: "🎫",       // Ticket - 票券
+  shopping: "🛍️",     // ShoppingBag - 購物
+  entertainment: "🎮", // Gamepad2 - 娛樂
+  gift: "🎁",         // Gift - 禮品
+  other: "💰",        // Wallet - 其他
+}
+
 /**
  * 發送支出通知到當前聊天室（以用戶身份）
  */
 export async function sendExpenseNotificationToChat(data: ExpenseNotificationData): Promise<boolean> {
-  const categoryEmojis: Record<string, string> = {
-    food: "🍽️",
-    drinks: "🥤",
-    transport: "🚗",
-    accommodation: "🏨",
-    entertainment: "🎬",
-    shopping: "🛍️",
-    ticket: "🎫",
-    gift: "🎁",
-    medical: "💊",
-    other: "📝",
-  }
-
   const operationConfig = {
     create: { label: "新增花費", color: "#5CB87A" },
     update: { label: "更新花費", color: "#E09855" },
@@ -140,7 +156,7 @@ export async function sendExpenseNotificationToChat(data: ExpenseNotificationDat
   }
 
   const config = operationConfig[data.operationType]
-  const categoryEmoji = categoryEmojis[data.category || "other"] || "📝"
+  const categoryEmoji = CATEGORY_EMOJIS[data.category || "other"] || "💰"
   const displayText = data.description
     ? `${categoryEmoji} ${data.description}`
     : categoryEmoji
@@ -239,6 +255,195 @@ export async function sendExpenseNotificationToChat(data: ExpenseNotificationDat
             style: "primary" as const,
             height: "sm" as const,
             color: config.color,
+          },
+        ],
+        paddingTop: "none" as const,
+        paddingBottom: "md" as const,
+        paddingStart: "lg" as const,
+        paddingEnd: "lg" as const,
+      },
+    },
+  }
+
+  return sendMessagesToChat([flexMessage])
+}
+
+/**
+ * 發送批次支出通知到當前聊天室（以用戶身份）
+ */
+export async function sendBatchExpenseNotificationToChat(data: BatchExpenseNotificationData): Promise<boolean> {
+  const themeColor = "#5CB87A"
+
+  // 計算總金額
+  const totalAmount = data.expenses.reduce((sum, e) => sum + e.amount, 0)
+  const formattedTotal = new Intl.NumberFormat("zh-TW", {
+    style: "currency",
+    currency: "TWD",
+    minimumFractionDigits: 0,
+  }).format(totalAmount)
+
+  // 生成費用列表內容
+  const expenseContents = data.expenses.flatMap((expense, index) => {
+    const categoryEmoji = CATEGORY_EMOJIS[expense.category || "other"] || "💰"
+
+    const formattedAmount = new Intl.NumberFormat("zh-TW", {
+      style: "currency",
+      currency: "TWD",
+      minimumFractionDigits: 0,
+    }).format(expense.amount)
+
+    const perPersonAmount = new Intl.NumberFormat("zh-TW", {
+      style: "currency",
+      currency: "TWD",
+      minimumFractionDigits: 0,
+    }).format(Math.round(expense.amount / expense.participantCount))
+
+    const baseItems = [
+      // 第一行：emoji + 描述 + 金額
+      {
+        type: "box" as const,
+        layout: "horizontal" as const,
+        contents: [
+          {
+            type: "text" as const,
+            text: categoryEmoji,
+            size: "md" as const,
+            flex: 0,
+          },
+          {
+            type: "text" as const,
+            text: expense.description || "消費",
+            size: "sm" as const,
+            color: "#4A4A4A",
+            flex: 1,
+            margin: "sm" as const,
+          },
+          {
+            type: "text" as const,
+            text: formattedAmount,
+            size: "sm" as const,
+            color: "#4A4A4A",
+            align: "end" as const,
+            flex: 0,
+            weight: "bold" as const,
+          },
+        ],
+        alignItems: "center" as const,
+      },
+      // 第二行：付款人 + 分攤資訊
+      {
+        type: "text" as const,
+        text: `${expense.payerName} 付 · ${expense.participantCount}人分攤 · 每人 ${perPersonAmount}`,
+        size: "xs" as const,
+        color: "#9E9E9E",
+        margin: "xs" as const,
+      },
+    ]
+
+    // 在項目之間加入分隔線（除了最後一個）
+    if (index < data.expenses.length - 1) {
+      return [
+        ...baseItems,
+        {
+          type: "separator" as const,
+          margin: "md" as const,
+          color: "#EEEEEE",
+        },
+      ]
+    }
+
+    return baseItems
+  })
+
+  const liffUrl = process.env.NEXT_PUBLIC_LIFF_URL || ""
+  const projectUrl = `${liffUrl}/projects/${data.projectId}`
+
+  const flexMessage = {
+    type: "flex" as const,
+    altText: `批次新增 ${data.expenses.length} 筆花費，共 ${formattedTotal}`,
+    contents: {
+      type: "bubble" as const,
+      size: "mega" as const,
+      header: {
+        type: "box" as const,
+        layout: "horizontal" as const,
+        contents: [
+          {
+            type: "text" as const,
+            text: data.projectName,
+            size: "xs" as const,
+            color: "#ffffff",
+            weight: "bold" as const,
+            flex: 3,
+          },
+          {
+            type: "text" as const,
+            text: `批次新增 ${data.expenses.length} 筆`,
+            size: "xs" as const,
+            color: "#ffffff",
+            align: "end" as const,
+            flex: 2,
+          },
+        ],
+        backgroundColor: themeColor,
+        paddingAll: "lg" as const,
+      },
+      body: {
+        type: "box" as const,
+        layout: "vertical" as const,
+        contents: [
+          // 總金額區塊
+          {
+            type: "box" as const,
+            layout: "horizontal" as const,
+            contents: [
+              {
+                type: "text" as const,
+                text: "總計",
+                size: "md" as const,
+                color: "#4A4A4A",
+                weight: "bold" as const,
+              },
+              {
+                type: "text" as const,
+                text: formattedTotal,
+                size: "xl" as const,
+                color: themeColor,
+                align: "end" as const,
+                weight: "bold" as const,
+              },
+            ],
+            paddingBottom: "md" as const,
+          },
+          {
+            type: "separator" as const,
+            color: "#EEEEEE",
+          },
+          // 費用列表
+          {
+            type: "box" as const,
+            layout: "vertical" as const,
+            contents: expenseContents,
+            paddingTop: "md" as const,
+            spacing: "sm" as const,
+          },
+        ],
+        paddingAll: "lg" as const,
+      },
+      footer: {
+        type: "box" as const,
+        layout: "vertical" as const,
+        contents: [
+          {
+            type: "button" as const,
+            action: {
+              type: "uri" as const,
+              label: "查看明細",
+              uri: projectUrl,
+            },
+            style: "primary" as const,
+            height: "sm" as const,
+            color: themeColor,
           },
         ],
         paddingTop: "none" as const,
