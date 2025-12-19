@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { ChatPromptTemplate } from "@langchain/core/prompts"
-import { createGeminiModel } from "./gemini"
+import { createDeepSeekModel } from "./deepseek"
 
 /**
  * 費用類別列表
@@ -110,7 +110,7 @@ const EXPENSE_PARSER_PROMPT = ChatPromptTemplate.fromMessages([
  * 建立費用解析 Chain
  */
 function createExpenseParserChain() {
-  const model = createGeminiModel({ temperature: 0.1 })
+  const model = createDeepSeekModel({ temperature: 0.1 })
   const structuredModel = model.withStructuredOutput(ParsedExpenseSchema)
 
   return EXPENSE_PARSER_PROMPT.pipe(structuredModel)
