@@ -4,7 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:dev": "dotenv -e .env.dev -- next dev",
+    "dev:main": "dotenv -e .env.main -- next dev",
     "build": "next build",
+    "build:dev": "dotenv -e .env.dev -- next build",
+    "build:main": "dotenv -e .env.main -- next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest",
@@ -17,7 +21,7 @@
     "db:reset": "prisma migrate reset",
     "db:studio": "prisma studio",
     "db:push": "prisma db push",
-    "db:export": "export $(grep -E '^DATABASE_URL=' .env | xargs) && echo $DATABASE_URL"
+    "db:export": "export $(grep -E '^DATABASE_URL=' .env.dev | xargs) && echo $DATABASE_URL"
   },
   "dependencies": {
     "@langchain/core": "^1.1.6",
@@ -58,6 +62,7 @@
     "@vitejs/plugin-react": "^5.1.2",
     "@vitest/coverage-v8": "^4.0.16",
     "baseline-browser-mapping": "^2.9.7",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.0",
     "jsdom": "^24.1.0",
