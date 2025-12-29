@@ -14,12 +14,16 @@ vi.mock("@/lib/db", () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       delete: vi.fn(),
       deleteMany: vi.fn(),
     },
     expenseParticipant: {
       deleteMany: vi.fn(),
       createMany: vi.fn(),
+    },
+    activityLog: {
+      create: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -28,6 +32,13 @@ vi.mock("@/lib/db", () => ({
 // Mock auth
 vi.mock("@/lib/auth", () => ({
   getAuthUser: vi.fn(),
+}))
+
+// Mock activity-log
+vi.mock("@/lib/activity-log", () => ({
+  createActivityLog: vi.fn().mockResolvedValue({ id: "log-123" }),
+  createActivityLogInTransaction: vi.fn().mockResolvedValue({ id: "log-123" }),
+  diffChanges: vi.fn().mockReturnValue(null),
 }))
 
 import { GET, POST } from "@/app/api/projects/[id]/expenses/route"
@@ -39,6 +50,7 @@ import {
 import { DELETE as DELETE_BATCH } from "@/app/api/projects/[id]/expenses/batch/route"
 import { prisma } from "@/lib/db"
 import { getAuthUser } from "@/lib/auth"
+import { createActivityLog } from "@/lib/activity-log"
 
 const mockUser = {
   id: "user-123",
@@ -444,6 +456,39 @@ describe("POST /api/projects/[id]/expenses", () => {
     expect(response.status).toBe(201)
     expect(data.id).toBe("expense-123")
     expect(prisma.expense.create).toHaveBeenCalled()
+  })
+
+  it("should create activity log after creating expense", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(
+      mockMembership as never
+    )
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123" },
+    ] as never)
+    vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense as never)
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          paidByMemberId: "member-123",
+          amount: 1000,
+          participants: [{ memberId: "member-123", shareAmount: 1000 }],
+        }),
+      }
+    )
+    await POST(req, { params: createParams("project-123") })
+
+    expect(createActivityLog).toHaveBeenCalledWith({
+      projectId: "project-123",
+      actorMemberId: "member-123",
+      entityType: "expense",
+      entityId: "expense-123",
+      action: "create",
+      changes: null,
+    })
   })
 
   it("should create expense with custom expense date", async () => {
@@ -941,13 +986,17 @@ describe("DELETE /api/projects/[id]/expenses/[expenseId]", () => {
     expect(data.error).toBe("費用不存在")
   })
 
-  it("should delete expense successfully", async () => {
+  it("should soft delete expense successfully", async () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(
       mockMembership as never
     )
     vi.mocked(prisma.expense.findFirst).mockResolvedValue(mockExpense as never)
-    vi.mocked(prisma.expense.delete).mockResolvedValue(mockExpense as never)
+    vi.mocked(prisma.expense.update).mockResolvedValue({
+      ...mockExpense,
+      deletedAt: new Date(),
+      deletedByMemberId: "member-123",
+    } as never)
 
     const req = new NextRequest(
       "http://localhost:3000/api/projects/project-123/expenses/expense-123",
@@ -960,8 +1009,41 @@ describe("DELETE /api/projects/[id]/expenses/[expenseId]", () => {
 
     expect(response.status).toBe(200)
     expect(data.message).toBe("費用已刪除")
-    expect(prisma.expense.delete).toHaveBeenCalledWith({
+    expect(prisma.expense.update).toHaveBeenCalledWith({
       where: { id: "expense-123" },
+      data: {
+        deletedAt: expect.any(Date),
+        deletedByMemberId: "member-123",
+      },
+    })
+  })
+
+  it("should create activity log on delete", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(
+      mockMembership as never
+    )
+    vi.mocked(prisma.expense.findFirst).mockResolvedValue(mockExpense as never)
+    vi.mocked(prisma.expense.update).mockResolvedValue({
+      ...mockExpense,
+      deletedAt: new Date(),
+    } as never)
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses/expense-123",
+      { method: "DELETE" }
+    )
+    await DELETE_EXPENSE(req, {
+      params: createExpenseParams("project-123", "expense-123"),
+    })
+
+    expect(createActivityLog).toHaveBeenCalledWith({
+      projectId: "project-123",
+      actorMemberId: "member-123",
+      entityType: "expense",
+      entityId: "expense-123",
+      action: "delete",
+      changes: null,
     })
   })
 
@@ -1096,7 +1178,7 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
     expect(data.error).toBe("找不到可刪除的費用")
   })
 
-  it("should delete expenses in batch successfully", async () => {
+  it("should soft delete expenses in batch successfully", async () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(
       mockMembership as never
@@ -1105,7 +1187,7 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
       { id: "expense-123" },
       { id: "expense-456" },
     ] as never)
-    vi.mocked(prisma.expense.deleteMany).mockResolvedValue({ count: 2 } as never)
+    vi.mocked(prisma.expense.updateMany).mockResolvedValue({ count: 2 } as never)
 
     const req = new NextRequest(
       "http://localhost:3000/api/projects/project-123/expenses/batch",
@@ -1122,9 +1204,60 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
     expect(response.status).toBe(200)
     expect(data.deleted).toBe(2)
     expect(data.message).toBe("已刪除 2 筆費用")
+    expect(prisma.expense.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["expense-123", "expense-456"] },
+        projectId: "project-123",
+      },
+      data: {
+        deletedAt: expect.any(Date),
+        deletedByMemberId: "member-123",
+      },
+    })
   })
 
-  it("should only delete valid expenses in batch", async () => {
+  it("should create activity logs for each expense in batch delete", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(
+      mockMembership as never
+    )
+    vi.mocked(prisma.expense.findMany).mockResolvedValue([
+      { id: "expense-123" },
+      { id: "expense-456" },
+    ] as never)
+    vi.mocked(prisma.expense.updateMany).mockResolvedValue({ count: 2 } as never)
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses/batch",
+      {
+        method: "DELETE",
+        body: JSON.stringify({ expenseIds: ["expense-123", "expense-456"] }),
+      }
+    )
+    await DELETE_BATCH(req, {
+      params: createParams("project-123"),
+    })
+
+    expect(createActivityLog).toHaveBeenCalledTimes(2)
+    expect(createActivityLog).toHaveBeenCalledWith({
+      projectId: "project-123",
+      actorMemberId: "member-123",
+      entityType: "expense",
+      entityId: "expense-123",
+      action: "delete",
+      changes: null,
+    })
+    expect(createActivityLog).toHaveBeenCalledWith({
+      projectId: "project-123",
+      actorMemberId: "member-123",
+      entityType: "expense",
+      entityId: "expense-456",
+      action: "delete",
+      changes: null,
+    })
+  })
+
+  it("should only soft delete valid expenses in batch", async () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(
       mockMembership as never
@@ -1132,7 +1265,7 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
     vi.mocked(prisma.expense.findMany).mockResolvedValue([
       { id: "expense-123" },
     ] as never)
-    vi.mocked(prisma.expense.deleteMany).mockResolvedValue({ count: 1 } as never)
+    vi.mocked(prisma.expense.updateMany).mockResolvedValue({ count: 1 } as never)
 
     const req = new NextRequest(
       "http://localhost:3000/api/projects/project-123/expenses/batch",
@@ -1150,6 +1283,16 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
 
     expect(response.status).toBe(200)
     expect(data.deleted).toBe(1)
+    expect(prisma.expense.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["expense-123"] },
+        projectId: "project-123",
+      },
+      data: {
+        deletedAt: expect.any(Date),
+        deletedByMemberId: "member-123",
+      },
+    })
   })
 
   it("should return 500 on database error", async () => {

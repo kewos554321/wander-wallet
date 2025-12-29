@@ -168,13 +168,16 @@ export async function DELETE(
       return NextResponse.json({ error: "不能移除自己" }, { status: 400 })
     }
 
-    // 檢查成員是否有關聯的支出記錄
+    // 檢查成員是否有關聯的支出記錄（只計算未刪除的費用）
     const [paidExpenses, participatedExpenses] = await Promise.all([
       prisma.expense.count({
-        where: { paidByMemberId: memberId },
+        where: { paidByMemberId: memberId, deletedAt: null },
       }),
       prisma.expenseParticipant.count({
-        where: { memberId: memberId },
+        where: {
+          memberId: memberId,
+          expense: { deletedAt: null },
+        },
       }),
     ])
 

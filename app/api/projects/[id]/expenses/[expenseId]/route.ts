@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { Prisma } from "@prisma/client"
+import { createActivityLog, createActivityLogInTransaction, diffChanges } from "@/lib/activity-log"
 
 interface Participant {
   memberId: string
@@ -36,6 +37,7 @@ export async function GET(
       where: {
         id: expenseId,
         projectId: id,
+        deletedAt: null, // 只取未刪除的費用
       },
       include: {
         payer: {
@@ -119,6 +121,7 @@ export async function PUT(
       where: {
         id: expenseId,
         projectId: id,
+        deletedAt: null, // 只取未刪除的費用
       },
     })
 
@@ -200,6 +203,13 @@ export async function PUT(
     if (longitude !== undefined) updateData.longitude = longitude ? Number(longitude) : null
     if (expenseDate !== undefined) updateData.expenseDate = new Date(expenseDate)
 
+    // 計算變更差異
+    const changes = diffChanges(
+      existingExpense as unknown as Record<string, unknown>,
+      updateData as unknown as Record<string, unknown>,
+      ["paidByMemberId", "amount", "description", "category", "location", "expenseDate"]
+    )
+
     await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       if (participants && Array.isArray(participants)) {
         // 刪除舊的參與者
@@ -224,6 +234,18 @@ export async function PUT(
         await tx.expense.update({
           where: { id: expenseId },
           data: updateData,
+        })
+      }
+
+      // 記錄操作歷史
+      if (changes || (participants && Array.isArray(participants))) {
+        await createActivityLogInTransaction(tx, {
+          projectId: id,
+          actorMemberId: membership.id,
+          entityType: "expense",
+          entityId: expenseId,
+          action: "update",
+          changes: changes,
         })
       }
     })
@@ -303,11 +325,12 @@ export async function DELETE(
       return NextResponse.json({ error: "無權限訪問此專案" }, { status: 403 })
     }
 
-    // 獲取費用詳情（用於通知）
+    // 獲取費用詳情
     const expense = await prisma.expense.findFirst({
       where: {
         id: expenseId,
         projectId: id,
+        deletedAt: null, // 只取未刪除的費用
       },
       include: {
         payer: {
@@ -323,8 +346,23 @@ export async function DELETE(
       return NextResponse.json({ error: "費用不存在" }, { status: 404 })
     }
 
-    await prisma.expense.delete({
+    // 軟刪除：更新 deletedAt 和 deletedByMemberId
+    await prisma.expense.update({
       where: { id: expenseId },
+      data: {
+        deletedAt: new Date(),
+        deletedByMemberId: membership.id,
+      },
+    })
+
+    // 記錄操作歷史
+    await createActivityLog({
+      projectId: id,
+      actorMemberId: membership.id,
+      entityType: "expense",
+      entityId: expenseId,
+      action: "delete",
+      changes: null,
     })
 
     // 通知改由前端使用 LIFF sendMessages API 發送（以用戶身份）

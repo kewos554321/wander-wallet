@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useEffect, useState, useMemo } from "react"
+import { use, useEffect, useState, useMemo, useRef, useCallback } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { AppLayout } from "@/components/layout/app-layout"
@@ -33,6 +33,7 @@ import {
   Check,
   Wallet,
   Sparkles,
+  History,
 } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import {
@@ -153,6 +154,20 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
 
   // AI 語音記帳相關狀態
   const [showVoiceDialog, setShowVoiceDialog] = useState(false)
+
+  // 功能 carousel 相關
+  const [currentPage, setCurrentPage] = useState(0)
+  const carouselRef = useRef<HTMLDivElement>(null)
+  const totalPages = 2 // 8 + 1 = 9 個功能，分成 2 頁
+
+  const handleScroll = useCallback(() => {
+    if (carouselRef.current) {
+      const scrollLeft = carouselRef.current.scrollLeft
+      const width = carouselRef.current.offsetWidth
+      const newPage = Math.round(scrollLeft / width)
+      setCurrentPage(newPage)
+    }
+  }, [])
 
   useEffect(() => {
     setCanNativeShare(typeof navigator !== "undefined" && !!navigator.share)
@@ -356,76 +371,121 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
         {/* 功能 */}
         <div>
           <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">功能</h2>
-          <div className="grid grid-cols-4 gap-2">
-            <Link href={`/projects/${id}/settle`}>
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-                <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center">
-                  <Calculator className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">結算</p>
-              </div>
-            </Link>
+          <div
+            ref={carouselRef}
+            onScroll={handleScroll}
+            className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-3 px-3"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {/* 第一頁 - 8 個功能 */}
+            <div className="flex-shrink-0 w-full snap-center">
+              <div className="grid grid-cols-4 gap-2">
+                <Link href={`/projects/${id}/settle`}>
+                  <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center">
+                      <Calculator className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">結算</p>
+                  </div>
+                </Link>
 
-            <Link href={`/projects/${id}/members`}>
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-                <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
-                  <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">成員</p>
-              </div>
-            </Link>
+                <Link href={`/projects/${id}/members`}>
+                  <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
+                      <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">成員</p>
+                  </div>
+                </Link>
 
-            <Link href={`/projects/${id}/stats`}>
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-                <div className="h-10 w-10 rounded-xl bg-violet-50 dark:bg-violet-950 flex items-center justify-center">
-                  <BarChart3 className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-                </div>
-                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">統計</p>
-              </div>
-            </Link>
+                <Link href={`/projects/${id}/stats`}>
+                  <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="h-10 w-10 rounded-xl bg-violet-50 dark:bg-violet-950 flex items-center justify-center">
+                      <BarChart3 className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                    </div>
+                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">統計</p>
+                  </div>
+                </Link>
 
-            <button onClick={() => setShowInvite(true)} className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-              <div className="h-10 w-10 rounded-xl bg-orange-50 dark:bg-orange-950 flex items-center justify-center">
-                <Share2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-              </div>
-              <p className="font-medium text-sm text-slate-900 dark:text-slate-100">邀請</p>
-            </button>
+                <button onClick={() => setShowInvite(true)} className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+                  <div className="h-10 w-10 rounded-xl bg-orange-50 dark:bg-orange-950 flex items-center justify-center">
+                    <Share2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <p className="font-medium text-sm text-slate-900 dark:text-slate-100">邀請</p>
+                </button>
 
-            <Link href={`/projects/${id}/export`}>
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-                <div className="h-10 w-10 rounded-xl bg-cyan-50 dark:bg-cyan-950 flex items-center justify-center">
-                  <Download className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
-                </div>
-                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">匯出</p>
-              </div>
-            </Link>
+                <Link href={`/projects/${id}/export`}>
+                  <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="h-10 w-10 rounded-xl bg-cyan-50 dark:bg-cyan-950 flex items-center justify-center">
+                      <Download className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                    </div>
+                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">匯出</p>
+                  </div>
+                </Link>
 
-            <Link href={`/projects/${id}/currency`}>
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-                <div className="h-10 w-10 rounded-xl bg-amber-50 dark:bg-amber-950 flex items-center justify-center">
-                  <ArrowRightLeft className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">幣種</p>
-              </div>
-            </Link>
+                <Link href={`/projects/${id}/currency`}>
+                  <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="h-10 w-10 rounded-xl bg-amber-50 dark:bg-amber-950 flex items-center justify-center">
+                      <ArrowRightLeft className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">幣種</p>
+                  </div>
+                </Link>
 
-            <Link href={`/projects/${id}/settings`}>
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-                <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                  <Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                </div>
-                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">設定</p>
-              </div>
-            </Link>
+                <Link href={`/projects/${id}/settings`}>
+                  <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                      <Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                    </div>
+                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">設定</p>
+                  </div>
+                </Link>
 
-            <Link href={`/projects/${id}/notes`}>
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-                <div className="h-10 w-10 rounded-xl bg-yellow-50 dark:bg-yellow-950 flex items-center justify-center">
-                  <StickyNote className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                </div>
-                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">筆記</p>
+                <Link href={`/projects/${id}/notes`}>
+                  <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="h-10 w-10 rounded-xl bg-yellow-50 dark:bg-yellow-950 flex items-center justify-center">
+                      <StickyNote className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                    </div>
+                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">筆記</p>
+                  </div>
+                </Link>
               </div>
-            </Link>
+            </div>
+
+            {/* 第二頁 - 歷史紀錄 */}
+            <div className="flex-shrink-0 w-full snap-center">
+              <div className="grid grid-cols-4 gap-2">
+                <Link href={`/projects/${id}/activity-logs`}>
+                  <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="h-10 w-10 rounded-xl bg-purple-50 dark:bg-purple-950 flex items-center justify-center">
+                      <History className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">歷史</p>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* 頁面指示器 (小圓點) */}
+          <div className="flex justify-center gap-1.5 mt-3">
+            {Array.from({ length: totalPages }).map((_, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  carouselRef.current?.scrollTo({
+                    left: index * (carouselRef.current?.offsetWidth || 0),
+                    behavior: "smooth",
+                  })
+                }}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  currentPage === index
+                    ? "w-4 bg-slate-800 dark:bg-slate-200"
+                    : "w-1.5 bg-slate-300 dark:bg-slate-600"
+                }`}
+                aria-label={`跳到第 ${index + 1} 頁`}
+              />
+            ))}
           </div>
         </div>
 

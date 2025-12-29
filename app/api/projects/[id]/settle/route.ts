@@ -103,10 +103,11 @@ export async function GET(
       return NextResponse.json({ error: "無權限訪問此專案" }, { status: 403 })
     }
 
-    // 獲取所有費用
+    // 獲取所有費用（只取未刪除的）
     const expenses = await prisma.expense.findMany({
       where: {
         projectId: id,
+        deletedAt: null,
       },
       include: {
         payer: {

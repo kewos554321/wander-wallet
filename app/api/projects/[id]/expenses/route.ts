@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { createActivityLog } from "@/lib/activity-log"
 
 interface Participant {
   memberId: string
@@ -34,6 +35,7 @@ export async function GET(
     const expenses = await prisma.expense.findMany({
       where: {
         projectId: id,
+        deletedAt: null, // 只取未刪除的費用
       },
       include: {
         payer: {
@@ -231,6 +233,16 @@ export async function POST(
           },
         },
       },
+    })
+
+    // 記錄操作歷史
+    await createActivityLog({
+      projectId: id,
+      actorMemberId: membership.id,
+      entityType: "expense",
+      entityId: expense.id,
+      action: "create",
+      changes: null,
     })
 
     // 通知改由前端使用 LIFF sendMessages API 發送（以用戶身份）

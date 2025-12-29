@@ -38,9 +38,10 @@ model Project {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  creator    User             @relation("ProjectCreator", fields: [createdBy], references: [id], onDelete: Cascade)
-  members    ProjectMember[]
-  expenses   Expense[]
+  creator       User             @relation("ProjectCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  members       ProjectMember[]
+  expenses      Expense[]
+  activityLogs  ActivityLog[]
 
   @@index([createdBy])
   @@map("projects")
@@ -60,7 +61,9 @@ model ProjectMember {
   user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   paidExpenses        Expense[]            @relation("ExpensePayer")
+  deletedExpenses     Expense[]            @relation("ExpenseDeleter")
   expenseParticipants ExpenseParticipant[] @relation("ExpenseParticipant")
+  activityLogs        ActivityLog[]        @relation("ActivityActor")
 
   @@index([projectId])
   @@index([userId])
@@ -83,14 +86,18 @@ model Expense {
   expenseDate DateTime @default(now()) @map("expense_date")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at") // 軟刪除時間
+  deletedByMemberId String? @map("deleted_by_member_id") @db.Uuid // 刪除者
 
   project       Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
   payer         ProjectMember        @relation("ExpensePayer", fields: [paidByMemberId], references: [id], onDelete: Cascade)
+  deletedBy     ProjectMember?       @relation("ExpenseDeleter", fields: [deletedByMemberId], references: [id], onDelete: SetNull)
   participants  ExpenseParticipant[]
 
   @@index([projectId])
   @@index([paidByMemberId])
   @@index([projectId, createdAt(sort: Desc)])
+  @@index([projectId, deletedAt])
   @@map("expenses")
 }
 
@@ -107,5 +114,24 @@ model ExpenseParticipant {
   @@index([memberId])
   @@unique([expenseId, memberId])
   @@map("expense_participants")
+}
+
+// 操作歷史紀錄
+model ActivityLog {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId     String   @map("project_id") @db.Uuid
+  actorMemberId String?  @map("actor_member_id") @db.Uuid
+  entityType    String   @map("entity_type")  // expense, project, member
+  entityId      String   @map("entity_id") @db.Uuid
+  action        String   // create, update, delete
+  changes       Json?    // 變更前後差異
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  project Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actor   ProjectMember? @relation("ActivityActor", fields: [actorMemberId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, createdAt(sort: Desc)])
+  @@index([entityType, entityId])
+  @@map("activity_logs")
 }
 
