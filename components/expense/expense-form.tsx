@@ -13,10 +13,11 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
-import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
+import { MemberAvatar } from "@/components/member-avatar"
 import { sendExpenseNotificationToChat } from "@/lib/liff"
+import { compressImage } from "@/lib/image-utils"
 import { LocationPicker } from "@/components/location-picker"
-import { Check, User, Calculator, Delete, CalendarIcon, ImagePlus, X } from "lucide-react"
+import { Check, Calculator, Delete, CalendarIcon, ImagePlus, X } from "lucide-react"
 import { CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
 
 interface Member {
@@ -766,8 +767,6 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           ) : (
             <div className="flex flex-wrap gap-1.5">
               {members.map((member) => {
-                const avatarData = parseAvatarString(member.user?.image)
-                const hasExternalImage = member.user?.image && !member.user.image.startsWith("avatar:")
                 const isSelected = paidBy === member.id
                 return (
                   <button
@@ -780,28 +779,12 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                         : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-primary/50"
                     }`}
                   >
-                    {avatarData ? (
-                      <div
-                        className="h-5 w-5 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.3)' : getAvatarColor(avatarData.colorId) }}
-                      >
-                        {(() => { const Icon = getAvatarIcon(avatarData.iconId); return <Icon className="h-2.5 w-2.5 text-white" /> })()}
-                      </div>
-                    ) : (
-                      <div className={`h-5 w-5 rounded-full flex items-center justify-center overflow-hidden ${isSelected ? 'bg-white/30' : 'bg-slate-100 dark:bg-slate-800'}`}>
-                        {hasExternalImage ? (
-                          <Image
-                            src={member.user!.image!}
-                            alt={member.displayName}
-                            width={20}
-                            height={20}
-                            className="rounded-full object-cover"
-                          />
-                        ) : (
-                          <User className={`h-2.5 w-2.5 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
-                        )}
-                      </div>
-                    )}
+                    <MemberAvatar
+                      image={member.user?.image}
+                      name={member.displayName}
+                      size="sm"
+                      selected={isSelected}
+                    />
                     <span className="text-xs font-medium">{member.displayName}</span>
                   </button>
                 )
@@ -836,8 +819,6 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
               {members.map((member) => {
                 const isSelected = selectedParticipants.has(member.id)
-                const avatarData = parseAvatarString(member.user?.image)
-                const hasExternalImage = member.user?.image && !member.user.image.startsWith("avatar:")
                 return (
                   <label
                     key={member.id}
@@ -850,28 +831,11 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                         checked={isSelected}
                         onCheckedChange={() => toggleParticipant(member.id)}
                       />
-                      {avatarData ? (
-                        <div
-                          className="h-8 w-8 rounded-full flex items-center justify-center"
-                          style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
-                        >
-                          {(() => { const Icon = getAvatarIcon(avatarData.iconId); return <Icon className="h-4 w-4 text-white" /> })()}
-                        </div>
-                      ) : (
-                        <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
-                          {hasExternalImage ? (
-                            <Image
-                              src={member.user!.image!}
-                              alt={member.displayName}
-                              width={32}
-                              height={32}
-                              className="rounded-full object-cover"
-                            />
-                          ) : (
-                            <User className="h-4 w-4 text-slate-500" />
-                          )}
-                        </div>
-                      )}
+                      <MemberAvatar
+                        image={member.user?.image}
+                        name={member.displayName}
+                        size="md"
+                      />
                       <span className="text-sm font-medium">{member.displayName}</span>
                     </div>
                     {isSelected && splitMode === "equal" && amountNum > 0 && (
@@ -988,162 +952,4 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       </form>
     </AppLayout>
   )
-}
-
-// 讀取圖片的 EXIF 方向資訊
-async function getExifOrientation(file: File): Promise<number> {
-  return new Promise((resolve) => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const view = new DataView(e.target?.result as ArrayBuffer)
-
-      // 檢查是否為 JPEG
-      if (view.getUint16(0, false) !== 0xFFD8) {
-        resolve(1)
-        return
-      }
-
-      let offset = 2
-      while (offset < view.byteLength) {
-        const marker = view.getUint16(offset, false)
-        offset += 2
-
-        if (marker === 0xFFE1) {
-          // EXIF marker
-          const length = view.getUint16(offset, false)
-          offset += 2
-
-          // 檢查 EXIF header
-          const exifHeader = view.getUint32(offset, false)
-          if (exifHeader !== 0x45786966) {
-            resolve(1)
-            return
-          }
-
-          offset += 6 // Skip 'Exif\0\0'
-          const tiffOffset = offset
-
-          // 檢查 byte order
-          const littleEndian = view.getUint16(offset, false) === 0x4949
-          offset += 8 // Skip to first IFD
-
-          const ifdOffset = view.getUint32(offset, littleEndian)
-          offset = tiffOffset + ifdOffset
-
-          const numEntries = view.getUint16(offset, littleEndian)
-          offset += 2
-
-          for (let i = 0; i < numEntries; i++) {
-            const tag = view.getUint16(offset, littleEndian)
-            if (tag === 0x0112) {
-              // Orientation tag
-              const orientation = view.getUint16(offset + 8, littleEndian)
-              resolve(orientation)
-              return
-            }
-            offset += 12
-          }
-          resolve(1)
-          return
-        } else if ((marker & 0xFF00) !== 0xFF00) {
-          break
-        } else {
-          offset += view.getUint16(offset, false)
-        }
-      }
-      resolve(1)
-    }
-    reader.onerror = () => resolve(1)
-    reader.readAsArrayBuffer(file.slice(0, 65536)) // 只讀前 64KB
-  })
-}
-
-// 壓縮圖片並轉為 WebP base64
-async function compressImage(
-  file: File,
-  maxWidth: number,
-  maxHeight: number,
-  quality: number
-): Promise<string> {
-  // 先讀取 EXIF 方向
-  const orientation = await getExifOrientation(file)
-
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const img = document.createElement("img")
-      img.onload = () => {
-        const canvas = document.createElement("canvas")
-        let { width, height } = img
-
-        // 計算縮放比例
-        if (width > maxWidth || height > maxHeight) {
-          const ratio = Math.min(maxWidth / width, maxHeight / height)
-          width = Math.round(width * ratio)
-          height = Math.round(height * ratio)
-        }
-
-        // 根據 EXIF 方向調整 canvas 尺寸
-        if (orientation >= 5 && orientation <= 8) {
-          // 需要旋轉 90 度的情況，交換寬高
-          canvas.width = height
-          canvas.height = width
-        } else {
-          canvas.width = width
-          canvas.height = height
-        }
-
-        const ctx = canvas.getContext("2d")
-        if (!ctx) {
-          reject(new Error("無法取得 canvas context"))
-          return
-        }
-
-        // 根據 EXIF 方向進行變換
-        switch (orientation) {
-          case 2: // 水平翻轉
-            ctx.transform(-1, 0, 0, 1, width, 0)
-            break
-          case 3: // 旋轉 180 度
-            ctx.transform(-1, 0, 0, -1, width, height)
-            break
-          case 4: // 垂直翻轉
-            ctx.transform(1, 0, 0, -1, 0, height)
-            break
-          case 5: // 順時針 90 度 + 水平翻轉
-            ctx.transform(0, 1, 1, 0, 0, 0)
-            break
-          case 6: // 順時針 90 度
-            ctx.transform(0, 1, -1, 0, height, 0)
-            break
-          case 7: // 逆時針 90 度 + 水平翻轉
-            ctx.transform(0, -1, -1, 0, height, width)
-            break
-          case 8: // 逆時針 90 度
-            ctx.transform(0, -1, 1, 0, 0, width)
-            break
-          default:
-            // orientation 1 或未知，不做變換
-            break
-        }
-
-        ctx.drawImage(img, 0, 0, width, height)
-
-        // 優先使用 WebP 格式（比 JPEG 小 25-35%）
-        const base64 = canvas.toDataURL("image/webp", quality)
-
-        // 檢查是否成功轉換為 WebP（某些舊瀏覽器會 fallback 到 PNG）
-        if (base64.startsWith("data:image/webp")) {
-          resolve(base64)
-        } else {
-          // Fallback 到 JPEG
-          resolve(canvas.toDataURL("image/jpeg", quality))
-        }
-      }
-      img.onerror = () => reject(new Error("圖片載入失敗"))
-      img.src = e.target?.result as string
-    }
-    reader.onerror = () => reject(new Error("檔案讀取失敗"))
-    reader.readAsDataURL(file)
-  })
 }

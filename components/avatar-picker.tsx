@@ -85,6 +85,13 @@ export function getAvatarIcon(iconId: string): LucideIcon {
   return AVATAR_ICONS.find((i) => i.id === iconId)?.icon || User
 }
 
+// 渲染頭像圖案的穩定元件
+export function AvatarIcon({ iconId, className }: { iconId: string; className?: string }) {
+  const iconData = AVATAR_ICONS.find((i) => i.id === iconId)
+  const IconComponent = iconData?.icon || User
+  return <IconComponent className={className} />
+}
+
 // 取得顏色
 export function getAvatarColor(colorId: string): string {
   return AVATAR_COLORS.find((c) => c.id === colorId)?.hex || "#6366f1"
