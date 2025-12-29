@@ -168,6 +168,30 @@ export async function DELETE(
       return NextResponse.json({ error: "不能移除自己" }, { status: 400 })
     }
 
+    // 檢查成員是否有關聯的支出記錄
+    const [paidExpenses, participatedExpenses] = await Promise.all([
+      prisma.expense.count({
+        where: { paidByMemberId: memberId },
+      }),
+      prisma.expenseParticipant.count({
+        where: { memberId: memberId },
+      }),
+    ])
+
+    if (paidExpenses > 0 || participatedExpenses > 0) {
+      const messages: string[] = []
+      if (paidExpenses > 0) {
+        messages.push(`${paidExpenses} 筆付款記錄`)
+      }
+      if (participatedExpenses > 0) {
+        messages.push(`${participatedExpenses} 筆分擔記錄`)
+      }
+      return NextResponse.json(
+        { error: `無法移除此成員，尚有 ${messages.join(" 和 ")}` },
+        { status: 400 }
+      )
+    }
+
     await prisma.projectMember.delete({
       where: { id: memberId },
     })
