@@ -500,12 +500,11 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
 
   const title = mode === "create" ? "新增支出" : "編輯支出"
   const backHref = mode === "create" ? `/projects/${projectId}` : `/projects/${projectId}/expenses`
-  const projectHref = `/projects/${projectId}`
   const submitText = mode === "create" ? "儲存支出" : "儲存變更"
 
   if (loading) {
     return (
-      <AppLayout title={title} showBack backHref={backHref} projectHref={projectHref}>
+      <AppLayout title={title} showBack backHref={backHref}>
         <div className="text-center py-8 text-muted-foreground">載入中...</div>
       </AppLayout>
     )
@@ -515,7 +514,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const sharePerPerson = selectedParticipants.size > 0 ? amountNum / selectedParticipants.size : 0
 
   return (
-    <AppLayout title={title} showBack backHref={backHref} projectHref={projectHref}>
+    <AppLayout title={title} showBack backHref={backHref}>
       <form onSubmit={handleSubmit} className="space-y-5 pb-40">
         {/* 金額輸入區 */}
         <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 rounded-2xl p-6">
