@@ -185,9 +185,9 @@ export function LiffProvider({ children }: { children: ReactNode }) {
             }
           }
         } else if (!isPublicRoute) {
-          // 非公開路由且未登入：觸發登入（LIFF Endpoint 設為 /projects，登入後會自動回到該頁）
-          debugLog("[LIFF] Not logged in, triggering login")
-          liffLogin()
+          // 非公開路由且未登入：觸發登入，帶入當前 URL 作為 redirectUri
+          debugLog("[LIFF] Not logged in, triggering login with redirectUri")
+          liffLogin(window.location.href)
         } else {
           // 公開路由且未登入：不強制登入，允許瀏覽
           debugLog("[LIFF] Public route, not logged in - allowing anonymous access")
@@ -212,8 +212,8 @@ export function LiffProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(DEV_SESSION_KEY, "true")
       return
     }
-    debugLog("[LIFF] Manual login triggered")
-    liffLogin()
+    debugLog("[LIFF] Manual login triggered with redirectUri")
+    liffLogin(window.location.href)
   }, [])
 
   const logout = useCallback(() => {

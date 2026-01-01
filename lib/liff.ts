@@ -25,8 +25,12 @@ export function isLoggedIn(): boolean {
   return liff.isLoggedIn()
 }
 
-export function login(): void {
-  liff.login()
+export function login(redirectUri?: string): void {
+  if (redirectUri) {
+    liff.login({ redirectUri })
+  } else {
+    liff.login()
+  }
 }
 
 export function logout(): void {
