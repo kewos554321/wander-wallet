@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
@@ -125,9 +125,48 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const [calcExpression, setCalcExpression] = useState("")
   const [calcResult, setCalcResult] = useState<number | null>(null)
 
+  // 自動獲取當下地點
+  const getCurrentLocation = useCallback(async () => {
+    if (!navigator.geolocation) return
+
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000,
+        })
+      })
+
+      const { latitude, longitude } = position.coords
+
+      // 反向地理編碼取得地址
+      const response = await fetch(`/api/geocode?lat=${latitude}&lon=${longitude}`)
+      const data = await response.json()
+
+      if (response.ok) {
+        setLocationData({
+          location: data.displayName,
+          latitude: data.lat,
+          longitude: data.lon,
+        })
+      } else {
+        setLocationData({
+          location: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+          latitude,
+          longitude,
+        })
+      }
+    } catch {
+      // 靜默失敗，不影響使用
+    }
+  }, [])
+
   useEffect(() => {
     if (mode === "create") {
       fetchProjectAndMembers()
+      // 新增模式時自動獲取當下地點
+      getCurrentLocation()
     } else {
       fetchExpenseData()
     }
@@ -618,38 +657,14 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         </div>
 
         {/* 描述 */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
-          <label className="block text-xs font-medium text-muted-foreground mb-2">描述</label>
+        <div>
+          <label className="block text-sm font-medium mb-3">描述</label>
           <Input
             placeholder="例如：午餐、計程車費"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="border-0 p-0 h-auto text-base shadow-none focus-visible:ring-0"
+            className="bg-white dark:bg-slate-900 rounded-xl px-4 py-3 border border-slate-200 dark:border-slate-800"
           />
-        </div>
-
-        {/* 日期 */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
-          <label className="block text-xs font-medium text-muted-foreground mb-2">支出日期</label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="flex items-center gap-2 text-base w-full text-left"
-              >
-                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                <span>{format(expenseDate, "yyyy/MM/dd (EEEE)", { locale: zhTW })}</span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={expenseDate}
-                onSelect={(date) => date && setExpenseDate(date)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
         </div>
 
         {/* 類別 */}
@@ -697,65 +712,6 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           )}
         </div>
 
-        {/* 收據/消費圖片 */}
-        <div>
-          <label className="block text-sm font-medium mb-3">收據/消費圖片（選填）</label>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleImageSelect}
-            className="hidden"
-          />
-          {image ? (
-            <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
-              <Image
-                src={image}
-                alt="消費圖片"
-                width={400}
-                height={300}
-                className="w-full h-auto max-h-48 object-contain bg-slate-50 dark:bg-slate-900"
-              />
-              <button
-                type="button"
-                onClick={handleRemoveImage}
-                className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadingImage}
-              className="w-full h-32 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary/50 dark:hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground"
-            >
-              {uploadingImage ? (
-                <>
-                  <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  <span className="text-sm">處理中...</span>
-                </>
-              ) : (
-                <>
-                  <ImagePlus className="h-6 w-6" />
-                  <span className="text-sm">點擊上傳圖片</span>
-                  <span className="text-xs text-muted-foreground">支援 JPG、PNG，自動壓縮為 WebP</span>
-                </>
-              )}
-            </button>
-          )}
-        </div>
-
-        {/* 消費地點 */}
-        <div>
-          <label className="block text-sm font-medium mb-3">消費地點（選填）</label>
-          <LocationPicker
-            value={locationData}
-            onChange={setLocationData}
-          />
-        </div>
-
         {/* 付款人 */}
         <div>
           <label className="block text-sm font-medium mb-3">誰付的錢？</label>
@@ -792,7 +748,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           )}
         </div>
 
-        {/* 分擔者 */}
+        {/* 分擔者（含分擔方式） */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <label className="text-sm font-medium">幫誰付？</label>
@@ -810,6 +766,33 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
               {selectedParticipants.size === members.length ? "取消全選" : "全選"}
             </button>
           </div>
+
+          {/* 分擔方式切換 */}
+          <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg mb-3">
+            <button
+              type="button"
+              onClick={() => setSplitMode("equal")}
+              className={`flex-1 py-2 rounded-md text-xs font-medium transition-all ${
+                splitMode === "equal"
+                  ? "bg-white dark:bg-slate-900 shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              均分
+            </button>
+            <button
+              type="button"
+              onClick={() => setSplitMode("custom")}
+              className={`flex-1 py-2 rounded-md text-xs font-medium transition-all ${
+                splitMode === "custom"
+                  ? "bg-white dark:bg-slate-900 shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              自訂金額
+            </button>
+          </div>
+
           {members.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">
               沒有成員，請先新增成員
@@ -868,52 +851,104 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
               })}
             </div>
           )}
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            已選 {selectedParticipants.size} 人
-          </p>
+
+          {/* 底部資訊 */}
+          <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+            <span>已選 {selectedParticipants.size} 人</span>
+            {splitMode === "custom" && amountNum > 0 && (
+              <span className={getCustomSharesTotal() === amountNum ? "text-emerald-600" : "text-red-500"}>
+                ${getCustomSharesTotal().toFixed(2)} / ${amountNum.toFixed(2)}
+                {getCustomSharesTotal() !== amountNum && (
+                  <span className="ml-1">
+                    ({getCustomSharesTotal() > amountNum ? "超出" : "還差"} ${Math.abs(getCustomSharesTotal() - amountNum).toFixed(2)})
+                  </span>
+                )}
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* 分擔方式 */}
+        {/* 分隔線 */}
+        <hr className="border-slate-200 dark:border-slate-800" />
+
+        {/* 支出日期 */}
         <div>
-          <label className="block text-sm font-medium mb-3">分擔方式</label>
-          <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
-            <button
-              type="button"
-              onClick={() => setSplitMode("equal")}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                splitMode === "equal"
-                  ? "bg-white dark:bg-slate-900 shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              均分
-            </button>
-            <button
-              type="button"
-              onClick={() => setSplitMode("custom")}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                splitMode === "custom"
-                  ? "bg-white dark:bg-slate-900 shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              自訂金額
-            </button>
-          </div>
-          {splitMode === "custom" && amountNum > 0 && (
-            <div className="mt-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">已分配金額</span>
-                <span className={`font-medium ${getCustomSharesTotal() === amountNum ? "text-emerald-600" : "text-red-500"}`}>
-                  ${getCustomSharesTotal().toFixed(2)} / ${amountNum.toFixed(2)}
-                </span>
-              </div>
-              {getCustomSharesTotal() !== amountNum && (
-                <p className="text-xs text-red-500 mt-1">
-                  {getCustomSharesTotal() > amountNum ? "超出" : "還差"} ${Math.abs(getCustomSharesTotal() - amountNum).toFixed(2)}
-                </p>
-              )}
+          <label className="block text-sm font-medium mb-3">支出日期</label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-2 px-4 py-3 w-full text-left bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-primary/50 transition-colors"
+              >
+                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">{format(expenseDate, "yyyy/MM/dd (EEEE)", { locale: zhTW })}</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={expenseDate}
+                onSelect={(date) => date && setExpenseDate(date)}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* 消費地點 */}
+        <div>
+          <label className="block text-sm font-medium mb-3">消費地點</label>
+          <LocationPicker
+            value={locationData}
+            onChange={setLocationData}
+          />
+        </div>
+
+        {/* 收據/消費圖片 */}
+        <div>
+          <label className="block text-sm font-medium mb-3">收據/消費圖片</label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageSelect}
+            className="hidden"
+          />
+          {image ? (
+            <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+              <Image
+                src={image}
+                alt="消費圖片"
+                width={400}
+                height={300}
+                className="w-full h-auto max-h-48 object-contain bg-slate-50 dark:bg-slate-900"
+              />
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingImage}
+              className="w-full h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary/50 dark:hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground"
+            >
+              {uploadingImage ? (
+                <>
+                  <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm">處理中...</span>
+                </>
+              ) : (
+                <>
+                  <ImagePlus className="h-5 w-5" />
+                  <span className="text-sm">點擊上傳圖片</span>
+                </>
+              )}
+            </button>
           )}
         </div>
 

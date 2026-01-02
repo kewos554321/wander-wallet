@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useCallback } from "react"
 import Image from "next/image"
 import {
   Dialog,
@@ -26,13 +26,20 @@ import {
   Trash2,
   X,
   Info,
+  ImagePlus,
+  MapPin,
+  CalendarIcon,
 } from "lucide-react"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { CATEGORIES, getCategoryInfo } from "@/lib/constants/expenses"
+import { CATEGORIES } from "@/lib/constants/expenses"
+import { Calendar } from "@/components/ui/calendar"
+import { compressImage } from "@/lib/image-utils"
+import { format } from "date-fns"
+import { zhTW } from "date-fns/locale"
 
 interface Member {
   id: string
@@ -85,6 +92,20 @@ export function VoiceExpenseDialog({
   // 儲存進度
   const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0 })
 
+  // 每筆費用的額外資料（圖片、地點、日期）
+  interface ExpenseExtras {
+    image: string | null
+    location: string | null
+    latitude: number | null
+    longitude: number | null
+    expenseDate: Date
+  }
+  const [expenseExtras, setExpenseExtras] = useState<Record<string, ExpenseExtras>>({})
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null) // 正在上傳的費用 ID
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [currentUploadExpenseId, setCurrentUploadExpenseId] = useState<string | null>(null)
+  const [gettingLocationFor, setGettingLocationFor] = useState<string | null>(null) // 正在獲取位置的費用 ID
+
   // 重置狀態
   function resetState() {
     setStep("input")
@@ -93,6 +114,7 @@ export function VoiceExpenseDialog({
     setExpenses([])
     setCurrentIndex(0)
     setSaveProgress({ current: 0, total: 0 })
+    setExpenseExtras({})
     speech.resetTranscript()
   }
 
@@ -103,6 +125,169 @@ export function VoiceExpenseDialog({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
+
+  // 初始化費用的額外資料（解析完成後）
+  useEffect(() => {
+    if (expenses.length > 0) {
+      const newExtras: Record<string, ExpenseExtras> = {}
+      expenses.forEach((expense) => {
+        if (!expenseExtras[expense.id]) {
+          newExtras[expense.id] = {
+            image: null,
+            location: null,
+            latitude: null,
+            longitude: null,
+            expenseDate: new Date(),
+          }
+        }
+      })
+      if (Object.keys(newExtras).length > 0) {
+        setExpenseExtras((prev) => ({ ...prev, ...newExtras }))
+        // 為每筆費用自動獲取位置
+        expenses.forEach((expense) => {
+          if (!expenseExtras[expense.id]) {
+            getLocationForExpense(expense.id)
+          }
+        })
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expenses])
+
+  // 獲取指定費用的當下位置
+  const getLocationForExpense = useCallback(async (expenseId: string) => {
+    if (!navigator.geolocation) return
+
+    setGettingLocationFor(expenseId)
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000,
+        })
+      })
+
+      const { latitude, longitude } = position.coords
+
+      // 反向地理編碼取得地址
+      const response = await fetch(`/api/geocode?lat=${latitude}&lon=${longitude}`)
+      const data = await response.json()
+
+      if (response.ok) {
+        setExpenseExtras((prev) => ({
+          ...prev,
+          [expenseId]: {
+            ...prev[expenseId],
+            location: data.displayName,
+            latitude: data.lat,
+            longitude: data.lon,
+          },
+        }))
+      } else {
+        setExpenseExtras((prev) => ({
+          ...prev,
+          [expenseId]: {
+            ...prev[expenseId],
+            location: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+            latitude,
+            longitude,
+          },
+        }))
+      }
+    } catch {
+      // 靜默失敗，不影響使用
+    } finally {
+      setGettingLocationFor(null)
+    }
+  }, [])
+
+  // 清除指定費用的位置
+  function clearLocationForExpense(expenseId: string) {
+    setExpenseExtras((prev) => ({
+      ...prev,
+      [expenseId]: {
+        ...prev[expenseId],
+        location: null,
+        latitude: null,
+        longitude: null,
+      },
+    }))
+  }
+
+  // 更新指定費用的日期
+  function updateExpenseDate(expenseId: string, date: Date) {
+    setExpenseExtras((prev) => ({
+      ...prev,
+      [expenseId]: {
+        ...prev[expenseId],
+        expenseDate: date,
+      },
+    }))
+  }
+
+  // 圖片上傳處理
+  async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !currentUploadExpenseId) return
+
+    if (!file.type.startsWith("image/")) {
+      setError("請選擇圖片檔案")
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("圖片大小不能超過 5MB")
+      return
+    }
+
+    setUploadingImage(currentUploadExpenseId)
+    setError(null)
+
+    try {
+      const compressedBase64 = await compressImage(file, 800, 800, 0.6)
+      const estimatedBytes = compressedBase64.length * 0.73
+      const maxBytes = 200 * 1024
+
+      const finalImage = estimatedBytes > maxBytes
+        ? await compressImage(file, 600, 600, 0.5)
+        : compressedBase64
+
+      setExpenseExtras((prev) => ({
+        ...prev,
+        [currentUploadExpenseId]: {
+          ...prev[currentUploadExpenseId],
+          image: finalImage,
+        },
+      }))
+    } catch {
+      setError("圖片處理失敗，請重試")
+    } finally {
+      setUploadingImage(null)
+      setCurrentUploadExpenseId(null)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+    }
+  }
+
+  function handleRemoveImage(expenseId: string) {
+    setExpenseExtras((prev) => ({
+      ...prev,
+      [expenseId]: {
+        ...prev[expenseId],
+        image: null,
+      },
+    }))
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
+  function triggerImageUpload(expenseId: string) {
+    setCurrentUploadExpenseId(expenseId)
+    fileInputRef.current?.click()
+  }
 
   // 取得完整輸入文字（文字輸入 + 語音）
   const fullTranscript = textInput + speech.transcript + speech.interimTranscript
@@ -354,6 +539,14 @@ export function VoiceExpenseDialog({
           }
         })
 
+        const extras = expenseExtras[expense.id] || {
+          image: null,
+          location: null,
+          latitude: null,
+          longitude: null,
+          expenseDate: new Date(),
+        }
+
         const res = await authFetch(`/api/projects/${projectId}/expenses`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -362,7 +555,11 @@ export function VoiceExpenseDialog({
             amount: expense.amount,
             description: expense.description.trim() || null,
             category: expense.category,
-            expenseDate: new Date().toISOString(),
+            image: extras.image,
+            location: extras.location,
+            latitude: extras.latitude,
+            longitude: extras.longitude,
+            expenseDate: extras.expenseDate.toISOString(),
             participants,
           }),
         })
@@ -593,31 +790,22 @@ export function VoiceExpenseDialog({
                       }}
                     >
                       {expenses.map((expense) => {
-                        const catInfo = getCategoryInfo(expense.category)
                         return (
                           <div key={expense.id} className="w-full flex-shrink-0 min-w-full">
                             <div className="bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-4">
-                                {/* 頂部：類別與刪除 */}
-                                <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${catInfo.color}`}>
-                                  {(() => { const Icon = catInfo.icon; return <Icon className="h-5 w-5" /> })()}
-                                </div>
-                                <span className="font-medium">{catInfo.label}</span>
+                              {/* 頂部：刪除按鈕 */}
+                              <div className="flex items-center justify-end">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => removeExpense(expense.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => removeExpense(expense.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
 
-                            {/* 金額 */}
-                            <div>
-                              <label className="block text-xs text-muted-foreground mb-1">金額</label>
+                              {/* 金額 */}
                               <div className="flex items-center gap-2">
                                 <span className="text-2xl font-bold">$</span>
                                 <Input
@@ -627,7 +815,6 @@ export function VoiceExpenseDialog({
                                   className="text-2xl font-bold h-12"
                                 />
                               </div>
-                            </div>
 
                             {/* 描述 */}
                             <div>
@@ -639,7 +826,7 @@ export function VoiceExpenseDialog({
                               />
                             </div>
 
-                            {/* 類別選擇 */}
+                            {/* 類別 */}
                             <div>
                               <label className="block text-xs text-muted-foreground mb-2">類別</label>
                               <div className="grid grid-cols-4 gap-1.5">
@@ -667,7 +854,7 @@ export function VoiceExpenseDialog({
 
                             {/* 付款人 */}
                             <div>
-                              <label className="block text-xs text-muted-foreground mb-2">付款人</label>
+                              <label className="block text-xs text-muted-foreground mb-2">誰付的錢？</label>
                               <div className="flex flex-wrap gap-1.5">
                                 {members.map((member) => {
                                   const avatarData = parseAvatarString(member.user?.image)
@@ -713,7 +900,7 @@ export function VoiceExpenseDialog({
                             {/* 分擔者 */}
                             <div>
                               <label className="block text-xs text-muted-foreground mb-2">
-                                分擔者（{expense.participantIds.length}人均分 · 每人 ${expense.participantIds.length > 0 ? Math.round(expense.amount / expense.participantIds.length) : 0}）
+                                幫誰付？（{expense.participantIds.length}人均分 · 每人 ${expense.participantIds.length > 0 ? Math.round(expense.amount / expense.participantIds.length) : 0}）
                               </label>
                               <div className="flex flex-wrap gap-1.5">
                                 {members.map((member) => {
@@ -756,6 +943,100 @@ export function VoiceExpenseDialog({
                                 })}
                               </div>
                             </div>
+
+                            {/* 分隔線 */}
+                            <hr className="border-slate-200 dark:border-slate-700" />
+
+                            {/* 支出日期 */}
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-2">支出日期</label>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="flex items-center gap-2 px-3 py-2 w-full bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-sm hover:border-primary/50 transition-colors"
+                                  >
+                                    <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                                    <span>{format(expenseExtras[expense.id]?.expenseDate || new Date(), "MM/dd (EEE)", { locale: zhTW })}</span>
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                    mode="single"
+                                    selected={expenseExtras[expense.id]?.expenseDate}
+                                    onSelect={(date) => date && updateExpenseDate(expense.id, date)}
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+
+                            {/* 消費地點 */}
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-2">消費地點</label>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => getLocationForExpense(expense.id)}
+                                  disabled={gettingLocationFor === expense.id}
+                                  className="flex-1 flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-sm hover:border-primary/50 transition-colors text-left"
+                                >
+                                  {gettingLocationFor === expense.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                  ) : (
+                                    <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                  )}
+                                  <span className="truncate text-xs">
+                                    {expenseExtras[expense.id]?.location || "點擊獲取位置"}
+                                  </span>
+                                </button>
+                                {expenseExtras[expense.id]?.location && (
+                                  <button
+                                    type="button"
+                                    onClick={() => clearLocationForExpense(expense.id)}
+                                    className="p-2 text-muted-foreground hover:text-foreground"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* 收據圖片 */}
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-2">收據/消費圖片</label>
+                              {expenseExtras[expense.id]?.image ? (
+                                <div className="relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                                  <Image
+                                    src={expenseExtras[expense.id].image!}
+                                    alt="收據"
+                                    width={200}
+                                    height={100}
+                                    className="w-full h-20 object-cover"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveImage(expense.id)}
+                                    className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => triggerImageUpload(expense.id)}
+                                  disabled={uploadingImage === expense.id}
+                                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
+                                >
+                                  {uploadingImage === expense.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <ImagePlus className="h-4 w-4" />
+                                  )}
+                                  <span>{uploadingImage === expense.id ? "處理中..." : "點擊上傳"}</span>
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                         )
@@ -781,6 +1062,15 @@ export function VoiceExpenseDialog({
                     </div>
                   )}
                 </div>
+
+                {/* 隱藏的圖片上傳 input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
 
                 {/* 總計 */}
                 <div className="flex items-center justify-between py-2 px-3 bg-primary/5 rounded-xl">
