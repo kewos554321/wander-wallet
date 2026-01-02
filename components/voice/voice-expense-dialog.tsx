@@ -1212,10 +1212,10 @@ export function VoiceExpenseDialog({
                                   type="button"
                                   onClick={() => getLocationForExpense(expense.id)}
                                   disabled={gettingLocationFor === expense.id}
-                                  className="flex-1 flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-sm hover:border-primary/50 transition-colors text-left"
+                                  className="flex-1 min-w-0 flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-sm hover:border-primary/50 transition-colors text-left overflow-hidden"
                                 >
                                   {gettingLocationFor === expense.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground flex-shrink-0" />
                                   ) : (
                                     <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                   )}

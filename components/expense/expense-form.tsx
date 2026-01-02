@@ -307,12 +307,15 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           participantIds: new Set(expense.participants.map(p => p.member.id)),
         })
       } else {
-        alert("無法載入支出資料")
+        const errorData = await expenseRes.json().catch(() => ({}))
+        const errorMsg = errorData.error || `載入失敗 (${expenseRes.status})`
+        console.error("載入支出失敗:", expenseRes.status, errorData)
+        alert(`無法載入支出資料：${errorMsg}`)
         router.push(`/projects/${projectId}/expenses`)
       }
     } catch (error) {
       console.error("獲取資料錯誤:", error)
-      alert("載入失敗")
+      alert(`載入失敗：${error instanceof Error ? error.message : "未知錯誤"}`)
       router.push(`/projects/${projectId}/expenses`)
     } finally {
       setLoading(false)
@@ -704,14 +707,14 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       <form onSubmit={handleSubmit} className="space-y-5 pb-40">
         {/* 編輯模式顯示刪除按鈕 */}
         {mode === "edit" && (
-          <div className="flex justify-end -mb-2">
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={() => setShowDeleteDialog(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+              className="p-2 rounded-full text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+              title="刪除此筆"
             >
-              <Trash2 className="h-3.5 w-3.5" />
-              刪除此筆
+              <Trash2 className="h-4 w-4" />
             </button>
           </div>
         )}
