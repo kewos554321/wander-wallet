@@ -1,14 +1,7 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useRef } from "react"
 import { Camera, ImagePlus, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 
 export interface ImagePickerValue {
   image: string | null // 已上傳的 URL
@@ -45,20 +38,18 @@ export function ImagePicker({
   maxSizeMB = 10,
   className,
 }: ImagePickerProps) {
-  const [showCamera, setShowCamera] = useState(false)
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
 
   const hasImage = value.preview || value.image
 
-  // 選擇圖片
+  // 處理圖片選擇（拍照或相簿都用這個）
   function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (!file.type.startsWith("image/")) {
+    // iOS HEIC 格式的 MIME type 可能是 image/heic 或 image/heif
+    if (!file.type.startsWith("image/") && !file.name.match(/\.(heic|heif)$/i)) {
       alert("請選擇圖片檔案")
       return
     }
@@ -80,9 +71,9 @@ export function ImagePicker({
       preview: previewUrl,
     })
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
+    // 重置 input 以便可以再次選擇相同檔案
+    if (fileInputRef.current) fileInputRef.current.value = ""
+    if (cameraInputRef.current) cameraInputRef.current.value = ""
   }
 
   // 移除圖片
@@ -101,87 +92,24 @@ export function ImagePicker({
       preview: null,
     })
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
-  }
-
-  // 開啟相機
-  async function openCamera() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment",
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
-      })
-      setCameraStream(stream)
-      setShowCamera(true)
-
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-          videoRef.current.play()
-        }
-      }, 100)
-    } catch (error) {
-      console.error("無法開啟相機:", error)
-      alert("無法開啟相機，請確認已授權相機權限")
-    }
-  }
-
-  // 關閉相機
-  function closeCamera() {
-    if (cameraStream) {
-      cameraStream.getTracks().forEach((track) => track.stop())
-      setCameraStream(null)
-    }
-    setShowCamera(false)
-  }
-
-  // 拍照
-  function capturePhoto() {
-    if (!videoRef.current || !canvasRef.current) return
-
-    const video = videoRef.current
-    const canvas = canvasRef.current
-    const context = canvas.getContext("2d")
-
-    if (!context) return
-
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-    context.drawImage(video, 0, 0, canvas.width, canvas.height)
-
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) return
-
-        const file = new File([blob], `photo-${Date.now()}.jpg`, {
-          type: "image/jpeg",
-        })
-
-        if (value.preview) {
-          URL.revokeObjectURL(value.preview)
-        }
-
-        const previewUrl = URL.createObjectURL(file)
-        onChange({
-          image: null,
-          pendingFile: file,
-          preview: previewUrl,
-        })
-
-        closeCamera()
-      },
-      "image/jpeg",
-      0.9
-    )
+    if (fileInputRef.current) fileInputRef.current.value = ""
+    if (cameraInputRef.current) cameraInputRef.current.value = ""
   }
 
   return (
     <div className={className}>
+      {/* 拍照專用 input - 使用 capture 屬性直接開啟相機 */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleImageSelect}
+        className="hidden"
+        disabled={disabled}
+      />
+
+      {/* 選擇圖片專用 input - 不使用 capture，讓用戶可以選擇相簿 */}
       <input
         ref={fileInputRef}
         type="file"
@@ -217,7 +145,7 @@ export function ImagePicker({
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={openCamera}
+            onClick={() => cameraInputRef.current?.click()}
             disabled={disabled}
             className="flex-1 h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary/50 dark:hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground"
           >
@@ -235,43 +163,6 @@ export function ImagePicker({
           </button>
         </div>
       )}
-
-      {/* 相機對話框 */}
-      <Dialog open={showCamera} onOpenChange={(open) => !open && closeCamera()}>
-        <DialogContent className="max-w-lg p-0 overflow-hidden">
-          <DialogHeader className="p-4 pb-0">
-            <DialogTitle>拍攝照片</DialogTitle>
-          </DialogHeader>
-          <div className="relative">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full aspect-[4/3] object-cover bg-black"
-            />
-            <canvas ref={canvasRef} className="hidden" />
-          </div>
-          <div className="p-4 flex gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={closeCamera}
-              className="flex-1"
-            >
-              取消
-            </Button>
-            <Button
-              type="button"
-              onClick={capturePhoto}
-              className="flex-1 bg-primary"
-            >
-              <Camera className="h-4 w-4 mr-2" />
-              拍照
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
@@ -292,18 +183,16 @@ export function SimpleImagePicker({
   showCamera = true,
   className,
 }: SimpleImagePickerProps) {
-  const [showCameraDialog, setShowCameraDialog] = useState(false)
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
 
-  // 選擇圖片
+  // 處理圖片選擇
   async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (!file.type.startsWith("image/")) {
+    // iOS HEIC 格式支援
+    if (!file.type.startsWith("image/") && !file.name.match(/\.(heic|heif)$/i)) {
       alert("請選擇圖片檔案")
       return
     }
@@ -315,77 +204,25 @@ export function SimpleImagePicker({
 
     await onFileSelect(file)
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
-  }
-
-  // 開啟相機
-  async function openCamera() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment",
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
-      })
-      setCameraStream(stream)
-      setShowCameraDialog(true)
-
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-          videoRef.current.play()
-        }
-      }, 100)
-    } catch (error) {
-      console.error("無法開啟相機:", error)
-      alert("無法開啟相機，請確認已授權相機權限")
-    }
-  }
-
-  // 關閉相機
-  function closeCamera() {
-    if (cameraStream) {
-      cameraStream.getTracks().forEach((track) => track.stop())
-      setCameraStream(null)
-    }
-    setShowCameraDialog(false)
-  }
-
-  // 拍照
-  function capturePhoto() {
-    if (!videoRef.current || !canvasRef.current) return
-
-    const video = videoRef.current
-    const canvas = canvasRef.current
-    const context = canvas.getContext("2d")
-
-    if (!context) return
-
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-    context.drawImage(video, 0, 0, canvas.width, canvas.height)
-
-    canvas.toBlob(
-      async (blob) => {
-        if (!blob) return
-
-        const file = new File([blob], `photo-${Date.now()}.jpg`, {
-          type: "image/jpeg",
-        })
-
-        closeCamera()
-        await onFileSelect(file)
-      },
-      "image/jpeg",
-      0.9
-    )
+    // 重置 input
+    if (fileInputRef.current) fileInputRef.current.value = ""
+    if (cameraInputRef.current) cameraInputRef.current.value = ""
   }
 
   return (
     <div className={className}>
+      {/* 拍照專用 input */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleImageSelect}
+        className="hidden"
+        disabled={disabled || uploading}
+      />
+
+      {/* 選擇圖片專用 input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -417,7 +254,7 @@ export function SimpleImagePicker({
           {showCamera && (
             <button
               type="button"
-              onClick={openCamera}
+              onClick={() => cameraInputRef.current?.click()}
               disabled={disabled || uploading}
               className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
@@ -443,45 +280,6 @@ export function SimpleImagePicker({
             <span>{uploading && !showCamera ? "處理中..." : "上傳"}</span>
           </button>
         </div>
-      )}
-
-      {/* 相機對話框 */}
-      {showCamera && (
-        <Dialog open={showCameraDialog} onOpenChange={(open) => !open && closeCamera()}>
-          <DialogContent className="max-w-lg p-0 overflow-hidden">
-            <DialogHeader className="p-4 pb-0">
-              <DialogTitle>拍攝照片</DialogTitle>
-            </DialogHeader>
-            <div className="relative">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full aspect-[4/3] object-cover bg-black"
-              />
-              <canvas ref={canvasRef} className="hidden" />
-            </div>
-            <div className="p-4 flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={closeCamera}
-                className="flex-1"
-              >
-                取消
-              </Button>
-              <Button
-                type="button"
-                onClick={capturePhoto}
-                className="flex-1 bg-primary"
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                拍照
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       )}
     </div>
   )
