@@ -665,14 +665,14 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
             <StatCard
               title="總支出"
               value={`$${totalAmount.toLocaleString("zh-TW")}`}
-              icon={<DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+              icon={<DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
               iconBgClass="bg-emerald-50 dark:bg-emerald-950"
               subtitle={`${project.expenses.length} 筆支出`}
             />
             <StatCard
               title="平均每人"
               value={`$${Math.round(perPerson).toLocaleString("zh-TW")}`}
-              icon={<UserCheck className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
+              icon={<UserCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />}
               iconBgClass="bg-blue-50 dark:bg-blue-950"
               subtitle={`${project.members.length} 位成員`}
             />
