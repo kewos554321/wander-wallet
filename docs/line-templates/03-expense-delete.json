@@ -1,0 +1,96 @@
+{
+  "type": "bubble",
+  "size": "kilo",
+  "header": {
+    "type": "box",
+    "layout": "horizontal",
+    "contents": [
+      {
+        "type": "text",
+        "text": "日本東京行",
+        "size": "xs",
+        "color": "#ffffff",
+        "weight": "bold",
+        "flex": 3
+      },
+      {
+        "type": "text",
+        "text": "刪除花費",
+        "size": "xs",
+        "color": "#ffffff",
+        "align": "end",
+        "flex": 2
+      }
+    ],
+    "backgroundColor": "#D97B7B",
+    "paddingAll": "lg"
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "text",
+            "text": "🍴",
+            "size": "lg",
+            "flex": 0
+          },
+          {
+            "type": "text",
+            "text": "午餐拉麵",
+            "size": "lg",
+            "weight": "bold",
+            "color": "#9E9E9E",
+            "margin": "sm",
+            "decoration": "line-through",
+            "wrap": true,
+            "flex": 1
+          }
+        ],
+        "alignItems": "center"
+      },
+      {
+        "type": "text",
+        "text": "NT$450",
+        "size": "xxl",
+        "weight": "bold",
+        "color": "#D97B7B",
+        "margin": "sm",
+        "decoration": "line-through"
+      },
+      {
+        "type": "text",
+        "text": "小明 付 · 3人分攤 · 每人 NT$150",
+        "size": "sm",
+        "color": "#BDBDBD",
+        "margin": "md"
+      }
+    ],
+    "paddingAll": "lg"
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "button",
+        "action": {
+          "type": "uri",
+          "label": "查看明細",
+          "uri": "https://example.com/projects/123"
+        },
+        "style": "primary",
+        "height": "sm",
+        "color": "#D97B7B"
+      }
+    ],
+    "paddingTop": "none",
+    "paddingBottom": "md",
+    "paddingStart": "lg",
+    "paddingEnd": "lg"
+  }
+}

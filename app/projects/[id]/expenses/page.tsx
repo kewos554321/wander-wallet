@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
-import { sendExpenseNotificationToChat } from "@/lib/liff"
+import { sendDeleteNotificationToChat, sendBatchDeleteNotificationToChat } from "@/lib/liff"
 
 interface Member {
   id: string
@@ -127,8 +127,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
       if (res.ok) {
         // 發送 LINE 通知
         if (notifyLineOnDelete && canSendMessages && !isDevMode && expenseToDelete) {
-          sendExpenseNotificationToChat({
-            operationType: "delete",
+          sendDeleteNotificationToChat({
             projectName,
             projectId: id,
             payerName: expenseToDelete.payer.displayName,
@@ -170,22 +169,21 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
       })
 
       if (res.ok) {
-        // 發送 LINE 通知（為每筆刪除的支出發送通知）
+        // 發送 LINE 通知（合併為單一通知）
         if (notifyLineOnDelete && canSendMessages && !isDevMode && expensesToDelete.length > 0) {
-          for (const expense of expensesToDelete) {
-            sendExpenseNotificationToChat({
-              operationType: "delete",
-              projectName,
-              projectId: id,
-              payerName: expense.payer.displayName,
+          sendBatchDeleteNotificationToChat({
+            projectName,
+            projectId: id,
+            expenses: expensesToDelete.map((expense) => ({
               amount: expense.amount,
               description: expense.description || undefined,
               category: expense.category || undefined,
+              payerName: expense.payer.displayName,
               participantCount: expense.participants.length,
-            }).catch(() => {
-              // 發送失敗時靜默處理，不影響使用者體驗
-            })
-          }
+            })),
+          }).catch(() => {
+            // 發送失敗時靜默處理，不影響使用者體驗
+          })
         }
 
         setExpenses(expenses.filter((e) => !selectedIds.has(e.id)))

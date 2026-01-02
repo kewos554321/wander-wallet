@@ -1,0 +1,218 @@
+{
+  "type": "bubble",
+  "size": "mega",
+  "header": {
+    "type": "box",
+    "layout": "horizontal",
+    "contents": [
+      {
+        "type": "text",
+        "text": "日本東京行",
+        "size": "xs",
+        "color": "#ffffff",
+        "weight": "bold",
+        "flex": 3
+      },
+      {
+        "type": "text",
+        "text": "批次刪除 3 筆",
+        "size": "xs",
+        "color": "#ffffff",
+        "align": "end",
+        "flex": 2
+      }
+    ],
+    "backgroundColor": "#D97B7B",
+    "paddingAll": "lg"
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "text",
+            "text": "已刪除",
+            "size": "md",
+            "color": "#4A4A4A",
+            "weight": "bold"
+          },
+          {
+            "type": "text",
+            "text": "NT$1,250",
+            "size": "xl",
+            "color": "#D97B7B",
+            "align": "end",
+            "weight": "bold",
+            "decoration": "line-through"
+          }
+        ],
+        "paddingBottom": "md"
+      },
+      {
+        "type": "separator",
+        "color": "#EEEEEE"
+      },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "text",
+                "text": "🍴",
+                "size": "md",
+                "flex": 0
+              },
+              {
+                "type": "text",
+                "text": "早餐",
+                "size": "sm",
+                "color": "#9E9E9E",
+                "flex": 1,
+                "margin": "sm",
+                "decoration": "line-through"
+              },
+              {
+                "type": "text",
+                "text": "NT$150",
+                "size": "sm",
+                "color": "#9E9E9E",
+                "align": "end",
+                "flex": 0,
+                "weight": "bold",
+                "decoration": "line-through"
+              }
+            ],
+            "alignItems": "center"
+          },
+          {
+            "type": "text",
+            "text": "小明 付 · 3人分攤",
+            "size": "xs",
+            "color": "#BDBDBD",
+            "margin": "xs"
+          },
+          {
+            "type": "separator",
+            "margin": "md",
+            "color": "#EEEEEE"
+          },
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "text",
+                "text": "🍴",
+                "size": "md",
+                "flex": 0
+              },
+              {
+                "type": "text",
+                "text": "午餐拉麵",
+                "size": "sm",
+                "color": "#9E9E9E",
+                "flex": 1,
+                "margin": "sm",
+                "decoration": "line-through"
+              },
+              {
+                "type": "text",
+                "text": "NT$600",
+                "size": "sm",
+                "color": "#9E9E9E",
+                "align": "end",
+                "flex": 0,
+                "weight": "bold",
+                "decoration": "line-through"
+              }
+            ],
+            "alignItems": "center"
+          },
+          {
+            "type": "text",
+            "text": "小華 付 · 3人分攤",
+            "size": "xs",
+            "color": "#BDBDBD",
+            "margin": "xs"
+          },
+          {
+            "type": "separator",
+            "margin": "md",
+            "color": "#EEEEEE"
+          },
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "text",
+                "text": "🚗",
+                "size": "md",
+                "flex": 0
+              },
+              {
+                "type": "text",
+                "text": "計程車",
+                "size": "sm",
+                "color": "#9E9E9E",
+                "flex": 1,
+                "margin": "sm",
+                "decoration": "line-through"
+              },
+              {
+                "type": "text",
+                "text": "NT$500",
+                "size": "sm",
+                "color": "#9E9E9E",
+                "align": "end",
+                "flex": 0,
+                "weight": "bold",
+                "decoration": "line-through"
+              }
+            ],
+            "alignItems": "center"
+          },
+          {
+            "type": "text",
+            "text": "小明 付 · 2人分攤",
+            "size": "xs",
+            "color": "#BDBDBD",
+            "margin": "xs"
+          }
+        ],
+        "paddingTop": "md",
+        "spacing": "sm"
+      }
+    ],
+    "paddingAll": "lg"
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "button",
+        "action": {
+          "type": "uri",
+          "label": "查看明細",
+          "uri": "https://example.com/projects/123"
+        },
+        "style": "primary",
+        "height": "sm",
+        "color": "#D97B7B"
+      }
+    ],
+    "paddingTop": "none",
+    "paddingBottom": "md",
+    "paddingStart": "lg",
+    "paddingEnd": "lg"
+  }
+}

@@ -869,6 +869,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
           open={showVoiceDialog}
           onOpenChange={setShowVoiceDialog}
           projectId={id}
+          projectName={project.name}
           members={project.members.map((m) => ({
             id: m.id,
             displayName: m.displayName,

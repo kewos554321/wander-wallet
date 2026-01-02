@@ -12,7 +12,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useSpeechRecognition } from "@/lib/speech"
-import { useAuthFetch } from "@/components/auth/liff-provider"
+import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
+import { sendBatchExpenseNotificationToChat } from "@/lib/liff"
+import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import type { ExpenseItemResult, ParseExpensesResult } from "@/lib/ai/expense-parser"
 import {
@@ -57,6 +59,7 @@ interface VoiceExpenseDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   projectId: string
+  projectName: string
   members: Member[]
   currentUserMemberId: string
   onSuccess: () => void
@@ -69,12 +72,14 @@ export function VoiceExpenseDialog({
   open,
   onOpenChange,
   projectId,
+  projectName,
   members,
   currentUserMemberId,
   onSuccess,
 }: VoiceExpenseDialogProps) {
   const authFetch = useAuthFetch()
   const speech = useSpeechRecognition()
+  const { isDevMode, canSendMessages } = useLiff()
 
   // 拖拉狀態
   const [isDragging, setIsDragging] = useState(false)
@@ -91,6 +96,9 @@ export function VoiceExpenseDialog({
 
   // 儲存進度
   const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0 })
+
+  // LINE 通知
+  const [notifyLine, setNotifyLine] = useState(true)
 
   // 每筆費用的額外資料（圖片、地點、日期）
   interface ExpenseExtras {
@@ -115,6 +123,7 @@ export function VoiceExpenseDialog({
     setCurrentIndex(0)
     setSaveProgress({ current: 0, total: 0 })
     setExpenseExtras({})
+    setNotifyLine(true)
     speech.resetTranscript()
   }
 
@@ -568,6 +577,23 @@ export function VoiceExpenseDialog({
           const data = await res.json()
           throw new Error(data.error || `儲存第 ${i + 1} 筆失敗`)
         }
+      }
+
+      // 發送 LINE 批次新增通知
+      if (notifyLine && canSendMessages && !isDevMode && expenses.length > 0) {
+        sendBatchExpenseNotificationToChat({
+          projectName,
+          projectId,
+          expenses: expenses.map((expense) => ({
+            amount: expense.amount,
+            description: expense.description || undefined,
+            category: expense.category || undefined,
+            payerName: members.find((m) => m.id === expense.payerId)?.displayName || "未知",
+            participantCount: expense.participantIds.length,
+          })),
+        }).catch(() => {
+          // 發送失敗時靜默處理，不影響使用者體驗
+        })
       }
 
       onSuccess()
@@ -1081,6 +1107,20 @@ export function VoiceExpenseDialog({
                     ${totalAmount.toLocaleString()}
                   </span>
                 </div>
+
+                {/* LINE 通知選項 - 只在可以發送時顯示 */}
+                {canSendMessages && !isDevMode && (
+                  <label className="flex items-center gap-3 cursor-pointer py-2 px-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <Checkbox
+                      checked={notifyLine}
+                      onCheckedChange={(checked) => setNotifyLine(checked === true)}
+                    />
+                    <div className="flex-1">
+                      <span className="text-sm font-medium">通知 LINE 群組</span>
+                      <p className="text-xs text-muted-foreground">新增後自動發送通知到群組</p>
+                    </div>
+                  </label>
+                )}
 
                 {/* 錯誤訊息 */}
                 {error && (

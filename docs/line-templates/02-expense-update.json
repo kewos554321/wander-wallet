@@ -1,0 +1,80 @@
+{
+  "type": "bubble",
+  "size": "kilo",
+  "header": {
+    "type": "box",
+    "layout": "horizontal",
+    "contents": [
+      {
+        "type": "text",
+        "text": "日本東京行",
+        "size": "xs",
+        "color": "#ffffff",
+        "weight": "bold",
+        "flex": 3
+      },
+      {
+        "type": "text",
+        "text": "更新花費",
+        "size": "xs",
+        "color": "#ffffff",
+        "align": "end",
+        "flex": 2
+      }
+    ],
+    "backgroundColor": "#E09855",
+    "paddingAll": "lg"
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "text",
+        "text": "🚗 計程車",
+        "size": "lg",
+        "weight": "bold",
+        "color": "#4A4A4A",
+        "wrap": true
+      },
+      {
+        "type": "text",
+        "text": "NT$320",
+        "size": "xxl",
+        "weight": "bold",
+        "color": "#E09855",
+        "margin": "sm"
+      },
+      {
+        "type": "text",
+        "text": "2人分攤 · 每人 NT$160",
+        "size": "sm",
+        "color": "#9E9E9E",
+        "margin": "md",
+        "style": "italic"
+      }
+    ],
+    "paddingAll": "lg"
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "button",
+        "action": {
+          "type": "uri",
+          "label": "查看明細",
+          "uri": "https://example.com/projects/123"
+        },
+        "style": "primary",
+        "height": "sm",
+        "color": "#E09855"
+      }
+    ],
+    "paddingTop": "none",
+    "paddingBottom": "md",
+    "paddingStart": "lg",
+    "paddingEnd": "lg"
+  }
+}
