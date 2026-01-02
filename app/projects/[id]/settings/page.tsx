@@ -10,14 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
 import { Calendar as CalendarIcon, Loader2, Trash2 } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 import { CoverPicker } from "@/components/cover-picker"
@@ -421,24 +414,15 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
       </form>
 
       {/* 刪除確認對話框 */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>確認刪除專案</DialogTitle>
-            <DialogDescription>
-              確定要刪除「{project.name}」嗎？所有成員、支出紀錄都會永久移除，此操作無法復原。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={deleting}>
-              取消
-            </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? "刪除中..." : "確認刪除"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="確認刪除專案"
+        description={`確定要刪除「${project.name}」嗎？所有成員、支出紀錄都會永久移除，此操作無法復原。`}
+        onConfirm={handleDelete}
+        loading={deleting}
+        confirmText="確認刪除"
+      />
     </AppLayout>
   )
 }

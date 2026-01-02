@@ -8,11 +8,10 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
 import { Plus, Trash2, User, Utensils, Car, Home, Gamepad2, ShoppingBag, Wallet, Ticket, Gift, Receipt, CheckSquare, X, Search, Filter, ChevronDown, MapPin } from "lucide-react"
 import {
   DropdownMenu,
@@ -827,78 +826,50 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
       )}
 
       {/* 單筆刪除確認對話框 */}
-      <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>確認刪除</DialogTitle>
-            <DialogDescription>
-              確定要刪除這筆支出嗎？此操作無法復原。
-            </DialogDescription>
-          </DialogHeader>
-          {/* LINE 通知選項 - 只在可以發送時顯示 */}
-          {canSendMessages && !isDevMode && (
-            <label className="flex items-center gap-3 cursor-pointer py-2">
-              <Checkbox
-                checked={notifyLineOnDelete}
-                onCheckedChange={(checked) => setNotifyLineOnDelete(checked === true)}
-              />
-              <div>
-                <span className="text-sm font-medium">通知 LINE 群組</span>
-                <p className="text-xs text-muted-foreground">刪除後自動發送通知到群組</p>
-              </div>
-            </label>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)}>
-              取消
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleting}
-            >
-              {deleting ? "刪除中..." : "刪除"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={!!deleteId}
+        onOpenChange={() => setDeleteId(null)}
+        description="確定要刪除這筆支出嗎？此操作無法復原。"
+        onConfirm={handleDelete}
+        loading={deleting}
+      >
+        {canSendMessages && !isDevMode && (
+          <label className="flex items-center gap-3 cursor-pointer py-2">
+            <Checkbox
+              checked={notifyLineOnDelete}
+              onCheckedChange={(checked) => setNotifyLineOnDelete(checked === true)}
+            />
+            <div>
+              <span className="text-sm font-medium">通知 LINE 群組</span>
+              <p className="text-xs text-muted-foreground">刪除後自動發送通知到群組</p>
+            </div>
+          </label>
+        )}
+      </ConfirmDeleteDialog>
 
       {/* 批量刪除確認對話框 */}
-      <Dialog open={showBatchDeleteDialog} onOpenChange={setShowBatchDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>確認批量刪除</DialogTitle>
-            <DialogDescription>
-              確定要刪除選取的 {selectedIds.size} 筆支出嗎？此操作無法復原。
-            </DialogDescription>
-          </DialogHeader>
-          {/* LINE 通知選項 - 只在可以發送時顯示 */}
-          {canSendMessages && !isDevMode && (
-            <label className="flex items-center gap-3 cursor-pointer py-2">
-              <Checkbox
-                checked={notifyLineOnDelete}
-                onCheckedChange={(checked) => setNotifyLineOnDelete(checked === true)}
-              />
-              <div>
-                <span className="text-sm font-medium">通知 LINE 群組</span>
-                <p className="text-xs text-muted-foreground">刪除後自動發送通知到群組</p>
-              </div>
-            </label>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBatchDeleteDialog(false)}>
-              取消
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleBatchDelete}
-              disabled={deleting}
-            >
-              {deleting ? "刪除中..." : `刪除 ${selectedIds.size} 筆`}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={showBatchDeleteDialog}
+        onOpenChange={setShowBatchDeleteDialog}
+        title="確認批量刪除"
+        description={`確定要刪除選取的 ${selectedIds.size} 筆支出嗎？此操作無法復原。`}
+        onConfirm={handleBatchDelete}
+        loading={deleting}
+        confirmText={`刪除 ${selectedIds.size} 筆`}
+      >
+        {canSendMessages && !isDevMode && (
+          <label className="flex items-center gap-3 cursor-pointer py-2">
+            <Checkbox
+              checked={notifyLineOnDelete}
+              onCheckedChange={(checked) => setNotifyLineOnDelete(checked === true)}
+            />
+            <div>
+              <span className="text-sm font-medium">通知 LINE 群組</span>
+              <p className="text-xs text-muted-foreground">刪除後自動發送通知到群組</p>
+            </div>
+          </label>
+        )}
+      </ConfirmDeleteDialog>
 
       {/* 圖片檢視對話框 */}
       <Dialog open={!!viewingImage} onOpenChange={() => setViewingImage(null)}>

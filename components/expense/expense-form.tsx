@@ -13,10 +13,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
 import { MemberAvatar } from "@/components/member-avatar"
-import { sendExpenseNotificationToChat, ExpenseChange } from "@/lib/liff"
+import { sendExpenseNotificationToChat, sendDeleteNotificationToChat, ExpenseChange } from "@/lib/liff"
 import { uploadImageToR2 } from "@/lib/image-utils"
 import { LocationPicker } from "@/components/location-picker"
-import { Check, Calculator, Delete, CalendarIcon, ImagePlus, X } from "lucide-react"
+import { Check, Calculator, Delete, CalendarIcon, ImagePlus, X, Trash2 } from "lucide-react"
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
 import { CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
 
 interface Member {
@@ -135,6 +136,10 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
 
   // 編輯模式下的原始資料（用於計算變更）
   const [originalData, setOriginalData] = useState<OriginalExpenseData | null>(null)
+
+  // 刪除相關狀態
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   // 計算機狀態
   const [showCalculator, setShowCalculator] = useState(false)
@@ -620,6 +625,47 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     }
   }
 
+  // 刪除支出
+  async function handleDelete() {
+    if (!expenseId || mode !== "edit") return
+
+    setDeleting(true)
+    try {
+      const res = await authFetch(`/api/projects/${projectId}/expenses/${expenseId}`, {
+        method: "DELETE",
+      })
+
+      if (res.ok) {
+        // 發送 LINE 通知
+        if (notifyLine && canSendMessages && !isDevMode && originalData) {
+          const payerMember = members.find((m) => m.id === originalData.paidByMemberId)
+          sendDeleteNotificationToChat({
+            projectName,
+            projectId,
+            payerName: payerMember?.displayName || originalData.payerName,
+            amount: originalData.amount,
+            description: originalData.description || undefined,
+            category: originalData.category || undefined,
+            participantCount: originalData.participantIds.size,
+          }).catch(() => {
+            // 發送失敗時靜默處理
+          })
+        }
+
+        router.push(`/projects/${projectId}/expenses`)
+      } else {
+        const data = await res.json()
+        alert(data.error || "刪除失敗")
+      }
+    } catch (error) {
+      console.error("刪除支出錯誤:", error)
+      alert("刪除失敗")
+    } finally {
+      setDeleting(false)
+      setShowDeleteDialog(false)
+    }
+  }
+
   // 計算機功能
   function handleCalcInput(value: string) {
     const operators = ["+", "-", "×", "÷"]
@@ -764,6 +810,20 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   return (
     <AppLayout title={title} showBack backHref={backHref}>
       <form onSubmit={handleSubmit} className="space-y-5 pb-40">
+        {/* 編輯模式顯示刪除按鈕 */}
+        {mode === "edit" && (
+          <div className="flex justify-end -mb-2">
+            <button
+              type="button"
+              onClick={() => setShowDeleteDialog(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              刪除此筆
+            </button>
+          </div>
+        )}
+
         {/* 金額輸入區 */}
         <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 rounded-2xl p-6">
           <div className="flex items-center justify-between mb-3">
@@ -1192,6 +1252,28 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           </div>
         )}
       </form>
+
+      {/* 刪除確認對話框 */}
+      <ConfirmDeleteDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        description="確定要刪除這筆支出嗎？此操作無法復原。"
+        onConfirm={handleDelete}
+        loading={deleting}
+      >
+        {canSendMessages && !isDevMode && (
+          <label className="flex items-center gap-3 cursor-pointer py-2">
+            <Checkbox
+              checked={notifyLine}
+              onCheckedChange={(checked) => setNotifyLine(checked === true)}
+            />
+            <div>
+              <span className="text-sm font-medium">通知 LINE 群組</span>
+              <p className="text-xs text-muted-foreground">刪除後自動發送通知到群組</p>
+            </div>
+          </label>
+        )}
+      </ConfirmDeleteDialog>
     </AppLayout>
   )
 }
