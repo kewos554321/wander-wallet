@@ -39,6 +39,7 @@ export default function NewProjectPage() {
   const [startDate, setStartDate] = useState<string | null>(null)
   const [endDate, setEndDate] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
+  const [budget, setBudget] = useState("")
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -66,6 +67,7 @@ export default function NewProjectPage() {
           name: name.trim(),
           description: description.trim() || null,
           cover: cover,
+          budget: budget ? Number(budget) : null,
           startDate: startDate || null,
           endDate: endDate || null,
         }),
@@ -165,6 +167,27 @@ export default function NewProjectPage() {
               </div>
             </PopoverContent>
           </Popover>
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="budget" className="text-sm font-medium">
+            旅程預算（選填）
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+            <Input
+              id="budget"
+              type="number"
+              placeholder="10000"
+              value={budget}
+              onChange={(e) => setBudget(e.target.value)}
+              disabled={loading}
+              className="pl-7"
+              min="0"
+              step="1"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">設定預算後，可在專案頁面查看花費進度</p>
         </div>
 
         <div className="space-y-2">
