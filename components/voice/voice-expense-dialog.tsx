@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useRef } from "react"
 import Image from "next/image"
 import {
   Dialog,
@@ -28,10 +28,10 @@ import {
   Trash2,
   X,
   Info,
-  ImagePlus,
   MapPin,
   CalendarIcon,
 } from "lucide-react"
+import { ImagePicker, type ImagePickerValue } from "@/components/ui/image-picker"
 import {
   Popover,
   PopoverContent,
@@ -90,6 +90,14 @@ export function VoiceExpenseDialog({
   const [textInput, setTextInput] = useState("")
   const [error, setError] = useState<string | null>(null)
 
+  // 輸入階段的圖片（用於 AI 發票辨識）
+  const [inputImage, setInputImage] = useState<ImagePickerValue>({
+    image: null,
+    pendingFile: null,
+    preview: null,
+  })
+  const [parsingImage, setParsingImage] = useState(false)
+
   // 多筆費用解析結果（每筆費用有獨立的 payerId 和 participantIds）
   const [expenses, setExpenses] = useState<ExpenseItemResult[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -102,16 +110,13 @@ export function VoiceExpenseDialog({
 
   // 每筆費用的額外資料（圖片、地點、日期）
   interface ExpenseExtras {
-    image: string | null
+    imageValue: ImagePickerValue
     location: string | null
     latitude: number | null
     longitude: number | null
     expenseDate: Date
   }
   const [expenseExtras, setExpenseExtras] = useState<Record<string, ExpenseExtras>>({})
-  const [uploadingImage, setUploadingImage] = useState<string | null>(null) // 正在上傳的費用 ID
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [currentUploadExpenseId, setCurrentUploadExpenseId] = useState<string | null>(null)
   const [gettingLocationFor, setGettingLocationFor] = useState<string | null>(null) // 正在獲取位置的費用 ID
 
   // 重置狀態
@@ -125,6 +130,12 @@ export function VoiceExpenseDialog({
     setExpenseExtras({})
     setNotifyLine(true)
     speech.resetTranscript()
+    // 清除輸入圖片
+    if (inputImage.preview) {
+      URL.revokeObjectURL(inputImage.preview)
+    }
+    setInputImage({ image: null, pendingFile: null, preview: null })
+    setParsingImage(false)
   }
 
   // 當 Dialog 開啟時重置
@@ -142,7 +153,7 @@ export function VoiceExpenseDialog({
       expenses.forEach((expense) => {
         if (!expenseExtras[expense.id]) {
           newExtras[expense.id] = {
-            image: null,
+            imageValue: { image: null, pendingFile: null, preview: null },
             location: null,
             latitude: null,
             longitude: null,
@@ -235,62 +246,15 @@ export function VoiceExpenseDialog({
     }))
   }
 
-  // 圖片上傳處理
-  async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file || !currentUploadExpenseId) return
-
-    if (!file.type.startsWith("image/")) {
-      setError("請選擇圖片檔案")
-      return
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      setError("圖片大小不能超過 10MB")
-      return
-    }
-
-    setUploadingImage(currentUploadExpenseId)
-    setError(null)
-
-    try {
-      // 上傳到 R2
-      const result = await uploadImageToR2(file, projectId, authFetch)
-
-      setExpenseExtras((prev) => ({
-        ...prev,
-        [currentUploadExpenseId]: {
-          ...prev[currentUploadExpenseId],
-          image: result.url,
-        },
-      }))
-    } catch {
-      setError("圖片上傳失敗，請重試")
-    } finally {
-      setUploadingImage(null)
-      setCurrentUploadExpenseId(null)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
-    }
-  }
-
-  function handleRemoveImage(expenseId: string) {
+  // 更新指定費用的圖片
+  function updateExpenseImage(expenseId: string, imageValue: ImagePickerValue) {
     setExpenseExtras((prev) => ({
       ...prev,
       [expenseId]: {
         ...prev[expenseId],
-        image: null,
+        imageValue,
       },
     }))
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
-  }
-
-  function triggerImageUpload(expenseId: string) {
-    setCurrentUploadExpenseId(expenseId)
-    fileInputRef.current?.click()
   }
 
   // 取得完整輸入文字（文字輸入 + 語音）
@@ -333,6 +297,93 @@ export function VoiceExpenseDialog({
     } catch (err) {
       setError(err instanceof Error ? err.message : "解析失敗，請重試")
       setStep("input")
+    }
+  }
+
+  // 將 File 轉換為 base64 data URL
+  function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
+
+  // 處理圖片發票辨識
+  async function handleImageParse() {
+    if (!inputImage.pendingFile) {
+      setError("請先選擇或拍攝發票圖片")
+      return
+    }
+
+    setParsingImage(true)
+    setError(null)
+
+    try {
+      // 1. 將圖片轉換為 base64
+      const imageData = await fileToBase64(inputImage.pendingFile)
+
+      // 2. 調用 AI 解析發票（使用 base64）
+      const res = await authFetch("/api/receipt/parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageData }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || "發票辨識失敗")
+      }
+
+      const parsed = data.data as {
+        amount: number
+        description: string
+        category: string
+        date: string | null
+        confidence: number
+      }
+
+      // 3. 轉換為 ExpenseItemResult 格式
+      const allMemberIds = members.map((m) => m.id)
+      const expense: ExpenseItemResult = {
+        id: `receipt-${Date.now()}`,
+        amount: parsed.amount,
+        description: parsed.description,
+        category: parsed.category as ExpenseItemResult["category"],
+        payerId: currentUserMemberId,
+        participantIds: allMemberIds,
+        selected: true,
+      }
+
+      // 4. 設定費用並進入確認階段
+      setExpenses([expense])
+      setCurrentIndex(0)
+      setStep("confirm")
+
+      // 5. 初始化該費用的額外資料，保留 pendingFile 供儲存時上傳，並使用現有的 preview
+      const expenseDate = parsed.date ? new Date(parsed.date) : new Date()
+      setExpenseExtras({
+        [expense.id]: {
+          imageValue: {
+            image: null,
+            pendingFile: inputImage.pendingFile,
+            preview: inputImage.preview,
+          },
+          location: null,
+          latitude: null,
+          longitude: null,
+          expenseDate,
+        },
+      })
+
+      // 6. 清除輸入圖片 state（但不 revoke preview，因為已轉移到 expenseExtras）
+      setInputImage({ image: null, pendingFile: null, preview: null })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "發票辨識失敗，請重試")
+    } finally {
+      setParsingImage(false)
     }
   }
 
@@ -544,11 +595,23 @@ export function VoiceExpenseDialog({
         })
 
         const extras = expenseExtras[expense.id] || {
-          image: null,
+          imageValue: { image: null, pendingFile: null, preview: null },
           location: null,
           latitude: null,
           longitude: null,
           expenseDate: new Date(),
+        }
+
+        // 如果有待上傳的圖片，先上傳到 R2
+        let finalImageUrl = extras.imageValue.image
+        if (extras.imageValue.pendingFile) {
+          try {
+            const result = await uploadImageToR2(extras.imageValue.pendingFile, projectId, authFetch)
+            finalImageUrl = result.url
+          } catch (error) {
+            console.error(`第 ${i + 1} 筆圖片上傳失敗:`, error)
+            // 圖片上傳失敗不阻止儲存，繼續執行
+          }
         }
 
         const res = await authFetch(`/api/projects/${projectId}/expenses`, {
@@ -559,7 +622,7 @@ export function VoiceExpenseDialog({
             amount: expense.amount,
             description: expense.description.trim() || null,
             category: expense.category,
-            image: extras.image,
+            image: finalImageUrl,
             location: extras.location,
             latitude: extras.latitude,
             longitude: extras.longitude,
@@ -730,6 +793,67 @@ export function VoiceExpenseDialog({
                 AI 解析
               </Button>
             </div>
+
+            {/* 分隔線 */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200 dark:border-slate-700" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="px-2 bg-background text-muted-foreground">或掃描發票</span>
+              </div>
+            </div>
+
+            {/* 發票圖片上傳 */}
+            {inputImage.preview ? (
+              <div className="space-y-3">
+                <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={inputImage.preview}
+                    alt="發票預覽"
+                    className="w-full h-auto max-h-48 object-contain bg-slate-50 dark:bg-slate-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (inputImage.preview) {
+                        URL.revokeObjectURL(inputImage.preview)
+                      }
+                      setInputImage({ image: null, pendingFile: null, preview: null })
+                    }}
+                    disabled={parsingImage}
+                    className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/50 hover:bg-black/70 disabled:opacity-50 flex items-center justify-center text-white transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <Button
+                  type="button"
+                  onClick={handleImageParse}
+                  disabled={parsingImage}
+                  className="w-full gap-2"
+                >
+                  {parsingImage ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      AI 辨識中...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      AI 發票辨識
+                    </>
+                  )}
+                </Button>
+              </div>
+            ) : (
+              <ImagePicker
+                value={inputImage}
+                onChange={setInputImage}
+                disabled={parsingImage}
+              />
+            )}
 
             {/* 錄音中動畫 */}
             {speech.isRecording && (
@@ -1025,38 +1149,10 @@ export function VoiceExpenseDialog({
                             {/* 收據圖片 */}
                             <div>
                               <label className="block text-xs text-muted-foreground mb-2">收據/消費圖片</label>
-                              {expenseExtras[expense.id]?.image ? (
-                                <div className="relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-                                  <Image
-                                    src={expenseExtras[expense.id].image!}
-                                    alt="收據"
-                                    width={200}
-                                    height={100}
-                                    className="w-full h-20 object-cover"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveImage(expense.id)}
-                                    className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white"
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => triggerImageUpload(expense.id)}
-                                  disabled={uploadingImage === expense.id}
-                                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
-                                >
-                                  {uploadingImage === expense.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <ImagePlus className="h-4 w-4" />
-                                  )}
-                                  <span>{uploadingImage === expense.id ? "處理中..." : "點擊上傳"}</span>
-                                </button>
-                              )}
+                              <ImagePicker
+                                value={expenseExtras[expense.id]?.imageValue || { image: null, pendingFile: null, preview: null }}
+                                onChange={(value) => updateExpenseImage(expense.id, value)}
+                              />
                             </div>
                           </div>
                         </div>
@@ -1083,15 +1179,6 @@ export function VoiceExpenseDialog({
                     </div>
                   )}
                 </div>
-
-                {/* 隱藏的圖片上傳 input */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                  className="hidden"
-                />
 
                 {/* 總計 */}
                 <div className="flex items-center justify-between py-2 px-3 bg-primary/5 rounded-xl">

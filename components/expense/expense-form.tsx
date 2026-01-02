@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { AppLayout } from "@/components/layout/app-layout"
@@ -16,8 +16,10 @@ import { MemberAvatar } from "@/components/member-avatar"
 import { sendExpenseNotificationToChat, sendDeleteNotificationToChat, ExpenseChange } from "@/lib/liff"
 import { uploadImageToR2 } from "@/lib/image-utils"
 import { LocationPicker } from "@/components/location-picker"
-import { Check, Calculator, Delete, CalendarIcon, ImagePlus, X, Trash2 } from "lucide-react"
+import { Calculator as CalculatorIcon, CalendarIcon, Trash2 } from "lucide-react"
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
+import { ImagePicker, type ImagePickerValue } from "@/components/ui/image-picker"
+import { Calculator } from "@/components/ui/calculator"
 import { CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
 
 interface Member {
@@ -117,11 +119,12 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const [customShares, setCustomShares] = useState<Record<string, string>>({})
 
   // 圖片上傳相關狀態
-  const [image, setImage] = useState<string | null>(null) // 已上傳的 URL 或既有的 base64/URL
-  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null) // 待上傳的檔案
-  const [imagePreview, setImagePreview] = useState<string | null>(null) // 本地預覽 URL
+  const [imageValue, setImageValue] = useState<ImagePickerValue>({
+    image: null,
+    pendingFile: null,
+    preview: null,
+  })
   const [uploadingImage, setUploadingImage] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 位置相關狀態
   const [locationData, setLocationData] = useState<{
@@ -143,8 +146,6 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
 
   // 計算機狀態
   const [showCalculator, setShowCalculator] = useState(false)
-  const [calcExpression, setCalcExpression] = useState("")
-  const [calcResult, setCalcResult] = useState<number | null>(null)
 
   // 自動獲取當下地點
   const getCurrentLocation = useCallback(async () => {
@@ -245,7 +246,11 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
 
         setDescription(expense.description || "")
         setAmount(String(expense.amount))
-        setImage(expense.image || null)
+        setImageValue({
+          image: expense.image || null,
+          pendingFile: null,
+          preview: null,
+        })
         setLocationData({
           location: expense.location || null,
           latitude: expense.latitude || null,
@@ -503,8 +508,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     if (originalData.location !== locationData.location) return true
 
     // 圖片變更（有待上傳圖片或圖片 URL 不同）
-    if (pendingImageFile) return true
-    if (originalData.image !== image) return true
+    if (imageValue.pendingFile) return true
+    if (originalData.image !== imageValue.image) return true
 
     // 分攤者變更
     const originalIds = Array.from(originalData.participantIds).sort()
@@ -545,11 +550,11 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     setSubmitting(true)
     try {
       // 如果有待上傳的圖片，先上傳到 R2
-      let finalImageUrl = image
-      if (pendingImageFile) {
+      let finalImageUrl = imageValue.image
+      if (imageValue.pendingFile) {
         setUploadingImage(true)
         try {
-          const result = await uploadImageToR2(pendingImageFile, projectId, authFetch)
+          const result = await uploadImageToR2(imageValue.pendingFile, projectId, authFetch)
           finalImageUrl = result.url
         } catch (error) {
           console.error("圖片上傳失敗:", error)
@@ -666,129 +671,16 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     }
   }
 
-  // 計算機功能
-  function handleCalcInput(value: string) {
-    const operators = ["+", "-", "×", "÷"]
-    const lastChar = calcExpression.slice(-1)
-
-    if (operators.includes(value)) {
-      if (calcExpression === "" || operators.includes(lastChar)) {
-        return
-      }
-    }
-
-    if (value === ".") {
-      const parts = calcExpression.split(/[+\-×÷]/)
-      const lastPart = parts[parts.length - 1]
-      if (lastPart.includes(".")) {
-        return
-      }
-    }
-
-    const newExpression = calcExpression + value
-    setCalcExpression(newExpression)
-    evaluateExpression(newExpression)
-  }
-
-  function handleCalcDelete() {
-    const newExpression = calcExpression.slice(0, -1)
-    setCalcExpression(newExpression)
-    evaluateExpression(newExpression)
-  }
-
-  function handleCalcClear() {
-    setCalcExpression("")
-    setCalcResult(null)
-  }
-
-  function evaluateExpression(expr: string) {
-    if (!expr) {
-      setCalcResult(null)
-      return
-    }
-
-    try {
-      const jsExpr = expr.replace(/×/g, "*").replace(/÷/g, "/")
-      const cleanExpr = jsExpr.replace(/[+\-*/]$/, "")
-      if (!cleanExpr) {
-        setCalcResult(null)
-        return
-      }
-      const result = new Function(`return ${cleanExpr}`)()
-      if (typeof result === "number" && !isNaN(result) && isFinite(result)) {
-        setCalcResult(Math.round(result * 100) / 100)
-      } else {
-        setCalcResult(null)
-      }
-    } catch {
-      setCalcResult(null)
-    }
-  }
-
-  function applyCalcResult() {
-    if (calcResult !== null) {
-      setAmount(calcResult.toString())
-      setShowCalculator(false)
-      setCalcExpression("")
-      setCalcResult(null)
-    }
-  }
-
-  // 圖片選擇處理（只預覽，不上傳）
-  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    // 驗證檔案類型
-    if (!file.type.startsWith("image/")) {
-      alert("請選擇圖片檔案")
-      return
-    }
-
-    // 限制檔案大小 (10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      alert("圖片大小不能超過 10MB")
-      return
-    }
-
-    // 釋放舊的預覽 URL
-    if (imagePreview) {
-      URL.revokeObjectURL(imagePreview)
-    }
-
-    // 建立本地預覽
-    const previewUrl = URL.createObjectURL(file)
-    setImagePreview(previewUrl)
-    setPendingImageFile(file)
-    setImage(null) // 清除舊的已上傳圖片
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
-  }
-
+  // 移除圖片時的額外處理（刪除 R2 上的圖片）
   async function handleRemoveImage() {
-    // 如果是編輯模式且有已上傳的圖片，從 R2 刪除
-    if (mode === "edit" && image && image.includes("r2.dev")) {
+    if (mode === "edit" && imageValue.image && imageValue.image.includes("r2.dev")) {
       try {
-        await authFetch(`/api/upload?url=${encodeURIComponent(image)}`, {
+        await authFetch(`/api/upload?url=${encodeURIComponent(imageValue.image)}`, {
           method: "DELETE",
         })
       } catch (error) {
         console.error("刪除圖片失敗:", error)
-        // 即使刪除失敗也繼續移除本地狀態
       }
-    }
-
-    // 釋放預覽 URL
-    if (imagePreview) {
-      URL.revokeObjectURL(imagePreview)
-    }
-    setImage(null)
-    setPendingImageFile(null)
-    setImagePreview(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
     }
   }
 
@@ -837,70 +729,17 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                   : "bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800"
               }`}
             >
-              <Calculator className="h-3.5 w-3.5" />
+              <CalculatorIcon className="h-3.5 w-3.5" />
               計算機
             </button>
           </div>
 
           {showCalculator ? (
-            <div className="space-y-3">
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-4">
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground min-h-[20px] font-mono">
-                    {calcExpression || "0"}
-                  </p>
-                  <p className="text-3xl font-bold text-primary tabular-nums">
-                    {calcResult !== null ? `= ${calcResult.toLocaleString("zh-TW")}` : ""}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-4 gap-2">
-                {["C", "÷", "×", "⌫", "7", "8", "9", "−", "4", "5", "6", "+", "1", "2", "3", "=", "0", "0", ".", "="].map((btn, idx) => {
-                  if ((idx === 17) || (idx === 19)) return null
-
-                  const isOperator = ["÷", "×", "−", "+"].includes(btn)
-                  const isClear = btn === "C"
-                  const isDelete = btn === "⌫"
-                  const isEquals = btn === "="
-                  const isZero = btn === "0" && idx === 16
-
-                  let className = "h-11 rounded-xl font-semibold text-lg transition-all active:scale-95 "
-
-                  if (isClear) {
-                    className += "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200"
-                  } else if (isOperator || isDelete) {
-                    className += "bg-slate-100 dark:bg-slate-700 text-primary hover:bg-slate-200 dark:hover:bg-slate-600"
-                  } else if (isEquals) {
-                    className += "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                  } else {
-                    className += "bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
-                  }
-
-                  if (isZero) className += " col-span-2"
-
-                  const handleClick = () => {
-                    if (isClear) handleCalcClear()
-                    else if (isDelete) handleCalcDelete()
-                    else if (isEquals) applyCalcResult()
-                    else if (isOperator) handleCalcInput(btn === "−" ? "-" : btn)
-                    else handleCalcInput(btn)
-                  }
-
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={handleClick}
-                      disabled={isEquals && calcResult === null}
-                      className={className}
-                    >
-                      {isDelete ? <Delete className="h-5 w-5 mx-auto" /> : isEquals ? <Check className="h-5 w-5 mx-auto" /> : btn}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
+            <Calculator
+              initialValue={amount}
+              onApply={(value) => setAmount(value.toString())}
+              onClose={() => setShowCalculator(false)}
+            />
           ) : (
             <>
               <div className="flex items-center gap-2">
@@ -1175,45 +1014,12 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         {/* 收據/消費圖片 */}
         <div>
           <label className="block text-sm font-medium mb-3">收據/消費圖片</label>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleImageSelect}
-            className="hidden"
+          <ImagePicker
+            value={imageValue}
+            onChange={setImageValue}
+            onRemove={handleRemoveImage}
+            disabled={uploadingImage}
           />
-          {(imagePreview || image) ? (
-            <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imagePreview || image || ""}
-                alt="消費圖片"
-                className="w-full h-auto max-h-48 object-contain bg-slate-50 dark:bg-slate-900"
-              />
-              {pendingImageFile && (
-                <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-amber-500 text-white text-xs font-medium">
-                  待上傳
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={handleRemoveImage}
-                className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadingImage}
-              className="w-full h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary/50 dark:hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground"
-            >
-              <ImagePlus className="h-5 w-5" />
-              <span className="text-sm">點擊上傳圖片</span>
-            </button>
-          )}
         </div>
 
         {/* LINE 通知選項 - 只在可以發送時顯示 */}
