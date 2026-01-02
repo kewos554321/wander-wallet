@@ -30,6 +30,7 @@ interface Project {
   budget: string | null
   startDate: string | null
   endDate: string | null
+  joinMode: string
   createdBy: string
   creator: {
     id: string
@@ -37,6 +38,12 @@ interface Project {
     email: string
   }
 }
+
+const JOIN_MODE_OPTIONS = [
+  { value: "both", label: "兩者皆可", description: "新成員可選擇建立新身份或取代佔位成員" },
+  { value: "create_only", label: "僅建立新成員", description: "新成員只能建立自己的身份" },
+  { value: "claim_only", label: "僅取代佔位成員", description: "新成員只能取代現有的佔位成員" },
+]
 
 // Helper function to format date as YYYY-MM-DD in local timezone
 function formatLocalDate(date: Date): string {
@@ -78,6 +85,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
   const [startDate, setStartDate] = useState<string | null>(null)
   const [endDate, setEndDate] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
+  const [joinMode, setJoinMode] = useState("both")
 
   const backHref = `/projects/${id}`
 
@@ -111,6 +119,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
         setDescription(data.description || "")
         setCover(data.cover)
         setBudget(data.budget ? String(Number(data.budget)) : "")
+        setJoinMode(data.joinMode || "both")
 
         if (data.startDate) {
           const start = isoToLocalDate(data.startDate)
@@ -165,6 +174,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
           budget: budget ? Number(budget) : null,
           startDate: startDate || null,
           endDate: endDate || null,
+          joinMode: joinMode,
         }),
       })
 
@@ -339,6 +349,38 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
             disabled={saving}
             rows={4}
           />
+        </div>
+
+        {/* 成員加入模式 */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">成員加入方式</label>
+          <p className="text-xs text-muted-foreground">設定新成員透過分享連結加入時的方式</p>
+          <div className="space-y-2 mt-3">
+            {JOIN_MODE_OPTIONS.map((option) => (
+              <label
+                key={option.value}
+                className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                  joinMode === option.value
+                    ? "border-primary bg-primary/5"
+                    : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="joinMode"
+                  value={option.value}
+                  checked={joinMode === option.value}
+                  onChange={(e) => setJoinMode(e.target.value)}
+                  disabled={saving}
+                  className="mt-0.5"
+                />
+                <div>
+                  <div className="text-sm font-medium">{option.label}</div>
+                  <div className="text-xs text-muted-foreground">{option.description}</div>
+                </div>
+              </label>
+            ))}
+          </div>
         </div>
 
         {/* 儲存與取消按鈕 */}

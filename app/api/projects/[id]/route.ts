@@ -97,6 +97,7 @@ export async function GET(
         id: project.id,
         name: project.name,
         description: project.description,
+        joinMode: project.joinMode,
         isMember: false,
         unclaimedMembers,
         memberCount: project._count.members,
@@ -145,7 +146,7 @@ export async function PUT(
     }
 
     const body = await req.json()
-    const { name, description, cover, budget, startDate, endDate } = body
+    const { name, description, cover, budget, startDate, endDate, joinMode } = body
 
     const updateData: {
       name?: string
@@ -154,6 +155,7 @@ export async function PUT(
       budget?: number | null
       startDate?: Date | null
       endDate?: Date | null
+      joinMode?: string
     } = {}
 
     if (name !== undefined) {
@@ -182,6 +184,14 @@ export async function PUT(
         }
         updateData.budget = budgetNum
       }
+    }
+
+    // 處理加入模式更新
+    if (joinMode !== undefined) {
+      if (!["both", "create_only", "claim_only"].includes(joinMode)) {
+        return NextResponse.json({ error: "無效的加入模式" }, { status: 400 })
+      }
+      updateData.joinMode = joinMode
     }
 
     // 處理日期更新

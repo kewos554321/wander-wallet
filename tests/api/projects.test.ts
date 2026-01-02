@@ -180,6 +180,58 @@ describe("POST /api/projects", () => {
     expect(prisma.project.create).toHaveBeenCalled()
   })
 
+  it("should create project with joinMode", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(null)
+    vi.mocked(prisma.project.create).mockResolvedValue({
+      ...mockProject,
+      joinMode: "claim_only",
+    } as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects", {
+      method: "POST",
+      body: JSON.stringify({
+        name: "New Project",
+        joinMode: "claim_only",
+      }),
+    })
+    const response = await POST(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(201)
+    expect(prisma.project.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          joinMode: "claim_only",
+        }),
+      })
+    )
+  })
+
+  it("should default joinMode to 'both' when not specified", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(null)
+    vi.mocked(prisma.project.create).mockResolvedValue(mockProject as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects", {
+      method: "POST",
+      body: JSON.stringify({
+        name: "New Project",
+      }),
+    })
+    await POST(req)
+
+    expect(prisma.project.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          joinMode: "both",
+        }),
+      })
+    )
+  })
+
   it("should return 401 if user does not exist in database", async () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null)

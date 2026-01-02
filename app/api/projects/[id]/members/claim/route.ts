@@ -21,6 +21,23 @@ export async function POST(
       return NextResponse.json({ error: "成員ID必填" }, { status: 400 })
     }
 
+    // 檢查專案是否存在以及加入模式
+    const project = await prisma.project.findUnique({
+      where: { id },
+    })
+
+    if (!project) {
+      return NextResponse.json({ error: "專案不存在" }, { status: 404 })
+    }
+
+    // 檢查加入模式是否允許認領成員
+    if (project.joinMode === "create_only") {
+      return NextResponse.json(
+        { error: "此專案僅允許建立新成員，不支援認領佔位成員" },
+        { status: 400 }
+      )
+    }
+
     // 檢查用戶是否已經是專案成員（有綁定帳號的）
     const existingMembership = await prisma.projectMember.findFirst({
       where: {

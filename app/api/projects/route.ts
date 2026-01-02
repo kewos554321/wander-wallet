@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { name, description, cover, startDate, endDate } = body
+    const { name, description, cover, startDate, endDate, budget, joinMode } = body
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return NextResponse.json({ error: "專案名稱必填" }, { status: 400 })
@@ -63,8 +63,10 @@ export async function POST(req: NextRequest) {
         name: name.trim(),
         description: description?.trim() || null,
         cover: cover || null,
+        budget: budget ? Number(budget) : null,
         startDate: startDateObj,
         endDate: endDateObj,
+        joinMode: joinMode || "both",
         createdBy: authUser.id,
         members: {
           create: {

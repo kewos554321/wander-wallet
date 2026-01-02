@@ -56,6 +56,7 @@ const mockProjectAsNonMember = {
   name: "Other Project",
   description: "Other Description",
   createdBy: "owner-456",
+  joinMode: "both",
   creator: { id: "owner-456", name: "Other Owner", email: "other@example.com" },
   members: [
     {
@@ -166,6 +167,24 @@ describe("GET /api/projects/[id]", () => {
     expect(data.unclaimedMembers.map((m: { displayName: string }) => m.displayName)).toContain("Unclaimed 1")
     expect(data.unclaimedMembers.map((m: { displayName: string }) => m.displayName)).toContain("Unclaimed 2")
   })
+
+  it("should return joinMode for non-member view", async () => {
+    const projectWithClaimOnly = {
+      ...mockProjectAsNonMember,
+      joinMode: "claim_only",
+    }
+
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(projectWithClaimOnly as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-456")
+    const response = await GET(req, { params: Promise.resolve({ id: "project-456" }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.isMember).toBe(false)
+    expect(data.joinMode).toBe("claim_only")
+  })
 })
 
 describe("PUT /api/projects/[id]", () => {
@@ -252,6 +271,69 @@ describe("PUT /api/projects/[id]", () => {
 
     expect(response.status).toBe(200)
     expect(data.name).toBe("Updated Name")
+  })
+
+  it("should update joinMode successfully", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue({ id: "member-1" } as never)
+    vi.mocked(prisma.project.update).mockResolvedValue({
+      ...mockProjectAsMember,
+      joinMode: "claim_only",
+    } as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123", {
+      method: "PUT",
+      body: JSON.stringify({ joinMode: "claim_only" }),
+    })
+    const response = await PUT(req, { params: Promise.resolve({ id: "project-123" }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.joinMode).toBe("claim_only")
+    expect(prisma.project.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          joinMode: "claim_only",
+        }),
+      })
+    )
+  })
+
+  it("should return 400 for invalid joinMode value", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue({ id: "member-1" } as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123", {
+      method: "PUT",
+      body: JSON.stringify({ joinMode: "invalid_mode" }),
+    })
+    const response = await PUT(req, { params: Promise.resolve({ id: "project-123" }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe("無效的加入模式")
+  })
+
+  it("should accept all valid joinMode values", async () => {
+    const validModes = ["both", "create_only", "claim_only"]
+
+    for (const mode of validModes) {
+      vi.clearAllMocks()
+      vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+      vi.mocked(prisma.projectMember.findFirst).mockResolvedValue({ id: "member-1" } as never)
+      vi.mocked(prisma.project.update).mockResolvedValue({
+        ...mockProjectAsMember,
+        joinMode: mode,
+      } as never)
+
+      const req = new NextRequest("http://localhost:3000/api/projects/project-123", {
+        method: "PUT",
+        body: JSON.stringify({ joinMode: mode }),
+      })
+      const response = await PUT(req, { params: Promise.resolve({ id: "project-123" }) })
+
+      expect(response.status).toBe(200)
+    }
   })
 })
 

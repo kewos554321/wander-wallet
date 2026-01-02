@@ -26,6 +26,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "專案不存在" }, { status: 404 })
     }
 
+    // 檢查加入模式是否允許建立新成員
+    if (project.joinMode === "claim_only") {
+      return NextResponse.json(
+        { error: "此專案僅允許認領現有佔位成員，請選擇一位成員進行認領" },
+        { status: 400 }
+      )
+    }
+
     // 檢查用戶是否已經是成員
     const existingMembership = await prisma.projectMember.findFirst({
       where: {

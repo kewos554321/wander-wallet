@@ -148,8 +148,14 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
 
   // 非成員加入相關狀態
   const [showJoinDialog, setShowJoinDialog] = useState(false)
-  const [projectBasicInfo, setProjectBasicInfo] = useState<{ name: string; description: string | null } | null>(null)
+  const [projectBasicInfo, setProjectBasicInfo] = useState<{
+    name: string
+    description: string | null
+    joinMode: string
+    unclaimedMembers: { id: string; displayName: string }[]
+  } | null>(null)
   const [joining, setJoining] = useState(false)
+  const [selectedMemberToClaim, setSelectedMemberToClaim] = useState<string | null>(null)
 
   // 邀請分享相關狀態
   const [showInvite, setShowInvite] = useState(false)
@@ -199,7 +205,12 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
       // 檢查是否為成員
       if (data.isMember === false) {
         // 非成員，顯示加入 Dialog
-        setProjectBasicInfo({ name: data.name, description: data.description })
+        setProjectBasicInfo({
+          name: data.name,
+          description: data.description,
+          joinMode: data.joinMode || "both",
+          unclaimedMembers: data.unclaimedMembers || [],
+        })
         setShowJoinDialog(true)
         setLoading(false)
         return
@@ -236,6 +247,38 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
       }
     } catch {
       alert("加入失敗")
+    } finally {
+      setJoining(false)
+    }
+  }
+
+  async function handleClaimMember() {
+    if (!selectedMemberToClaim) {
+      alert("請選擇要認領的成員")
+      return
+    }
+    setJoining(true)
+    try {
+      const res = await authFetch(`/api/projects/${id}/members/claim`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: selectedMemberToClaim }),
+      })
+
+      if (res.ok) {
+        setShowJoinDialog(false)
+        // 重新獲取完整專案資料
+        const projectRes = await authFetch(`/api/projects/${id}`)
+        if (projectRes.ok) {
+          const data = await projectRes.json()
+          setProject(data)
+        }
+      } else {
+        const data = await res.json()
+        alert(data.error || "認領失敗")
+      }
+    } catch {
+      alert("認領失敗")
     } finally {
       setJoining(false)
     }
@@ -375,6 +418,10 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
 
   // 顯示加入 Dialog（非成員）
   if (showJoinDialog && projectBasicInfo) {
+    const { joinMode, unclaimedMembers } = projectBasicInfo
+    const canCreate = joinMode === "both" || joinMode === "create_only"
+    const canClaim = (joinMode === "both" || joinMode === "claim_only") && unclaimedMembers.length > 0
+
     return (
       <AppLayout title="專案" showBack>
         <Dialog open={showJoinDialog} onOpenChange={() => router.push("/projects")}>
@@ -382,27 +429,102 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
             <DialogHeader>
               <DialogTitle>加入「{projectBasicInfo.name}」</DialogTitle>
               <DialogDescription>
-                你將以新成員身份加入此專案
+                {joinMode === "claim_only"
+                  ? "請選擇你要認領的佔位成員"
+                  : joinMode === "create_only"
+                  ? "你將以新成員身份加入此專案"
+                  : "選擇加入方式"}
               </DialogDescription>
             </DialogHeader>
-            <div className="py-4">
-              <p className="text-sm text-muted-foreground">
-                加入後可以查看支出記錄、新增支出，並參與分帳。
-              </p>
+            <div className="py-4 space-y-4">
+              {/* 認領佔位成員選項 */}
+              {canClaim && (
+                <div>
+                  <p className="text-sm font-medium mb-2">認領現有成員</p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    如果專案創建者已經幫你新增了佔位成員，請選擇你的名字
+                  </p>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {unclaimedMembers.map((member) => (
+                      <label
+                        key={member.id}
+                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                          selectedMemberToClaim === member.id
+                            ? "border-primary bg-primary/5"
+                            : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="claimMember"
+                          value={member.id}
+                          checked={selectedMemberToClaim === member.id}
+                          onChange={() => setSelectedMemberToClaim(member.id)}
+                          className="accent-primary"
+                        />
+                        <span className="text-sm font-medium">{member.displayName}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {selectedMemberToClaim && (
+                    <Button
+                      onClick={handleClaimMember}
+                      disabled={joining}
+                      className="w-full mt-3"
+                    >
+                      {joining ? "認領中..." : "確認認領"}
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* 分隔線 */}
+              {canCreate && canClaim && (
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-slate-200 dark:border-slate-700" />
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-background px-2 text-muted-foreground">或</span>
+                  </div>
+                </div>
+              )}
+
+              {/* 建立新成員選項 */}
+              {canCreate && (
+                <div>
+                  {canClaim && <p className="text-sm font-medium mb-2">建立新成員</p>}
+                  <p className="text-xs text-muted-foreground mb-3">
+                    以新成員身份加入，可查看支出記錄、新增支出並參與分帳
+                  </p>
+                  <Button
+                    onClick={handleJoinProject}
+                    disabled={joining}
+                    variant={canClaim ? "outline" : "default"}
+                    className="w-full"
+                  >
+                    {joining ? "加入中..." : "以新成員加入"}
+                  </Button>
+                </div>
+              )}
+
+              {/* 無法加入的情況 */}
+              {!canCreate && !canClaim && (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground">
+                    此專案目前沒有可認領的佔位成員，請聯繫專案創建者
+                  </p>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button
                 variant="outline"
                 onClick={() => router.push("/projects")}
                 disabled={joining}
+                className="w-full"
               >
                 取消
-              </Button>
-              <Button
-                onClick={handleJoinProject}
-                disabled={joining}
-              >
-                {joining ? "加入中..." : "確認加入"}
               </Button>
             </DialogFooter>
           </DialogContent>

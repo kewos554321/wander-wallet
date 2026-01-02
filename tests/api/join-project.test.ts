@@ -39,6 +39,7 @@ const mockProject = {
   name: "Test Project",
   description: "Test Description",
   createdBy: "user-456",
+  joinMode: "both",
 }
 
 const mockMember = {
@@ -102,6 +103,73 @@ describe("POST /api/projects/join", () => {
 
     expect(response.status).toBe(404)
     expect(data.error).toBe("專案不存在")
+  })
+
+  it("should return 400 if project joinMode is claim_only", async () => {
+    const claimOnlyProject = {
+      ...mockProject,
+      joinMode: "claim_only",
+    }
+
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(claimOnlyProject as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/join", {
+      method: "POST",
+      body: JSON.stringify({ projectId: "project-123" }),
+    })
+    const response = await POST(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe("此專案僅允許認領現有佔位成員，請選擇一位成員進行認領")
+  })
+
+  it("should allow join when joinMode is create_only", async () => {
+    const createOnlyProject = {
+      ...mockProject,
+      joinMode: "create_only",
+    }
+
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(createOnlyProject as never)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(null)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user-123",
+      name: "Test User",
+      email: "test@example.com",
+    } as never)
+    vi.mocked(prisma.projectMember.create).mockResolvedValue(mockMember as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/join", {
+      method: "POST",
+      body: JSON.stringify({ projectId: "project-123" }),
+    })
+    const response = await POST(req)
+
+    expect(response.status).toBe(201)
+    expect(prisma.projectMember.create).toHaveBeenCalled()
+  })
+
+  it("should allow join when joinMode is both", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(null)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user-123",
+      name: "Test User",
+      email: "test@example.com",
+    } as never)
+    vi.mocked(prisma.projectMember.create).mockResolvedValue(mockMember as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/join", {
+      method: "POST",
+      body: JSON.stringify({ projectId: "project-123" }),
+    })
+    const response = await POST(req)
+
+    expect(response.status).toBe(201)
+    expect(prisma.projectMember.create).toHaveBeenCalled()
   })
 
   it("should return 400 if user is already a member", async () => {
