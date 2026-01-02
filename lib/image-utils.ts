@@ -199,7 +199,7 @@ export interface UploadResult {
 }
 
 /**
- * 上傳圖片到 R2（透過後端上傳，避免 iOS CORS 問題）
+ * 上傳圖片到 R2
  * @param file 圖片檔案
  * @param projectId 專案 ID
  * @param authFetch 認證的 fetch 函數
@@ -213,23 +213,34 @@ export async function uploadImageToR2(
 ): Promise<UploadResult> {
   // 1. 壓縮圖片
   const compressedBlob = await compressImageToBlob(file, 1200, 1200, 0.8)
+  const contentType = compressedBlob.type || "image/webp"
 
-  // 2. 使用 FormData 上傳到後端
-  const formData = new FormData()
-  formData.append("file", compressedBlob, `image.${compressedBlob.type === "image/webp" ? "webp" : "jpg"}`)
-  formData.append("projectId", projectId)
-  formData.append("type", type)
-
-  const response = await authFetch("/api/upload", {
+  // 2. 取得預簽名上傳 URL
+  const urlResponse = await authFetch("/api/upload", {
     method: "POST",
-    body: formData,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ projectId, contentType, type }),
   })
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: "上傳失敗" }))
-    throw new Error(error.error || "上傳圖片失敗")
+  if (!urlResponse.ok) {
+    const error = await urlResponse.json()
+    throw new Error(error.error || "取得上傳 URL 失敗")
   }
 
-  const { publicUrl, key } = await response.json()
+  const { uploadUrl, publicUrl, key } = await urlResponse.json()
+
+  // 3. 直接上傳到 R2
+  const uploadResponse = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: {
+      "Content-Type": contentType,
+    },
+    body: compressedBlob,
+  })
+
+  if (!uploadResponse.ok) {
+    throw new Error("上傳圖片失敗")
+  }
+
   return { url: publicUrl, key }
 }

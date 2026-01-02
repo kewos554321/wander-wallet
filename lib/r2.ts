@@ -1,4 +1,5 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3"
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 
 // R2 Client 設定
 const r2Client = new S3Client({
@@ -14,20 +15,19 @@ const BUCKET_NAME = process.env.R2_BUCKET_NAME || ""
 const PUBLIC_URL = process.env.R2_PUBLIC_URL || "" // 例如: https://images.yourdomain.com
 
 /**
- * 直接上傳檔案到 R2
- * @param key 檔案路徑
- * @param body 檔案內容
- * @param contentType MIME 類型
+ * 產生預簽名上傳 URL
+ * 前端可直接用此 URL 上傳檔案到 R2
  */
-export async function uploadToR2(key: string, body: Buffer, contentType: string): Promise<void> {
+export async function getUploadUrl(key: string, contentType: string): Promise<string> {
   const command = new PutObjectCommand({
     Bucket: BUCKET_NAME,
     Key: key,
-    Body: body,
     ContentType: contentType,
   })
 
-  await r2Client.send(command)
+  // URL 有效期 5 分鐘
+  const signedUrl = await getSignedUrl(r2Client, command, { expiresIn: 300 })
+  return signedUrl
 }
 
 /**
