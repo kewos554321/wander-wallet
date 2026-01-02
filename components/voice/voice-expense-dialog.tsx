@@ -30,6 +30,10 @@ import {
   Info,
   MapPin,
   CalendarIcon,
+  Copy,
+  Check,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
 import { ImagePicker, type ImagePickerValue } from "@/components/ui/image-picker"
 import {
@@ -90,6 +94,11 @@ export function VoiceExpenseDialog({
   const [textInput, setTextInput] = useState("")
   const [error, setError] = useState<string | null>(null)
 
+  // Debug 狀態
+  const [debugInfo, setDebugInfo] = useState<string | null>(null)
+  const [debugExpanded, setDebugExpanded] = useState(false)
+  const [copied, setCopied] = useState(false)
+
   // 輸入階段的圖片（用於 AI 發票辨識）
   const [inputImage, setInputImage] = useState<ImagePickerValue>({
     image: null,
@@ -124,6 +133,9 @@ export function VoiceExpenseDialog({
     setStep("input")
     setTextInput("")
     setError(null)
+    setDebugInfo(null)
+    setDebugExpanded(false)
+    setCopied(false)
     setExpenses([])
     setCurrentIndex(0)
     setSaveProgress({ current: 0, total: 0 })
@@ -136,6 +148,18 @@ export function VoiceExpenseDialog({
     }
     setInputImage({ image: null, pendingFile: null, preview: null })
     setParsingImage(false)
+  }
+
+  // 複製錯誤訊息
+  async function copyDebugInfo() {
+    if (!debugInfo) return
+    try {
+      await navigator.clipboard.writeText(debugInfo)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error("Failed to copy:", err)
+    }
   }
 
   // 當 Dialog 開啟時重置
@@ -380,8 +404,25 @@ export function VoiceExpenseDialog({
 
       // 6. 清除輸入圖片 state（但不 revoke preview，因為已轉移到 expenseExtras）
       setInputImage({ image: null, pendingFile: null, preview: null })
+      // 清除 debug info on success
+      setDebugInfo(null)
+      setDebugExpanded(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "發票辨識失敗，請重試")
+      const errorMessage = err instanceof Error ? err.message : "發票辨識失敗，請重試"
+      setError(errorMessage)
+
+      // 建立詳細的 debug 資訊
+      const debugDetails = {
+        timestamp: new Date().toISOString(),
+        error: errorMessage,
+        stack: err instanceof Error ? err.stack : undefined,
+        file: inputImage.pendingFile ? {
+          name: inputImage.pendingFile.name,
+          type: inputImage.pendingFile.type,
+          size: `${(inputImage.pendingFile.size / 1024).toFixed(2)} KB`,
+        } : null,
+      }
+      setDebugInfo(JSON.stringify(debugDetails, null, 2))
     } finally {
       setParsingImage(false)
     }
@@ -866,11 +907,59 @@ export function VoiceExpenseDialog({
               </div>
             )}
 
-            {/* 錯誤訊息 */}
+            {/* 錯誤訊息與 Debug 區塊 */}
             {(error || speech.error) && (
-              <p className="text-sm text-destructive text-center">
-                {error || speech.error}
-              </p>
+              <div className="rounded-lg border border-destructive/50 bg-destructive/5 overflow-hidden">
+                {/* 錯誤摘要 */}
+                <div className="px-3 py-2 flex items-center justify-between gap-2">
+                  <p className="text-sm text-destructive flex-1">
+                    {error || speech.error}
+                  </p>
+                  {/* Debug 展開按鈕 - 僅開發環境顯示 */}
+                  {process.env.NODE_ENV === "development" && debugInfo && (
+                    <button
+                      type="button"
+                      onClick={() => setDebugExpanded(!debugExpanded)}
+                      className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {debugExpanded ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {/* Debug 詳細資訊 - 僅開發環境顯示 */}
+                {process.env.NODE_ENV === "development" && debugInfo && debugExpanded && (
+                  <div className="border-t border-destructive/30 bg-slate-900 dark:bg-slate-950">
+                    <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-700">
+                      <span className="text-xs text-slate-400">Debug Info</span>
+                      <button
+                        type="button"
+                        onClick={copyDebugInfo}
+                        className="flex items-center gap-1 px-2 py-0.5 text-xs text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded transition-colors"
+                      >
+                        {copied ? (
+                          <>
+                            <Check className="h-3 w-3" />
+                            已複製
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3 w-3" />
+                            複製
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <pre className="p-3 text-xs text-slate-300 overflow-x-auto max-h-40 overflow-y-auto font-mono whitespace-pre-wrap break-all">
+                      {debugInfo}
+                    </pre>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* 開發測試按鈕 */}
