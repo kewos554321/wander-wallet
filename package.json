@@ -24,6 +24,8 @@
     "db:export": "export $(grep -E '^DATABASE_URL=' .env.dev | xargs) && echo $DATABASE_URL"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.958.0",
+    "@aws-sdk/s3-request-presigner": "^3.958.0",
     "@langchain/core": "^1.1.6",
     "@langchain/deepseek": "^1.0.3",
     "@langchain/google-genai": "^2.1.1",

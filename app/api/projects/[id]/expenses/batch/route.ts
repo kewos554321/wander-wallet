@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { createActivityLog } from "@/lib/activity-log"
+import { deleteFile, extractKeyFromUrl } from "@/lib/r2"
 
 // 批量刪除費用
 export async function DELETE(
@@ -41,7 +42,7 @@ export async function DELETE(
         projectId: id,
         deletedAt: null,
       },
-      select: { id: true },
+      select: { id: true, image: true },
     })
 
     const validIds = expenses.map(e => e.id)
@@ -49,6 +50,22 @@ export async function DELETE(
     if (validIds.length === 0) {
       return NextResponse.json({ error: "找不到可刪除的費用" }, { status: 404 })
     }
+
+    // 刪除 R2 圖片（並行處理）
+    await Promise.all(
+      expenses
+        .filter(e => e.image)
+        .map(async (e) => {
+          const key = extractKeyFromUrl(e.image!)
+          if (key) {
+            try {
+              await deleteFile(key)
+            } catch (error) {
+              console.error(`刪除 R2 圖片失敗 (${e.id}):`, error)
+            }
+          }
+        })
+    )
 
     // 批量軟刪除
     const result = await prisma.expense.updateMany({

@@ -69,7 +69,7 @@ export async function getExifOrientation(file: File): Promise<number> {
 }
 
 /**
- * 壓縮圖片並轉為 WebP base64
+ * 壓縮圖片並轉為 WebP base64（保留向下相容）
  */
 export async function compressImage(
   file: File,
@@ -77,6 +77,19 @@ export async function compressImage(
   maxHeight: number,
   quality: number
 ): Promise<string> {
+  const blob = await compressImageToBlob(file, maxWidth, maxHeight, quality)
+  return blobToBase64(blob)
+}
+
+/**
+ * 壓縮圖片並轉為 Blob（用於 R2 上傳）
+ */
+export async function compressImageToBlob(
+  file: File,
+  maxWidth: number,
+  maxHeight: number,
+  quality: number
+): Promise<Blob> {
   const orientation = await getExifOrientation(file)
 
   return new Promise((resolve, reject) => {
@@ -137,13 +150,28 @@ export async function compressImage(
         ctx.drawImage(img, 0, 0, width, height)
 
         // 優先使用 WebP 格式
-        const base64 = canvas.toDataURL("image/webp", quality)
-
-        if (base64.startsWith("data:image/webp")) {
-          resolve(base64)
-        } else {
-          resolve(canvas.toDataURL("image/jpeg", quality))
-        }
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob)
+            } else {
+              // 回退到 JPEG
+              canvas.toBlob(
+                (jpegBlob) => {
+                  if (jpegBlob) {
+                    resolve(jpegBlob)
+                  } else {
+                    reject(new Error("圖片轉換失敗"))
+                  }
+                },
+                "image/jpeg",
+                quality
+              )
+            }
+          },
+          "image/webp",
+          quality
+        )
       }
       img.onerror = () => reject(new Error("圖片載入失敗"))
       img.src = e.target?.result as string
@@ -151,4 +179,68 @@ export async function compressImage(
     reader.onerror = () => reject(new Error("檔案讀取失敗"))
     reader.readAsDataURL(file)
   })
+}
+
+/**
+ * Blob 轉 Base64
+ */
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = () => reject(new Error("轉換失敗"))
+    reader.readAsDataURL(blob)
+  })
+}
+
+export interface UploadResult {
+  url: string
+  key: string
+}
+
+/**
+ * 上傳圖片到 R2
+ * @param file 圖片檔案
+ * @param projectId 專案 ID
+ * @param authFetch 認證的 fetch 函數
+ * @param type 類型（expense 或 cover）
+ */
+export async function uploadImageToR2(
+  file: File,
+  projectId: string,
+  authFetch: (url: string, options?: RequestInit) => Promise<Response>,
+  type: "expense" | "cover" = "expense"
+): Promise<UploadResult> {
+  // 1. 壓縮圖片
+  const compressedBlob = await compressImageToBlob(file, 1200, 1200, 0.8)
+  const contentType = compressedBlob.type || "image/webp"
+
+  // 2. 取得預簽名上傳 URL
+  const urlResponse = await authFetch("/api/upload", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ projectId, contentType, type }),
+  })
+
+  if (!urlResponse.ok) {
+    const error = await urlResponse.json()
+    throw new Error(error.error || "取得上傳 URL 失敗")
+  }
+
+  const { uploadUrl, publicUrl, key } = await urlResponse.json()
+
+  // 3. 直接上傳到 R2
+  const uploadResponse = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: {
+      "Content-Type": contentType,
+    },
+    body: compressedBlob,
+  })
+
+  if (!uploadResponse.ok) {
+    throw new Error("上傳圖片失敗")
+  }
+
+  return { url: publicUrl, key }
 }

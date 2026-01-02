@@ -3,6 +3,7 @@ import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { Prisma } from "@prisma/client"
 import { createActivityLog, createActivityLogInTransaction, diffChanges } from "@/lib/activity-log"
+import { deleteFile, extractKeyFromUrl } from "@/lib/r2"
 
 interface Participant {
   memberId: string
@@ -344,6 +345,19 @@ export async function DELETE(
 
     if (!expense) {
       return NextResponse.json({ error: "費用不存在" }, { status: 404 })
+    }
+
+    // 如果有 R2 圖片，刪除
+    if (expense.image) {
+      const key = extractKeyFromUrl(expense.image)
+      if (key) {
+        try {
+          await deleteFile(key)
+        } catch (error) {
+          console.error("刪除 R2 圖片失敗:", error)
+          // 繼續執行，不影響費用刪除
+        }
+      }
     }
 
     // 軟刪除：更新 deletedAt 和 deletedByMemberId

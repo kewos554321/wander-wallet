@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
 import Link from "next/link"
 import { AppLayout } from "@/components/layout/app-layout"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
@@ -15,7 +14,7 @@ import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
 import { MemberAvatar } from "@/components/member-avatar"
 import { sendExpenseNotificationToChat } from "@/lib/liff"
-import { compressImage } from "@/lib/image-utils"
+import { uploadImageToR2 } from "@/lib/image-utils"
 import { LocationPicker } from "@/components/location-picker"
 import { Check, Calculator, Delete, CalendarIcon, ImagePlus, X } from "lucide-react"
 import { CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
@@ -105,7 +104,9 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const [customShares, setCustomShares] = useState<Record<string, string>>({})
 
   // 圖片上傳相關狀態
-  const [image, setImage] = useState<string | null>(null)
+  const [image, setImage] = useState<string | null>(null) // 已上傳的 URL 或既有的 base64/URL
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null) // 待上傳的檔案
+  const [imagePreview, setImagePreview] = useState<string | null>(null) // 本地預覽 URL
   const [uploadingImage, setUploadingImage] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -357,6 +358,23 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
 
     setSubmitting(true)
     try {
+      // 如果有待上傳的圖片，先上傳到 R2
+      let finalImageUrl = image
+      if (pendingImageFile) {
+        setUploadingImage(true)
+        try {
+          const result = await uploadImageToR2(pendingImageFile, projectId, authFetch)
+          finalImageUrl = result.url
+        } catch (error) {
+          console.error("圖片上傳失敗:", error)
+          alert("圖片上傳失敗，請重試")
+          setUploadingImage(false)
+          setSubmitting(false)
+          return
+        }
+        setUploadingImage(false)
+      }
+
       const url = mode === "create"
         ? `/api/projects/${projectId}/expenses`
         : `/api/projects/${projectId}/expenses/${expenseId}`
@@ -374,7 +392,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           amount: amountNum,
           description: description.trim() || null,
           category: finalCategory,
-          image: image || null,
+          image: finalImageUrl || null,
           location: locationData.location,
           latitude: locationData.latitude,
           longitude: locationData.longitude,
@@ -485,8 +503,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     }
   }
 
-  // 圖片上傳處理
-  async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+  // 圖片選擇處理（只預覽，不上傳）
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -496,42 +514,48 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       return
     }
 
-    // 限制檔案大小 (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert("圖片大小不能超過 5MB")
+    // 限制檔案大小 (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert("圖片大小不能超過 10MB")
       return
     }
 
-    setUploadingImage(true)
+    // 釋放舊的預覽 URL
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview)
+    }
 
-    try {
-      // 壓縮並轉換為 WebP base64
-      const compressedBase64 = await compressImage(file, 800, 800, 0.6)
+    // 建立本地預覽
+    const previewUrl = URL.createObjectURL(file)
+    setImagePreview(previewUrl)
+    setPendingImageFile(file)
+    setImage(null) // 清除舊的已上傳圖片
 
-      // 檢查壓縮後大小（base64 長度 / 1.37 ≈ 實際 bytes）
-      const estimatedBytes = compressedBase64.length * 0.73
-      const maxBytes = 200 * 1024 // 200KB 限制
-
-      if (estimatedBytes > maxBytes) {
-        // 如果還是太大，再壓縮一次
-        const smallerBase64 = await compressImage(file, 600, 600, 0.5)
-        setImage(smallerBase64)
-      } else {
-        setImage(compressedBase64)
-      }
-    } catch (error) {
-      console.error("圖片處理失敗:", error)
-      alert("圖片處理失敗，請重試")
-    } finally {
-      setUploadingImage(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
     }
   }
 
-  function handleRemoveImage() {
+  async function handleRemoveImage() {
+    // 如果是編輯模式且有已上傳的圖片，從 R2 刪除
+    if (mode === "edit" && image && image.includes("r2.dev")) {
+      try {
+        await authFetch(`/api/upload?url=${encodeURIComponent(image)}`, {
+          method: "DELETE",
+        })
+      } catch (error) {
+        console.error("刪除圖片失敗:", error)
+        // 即使刪除失敗也繼續移除本地狀態
+      }
+    }
+
+    // 釋放預覽 URL
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview)
+    }
     setImage(null)
+    setPendingImageFile(null)
+    setImagePreview(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
@@ -913,15 +937,19 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
             onChange={handleImageSelect}
             className="hidden"
           />
-          {image ? (
+          {(imagePreview || image) ? (
             <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
-              <Image
-                src={image}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imagePreview || image || ""}
                 alt="消費圖片"
-                width={400}
-                height={300}
                 className="w-full h-auto max-h-48 object-contain bg-slate-50 dark:bg-slate-900"
               />
+              {pendingImageFile && (
+                <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-amber-500 text-white text-xs font-medium">
+                  待上傳
+                </div>
+              )}
               <button
                 type="button"
                 onClick={handleRemoveImage}
@@ -937,17 +965,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
               disabled={uploadingImage}
               className="w-full h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary/50 dark:hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground"
             >
-              {uploadingImage ? (
-                <>
-                  <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  <span className="text-sm">處理中...</span>
-                </>
-              ) : (
-                <>
-                  <ImagePlus className="h-5 w-5" />
-                  <span className="text-sm">點擊上傳圖片</span>
-                </>
-              )}
+              <ImagePlus className="h-5 w-5" />
+              <span className="text-sm">點擊上傳圖片</span>
             </button>
           )}
         </div>
@@ -977,8 +996,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                   取消
                 </Button>
               </Link>
-              <Button type="submit" className="flex-1 h-12" disabled={submitting}>
-                {submitting ? "儲存中..." : submitText}
+              <Button type="submit" className="flex-1 h-12" disabled={submitting || uploadingImage}>
+                {uploadingImage ? "上傳圖片中..." : submitting ? "儲存中..." : submitText}
               </Button>
             </div>
           </div>

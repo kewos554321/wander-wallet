@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/popover"
 import { CATEGORIES } from "@/lib/constants/expenses"
 import { Calendar } from "@/components/ui/calendar"
-import { compressImage } from "@/lib/image-utils"
+import { uploadImageToR2 } from "@/lib/image-utils"
 import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
 
@@ -245,8 +245,8 @@ export function VoiceExpenseDialog({
       return
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError("圖片大小不能超過 5MB")
+    if (file.size > 10 * 1024 * 1024) {
+      setError("圖片大小不能超過 10MB")
       return
     }
 
@@ -254,23 +254,18 @@ export function VoiceExpenseDialog({
     setError(null)
 
     try {
-      const compressedBase64 = await compressImage(file, 800, 800, 0.6)
-      const estimatedBytes = compressedBase64.length * 0.73
-      const maxBytes = 200 * 1024
-
-      const finalImage = estimatedBytes > maxBytes
-        ? await compressImage(file, 600, 600, 0.5)
-        : compressedBase64
+      // 上傳到 R2
+      const result = await uploadImageToR2(file, projectId, authFetch)
 
       setExpenseExtras((prev) => ({
         ...prev,
         [currentUploadExpenseId]: {
           ...prev[currentUploadExpenseId],
-          image: finalImage,
+          image: result.url,
         },
       }))
     } catch {
-      setError("圖片處理失敗，請重試")
+      setError("圖片上傳失敗，請重試")
     } finally {
       setUploadingImage(null)
       setCurrentUploadExpenseId(null)

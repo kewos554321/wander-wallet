@@ -30,6 +30,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.line-scdn.net",
       },
+      {
+        protocol: "https",
+        hostname: "**.r2.dev",
+      },
     ],
   },
   async headers() {
