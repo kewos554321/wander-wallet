@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
 import { MemberAvatar } from "@/components/member-avatar"
-import { sendExpenseNotificationToChat } from "@/lib/liff"
+import { sendExpenseNotificationToChat, ExpenseChange } from "@/lib/liff"
 import { uploadImageToR2 } from "@/lib/image-utils"
 import { LocationPicker } from "@/components/location-picker"
 import { Check, Calculator, Delete, CalendarIcon, ImagePlus, X } from "lucide-react"
@@ -77,6 +77,18 @@ interface ParticipantShare {
   shareAmount: number
 }
 
+interface OriginalExpenseData {
+  amount: number
+  description: string | null
+  category: string | null
+  paidByMemberId: string
+  payerName: string
+  expenseDate: Date
+  location: string | null
+  image: string | null
+  participantIds: Set<string>
+}
+
 
 interface ExpenseFormProps {
   projectId: string
@@ -120,6 +132,9 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   // LINE 通知相關狀態
   const [notifyLine, setNotifyLine] = useState(true)
   const [projectName, setProjectName] = useState("")
+
+  // 編輯模式下的原始資料（用於計算變更）
+  const [originalData, setOriginalData] = useState<OriginalExpenseData | null>(null)
 
   // 計算機狀態
   const [showCalculator, setShowCalculator] = useState(false)
@@ -268,6 +283,19 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           })
           setCustomShares(customSharesMap)
         }
+
+        // 儲存原始資料用於計算變更
+        setOriginalData({
+          amount: expense.amount,
+          description: expense.description,
+          category: expense.category,
+          paidByMemberId: expense.payer.id,
+          payerName: expense.payer.displayName,
+          expenseDate: expense.expenseDate ? new Date(expense.expenseDate) : new Date(),
+          location: expense.location,
+          image: expense.image,
+          participantIds: new Set(expense.participants.map(p => p.member.id)),
+        })
       } else {
         alert("無法載入支出資料")
         router.push(`/projects/${projectId}/expenses`)
@@ -327,6 +355,159 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       (sum, memberId) => sum + (Number(customShares[memberId]) || 0),
       0
     )
+  }
+
+  // 計算編輯時的變更內容
+  function calculateChanges(
+    finalCategory: string,
+    finalImageUrl: string | null,
+    amountNum: number
+  ): ExpenseChange[] {
+    if (!originalData || mode !== "edit") return []
+
+    const changes: ExpenseChange[] = []
+
+    // 金額變更
+    if (originalData.amount !== amountNum) {
+      changes.push({
+        field: "amount",
+        label: "金額",
+        oldValue: `$${originalData.amount.toLocaleString("zh-TW")}`,
+        newValue: `$${amountNum.toLocaleString("zh-TW")}`,
+      })
+    }
+
+    // 描述變更
+    const newDescription = description.trim() || null
+    if (originalData.description !== newDescription) {
+      changes.push({
+        field: "description",
+        label: "描述",
+        oldValue: originalData.description || "無",
+        newValue: newDescription || "無",
+      })
+    }
+
+    // 類別變更
+    if (originalData.category !== finalCategory) {
+      const getCategoryLabel = (cat: string | null) => {
+        if (!cat) return "其他"
+        const found = CATEGORIES.find(c => c.value === cat)
+        return found ? found.label : cat
+      }
+      changes.push({
+        field: "category",
+        label: "類別",
+        oldValue: getCategoryLabel(originalData.category),
+        newValue: getCategoryLabel(finalCategory),
+      })
+    }
+
+    // 付款人變更
+    if (originalData.paidByMemberId !== paidBy) {
+      const newPayerMember = members.find(m => m.id === paidBy)
+      changes.push({
+        field: "payer",
+        label: "付款人",
+        oldValue: originalData.payerName,
+        newValue: newPayerMember?.displayName || "未知",
+      })
+    }
+
+    // 日期變更
+    const originalDateStr = format(originalData.expenseDate, "yyyy/MM/dd")
+    const newDateStr = format(expenseDate, "yyyy/MM/dd")
+    if (originalDateStr !== newDateStr) {
+      changes.push({
+        field: "date",
+        label: "日期",
+        oldValue: originalDateStr,
+        newValue: newDateStr,
+      })
+    }
+
+    // 地點變更
+    if (originalData.location !== locationData.location) {
+      changes.push({
+        field: "location",
+        label: "地點",
+        oldValue: originalData.location || "無",
+        newValue: locationData.location || "無",
+      })
+    }
+
+    // 圖片變更
+    const hasImageChanged = originalData.image !== finalImageUrl
+    if (hasImageChanged) {
+      changes.push({
+        field: "image",
+        label: "圖片",
+        oldValue: originalData.image ? "有圖片" : "無",
+        newValue: finalImageUrl ? "有圖片" : "無",
+      })
+    }
+
+    // 分攤者變更
+    const originalIds = Array.from(originalData.participantIds).sort()
+    const newIds = Array.from(selectedParticipants).sort()
+    const participantsChanged = originalIds.length !== newIds.length ||
+      originalIds.some((id, i) => id !== newIds[i])
+
+    if (participantsChanged) {
+      changes.push({
+        field: "participants",
+        label: "分攤者",
+        oldValue: `${originalData.participantIds.size}人`,
+        newValue: `${selectedParticipants.size}人`,
+      })
+    }
+
+    return changes
+  }
+
+  // 檢查是否有任何變更（用於編輯模式下的儲存按鈕）
+  function hasChanges(): boolean {
+    if (!originalData || mode !== "edit") return true // 新增模式永遠可以儲存
+
+    const amountNum = Number(amount) || 0
+    const newDescription = description.trim() || null
+
+    // 計算 finalCategory（與 handleSubmit 中相同邏輯）
+    const finalCategory = category === "other" && customCategory.trim()
+      ? customCategory.trim()
+      : category || "other"
+
+    // 金額變更
+    if (originalData.amount !== amountNum) return true
+
+    // 描述變更
+    if (originalData.description !== newDescription) return true
+
+    // 類別變更
+    if (originalData.category !== finalCategory) return true
+
+    // 付款人變更
+    if (originalData.paidByMemberId !== paidBy) return true
+
+    // 日期變更
+    const originalDateStr = format(originalData.expenseDate, "yyyy/MM/dd")
+    const newDateStr = format(expenseDate, "yyyy/MM/dd")
+    if (originalDateStr !== newDateStr) return true
+
+    // 地點變更
+    if (originalData.location !== locationData.location) return true
+
+    // 圖片變更（有待上傳圖片或圖片 URL 不同）
+    if (pendingImageFile) return true
+    if (originalData.image !== image) return true
+
+    // 分攤者變更
+    const originalIds = Array.from(originalData.participantIds).sort()
+    const newIds = Array.from(selectedParticipants).sort()
+    if (originalIds.length !== newIds.length) return true
+    if (originalIds.some((id, i) => id !== newIds[i])) return true
+
+    return false
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -408,6 +589,9 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           const payerName = payerMember?.displayName || "未知"
           const operationType: "create" | "update" = mode === "create" ? "create" : "update"
 
+          // 計算變更內容（編輯模式）
+          const changes = calculateChanges(finalCategory, finalImageUrl, amountNum)
+
           sendExpenseNotificationToChat({
             operationType,
             projectName,
@@ -417,6 +601,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
             description: description.trim() || undefined,
             category: finalCategory || undefined,
             participantCount: participants.length,
+            changes: changes.length > 0 ? changes : undefined,
           }).catch(() => {
             // 發送失敗時靜默處理，不影響使用者體驗
           })
@@ -996,8 +1181,12 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                   取消
                 </Button>
               </Link>
-              <Button type="submit" className="flex-1 h-12" disabled={submitting || uploadingImage}>
-                {uploadingImage ? "上傳圖片中..." : submitting ? "儲存中..." : submitText}
+              <Button
+                type="submit"
+                className="flex-1 h-12"
+                disabled={submitting || uploadingImage || !hasChanges()}
+              >
+                {uploadingImage ? "上傳圖片中..." : submitting ? "儲存中..." : !hasChanges() ? "無變更" : submitText}
               </Button>
             </div>
           </div>

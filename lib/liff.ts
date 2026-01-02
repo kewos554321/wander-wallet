@@ -105,6 +105,13 @@ export async function sendMessagesToChat(messages: Parameters<typeof liff.sendMe
   }
 }
 
+export interface ExpenseChange {
+  field: "amount" | "description" | "category" | "payer" | "date" | "location" | "participants" | "image"
+  label: string
+  oldValue?: string
+  newValue?: string
+}
+
 export interface ExpenseNotificationData {
   operationType: "create" | "update"
   projectName: string
@@ -114,6 +121,7 @@ export interface ExpenseNotificationData {
   description?: string
   category?: string
   participantCount: number
+  changes?: ExpenseChange[]
 }
 
 export interface DeleteNotificationData {
@@ -191,6 +199,82 @@ export async function sendExpenseNotificationToChat(data: ExpenseNotificationDat
   const liffUrl = process.env.NEXT_PUBLIC_LIFF_URL || ""
   const projectUrl = `${liffUrl}/projects/${data.projectId}`
 
+  // 建立基礎 body 內容（使用 unknown[] 因為 LIFF SDK 型別較嚴格）
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const bodyContents: any[] = [
+    {
+      type: "text" as const,
+      text: displayText,
+      size: "lg" as const,
+      weight: "bold" as const,
+      color: "#4A4A4A",
+      wrap: true as const,
+    },
+    {
+      type: "text" as const,
+      text: formattedAmount,
+      size: "xxl" as const,
+      weight: "bold" as const,
+      color: config.color,
+      margin: "sm" as const,
+    },
+    {
+      type: "text" as const,
+      text: `${data.participantCount}人分攤 · 每人 ${perPersonAmount}`,
+      size: "sm" as const,
+      color: "#9E9E9E",
+      margin: "md" as const,
+      style: "italic" as const,
+    },
+  ]
+
+  // 如果是更新且有變更內容，加入變更區塊
+  if (data.operationType === "update" && data.changes && data.changes.length > 0) {
+    // 加入分隔線
+    bodyContents.push({
+      type: "separator" as const,
+      margin: "lg" as const,
+      color: "#EEEEEE",
+    })
+
+    // 加入「變更內容」標題
+    bodyContents.push({
+      type: "text" as const,
+      text: "📝 變更內容",
+      size: "sm" as const,
+      weight: "bold" as const,
+      color: "#4A4A4A",
+      margin: "lg" as const,
+    })
+
+    // 加入每個變更項目
+    for (const change of data.changes) {
+      bodyContents.push({
+        type: "box" as const,
+        layout: "horizontal" as const,
+        contents: [
+          {
+            type: "text" as const,
+            text: change.label,
+            size: "xs" as const,
+            color: "#9E9E9E",
+            flex: 0,
+          },
+          {
+            type: "text" as const,
+            text: `${change.oldValue || "-"} → ${change.newValue || "-"}`,
+            size: "xs" as const,
+            color: "#E09855",
+            align: "end" as const,
+            flex: 1,
+            wrap: true as const,
+          },
+        ],
+        margin: "sm" as const,
+      })
+    }
+  }
+
   const flexMessage = {
     type: "flex" as const,
     altText: `${config.label}：${data.description || "消費"} ${formattedAmount}`,
@@ -224,32 +308,7 @@ export async function sendExpenseNotificationToChat(data: ExpenseNotificationDat
       body: {
         type: "box" as const,
         layout: "vertical" as const,
-        contents: [
-          {
-            type: "text" as const,
-            text: displayText,
-            size: "lg" as const,
-            weight: "bold" as const,
-            color: "#4A4A4A",
-            wrap: true as const,
-          },
-          {
-            type: "text" as const,
-            text: formattedAmount,
-            size: "xxl" as const,
-            weight: "bold" as const,
-            color: config.color,
-            margin: "sm" as const,
-          },
-          {
-            type: "text" as const,
-            text: `${data.participantCount}人分攤 · 每人 ${perPersonAmount}`,
-            size: "sm" as const,
-            color: "#9E9E9E",
-            margin: "md" as const,
-            style: "italic" as const,
-          },
-        ],
+        contents: bodyContents,
         paddingAll: "lg" as const,
       },
       footer: {
