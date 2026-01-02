@@ -74,9 +74,59 @@ Expense → project, payer (User), participants (ExpenseParticipant[])
 3. Session provider wraps app with automatic refresh
 4. API routes validate session and return 401 for invalid tokens
 
+## Shared Components
+
+### ConfirmDeleteDialog
+
+Reusable delete confirmation dialog component located at `components/ui/confirm-delete-dialog.tsx`.
+
+```tsx
+interface ConfirmDeleteDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title?: string           // Default: "確認刪除"
+  description: string
+  onConfirm: () => void
+  loading?: boolean        // Default: false
+  confirmText?: string     // Default: "刪除"
+  children?: React.ReactNode
+}
+```
+
+**Usage:**
+```tsx
+<ConfirmDeleteDialog
+  open={showDeleteDialog}
+  onOpenChange={setShowDeleteDialog}
+  description="確定要刪除這筆支出嗎？此操作無法復原。"
+  onConfirm={handleDelete}
+  loading={deleting}
+>
+  {/* Optional children for extra content like LINE notification checkbox */}
+</ConfirmDeleteDialog>
+```
+
+**Used in:**
+- `app/projects/[id]/expenses/page.tsx` - Single and batch expense delete
+- `app/projects/[id]/settings/page.tsx` - Project delete
+- `components/expense/expense-form.tsx` - Edit page expense delete
+
 ## Development Notes
 
 - Test credentials: `test@example.com` / `test1234`
 - Mobile-first responsive design with bottom navigation
 - PWA support with service worker and install prompt
 - Dark mode with system detection and manual toggle
+
+## Testing
+
+```bash
+npm run test:run              # Run all tests
+npm run test:coverage         # Run tests with coverage report
+```
+
+Test files are located in `/tests` directory:
+- `/tests/components/` - Component tests
+- `/tests/api/` - API route tests
+- `/tests/lib/` - Utility function tests
+- `/tests/unit/` - Unit tests
