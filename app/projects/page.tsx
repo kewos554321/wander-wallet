@@ -15,7 +15,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical, Plus, Share2, Trash2, Edit, Folder } from "lucide-react"
+import { MoreVertical, Plus, Share2, Trash2, Edit, Wallet } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { getProjectShareUrl } from "@/lib/utils"
 import { parseCover, getPresetCover } from "@/lib/covers"
@@ -129,21 +130,54 @@ export default function ProjectsPage() {
     <AppLayout title="所有專案">
       <div className="space-y-6 pb-20">
         {loading ? (
-          <div className="text-center py-12 text-muted-foreground">載入中...</div>
-        ) : projects.length === 0 ? (
-          <Card className="border-0 shadow-sm">
-            <CardContent className="py-16 text-center">
-              <div className="h-16 w-16 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
-                <Folder className="h-8 w-8 text-slate-300 dark:text-slate-600" />
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <Skeleton className="h-5 w-32 mb-2" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <Skeleton className="h-8 w-8 rounded" />
+                </div>
+                <div className="flex items-baseline gap-2 mb-3">
+                  <Skeleton className="h-7 w-24" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <div className="flex -space-x-1.5">
+                      {[...Array(3)].map((_, j) => (
+                        <Skeleton key={j} className="h-5 w-5 rounded-full" />
+                      ))}
+                    </div>
+                    <Skeleton className="h-3 w-10" />
+                  </div>
+                  <Skeleton className="h-3 w-16" />
+                </div>
               </div>
-              <h3 className="font-semibold text-lg mb-2">還沒有專案</h3>
-              <p className="text-muted-foreground text-sm mb-6">建立一個專案或加入其他人的專案</p>
-              <Link href="/projects/new">
-                <Button size="lg" className="rounded-full px-6">
-                  <Plus className="h-4 w-4 mr-2" />
-                  建立專案
-                </Button>
-              </Link>
+            ))}
+          </div>
+        ) : projects.length === 0 ? (
+          <Card className="border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <CardContent className="py-16 text-center relative">
+              {/* 背景裝飾 */}
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-transparent to-blue-50/50 dark:from-emerald-950/20 dark:to-blue-950/20" />
+              <div className="relative">
+                <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-emerald-100 to-blue-100 dark:from-emerald-900 dark:to-blue-900 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-emerald-100/50 dark:shadow-emerald-900/20">
+                  <Wallet className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <h3 className="font-bold text-xl mb-2 text-slate-900 dark:text-slate-100">開始你的第一個專案</h3>
+                <p className="text-muted-foreground text-sm mb-6 max-w-xs mx-auto">
+                  建立專案來追蹤旅行或活動的共同開銷，輕鬆分帳
+                </p>
+                <Link href="/projects/new">
+                  <Button size="lg" className="rounded-full px-8 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all">
+                    <Plus className="h-4 w-4 mr-2" />
+                    建立專案
+                  </Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
         ) : (
@@ -174,7 +208,7 @@ export default function ProjectsPage() {
                 return (
                   <Card
                     key={project.id}
-                    className={`relative shadow-md hover:shadow-lg transition-all cursor-pointer overflow-hidden py-0 gap-0 ${coverData.type !== "none" ? "h-36 border-0" : "border border-slate-200"}`}
+                    className={`relative shadow-md hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 cursor-pointer overflow-hidden py-0 gap-0 ${coverData.type !== "none" ? "h-36 border-0" : "border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"}`}
                     onClick={() => router.push(`/projects/${project.id}`)}
                   >
                     {/* 有封面：全景覆蓋設計 */}

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
 import { StatCard } from "@/components/dashboard/stat-card"
+import { FeatureCard } from "@/components/dashboard/feature-card"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import {
   Plus,
@@ -34,6 +35,8 @@ import {
   Wallet,
   Sparkles,
   History,
+  DollarSign,
+  UserCheck,
 } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import {
@@ -46,6 +49,7 @@ import {
 } from "@/components/ui/dialog"
 import { getProjectShareUrl } from "@/lib/utils"
 import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface ProjectMember {
   id: string
@@ -158,7 +162,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
   // 功能 carousel 相關
   const [currentPage, setCurrentPage] = useState(0)
   const carouselRef = useRef<HTMLDivElement>(null)
-  const totalPages = 2 // 8 + 1 = 9 個功能，分成 2 頁
+  const totalPages = 2
 
   const handleScroll = useCallback(() => {
     if (carouselRef.current) {
@@ -298,7 +302,73 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
   if (loading) {
     return (
       <AppLayout title="專案" showBack>
-        <div className="text-center py-8 text-muted-foreground">載入中...</div>
+        <div className="pb-24 space-y-6 px-3 sm:px-4">
+          {/* 標題骨架 */}
+          <div>
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+
+          {/* 功能區塊骨架 */}
+          <div>
+            <Skeleton className="h-5 w-16 mb-3" />
+            <div className="grid grid-cols-4 gap-2">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2">
+                  <Skeleton className="h-10 w-10 rounded-xl" />
+                  <Skeleton className="h-4 w-10" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 總覽骨架 */}
+          <div>
+            <Skeleton className="h-5 w-16 mb-3" />
+            <div className="grid grid-cols-2 gap-3">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+                  <Skeleton className="h-3 w-16 mb-2" />
+                  <Skeleton className="h-7 w-24" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 餘額骨架 */}
+          <div>
+            <Skeleton className="h-5 w-20 mb-3" />
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Skeleton className="h-8 w-28 mb-2" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <Skeleton className="h-12 w-12 rounded-xl" />
+              </div>
+            </div>
+          </div>
+
+          {/* 最近支出骨架 */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <Skeleton className="h-5 w-20" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-4">
+                  <Skeleton className="h-10 w-10 rounded-xl" />
+                  <div className="flex-1">
+                    <Skeleton className="h-4 w-24 mb-1" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                  <Skeleton className="h-5 w-16" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </AppLayout>
     )
   }
@@ -380,89 +450,66 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
             {/* 第一頁 - 8 個功能 */}
             <div className="flex-shrink-0 w-full snap-center">
               <div className="grid grid-cols-4 gap-2">
-                <Link href={`/projects/${id}/settle`}>
-                  <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-                    <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center">
-                      <Calculator className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">結算</p>
-                  </div>
-                </Link>
-
-                <Link href={`/projects/${id}/members`}>
-                  <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-                    <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
-                      <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">成員</p>
-                  </div>
-                </Link>
-
-                <Link href={`/projects/${id}/stats`}>
-                  <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-                    <div className="h-10 w-10 rounded-xl bg-violet-50 dark:bg-violet-950 flex items-center justify-center">
-                      <BarChart3 className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-                    </div>
-                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">統計</p>
-                  </div>
-                </Link>
-
-                <button onClick={() => setShowInvite(true)} className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-                  <div className="h-10 w-10 rounded-xl bg-orange-50 dark:bg-orange-950 flex items-center justify-center">
-                    <Share2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                  </div>
-                  <p className="font-medium text-sm text-slate-900 dark:text-slate-100">邀請</p>
-                </button>
-
-                <Link href={`/projects/${id}/export`}>
-                  <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-                    <div className="h-10 w-10 rounded-xl bg-cyan-50 dark:bg-cyan-950 flex items-center justify-center">
-                      <Download className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
-                    </div>
-                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">匯出</p>
-                  </div>
-                </Link>
-
-                <Link href={`/projects/${id}/currency`}>
-                  <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-                    <div className="h-10 w-10 rounded-xl bg-amber-50 dark:bg-amber-950 flex items-center justify-center">
-                      <ArrowRightLeft className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                    </div>
-                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">幣種</p>
-                  </div>
-                </Link>
-
-                <Link href={`/projects/${id}/settings`}>
-                  <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-                    <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                      <Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                    </div>
-                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">設定</p>
-                  </div>
-                </Link>
-
-                <Link href={`/projects/${id}/notes`}>
-                  <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-                    <div className="h-10 w-10 rounded-xl bg-yellow-50 dark:bg-yellow-950 flex items-center justify-center">
-                      <StickyNote className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                    </div>
-                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">筆記</p>
-                  </div>
-                </Link>
+                <FeatureCard
+                  href={`/projects/${id}/settle`}
+                  icon={<Calculator className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+                  iconBgClass="bg-emerald-50 dark:bg-emerald-950"
+                  label="結算"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/members`}
+                  icon={<Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
+                  iconBgClass="bg-blue-50 dark:bg-blue-950"
+                  label="成員"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/stats`}
+                  icon={<BarChart3 className="h-5 w-5 text-violet-600 dark:text-violet-400" />}
+                  iconBgClass="bg-violet-50 dark:bg-violet-950"
+                  label="統計"
+                />
+                <FeatureCard
+                  onClick={() => setShowInvite(true)}
+                  icon={<Share2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />}
+                  iconBgClass="bg-orange-50 dark:bg-orange-950"
+                  label="邀請"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/export`}
+                  icon={<Download className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />}
+                  iconBgClass="bg-cyan-50 dark:bg-cyan-950"
+                  label="匯出"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/currency`}
+                  icon={<ArrowRightLeft className="h-5 w-5 text-amber-600 dark:text-amber-400" />}
+                  iconBgClass="bg-amber-50 dark:bg-amber-950"
+                  label="幣種"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/settings`}
+                  icon={<Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />}
+                  iconBgClass="bg-slate-100 dark:bg-slate-800"
+                  label="設定"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/notes`}
+                  icon={<StickyNote className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />}
+                  iconBgClass="bg-yellow-50 dark:bg-yellow-950"
+                  label="筆記"
+                />
               </div>
             </div>
 
             {/* 第二頁 - 歷史紀錄 */}
             <div className="flex-shrink-0 w-full snap-center">
               <div className="grid grid-cols-4 gap-2">
-                <Link href={`/projects/${id}/activity-logs`}>
-                  <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2 hover:shadow-md transition-shadow cursor-pointer">
-                    <div className="h-10 w-10 rounded-xl bg-purple-50 dark:bg-purple-950 flex items-center justify-center">
-                      <History className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">歷史</p>
-                  </div>
-                </Link>
+                <FeatureCard
+                  href={`/projects/${id}/activity-logs`}
+                  icon={<History className="h-5 w-5 text-purple-600 dark:text-purple-400" />}
+                  iconBgClass="bg-purple-50 dark:bg-purple-950"
+                  label="歷史"
+                />
               </div>
             </div>
           </div>
@@ -493,10 +540,19 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
         <div>
           <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">總覽</h2>
           <div className="grid grid-cols-2 gap-3">
-            <StatCard title="總支出" value={`$${totalAmount.toLocaleString("zh-TW")}`} />
+            <StatCard
+              title="總支出"
+              value={`$${totalAmount.toLocaleString("zh-TW")}`}
+              icon={<DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+              iconBgClass="bg-emerald-50 dark:bg-emerald-950"
+              subtitle={`${project.expenses.length} 筆支出`}
+            />
             <StatCard
               title="平均每人"
               value={`$${Math.round(perPerson).toLocaleString("zh-TW")}`}
+              icon={<UserCheck className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
+              iconBgClass="bg-blue-50 dark:bg-blue-950"
+              subtitle={`${project.members.length} 位成員`}
             />
           </div>
         </div>
@@ -671,7 +727,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
         {/* AI 語音記帳按鈕 */}
         <Button
           size="icon"
-          className="h-14 w-14 rounded-full shadow-xl shadow-black/25 bg-gradient-to-br from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white"
+          className="h-14 w-14 rounded-full shadow-xl shadow-violet-500/30 bg-gradient-to-br from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 hover:scale-110 hover:shadow-2xl hover:shadow-violet-500/40 active:scale-95 transition-all duration-200 text-white"
           onClick={() => setShowVoiceDialog(true)}
         >
           <Sparkles className="h-6 w-6" />
@@ -679,7 +735,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
 
         {/* 新增支出按鈕 */}
         <Link href={`/projects/${id}/expenses/new`}>
-          <Button size="icon" className="h-14 w-14 rounded-full shadow-xl shadow-black/25">
+          <Button size="icon" className="h-14 w-14 rounded-full shadow-xl shadow-primary/30 hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 active:scale-95 transition-all duration-200">
             <Plus className="h-6 w-6" />
           </Button>
         </Link>
