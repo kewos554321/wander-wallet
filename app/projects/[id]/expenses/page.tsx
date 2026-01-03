@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
-import { Plus, Trash2, User, Utensils, Car, Home, Gamepad2, ShoppingBag, Wallet, Ticket, Gift, Receipt, CheckSquare, X, Search, Filter, ChevronDown, MapPin } from "lucide-react"
+import { Plus, Trash2, User, Utensils, Car, Home, Gamepad2, ShoppingBag, Wallet, Ticket, Gift, Receipt, CheckSquare, X, Search, Filter, ChevronDown, MapPin, Sparkles } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { sendDeleteNotificationToChat, sendBatchDeleteNotificationToChat } from "@/lib/liff"
+import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
 
 interface Member {
   id: string
@@ -76,8 +77,11 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
   const [amountRange, setAmountRange] = useState<[number, number]>([0, 0])
   const [notifyLineOnDelete, setNotifyLineOnDelete] = useState(true)
   const [projectName, setProjectName] = useState("")
+  const [showVoiceDialog, setShowVoiceDialog] = useState(false)
+  const [members, setMembers] = useState<Member[]>([])
+  const [currentUserMemberId, setCurrentUserMemberId] = useState("")
   const authFetch = useAuthFetch()
-  const { isDevMode, canSendMessages } = useLiff()
+  const { isDevMode, canSendMessages, user } = useLiff()
 
   useEffect(() => {
     fetchExpenses()
@@ -105,6 +109,20 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
       if (res.ok) {
         const data = await res.json()
         setProjectName(data.name)
+        // 設定成員資料供 AI 語音記帳使用
+        if (data.members) {
+          setMembers(data.members.map((m: Member & { user?: Member["user"] }) => ({
+            id: m.id,
+            displayName: m.displayName,
+            userId: m.user?.id || null,
+            user: m.user || null,
+          })))
+          // 找出當前用戶的 memberId
+          const currentMember = data.members.find((m: Member) => m.user?.id === user?.id)
+          if (currentMember) {
+            setCurrentUserMemberId(currentMember.id)
+          }
+        }
       }
     } catch (error) {
       console.error("獲取專案名稱錯誤:", error)
@@ -816,13 +834,25 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
 
               </div>
 
-      {/* 浮動新增按鈕 */}
+      {/* 浮動按鈕群組 */}
       {!selectMode && (
-        <Link href={`/projects/${id}/expenses/new`} className="fixed bottom-6 right-4 z-50">
-          <Button size="icon" className="h-14 w-14 rounded-full shadow-xl shadow-black/25">
-            <Plus className="h-6 w-6" />
+        <div className="fixed bottom-6 right-4 z-50 flex flex-col gap-3">
+          {/* AI 語音記帳按鈕 */}
+          <Button
+            size="icon"
+            className="h-14 w-14 rounded-full shadow-xl shadow-violet-500/30 bg-gradient-to-br from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 hover:scale-110 hover:shadow-2xl hover:shadow-violet-500/40 active:scale-95 transition-all duration-200 text-white"
+            onClick={() => setShowVoiceDialog(true)}
+          >
+            <Sparkles className="h-6 w-6" />
           </Button>
-        </Link>
+
+          {/* 新增支出按鈕 */}
+          <Link href={`/projects/${id}/expenses/new`}>
+            <Button size="icon" className="h-14 w-14 rounded-full shadow-xl shadow-primary/30 hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 active:scale-95 transition-all duration-200">
+              <Plus className="h-6 w-6" />
+            </Button>
+          </Link>
+        </div>
       )}
 
       {/* 單筆刪除確認對話框 */}
