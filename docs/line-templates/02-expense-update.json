@@ -30,28 +30,42 @@
     "layout": "vertical",
     "contents": [
       {
-        "type": "text",
-        "text": "🚗 計程車",
-        "size": "lg",
-        "weight": "bold",
-        "color": "#4A4A4A",
-        "wrap": true
-      },
-      {
-        "type": "text",
-        "text": "NT$320",
-        "size": "xxl",
-        "weight": "bold",
-        "color": "#E09855",
-        "margin": "sm"
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "text",
+            "text": "🚗",
+            "size": "md",
+            "flex": 0
+          },
+          {
+            "type": "text",
+            "text": "計程車",
+            "size": "sm",
+            "color": "#4A4A4A",
+            "flex": 1,
+            "margin": "sm",
+            "weight": "bold"
+          },
+          {
+            "type": "text",
+            "text": "NT$320",
+            "size": "sm",
+            "color": "#E09855",
+            "align": "end",
+            "flex": 0,
+            "weight": "bold"
+          }
+        ],
+        "alignItems": "center"
       },
       {
         "type": "text",
         "text": "2人分攤 · 每人 NT$160",
-        "size": "sm",
+        "size": "xs",
         "color": "#9E9E9E",
-        "margin": "md",
-        "style": "italic"
+        "margin": "sm"
       }
     ],
     "paddingAll": "lg"

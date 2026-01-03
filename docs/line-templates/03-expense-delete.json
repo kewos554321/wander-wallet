@@ -36,38 +36,38 @@
           {
             "type": "text",
             "text": "🍴",
-            "size": "lg",
+            "size": "md",
             "flex": 0
           },
           {
             "type": "text",
             "text": "午餐拉麵",
-            "size": "lg",
-            "weight": "bold",
+            "size": "sm",
             "color": "#9E9E9E",
+            "flex": 1,
             "margin": "sm",
-            "decoration": "line-through",
-            "wrap": true,
-            "flex": 1
+            "weight": "bold",
+            "decoration": "line-through"
+          },
+          {
+            "type": "text",
+            "text": "NT$450",
+            "size": "sm",
+            "color": "#D97B7B",
+            "align": "end",
+            "flex": 0,
+            "weight": "bold",
+            "decoration": "line-through"
           }
         ],
         "alignItems": "center"
       },
       {
         "type": "text",
-        "text": "NT$450",
-        "size": "xxl",
-        "weight": "bold",
-        "color": "#D97B7B",
-        "margin": "sm",
-        "decoration": "line-through"
-      },
-      {
-        "type": "text",
         "text": "小明 付 · 3人分攤 · 每人 NT$150",
-        "size": "sm",
+        "size": "xs",
         "color": "#BDBDBD",
-        "margin": "md"
+        "margin": "sm"
       }
     ],
     "paddingAll": "lg"

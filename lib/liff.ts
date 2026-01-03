@@ -180,9 +180,6 @@ export async function sendExpenseNotificationToChat(data: ExpenseNotificationDat
 
   const config = operationConfig[data.operationType]
   const categoryEmoji = CATEGORY_EMOJIS[data.category || "other"] || "💰"
-  const displayText = data.description
-    ? `${categoryEmoji} ${data.description}`
-    : categoryEmoji
 
   const formattedAmount = new Intl.NumberFormat("zh-TW", {
     style: "currency",
@@ -202,29 +199,45 @@ export async function sendExpenseNotificationToChat(data: ExpenseNotificationDat
   // 建立基礎 body 內容（使用 unknown[] 因為 LIFF SDK 型別較嚴格）
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bodyContents: any[] = [
+    // 第一行：emoji + 描述 + 金額（與批次模板一致）
     {
-      type: "text" as const,
-      text: displayText,
-      size: "lg" as const,
-      weight: "bold" as const,
-      color: "#4A4A4A",
-      wrap: true as const,
+      type: "box" as const,
+      layout: "horizontal" as const,
+      contents: [
+        {
+          type: "text" as const,
+          text: categoryEmoji,
+          size: "md" as const,
+          flex: 0,
+        },
+        {
+          type: "text" as const,
+          text: data.description || "消費",
+          size: "sm" as const,
+          color: "#4A4A4A",
+          flex: 1,
+          margin: "sm" as const,
+          weight: "bold" as const,
+        },
+        {
+          type: "text" as const,
+          text: formattedAmount,
+          size: "sm" as const,
+          color: config.color,
+          align: "end" as const,
+          flex: 0,
+          weight: "bold" as const,
+        },
+      ],
+      alignItems: "center" as const,
     },
-    {
-      type: "text" as const,
-      text: formattedAmount,
-      size: "xxl" as const,
-      weight: "bold" as const,
-      color: config.color,
-      margin: "sm" as const,
-    },
+    // 第二行：分攤資訊
     {
       type: "text" as const,
       text: `${data.participantCount}人分攤 · 每人 ${perPersonAmount}`,
-      size: "sm" as const,
+      size: "xs" as const,
       color: "#9E9E9E",
-      margin: "md" as const,
-      style: "italic" as const,
+      margin: "sm" as const,
     },
   ]
 
@@ -394,6 +407,7 @@ export async function sendDeleteNotificationToChat(data: DeleteNotificationData)
         type: "box" as const,
         layout: "vertical" as const,
         contents: [
+          // 第一行：emoji + 描述 + 金額（與批次模板一致）
           {
             type: "box" as const,
             layout: "horizontal" as const,
@@ -401,38 +415,39 @@ export async function sendDeleteNotificationToChat(data: DeleteNotificationData)
               {
                 type: "text" as const,
                 text: categoryEmoji,
-                size: "lg" as const,
+                size: "md" as const,
                 flex: 0,
               },
               {
                 type: "text" as const,
                 text: data.description || "消費",
-                size: "lg" as const,
-                weight: "bold" as const,
+                size: "sm" as const,
                 color: "#9E9E9E",
-                margin: "sm" as const,
-                decoration: "line-through" as const,
-                wrap: true as const,
                 flex: 1,
+                margin: "sm" as const,
+                weight: "bold" as const,
+                decoration: "line-through" as const,
+              },
+              {
+                type: "text" as const,
+                text: formattedAmount,
+                size: "sm" as const,
+                color: themeColor,
+                align: "end" as const,
+                flex: 0,
+                weight: "bold" as const,
+                decoration: "line-through" as const,
               },
             ],
             alignItems: "center" as const,
           },
-          {
-            type: "text" as const,
-            text: formattedAmount,
-            size: "xxl" as const,
-            weight: "bold" as const,
-            color: themeColor,
-            margin: "sm" as const,
-            decoration: "line-through" as const,
-          },
+          // 第二行：付款人 + 分攤資訊
           {
             type: "text" as const,
             text: `${data.payerName} 付 · ${data.participantCount}人分攤 · 每人 ${perPersonAmount}`,
-            size: "sm" as const,
+            size: "xs" as const,
             color: "#BDBDBD",
-            margin: "md" as const,
+            margin: "sm" as const,
           },
         ],
         paddingAll: "lg" as const,

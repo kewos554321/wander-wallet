@@ -30,28 +30,42 @@
     "layout": "vertical",
     "contents": [
       {
-        "type": "text",
-        "text": "🍴 午餐拉麵",
-        "size": "lg",
-        "weight": "bold",
-        "color": "#4A4A4A",
-        "wrap": true
-      },
-      {
-        "type": "text",
-        "text": "NT$450",
-        "size": "xxl",
-        "weight": "bold",
-        "color": "#5CB87A",
-        "margin": "sm"
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "text",
+            "text": "🍴",
+            "size": "md",
+            "flex": 0
+          },
+          {
+            "type": "text",
+            "text": "午餐拉麵",
+            "size": "sm",
+            "color": "#4A4A4A",
+            "flex": 1,
+            "margin": "sm",
+            "weight": "bold"
+          },
+          {
+            "type": "text",
+            "text": "NT$450",
+            "size": "sm",
+            "color": "#5CB87A",
+            "align": "end",
+            "flex": 0,
+            "weight": "bold"
+          }
+        ],
+        "alignItems": "center"
       },
       {
         "type": "text",
         "text": "3人分攤 · 每人 NT$150",
-        "size": "sm",
+        "size": "xs",
         "color": "#9E9E9E",
-        "margin": "md",
-        "style": "italic"
+        "margin": "sm"
       }
     ],
     "paddingAll": "lg"
