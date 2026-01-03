@@ -144,6 +144,9 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
+  // 待刪除的圖片 URL（儲存成功後才實際刪除）
+  const [pendingImageDelete, setPendingImageDelete] = useState<string | null>(null)
+
   // 計算機狀態
   const [showCalculator, setShowCalculator] = useState(false)
 
@@ -596,6 +599,15 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       })
 
       if (res.ok) {
+        // 儲存成功後，刪除標記為待刪除的舊圖片
+        if (pendingImageDelete && pendingImageDelete !== finalImageUrl) {
+          authFetch(`/api/upload?url=${encodeURIComponent(pendingImageDelete)}`, {
+            method: "DELETE",
+          }).catch((error) => {
+            console.error("刪除舊圖片失敗:", error)
+          })
+        }
+
         // 如果勾選了通知且可以發送訊息，則發送通知
         if (notifyLine && canSendMessages && !isDevMode) {
           const payerMember = members.find((m) => m.id === paidBy)
@@ -674,16 +686,11 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     }
   }
 
-  // 移除圖片時的額外處理（刪除 R2 上的圖片）
-  async function handleRemoveImage() {
-    if (mode === "edit" && imageValue.image && imageValue.image.includes("r2.dev")) {
-      try {
-        await authFetch(`/api/upload?url=${encodeURIComponent(imageValue.image)}`, {
-          method: "DELETE",
-        })
-      } catch (error) {
-        console.error("刪除圖片失敗:", error)
-      }
+  // 移除圖片時的處理（只標記待刪除，儲存成功後才實際刪除）
+  function handleRemoveImage() {
+    if (mode === "edit" && imageValue.image) {
+      // 記錄待刪除的圖片 URL，儲存成功後才刪除
+      setPendingImageDelete(imageValue.image)
     }
   }
 
