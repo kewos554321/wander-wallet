@@ -844,20 +844,20 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      {/* 浮動按鈕群組 */}
-      <div className="fixed bottom-6 right-4 z-50 flex flex-col gap-3">
+      {/* 浮動按鈕群組 - 橫向排列 */}
+      <div className="fixed bottom-6 right-4 z-50 flex items-center gap-3">
         {/* AI 語音記帳按鈕 */}
         <Button
           size="icon"
-          className="h-14 w-14 rounded-full shadow-xl shadow-violet-500/30 bg-gradient-to-br from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 hover:scale-110 hover:shadow-2xl hover:shadow-violet-500/40 active:scale-95 transition-all duration-200 text-white"
+          className="h-12 w-12 rounded-full shadow-lg shadow-violet-500/25 bg-gradient-to-br from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 hover:scale-105 active:scale-95 transition-all duration-200 text-white ring-2 ring-white/20"
           onClick={() => setShowVoiceDialog(true)}
         >
-          <Sparkles className="h-6 w-6" />
+          <Sparkles className="h-5 w-5" />
         </Button>
 
-        {/* 新增支出按鈕 */}
+        {/* 新增支出按鈕 - 主要動作 */}
         <Link href={`/projects/${id}/expenses/new`}>
-          <Button size="icon" className="h-14 w-14 rounded-full shadow-xl shadow-primary/30 hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 active:scale-95 transition-all duration-200">
+          <Button size="icon" className="h-14 w-14 rounded-full shadow-xl shadow-primary/30 bg-primary hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all duration-200 ring-4 ring-primary/20">
             <Plus className="h-6 w-6" />
           </Button>
         </Link>
