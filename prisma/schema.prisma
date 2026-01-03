@@ -35,6 +35,7 @@ model Project {
   startDate   DateTime? @map("start_date")
   endDate     DateTime? @map("end_date")
   joinMode    String    @default("both") @map("join_mode") // 加入模式：create_only, claim_only, both
+  memo        String?   @db.Text // 共享備忘錄
   createdBy   String    @map("created_by") @db.Uuid
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
