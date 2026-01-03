@@ -22,27 +22,40 @@ export async function getExifOrientation(file: File): Promise<number> {
 
         try {
           const view = new DataView(e.target?.result as ArrayBuffer)
-          debugLog(`EXIF: DataView created, byteLength=${view.byteLength}`)
+          const len = view.byteLength
+          debugLog(`EXIF: DataView created, byteLength=${len}`)
+
+          // 安全讀取函數，避免 RangeError
+          const safeGetUint16 = (offset: number, le = false) => {
+            if (offset + 2 > len) return null
+            return view.getUint16(offset, le)
+          }
+          const safeGetUint32 = (offset: number, le = false) => {
+            if (offset + 4 > len) return null
+            return view.getUint32(offset, le)
+          }
 
           // 檢查是否為 JPEG
-          if (view.getUint16(0, false) !== 0xFFD8) {
+          if (safeGetUint16(0, false) !== 0xFFD8) {
             debugLog("EXIF: Not JPEG, returning 1")
             resolve(1)
             return
           }
 
           let offset = 2
-          while (offset < view.byteLength) {
-            const marker = view.getUint16(offset, false)
+          while (offset + 2 < len) {
+            const marker = safeGetUint16(offset, false)
+            if (marker === null) break
             offset += 2
 
             if (marker === 0xFFE1) {
               // EXIF marker
-              const length = view.getUint16(offset, false)
+              const length = safeGetUint16(offset, false)
+              if (length === null) break
               offset += 2
 
               // 檢查 EXIF header
-              const exifHeader = view.getUint32(offset, false)
+              const exifHeader = safeGetUint32(offset, false)
               if (exifHeader !== 0x45786966) {
                 debugLog("EXIF: Invalid header, returning 1")
                 resolve(1)
@@ -53,23 +66,30 @@ export async function getExifOrientation(file: File): Promise<number> {
               const tiffOffset = offset
 
               // 檢查 byte order
-              const littleEndian = view.getUint16(offset, false) === 0x4949
+              const byteOrder = safeGetUint16(offset, false)
+              if (byteOrder === null) break
+              const littleEndian = byteOrder === 0x4949
               offset += 8 // Skip to first IFD
 
-              const ifdOffset = view.getUint32(offset, littleEndian)
+              const ifdOffset = safeGetUint32(offset, littleEndian)
+              if (ifdOffset === null) break
               offset = tiffOffset + ifdOffset
 
-              const numEntries = view.getUint16(offset, littleEndian)
+              const numEntries = safeGetUint16(offset, littleEndian)
+              if (numEntries === null) break
               offset += 2
 
               for (let i = 0; i < numEntries; i++) {
-                const tag = view.getUint16(offset, littleEndian)
+                const tag = safeGetUint16(offset, littleEndian)
+                if (tag === null) break
                 if (tag === 0x0112) {
                   // Orientation tag
-                  const orientation = view.getUint16(offset + 8, littleEndian)
-                  debugLog(`EXIF: Found orientation=${orientation}`)
-                  resolve(orientation)
-                  return
+                  const orientation = safeGetUint16(offset + 8, littleEndian)
+                  if (orientation !== null) {
+                    debugLog(`EXIF: Found orientation=${orientation}`)
+                    resolve(orientation)
+                    return
+                  }
                 }
                 offset += 12
               }
@@ -79,7 +99,9 @@ export async function getExifOrientation(file: File): Promise<number> {
             } else if ((marker & 0xFF00) !== 0xFF00) {
               break
             } else {
-              offset += view.getUint16(offset, false)
+              const skipLen = safeGetUint16(offset, false)
+              if (skipLen === null) break
+              offset += skipLen
             }
           }
           debugLog("EXIF: No EXIF marker found, returning 1")
@@ -201,32 +223,52 @@ export async function compressImageToBlob(
         ctx.drawImage(img, 0, 0, width, height)
         debugLog("Canvas drawn, converting to blob...")
 
-        // 優先使用 WebP 格式
-        canvas.toBlob(
-          (blob) => {
-            debugLog(`WebP blob: ${blob?.size} bytes, ${blob?.type}`)
-            if (blob) {
-              resolve(blob)
-            } else {
-              // 回退到 JPEG
-              debugLog("WebP failed, trying JPEG...")
-              canvas.toBlob(
-                (jpegBlob) => {
-                  debugLog(`JPEG blob: ${jpegBlob?.size} bytes, ${jpegBlob?.type}`)
-                  if (jpegBlob) {
-                    resolve(jpegBlob)
-                  } else {
-                    reject(new Error("圖片轉換失敗"))
-                  }
-                },
-                "image/jpeg",
-                quality
-              )
-            }
-          },
-          "image/webp",
-          quality
-        )
+        // iOS Safari 不支援 WebP 編碼，直接用 JPEG
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent || "")
+
+        if (isIOS) {
+          debugLog("iOS detected, using JPEG directly...")
+          canvas.toBlob(
+            (jpegBlob) => {
+              debugLog(`JPEG blob: ${jpegBlob?.size} bytes, ${jpegBlob?.type}`)
+              if (jpegBlob) {
+                resolve(jpegBlob)
+              } else {
+                reject(new Error("圖片轉換失敗"))
+              }
+            },
+            "image/jpeg",
+            quality
+          )
+        } else {
+          // 非 iOS：優先使用 WebP 格式
+          canvas.toBlob(
+            (blob) => {
+              debugLog(`WebP blob: ${blob?.size} bytes, ${blob?.type}`)
+              // 檢查是否真的是 WebP（有些瀏覽器會回傳 PNG）
+              if (blob && blob.type === "image/webp") {
+                resolve(blob)
+              } else {
+                // 回退到 JPEG
+                debugLog("WebP not supported, trying JPEG...")
+                canvas.toBlob(
+                  (jpegBlob) => {
+                    debugLog(`JPEG blob: ${jpegBlob?.size} bytes, ${jpegBlob?.type}`)
+                    if (jpegBlob) {
+                      resolve(jpegBlob)
+                    } else {
+                      reject(new Error("圖片轉換失敗"))
+                    }
+                  },
+                  "image/jpeg",
+                  quality
+                )
+              }
+            },
+            "image/webp",
+            quality
+          )
+        }
       }
       img.onerror = () => reject(new Error("圖片載入失敗"))
       img.src = e.target?.result as string
