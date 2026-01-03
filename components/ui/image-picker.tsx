@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Camera, ImagePlus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -9,6 +9,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+
+/**
+ * 偵測是否為 iOS 裝置
+ * iOS 的 LIFF 環境不支援 getUserMedia，需要使用 file input with capture
+ */
+function useIsIOS() {
+  const [isIOS, setIsIOS] = useState(false)
+
+  useEffect(() => {
+    const userAgent = navigator.userAgent || navigator.vendor
+    // 偵測 iOS 裝置（iPhone, iPad, iPod）
+    const iosDevice = /iPad|iPhone|iPod/.test(userAgent) && !(window as unknown as { MSStream?: unknown }).MSStream
+    setIsIOS(iosDevice)
+  }, [])
+
+  return isIOS
+}
 
 export interface ImagePickerValue {
   image: string | null // 已上傳的 URL
@@ -45,9 +62,11 @@ export function ImagePicker({
   maxSizeMB = 10,
   className,
 }: ImagePickerProps) {
+  const isIOS = useIsIOS()
   const [showCamera, setShowCamera] = useState(false)
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null) // iOS 用的 capture input
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -180,8 +199,30 @@ export function ImagePicker({
     )
   }
 
+  // 處理拍照按鈕點擊
+  function handleCameraClick() {
+    if (isIOS) {
+      // iOS: 使用 file input with capture
+      cameraInputRef.current?.click()
+    } else {
+      // Android/其他: 使用 getUserMedia
+      openCamera()
+    }
+  }
+
   return (
     <div className={className}>
+      {/* iOS 專用：拍照 input with capture */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleImageSelect}
+        className="hidden"
+        disabled={disabled}
+      />
+      {/* 選擇圖片 input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -217,7 +258,7 @@ export function ImagePicker({
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={openCamera}
+            onClick={handleCameraClick}
             disabled={disabled}
             className="flex-1 h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary/50 dark:hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground"
           >
@@ -292,9 +333,11 @@ export function SimpleImagePicker({
   showCamera = true,
   className,
 }: SimpleImagePickerProps) {
+  const isIOS = useIsIOS()
   const [showCameraDialog, setShowCameraDialog] = useState(false)
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null) // iOS 用的 capture input
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -384,8 +427,30 @@ export function SimpleImagePicker({
     )
   }
 
+  // 處理拍照按鈕點擊
+  function handleCameraClick() {
+    if (isIOS) {
+      // iOS: 使用 file input with capture
+      cameraInputRef.current?.click()
+    } else {
+      // Android/其他: 使用 getUserMedia
+      openCamera()
+    }
+  }
+
   return (
     <div className={className}>
+      {/* iOS 專用：拍照 input with capture */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleImageSelect}
+        className="hidden"
+        disabled={disabled || uploading}
+      />
+      {/* 選擇圖片 input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -417,7 +482,7 @@ export function SimpleImagePicker({
           {showCamera && (
             <button
               type="button"
-              onClick={openCamera}
+              onClick={handleCameraClick}
               disabled={disabled || uploading}
               className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
