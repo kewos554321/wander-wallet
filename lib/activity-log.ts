@@ -6,6 +6,18 @@ export type ActionType = "create" | "update" | "delete"
 
 export type ChangesRecord = Record<string, { from: unknown; to: unknown }>
 
+// 費用實體的 metadata
+export interface ExpenseMetadata {
+  description?: string | null
+  amount?: number
+  category?: string | null
+  payerName?: string
+  expenseDate?: string
+}
+
+// 通用 metadata 類型
+export type EntityMetadata = ExpenseMetadata | Record<string, unknown>
+
 export interface ActivityLogData {
   projectId: string
   actorMemberId: string | null
@@ -13,6 +25,7 @@ export interface ActivityLogData {
   entityId: string
   action: ActionType
   changes?: ChangesRecord | null
+  metadata?: EntityMetadata | null
 }
 
 /**
@@ -37,6 +50,7 @@ export async function createActivityLog(data: ActivityLogData) {
       entityId: data.entityId,
       action: data.action,
       changes: toJsonValue(data.changes),
+      metadata: toJsonValue(data.metadata as ChangesRecord | null | undefined),
     },
   })
 }
@@ -56,6 +70,7 @@ export async function createActivityLogInTransaction(
       entityId: data.entityId,
       action: data.action,
       changes: toJsonValue(data.changes),
+      metadata: toJsonValue(data.metadata as ChangesRecord | null | undefined),
     },
   })
 }

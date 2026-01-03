@@ -235,7 +235,7 @@ export async function POST(
       },
     })
 
-    // 記錄操作歷史
+    // 記錄操作歷史（包含 metadata 快照）
     await createActivityLog({
       projectId: id,
       actorMemberId: membership.id,
@@ -243,6 +243,13 @@ export async function POST(
       entityId: expense.id,
       action: "create",
       changes: null,
+      metadata: {
+        description: expense.description,
+        amount: Number(expense.amount),
+        category: expense.category,
+        payerName: expense.payer.displayName,
+        expenseDate: expense.expenseDate.toISOString(),
+      },
     })
 
     // 通知改由前端使用 LIFF sendMessages API 發送（以用戶身份）

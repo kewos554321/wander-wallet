@@ -210,6 +210,7 @@ describe("activity-log", () => {
           entityId: "expense-123",
           action: "create",
           changes: expect.anything(),
+          metadata: expect.anything(),
         },
       })
     })
@@ -290,6 +291,7 @@ describe("activity-log", () => {
           entityId: "expense-123",
           action: "update",
           changes: { amount: { from: 100, to: 200 } },
+          metadata: expect.anything(),
         },
       })
     })

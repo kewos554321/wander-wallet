@@ -35,14 +35,26 @@ export async function DELETE(
       return NextResponse.json({ error: "請提供要刪除的費用 ID" }, { status: 400 })
     }
 
-    // 驗證所有費用都屬於該專案（只取未刪除的）
+    // 驗證所有費用都屬於該專案（只取未刪除的）並獲取詳細資訊
     const expenses = await prisma.expense.findMany({
       where: {
         id: { in: expenseIds },
         projectId: id,
         deletedAt: null,
       },
-      select: { id: true, image: true },
+      select: {
+        id: true,
+        image: true,
+        description: true,
+        amount: true,
+        category: true,
+        expenseDate: true,
+        payer: {
+          select: {
+            displayName: true,
+          },
+        },
+      },
     })
 
     const validIds = expenses.map(e => e.id)
@@ -79,16 +91,23 @@ export async function DELETE(
       },
     })
 
-    // 記錄操作歷史
+    // 記錄操作歷史（包含每筆被刪除費用的 metadata 快照）
     await Promise.all(
-      validIds.map((expenseId) =>
+      expenses.map((expense) =>
         createActivityLog({
           projectId: id,
           actorMemberId: membership.id,
           entityType: "expense",
-          entityId: expenseId,
+          entityId: expense.id,
           action: "delete",
           changes: null,
+          metadata: {
+            description: expense.description,
+            amount: Number(expense.amount),
+            category: expense.category,
+            payerName: expense.payer.displayName,
+            expenseDate: expense.expenseDate.toISOString(),
+          },
         })
       )
     )

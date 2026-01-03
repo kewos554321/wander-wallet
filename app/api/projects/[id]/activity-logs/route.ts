@@ -31,17 +31,23 @@ export async function GET(
     const limit = parseInt(searchParams.get("limit") || "50", 10)
     const offset = parseInt(searchParams.get("offset") || "0", 10)
     const entityType = searchParams.get("entityType")
+    const action = searchParams.get("action")
 
     // 建立查詢條件
     const where: {
       projectId: string
       entityType?: string
+      action?: string
     } = {
       projectId: id,
     }
 
     if (entityType) {
       where.entityType = entityType
+    }
+
+    if (action) {
+      where.action = action
     }
 
     // 獲取歷史紀錄

@@ -117,12 +117,19 @@ export async function PUT(
     const body = await req.json()
     const { paidByMemberId, amount, description, category, image, location, latitude, longitude, participants, expenseDate } = body
 
-    // 獲取現有費用
+    // 獲取現有費用（包含付款人資訊）
     const existingExpense = await prisma.expense.findFirst({
       where: {
         id: expenseId,
         projectId: id,
         deletedAt: null, // 只取未刪除的費用
+      },
+      include: {
+        payer: {
+          select: {
+            displayName: true,
+          },
+        },
       },
     })
 
@@ -211,6 +218,40 @@ export async function PUT(
       ["paidByMemberId", "amount", "description", "category", "location", "expenseDate"]
     )
 
+    // 如果付款人有變更，獲取成員名稱映射
+    let memberNameMap: Record<string, string> = {}
+    if (changes?.paidByMemberId) {
+      const memberIds = [changes.paidByMemberId.from, changes.paidByMemberId.to].filter(Boolean) as string[]
+      const members = await prisma.projectMember.findMany({
+        where: { id: { in: memberIds } },
+        select: { id: true, displayName: true },
+      })
+      memberNameMap = Object.fromEntries(members.map(m => [m.id, m.displayName]))
+    }
+
+    // 將 paidByMemberId 變更轉換為名稱顯示
+    const changesWithNames = changes ? {
+      ...changes,
+      ...(changes.paidByMemberId && {
+        paidByMemberId: {
+          from: memberNameMap[changes.paidByMemberId.from as string] || changes.paidByMemberId.from,
+          to: memberNameMap[changes.paidByMemberId.to as string] || changes.paidByMemberId.to,
+        }
+      })
+    } : null
+
+    // 獲取新的付款人名稱（如果有變更）
+    let newPayerName = existingExpense.payer.displayName
+    if (paidByMemberId && paidByMemberId !== existingExpense.paidByMemberId) {
+      const newPayer = await prisma.projectMember.findUnique({
+        where: { id: paidByMemberId },
+        select: { displayName: true },
+      })
+      if (newPayer) {
+        newPayerName = newPayer.displayName
+      }
+    }
+
     await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       if (participants && Array.isArray(participants)) {
         // 刪除舊的參與者
@@ -238,15 +279,22 @@ export async function PUT(
         })
       }
 
-      // 記錄操作歷史
-      if (changes || (participants && Array.isArray(participants))) {
+      // 記錄操作歷史（包含 metadata 快照）
+      if (changesWithNames || (participants && Array.isArray(participants))) {
         await createActivityLogInTransaction(tx, {
           projectId: id,
           actorMemberId: membership.id,
           entityType: "expense",
           entityId: expenseId,
           action: "update",
-          changes: changes,
+          changes: changesWithNames,
+          metadata: {
+            description: updateData.description !== undefined ? updateData.description : existingExpense.description,
+            amount: updateData.amount !== undefined ? updateData.amount : Number(existingExpense.amount),
+            category: updateData.category !== undefined ? updateData.category : existingExpense.category,
+            payerName: newPayerName,
+            expenseDate: (updateData.expenseDate || existingExpense.expenseDate).toISOString(),
+          },
         })
       }
     })
@@ -369,7 +417,7 @@ export async function DELETE(
       },
     })
 
-    // 記錄操作歷史
+    // 記錄操作歷史（包含被刪除費用的 metadata 快照）
     await createActivityLog({
       projectId: id,
       actorMemberId: membership.id,
@@ -377,6 +425,13 @@ export async function DELETE(
       entityId: expenseId,
       action: "delete",
       changes: null,
+      metadata: {
+        description: expense.description,
+        amount: Number(expense.amount),
+        category: expense.category,
+        payerName: expense.payer.displayName,
+        expenseDate: expense.expenseDate.toISOString(),
+      },
     })
 
     // 通知改由前端使用 LIFF sendMessages API 發送（以用戶身份）
