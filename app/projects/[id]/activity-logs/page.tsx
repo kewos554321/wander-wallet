@@ -13,9 +13,11 @@ import {
   Filter,
   ChevronDown,
   X,
-  Calendar,
+  Calendar as CalendarIcon,
   DollarSign,
+  Search,
 } from "lucide-react"
+import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -25,6 +27,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { format } from "date-fns"
+import type { DateRange } from "react-day-picker"
 import { formatDistanceToNow } from "date-fns"
 import { zhTW } from "date-fns/locale"
 
@@ -169,17 +179,19 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
   const [selectedEntities, setSelectedEntities] = useState<Set<EntityType>>(new Set())
   const [selectedPayers, setSelectedPayers] = useState<Set<string>>(new Set())
   const [amountRange, setAmountRange] = useState<[number, number]>([0, 0])
-  const [createdDateRange, setCreatedDateRange] = useState<[string, string]>(["", ""])
-  const [expenseDateRange, setExpenseDateRange] = useState<[string, string]>(["", ""])
+  const [createdDateRange, setCreatedDateRange] = useState<DateRange | undefined>(undefined)
+  const [expenseDateRange, setExpenseDateRange] = useState<DateRange | undefined>(undefined)
+  const [searchQuery, setSearchQuery] = useState("")
   const authFetch = useAuthFetch()
 
   const hasActiveFilters =
+    searchQuery !== "" ||
     selectedActions.size > 0 ||
     selectedEntities.size > 0 ||
     selectedPayers.size > 0 ||
     amountRange[0] > 0 || amountRange[1] > 0 ||
-    createdDateRange[0] !== "" || createdDateRange[1] !== "" ||
-    expenseDateRange[0] !== "" || expenseDateRange[1] !== ""
+    createdDateRange?.from !== undefined ||
+    expenseDateRange?.from !== undefined
 
   const toggleAction = (action: ActionType) => {
     setSelectedActions((prev) => {
@@ -218,12 +230,13 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
   }
 
   const clearAllFilters = () => {
+    setSearchQuery("")
     setSelectedActions(new Set())
     setSelectedEntities(new Set())
     setSelectedPayers(new Set())
     setAmountRange([0, 0])
-    setCreatedDateRange(["", ""])
-    setExpenseDateRange(["", ""])
+    setCreatedDateRange(undefined)
+    setExpenseDateRange(undefined)
   }
 
   // 從 logs 中提取唯一的付款人列表
@@ -243,6 +256,16 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
 
   // 前端篩選
   const filteredLogs = logs.filter((log) => {
+    // 搜尋篩選（描述、付款人、操作者）
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      const matchDescription = log.metadata?.description?.toLowerCase().includes(query)
+      const matchPayer = log.metadata?.payerName?.toLowerCase().includes(query)
+      const matchActor = log.actor?.displayName?.toLowerCase().includes(query)
+      if (!matchDescription && !matchPayer && !matchActor) {
+        return false
+      }
+    }
     // 操作類型篩選
     if (selectedActions.size > 0 && !selectedActions.has(log.action as ActionType)) {
       return false
@@ -261,17 +284,25 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
       if (amountRange[1] > 0 && log.metadata.amount > amountRange[1]) return false
     }
     // 創建時間篩選
-    if (createdDateRange[0] || createdDateRange[1]) {
-      const createdDate = new Date(log.createdAt).toISOString().split("T")[0]
-      if (createdDateRange[0] && createdDate < createdDateRange[0]) return false
-      if (createdDateRange[1] && createdDate > createdDateRange[1]) return false
+    if (createdDateRange?.from || createdDateRange?.to) {
+      const createdDate = new Date(log.createdAt)
+      if (createdDateRange.from && createdDate < createdDateRange.from) return false
+      if (createdDateRange.to) {
+        const endOfDay = new Date(createdDateRange.to)
+        endOfDay.setHours(23, 59, 59, 999)
+        if (createdDate > endOfDay) return false
+      }
     }
     // 支付時間篩選
-    if (expenseDateRange[0] || expenseDateRange[1]) {
+    if (expenseDateRange?.from || expenseDateRange?.to) {
       if (!log.metadata?.expenseDate) return false
-      const expenseDate = new Date(log.metadata.expenseDate).toISOString().split("T")[0]
-      if (expenseDateRange[0] && expenseDate < expenseDateRange[0]) return false
-      if (expenseDateRange[1] && expenseDate > expenseDateRange[1]) return false
+      const expenseDate = new Date(log.metadata.expenseDate)
+      if (expenseDateRange.from && expenseDate < expenseDateRange.from) return false
+      if (expenseDateRange.to) {
+        const endOfDay = new Date(expenseDateRange.to)
+        endOfDay.setHours(23, 59, 59, 999)
+        if (expenseDate > endOfDay) return false
+      }
     }
     return true
   })
@@ -331,6 +362,25 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
       <div className="pb-6 px-3 sm:px-4">
         {/* 篩選器 */}
         <div className="mb-4 space-y-2">
+          {/* 搜尋框 */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="搜尋描述、付款人、操作者..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-9"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
           {/* 第一行：主要篩選 */}
           <div className="flex flex-wrap items-center gap-2">
             {/* 操作類型篩選 */}
@@ -400,24 +450,20 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
               </DropdownMenu>
             )}
 
-            {/* 金額篩選 */}
+            {/* 金額篩選 - 範圍滑桿 */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="justify-between">
                   <span className="flex items-center gap-1.5">
                     <DollarSign className="h-3.5 w-3.5" />
-                    金額
-                    {(amountRange[0] > 0 || amountRange[1] > 0) && (
-                      <span className="px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
-                        1
-                      </span>
-                    )}
+                    {amountRange[0] > 0 || amountRange[1] > 0
+                      ? `$${amountRange[0].toLocaleString()}~${amountRange[1] > 0 ? `$${amountRange[1].toLocaleString()}` : "不限"}`
+                      : "金額"}
                   </span>
                   <ChevronDown className="h-3.5 w-3.5 ml-1" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-64 p-3">
-                <DropdownMenuLabel className="px-0 pb-3">金額範圍</DropdownMenuLabel>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">${amountRange[0].toLocaleString()}</span>
@@ -426,130 +472,126 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
                       {amountRange[1] === 0 ? "不限" : `$${amountRange[1].toLocaleString()}`}
                     </span>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs text-muted-foreground">最低</label>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">最低金額</label>
                     <input
                       type="range"
                       min={0}
                       max={maxAmount}
-                      step={Math.max(1, Math.floor(maxAmount / 100))}
+                      step={Math.max(1, Math.floor(maxAmount / 50))}
                       value={amountRange[0]}
                       onChange={(e) => setAmountRange([Number(e.target.value), amountRange[1]])}
                       className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs text-muted-foreground">最高 (0 = 不限)</label>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">最高金額 (0=不限)</label>
                     <input
                       type="range"
                       min={0}
                       max={maxAmount}
-                      step={Math.max(1, Math.floor(maxAmount / 100))}
+                      step={Math.max(1, Math.floor(maxAmount / 50))}
                       value={amountRange[1]}
                       onChange={(e) => setAmountRange([amountRange[0], Number(e.target.value)])}
                       className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
                     />
                   </div>
                   {(amountRange[0] > 0 || amountRange[1] > 0) && (
-                    <Button variant="ghost" size="sm" className="w-full" onClick={() => setAmountRange([0, 0])}>
-                      清除金額篩選
+                    <Button variant="ghost" size="sm" className="w-full h-7" onClick={() => setAmountRange([0, 0])}>
+                      清除
                     </Button>
                   )}
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* 創建時間篩選 */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            {/* 紀錄時間篩選 - 日曆範圍選擇 */}
+            <Popover>
+              <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="justify-between">
                   <span className="flex items-center gap-1.5">
                     <Clock className="h-3.5 w-3.5" />
-                    紀錄時間
-                    {(createdDateRange[0] || createdDateRange[1]) && (
-                      <span className="px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
-                        1
-                      </span>
+                    {createdDateRange?.from ? (
+                      createdDateRange.to ? (
+                        <>
+                          {format(createdDateRange.from, "MM/dd")} ~ {format(createdDateRange.to, "MM/dd")}
+                        </>
+                      ) : (
+                        format(createdDateRange.from, "MM/dd") + " ~"
+                      )
+                    ) : (
+                      "紀錄時間"
                     )}
                   </span>
                   <ChevronDown className="h-3.5 w-3.5 ml-1" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64 p-3">
-                <DropdownMenuLabel className="px-0 pb-3">紀錄時間範圍</DropdownMenuLabel>
-                <div className="space-y-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs text-muted-foreground">開始日期</label>
-                    <input
-                      type="date"
-                      value={createdDateRange[0]}
-                      onChange={(e) => setCreatedDateRange([e.target.value, createdDateRange[1]])}
-                      className="w-full px-3 py-1.5 text-sm border rounded-md bg-background"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs text-muted-foreground">結束日期</label>
-                    <input
-                      type="date"
-                      value={createdDateRange[1]}
-                      onChange={(e) => setCreatedDateRange([createdDateRange[0], e.target.value])}
-                      className="w-full px-3 py-1.5 text-sm border rounded-md bg-background"
-                    />
-                  </div>
-                  {(createdDateRange[0] || createdDateRange[1]) && (
-                    <Button variant="ghost" size="sm" className="w-full" onClick={() => setCreatedDateRange(["", ""])}>
-                      清除時間篩選
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <div className="p-2 border-b flex items-center justify-between">
+                  <span className="text-sm font-medium">選擇日期範圍</span>
+                  {createdDateRange && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setCreatedDateRange(undefined)}
+                    >
+                      清除
                     </Button>
                   )}
                 </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <Calendar
+                  mode="range"
+                  selected={createdDateRange}
+                  onSelect={setCreatedDateRange}
+                  numberOfMonths={1}
+                />
+              </PopoverContent>
+            </Popover>
 
-            {/* 支付時間篩選 */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            {/* 支付時間篩選 - 日曆範圍選擇 */}
+            <Popover>
+              <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="justify-between">
                   <span className="flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5" />
-                    支付時間
-                    {(expenseDateRange[0] || expenseDateRange[1]) && (
-                      <span className="px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
-                        1
-                      </span>
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {expenseDateRange?.from ? (
+                      expenseDateRange.to ? (
+                        <>
+                          {format(expenseDateRange.from, "MM/dd")} ~ {format(expenseDateRange.to, "MM/dd")}
+                        </>
+                      ) : (
+                        format(expenseDateRange.from, "MM/dd") + " ~"
+                      )
+                    ) : (
+                      "支付時間"
                     )}
                   </span>
                   <ChevronDown className="h-3.5 w-3.5 ml-1" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64 p-3">
-                <DropdownMenuLabel className="px-0 pb-3">支付時間範圍</DropdownMenuLabel>
-                <div className="space-y-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs text-muted-foreground">開始日期</label>
-                    <input
-                      type="date"
-                      value={expenseDateRange[0]}
-                      onChange={(e) => setExpenseDateRange([e.target.value, expenseDateRange[1]])}
-                      className="w-full px-3 py-1.5 text-sm border rounded-md bg-background"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs text-muted-foreground">結束日期</label>
-                    <input
-                      type="date"
-                      value={expenseDateRange[1]}
-                      onChange={(e) => setExpenseDateRange([expenseDateRange[0], e.target.value])}
-                      className="w-full px-3 py-1.5 text-sm border rounded-md bg-background"
-                    />
-                  </div>
-                  {(expenseDateRange[0] || expenseDateRange[1]) && (
-                    <Button variant="ghost" size="sm" className="w-full" onClick={() => setExpenseDateRange(["", ""])}>
-                      清除時間篩選
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <div className="p-2 border-b flex items-center justify-between">
+                  <span className="text-sm font-medium">選擇日期範圍</span>
+                  {expenseDateRange && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setExpenseDateRange(undefined)}
+                    >
+                      清除
                     </Button>
                   )}
                 </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <Calendar
+                  mode="range"
+                  selected={expenseDateRange}
+                  onSelect={setExpenseDateRange}
+                  numberOfMonths={1}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* 第二行：清除篩選和結果統計 */}
