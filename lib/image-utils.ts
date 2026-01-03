@@ -1,3 +1,5 @@
+import { debugLog } from "./debug"
+
 /**
  * 讀取圖片的 EXIF 方向資訊
  */
@@ -90,17 +92,17 @@ export async function compressImageToBlob(
   maxHeight: number,
   quality: number
 ): Promise<Blob> {
-  console.log("[Compress] Getting EXIF orientation...")
+  debugLog("Getting EXIF orientation...")
   const orientation = await getExifOrientation(file)
-  console.log("[Compress] Orientation:", orientation)
+  debugLog(`Orientation: ${orientation}`)
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = (e) => {
-      console.log("[Compress] File read complete, creating image...")
+      debugLog("File read complete, creating image...")
       const img = document.createElement("img")
       img.onload = () => {
-        console.log("[Compress] Image loaded:", img.width, "x", img.height)
+        debugLog(`Image loaded: ${img.width}x${img.height}`)
         const canvas = document.createElement("canvas")
         let { width, height } = img
 
@@ -152,20 +154,20 @@ export async function compressImageToBlob(
         }
 
         ctx.drawImage(img, 0, 0, width, height)
-        console.log("[Compress] Canvas drawn, converting to blob...")
+        debugLog("Canvas drawn, converting to blob...")
 
         // 優先使用 WebP 格式
         canvas.toBlob(
           (blob) => {
-            console.log("[Compress] WebP blob result:", blob?.size, blob?.type)
+            debugLog(`WebP blob: ${blob?.size} bytes, ${blob?.type}`)
             if (blob) {
               resolve(blob)
             } else {
               // 回退到 JPEG
-              console.log("[Compress] WebP failed, trying JPEG...")
+              debugLog("WebP failed, trying JPEG...")
               canvas.toBlob(
                 (jpegBlob) => {
-                  console.log("[Compress] JPEG blob result:", jpegBlob?.size, jpegBlob?.type)
+                  debugLog(`JPEG blob: ${jpegBlob?.size} bytes, ${jpegBlob?.type}`)
                   if (jpegBlob) {
                     resolve(jpegBlob)
                   } else {
@@ -213,7 +215,7 @@ function isIOSDevice(): boolean {
   if (typeof navigator === "undefined") return false
   const userAgent = navigator.userAgent || ""
   const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !(window as unknown as { MSStream?: unknown }).MSStream
-  console.log("[Upload] Platform detection:", { userAgent, isIOS })
+  debugLog(`Platform: ${isIOS ? "iOS" : "Other"} (${userAgent.slice(0, 50)}...)`)
   return isIOS
 }
 
@@ -233,37 +235,37 @@ export async function uploadImageToR2(
   authFetch: (url: string, options?: RequestInit) => Promise<Response>,
   type: "expense" | "cover" = "expense"
 ): Promise<UploadResult> {
-  console.log("[Upload] Starting upload for file:", file.name, file.size, file.type)
+  debugLog(`Starting upload: ${file.name} (${file.size} bytes, ${file.type})`)
 
   // 1. 壓縮圖片
-  console.log("[Upload] Compressing image...")
+  debugLog("Compressing image...")
   const compressedBlob = await compressImageToBlob(file, 1200, 1200, 0.8)
-  console.log("[Upload] Compressed:", compressedBlob.size, compressedBlob.type)
+  debugLog(`Compressed: ${compressedBlob.size} bytes, ${compressedBlob.type}`)
   const contentType = compressedBlob.type || "image/webp"
 
   // iOS 走後端上傳
   if (isIOSDevice()) {
-    console.log("[Upload] iOS detected, using backend upload")
+    debugLog("iOS: Using backend upload")
     const formData = new FormData()
     formData.append("file", compressedBlob, `image.${contentType === "image/webp" ? "webp" : "jpg"}`)
     formData.append("projectId", projectId)
     formData.append("type", type)
 
-    console.log("[Upload] Sending to /api/upload/direct...")
+    debugLog("Sending to /api/upload/direct...")
     const response = await authFetch("/api/upload/direct", {
       method: "POST",
       body: formData,
     })
 
-    console.log("[Upload] Response status:", response.status)
+    debugLog(`Response status: ${response.status}`)
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: "上傳失敗" }))
-      console.error("[Upload] Error:", error)
+      debugLog(`Error: ${JSON.stringify(error)}`, "error")
       throw new Error(error.error || "上傳圖片失敗")
     }
 
     const result = await response.json()
-    console.log("[Upload] Success:", result)
+    debugLog(`Success: ${result.publicUrl}`)
     return { url: result.publicUrl, key: result.key }
   }
 
