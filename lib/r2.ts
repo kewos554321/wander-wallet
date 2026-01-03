@@ -76,11 +76,29 @@ export async function deleteFile(key: string): Promise<void> {
 
 /**
  * 從完整 URL 提取 key
+ * 支援多種 URL 格式：
+ * - 自訂網域: https://images.yourdomain.com/expense/xxx
+ * - R2 預設: https://pub-xxx.r2.dev/expense/xxx
  */
 export function extractKeyFromUrl(url: string): string | null {
-  if (!url || !PUBLIC_URL) return null
-  if (url.startsWith(PUBLIC_URL)) {
+  if (!url) return null
+
+  // 嘗試匹配自訂網域
+  if (PUBLIC_URL && url.startsWith(PUBLIC_URL)) {
     return url.replace(`${PUBLIC_URL}/`, "")
   }
+
+  // 嘗試匹配 R2 預設 URL 格式: https://pub-xxx.r2.dev/key
+  const r2DefaultMatch = url.match(/^https:\/\/pub-[a-f0-9]+\.r2\.dev\/(.+)$/)
+  if (r2DefaultMatch) {
+    return r2DefaultMatch[1]
+  }
+
+  // 嘗試從 URL 路徑提取 (expense/xxx 或 cover/xxx)
+  const pathMatch = url.match(/((?:expense|cover)\/[^?]+)/)
+  if (pathMatch) {
+    return pathMatch[1]
+  }
+
   return null
 }
