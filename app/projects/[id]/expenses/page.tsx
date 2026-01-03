@@ -87,7 +87,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
     fetchExpenses()
     fetchProjectName()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id])
+  }, [id, user?.id])
 
   async function fetchExpenses() {
     try {
@@ -920,6 +920,19 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
           )}
         </DialogContent>
       </Dialog>
+
+      {/* AI 語音記帳對話框 */}
+      <VoiceExpenseDialog
+        open={showVoiceDialog}
+        onOpenChange={setShowVoiceDialog}
+        projectId={id}
+        projectName={projectName}
+        members={members}
+        currentUserMemberId={currentUserMemberId}
+        onSuccess={() => {
+          fetchExpenses()
+        }}
+      />
 
     </AppLayout>
   )
