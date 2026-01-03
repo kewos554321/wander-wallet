@@ -31,6 +31,23 @@ export async function getUploadUrl(key: string, contentType: string): Promise<st
 }
 
 /**
+ * 直接上傳檔案到 R2（後端使用）
+ * @param key 檔案路徑
+ * @param body 檔案內容
+ * @param contentType MIME 類型
+ */
+export async function uploadToR2(key: string, body: Buffer, contentType: string): Promise<void> {
+  const command = new PutObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+    Body: body,
+    ContentType: contentType,
+  })
+
+  await r2Client.send(command)
+}
+
+/**
  * 取得檔案的公開 URL
  */
 export function getPublicUrl(key: string): string {

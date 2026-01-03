@@ -199,7 +199,19 @@ export interface UploadResult {
 }
 
 /**
+ * 偵測是否為 iOS 裝置
+ */
+function isIOSDevice(): boolean {
+  if (typeof navigator === "undefined") return false
+  const userAgent = navigator.userAgent || ""
+  return /iPad|iPhone|iPod/.test(userAgent) && !(window as unknown as { MSStream?: unknown }).MSStream
+}
+
+/**
  * 上傳圖片到 R2
+ * - iOS: 透過後端上傳（避免 CORS 問題）
+ * - Android/其他: 使用預簽名 URL 直傳
+ *
  * @param file 圖片檔案
  * @param projectId 專案 ID
  * @param authFetch 認證的 fetch 函數
@@ -215,6 +227,28 @@ export async function uploadImageToR2(
   const compressedBlob = await compressImageToBlob(file, 1200, 1200, 0.8)
   const contentType = compressedBlob.type || "image/webp"
 
+  // iOS 走後端上傳
+  if (isIOSDevice()) {
+    const formData = new FormData()
+    formData.append("file", compressedBlob, `image.${contentType === "image/webp" ? "webp" : "jpg"}`)
+    formData.append("projectId", projectId)
+    formData.append("type", type)
+
+    const response = await authFetch("/api/upload/direct", {
+      method: "POST",
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: "上傳失敗" }))
+      throw new Error(error.error || "上傳圖片失敗")
+    }
+
+    const { publicUrl, key } = await response.json()
+    return { url: publicUrl, key }
+  }
+
+  // Android/其他走預簽名 URL 直傳
   // 2. 取得預簽名上傳 URL
   const urlResponse = await authFetch("/api/upload", {
     method: "POST",
