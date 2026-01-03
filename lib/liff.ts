@@ -231,10 +231,10 @@ export async function sendExpenseNotificationToChat(data: ExpenseNotificationDat
       ],
       alignItems: "center" as const,
     },
-    // 第二行：分攤資訊
+    // 第二行：付款人 + 分攤資訊
     {
       type: "text" as const,
-      text: `${data.participantCount}人分攤 · 每人 ${perPersonAmount}`,
+      text: `${data.payerName} 付 · ${data.participantCount}人分攤 · 每人 ${perPersonAmount}`,
       size: "xs" as const,
       color: "#9E9E9E",
       margin: "sm" as const,

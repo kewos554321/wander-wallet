@@ -297,9 +297,9 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           setCustomShares(customSharesMap)
         }
 
-        // 儲存原始資料用於計算變更
+        // 儲存原始資料用於計算變更（確保 amount 是數字類型）
         setOriginalData({
-          amount: expense.amount,
+          amount: Number(expense.amount),
           description: expense.description,
           category: expense.category,
           paidByMemberId: expense.payer.id,
@@ -377,7 +377,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   function calculateChanges(
     finalCategory: string,
     finalImageUrl: string | null,
-    amountNum: number
+    amountNum: number,
+    hasNewImageUpload: boolean = false
   ): ExpenseChange[] {
     if (!originalData || mode !== "edit") return []
 
@@ -452,14 +453,19 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       })
     }
 
-    // 圖片變更
-    const hasImageChanged = originalData.image !== finalImageUrl
-    if (hasImageChanged) {
+    // 圖片變更 - 偵測圖片存在狀態的改變或新圖片上傳
+    const originalHasImage = !!originalData.image
+    const newHasImage = !!finalImageUrl
+    // 1. 圖片存在狀態改變（有→無 或 無→有）
+    // 2. 或有新上傳的檔案替換原本的圖片
+    const imagePresenceChanged = originalHasImage !== newHasImage
+    const imageReplaced = originalHasImage && newHasImage && hasNewImageUpload
+    if (imagePresenceChanged || imageReplaced) {
       changes.push({
         field: "image",
         label: "圖片",
-        oldValue: originalData.image ? "有圖片" : "無",
-        newValue: finalImageUrl ? "有圖片" : "無",
+        oldValue: originalHasImage ? "有圖片" : "無",
+        newValue: imageReplaced ? "已更換" : (newHasImage ? "有圖片" : "無"),
       })
     }
 
@@ -614,8 +620,9 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           const payerName = payerMember?.displayName || "未知"
           const operationType: "create" | "update" = mode === "create" ? "create" : "update"
 
-          // 計算變更內容（編輯模式）
-          const changes = calculateChanges(finalCategory, finalImageUrl, amountNum)
+          // 計算變更內容（編輯模式）- 傳入是否有新上傳圖片的資訊
+          const hasNewImageUpload = imageValue.pendingFile !== null
+          const changes = calculateChanges(finalCategory, finalImageUrl, amountNum, hasNewImageUpload)
 
           sendExpenseNotificationToChat({
             operationType,
