@@ -832,22 +832,22 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
 
               </div>
 
-      {/* 浮動按鈕群組 - 橫向排列 */}
+      {/* 浮動按鈕群組 - 垂直排列 */}
       {!selectMode && (
-        <div className="fixed bottom-6 right-4 z-50 flex items-center gap-3">
+        <div className="fixed bottom-6 right-4 z-50 flex flex-col items-center gap-3">
           {/* AI 語音記帳按鈕 */}
           <Button
             size="icon"
-            className="h-12 w-12 rounded-full shadow-lg shadow-violet-500/25 bg-gradient-to-br from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 hover:scale-105 active:scale-95 transition-all duration-200 text-white ring-2 ring-white/20"
+            className="h-12 w-12 rounded-full shadow-lg shadow-fuchsia-500/25 bg-gradient-to-br from-fuchsia-500 to-violet-500 hover:from-fuchsia-600 hover:to-violet-600 hover:scale-105 active:scale-95 transition-all duration-200 text-white ring-2 ring-white/20"
             onClick={() => setShowVoiceDialog(true)}
           >
             <Sparkles className="h-5 w-5" />
           </Button>
 
-          {/* 新增支出按鈕 - 主要動作 */}
+          {/* 新增支出按鈕 - 主要動作（黑灰漸層） */}
           <Link href={`/projects/${id}/expenses/new`}>
-            <Button size="icon" className="h-14 w-14 rounded-full shadow-xl shadow-primary/30 bg-primary hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all duration-200 ring-4 ring-primary/20">
-              <Plus className="h-6 w-6" />
+            <Button size="icon" className="h-12 w-12 rounded-full shadow-lg shadow-slate-900/25 bg-gradient-to-br from-zinc-400 to-zinc-900 hover:from-zinc-300 hover:to-zinc-800 hover:scale-105 active:scale-95 transition-all duration-200 text-white ring-2 ring-white/20">
+              <Plus className="h-5 w-5" />
             </Button>
           </Link>
         </div>
