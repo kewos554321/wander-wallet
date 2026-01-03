@@ -62,7 +62,7 @@ export function DebugOverlay() {
     return (
       <button
         onClick={() => setIsExpanded(true)}
-        className="fixed bottom-44 right-3 z-[9999] w-10 h-10 bg-black/80 backdrop-blur rounded-full border border-slate-600 shadow-xl flex items-center justify-center"
+        className="fixed bottom-6 left-4 z-[9999] w-10 h-10 bg-black/80 backdrop-blur rounded-full border border-slate-600 shadow-xl flex items-center justify-center"
       >
         <Bug className="h-4 w-4 text-green-400" />
         {logs.length > 0 && (
@@ -76,7 +76,7 @@ export function DebugOverlay() {
 
   // Expanded: show full panel
   return (
-    <div className="fixed bottom-44 left-2 right-2 z-[9999] max-h-[30vh] bg-black/95 backdrop-blur rounded-lg border border-slate-700 shadow-xl text-xs font-mono">
+    <div className="fixed bottom-20 left-2 right-2 z-[9999] max-h-[30vh] bg-black/95 backdrop-blur rounded-lg border border-slate-700 shadow-xl text-xs font-mono">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700">
         <div className="flex items-center gap-2">
