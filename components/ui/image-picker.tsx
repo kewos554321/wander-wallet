@@ -48,6 +48,7 @@ export function ImagePicker({
   const [showCamera, setShowCamera] = useState(false)
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -182,6 +183,17 @@ export function ImagePicker({
 
   return (
     <div className={className}>
+      {/* 拍照專用 input - 使用 capture 屬性直接開啟相機（iOS LIFF 兼容） */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleImageSelect}
+        className="hidden"
+        disabled={disabled}
+      />
+      {/* 選擇圖片專用 input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -217,7 +229,7 @@ export function ImagePicker({
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={openCamera}
+            onClick={() => cameraInputRef.current?.click()}
             disabled={disabled}
             className="flex-1 h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary/50 dark:hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground"
           >
@@ -295,6 +307,7 @@ export function SimpleImagePicker({
   const [showCameraDialog, setShowCameraDialog] = useState(false)
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -386,6 +399,17 @@ export function SimpleImagePicker({
 
   return (
     <div className={className}>
+      {/* 拍照專用 input - 使用 capture 屬性直接開啟相機（iOS LIFF 兼容） */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleImageSelect}
+        className="hidden"
+        disabled={disabled || uploading}
+      />
+      {/* 選擇圖片專用 input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -417,7 +441,7 @@ export function SimpleImagePicker({
           {showCamera && (
             <button
               type="button"
-              onClick={openCamera}
+              onClick={() => cameraInputRef.current?.click()}
               disabled={disabled || uploading}
               className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
