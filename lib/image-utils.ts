@@ -90,13 +90,17 @@ export async function compressImageToBlob(
   maxHeight: number,
   quality: number
 ): Promise<Blob> {
+  console.log("[Compress] Getting EXIF orientation...")
   const orientation = await getExifOrientation(file)
+  console.log("[Compress] Orientation:", orientation)
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = (e) => {
+      console.log("[Compress] File read complete, creating image...")
       const img = document.createElement("img")
       img.onload = () => {
+        console.log("[Compress] Image loaded:", img.width, "x", img.height)
         const canvas = document.createElement("canvas")
         let { width, height } = img
 
@@ -148,16 +152,20 @@ export async function compressImageToBlob(
         }
 
         ctx.drawImage(img, 0, 0, width, height)
+        console.log("[Compress] Canvas drawn, converting to blob...")
 
         // 優先使用 WebP 格式
         canvas.toBlob(
           (blob) => {
+            console.log("[Compress] WebP blob result:", blob?.size, blob?.type)
             if (blob) {
               resolve(blob)
             } else {
               // 回退到 JPEG
+              console.log("[Compress] WebP failed, trying JPEG...")
               canvas.toBlob(
                 (jpegBlob) => {
+                  console.log("[Compress] JPEG blob result:", jpegBlob?.size, jpegBlob?.type)
                   if (jpegBlob) {
                     resolve(jpegBlob)
                   } else {
@@ -225,8 +233,12 @@ export async function uploadImageToR2(
   authFetch: (url: string, options?: RequestInit) => Promise<Response>,
   type: "expense" | "cover" = "expense"
 ): Promise<UploadResult> {
+  console.log("[Upload] Starting upload for file:", file.name, file.size, file.type)
+
   // 1. 壓縮圖片
+  console.log("[Upload] Compressing image...")
   const compressedBlob = await compressImageToBlob(file, 1200, 1200, 0.8)
+  console.log("[Upload] Compressed:", compressedBlob.size, compressedBlob.type)
   const contentType = compressedBlob.type || "image/webp"
 
   // iOS 走後端上傳
