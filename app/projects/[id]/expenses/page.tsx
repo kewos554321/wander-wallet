@@ -673,12 +673,10 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
 
                           {/* 第四行：位置（如果有） */}
                           {expense.location && (
-                            <div className="flex items-start gap-1 mt-1.5">
+                            <div className={`flex items-start gap-1 mt-1.5 ${expense.image ? "pr-12" : ""}`}>
                               <MapPin className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
-                              <span className="text-xs text-muted-foreground line-clamp-1">
-                                {expense.location.length > 40
-                                  ? expense.location.substring(0, 40) + "..."
-                                  : expense.location}
+                              <span className="text-xs text-muted-foreground truncate">
+                                {expense.location}
                               </span>
                             </div>
                           )}
