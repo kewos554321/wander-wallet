@@ -204,7 +204,9 @@ export interface UploadResult {
 function isIOSDevice(): boolean {
   if (typeof navigator === "undefined") return false
   const userAgent = navigator.userAgent || ""
-  return /iPad|iPhone|iPod/.test(userAgent) && !(window as unknown as { MSStream?: unknown }).MSStream
+  const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !(window as unknown as { MSStream?: unknown }).MSStream
+  console.log("[Upload] Platform detection:", { userAgent, isIOS })
+  return isIOS
 }
 
 /**
@@ -229,23 +231,28 @@ export async function uploadImageToR2(
 
   // iOS 走後端上傳
   if (isIOSDevice()) {
+    console.log("[Upload] iOS detected, using backend upload")
     const formData = new FormData()
     formData.append("file", compressedBlob, `image.${contentType === "image/webp" ? "webp" : "jpg"}`)
     formData.append("projectId", projectId)
     formData.append("type", type)
 
+    console.log("[Upload] Sending to /api/upload/direct...")
     const response = await authFetch("/api/upload/direct", {
       method: "POST",
       body: formData,
     })
 
+    console.log("[Upload] Response status:", response.status)
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: "上傳失敗" }))
+      console.error("[Upload] Error:", error)
       throw new Error(error.error || "上傳圖片失敗")
     }
 
-    const { publicUrl, key } = await response.json()
-    return { url: publicUrl, key }
+    const result = await response.json()
+    console.log("[Upload] Success:", result)
+    return { url: result.publicUrl, key: result.key }
   }
 
   // Android/其他走預簽名 URL 直傳
