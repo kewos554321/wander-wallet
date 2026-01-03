@@ -4,69 +4,114 @@ import { debugLog } from "./debug"
  * 讀取圖片的 EXIF 方向資訊
  */
 export async function getExifOrientation(file: File): Promise<number> {
+  debugLog(`EXIF: Starting for ${file.name} (${file.size} bytes)`)
+
   return new Promise((resolve) => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const view = new DataView(e.target?.result as ArrayBuffer)
+    // 設置超時，避免卡住
+    const timeout = setTimeout(() => {
+      debugLog("EXIF: Timeout after 5s, using default", "warn")
+      resolve(1)
+    }, 5000)
 
-      // 檢查是否為 JPEG
-      if (view.getUint16(0, false) !== 0xFFD8) {
-        resolve(1)
-        return
-      }
+    try {
+      const reader = new FileReader()
 
-      let offset = 2
-      while (offset < view.byteLength) {
-        const marker = view.getUint16(offset, false)
-        offset += 2
+      reader.onload = (e) => {
+        clearTimeout(timeout)
+        debugLog("EXIF: FileReader onload fired")
 
-        if (marker === 0xFFE1) {
-          // EXIF marker
-          const length = view.getUint16(offset, false)
-          offset += 2
+        try {
+          const view = new DataView(e.target?.result as ArrayBuffer)
+          debugLog(`EXIF: DataView created, byteLength=${view.byteLength}`)
 
-          // 檢查 EXIF header
-          const exifHeader = view.getUint32(offset, false)
-          if (exifHeader !== 0x45786966) {
+          // 檢查是否為 JPEG
+          if (view.getUint16(0, false) !== 0xFFD8) {
+            debugLog("EXIF: Not JPEG, returning 1")
             resolve(1)
             return
           }
 
-          offset += 6 // Skip 'Exif\0\0'
-          const tiffOffset = offset
+          let offset = 2
+          while (offset < view.byteLength) {
+            const marker = view.getUint16(offset, false)
+            offset += 2
 
-          // 檢查 byte order
-          const littleEndian = view.getUint16(offset, false) === 0x4949
-          offset += 8 // Skip to first IFD
+            if (marker === 0xFFE1) {
+              // EXIF marker
+              const length = view.getUint16(offset, false)
+              offset += 2
 
-          const ifdOffset = view.getUint32(offset, littleEndian)
-          offset = tiffOffset + ifdOffset
+              // 檢查 EXIF header
+              const exifHeader = view.getUint32(offset, false)
+              if (exifHeader !== 0x45786966) {
+                debugLog("EXIF: Invalid header, returning 1")
+                resolve(1)
+                return
+              }
 
-          const numEntries = view.getUint16(offset, littleEndian)
-          offset += 2
+              offset += 6 // Skip 'Exif\0\0'
+              const tiffOffset = offset
 
-          for (let i = 0; i < numEntries; i++) {
-            const tag = view.getUint16(offset, littleEndian)
-            if (tag === 0x0112) {
-              // Orientation tag
-              const orientation = view.getUint16(offset + 8, littleEndian)
-              resolve(orientation)
+              // 檢查 byte order
+              const littleEndian = view.getUint16(offset, false) === 0x4949
+              offset += 8 // Skip to first IFD
+
+              const ifdOffset = view.getUint32(offset, littleEndian)
+              offset = tiffOffset + ifdOffset
+
+              const numEntries = view.getUint16(offset, littleEndian)
+              offset += 2
+
+              for (let i = 0; i < numEntries; i++) {
+                const tag = view.getUint16(offset, littleEndian)
+                if (tag === 0x0112) {
+                  // Orientation tag
+                  const orientation = view.getUint16(offset + 8, littleEndian)
+                  debugLog(`EXIF: Found orientation=${orientation}`)
+                  resolve(orientation)
+                  return
+                }
+                offset += 12
+              }
+              debugLog("EXIF: No orientation tag found, returning 1")
+              resolve(1)
               return
+            } else if ((marker & 0xFF00) !== 0xFF00) {
+              break
+            } else {
+              offset += view.getUint16(offset, false)
             }
-            offset += 12
           }
+          debugLog("EXIF: No EXIF marker found, returning 1")
           resolve(1)
-          return
-        } else if ((marker & 0xFF00) !== 0xFF00) {
-          break
-        } else {
-          offset += view.getUint16(offset, false)
+        } catch (err) {
+          debugLog(`EXIF: Parse error: ${err}`, "error")
+          resolve(1)
         }
       }
+
+      reader.onerror = (err) => {
+        clearTimeout(timeout)
+        debugLog(`EXIF: FileReader error: ${err}`, "error")
+        resolve(1)
+      }
+
+      reader.onabort = () => {
+        clearTimeout(timeout)
+        debugLog("EXIF: FileReader aborted", "warn")
+        resolve(1)
+      }
+
+      debugLog("EXIF: Calling readAsArrayBuffer...")
+      const slice = file.slice(0, 65536)
+      debugLog(`EXIF: Sliced to ${slice.size} bytes`)
+      reader.readAsArrayBuffer(slice)
+      debugLog("EXIF: readAsArrayBuffer called, waiting for onload...")
+    } catch (err) {
+      clearTimeout(timeout)
+      debugLog(`EXIF: Unexpected error: ${err}`, "error")
       resolve(1)
     }
-    reader.onerror = () => resolve(1)
-    reader.readAsArrayBuffer(file.slice(0, 65536)) // 只讀前 64KB
   })
 }
 
