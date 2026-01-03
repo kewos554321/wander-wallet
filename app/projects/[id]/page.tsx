@@ -603,34 +603,40 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
                   label="匯出"
                 />
                 <FeatureCard
-                  href={`/projects/${id}/currency`}
-                  icon={<ArrowRightLeft className="h-5 w-5 text-amber-600 dark:text-amber-400" />}
-                  iconBgClass="bg-amber-50 dark:bg-amber-950"
-                  label="幣種"
-                />
-                <FeatureCard
                   href={`/projects/${id}/settings`}
                   icon={<Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />}
                   iconBgClass="bg-slate-100 dark:bg-slate-800"
                   label="設定"
                 />
                 <FeatureCard
-                  href={`/projects/${id}/notes`}
-                  icon={<StickyNote className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />}
-                  iconBgClass="bg-yellow-50 dark:bg-yellow-950"
-                  label="筆記"
-                />
-              </div>
-            </div>
-
-            {/* 第二頁 - 歷史紀錄 */}
-            <div className="flex-shrink-0 w-full snap-center">
-              <div className="grid grid-cols-4 gap-2">
-                <FeatureCard
                   href={`/projects/${id}/activity-logs`}
                   icon={<History className="h-5 w-5 text-purple-600 dark:text-purple-400" />}
                   iconBgClass="bg-purple-50 dark:bg-purple-950"
                   label="歷史"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/mileage`}
+                  icon={<Car className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
+                  iconBgClass="bg-blue-50 dark:bg-blue-950"
+                  label="里程"
+                />
+              </div>
+            </div>
+
+            {/* 第二頁 */}
+            <div className="flex-shrink-0 w-full snap-center">
+              <div className="grid grid-cols-4 gap-2">
+                <FeatureCard
+                  href={`/projects/${id}/currency`}
+                  icon={<ArrowRightLeft className="h-5 w-5 text-amber-600 dark:text-amber-400" />}
+                  iconBgClass="bg-amber-50 dark:bg-amber-950"
+                  label="幣種"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/notes`}
+                  icon={<StickyNote className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />}
+                  iconBgClass="bg-yellow-50 dark:bg-yellow-950"
+                  label="筆記"
                 />
               </div>
             </div>
