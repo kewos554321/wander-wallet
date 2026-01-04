@@ -287,7 +287,7 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
       }))
       .sort((a, b) => a.timestamp - b.timestamp)
       .slice(-7)
-      .map(({ timestamp, ...rest }) => rest)
+      .map(({ timestamp: _timestamp, ...rest }) => rest)
 
     return { categoryTrendData: data, trendCategories: categories }
   }, [project])

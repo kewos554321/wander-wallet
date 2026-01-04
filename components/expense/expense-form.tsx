@@ -20,7 +20,9 @@ import { Calculator as CalculatorIcon, CalendarIcon, Trash2 } from "lucide-react
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
 import { ImagePicker, type ImagePickerValue } from "@/components/ui/image-picker"
 import { Calculator } from "@/components/ui/calculator"
+import { CurrencySelect } from "@/components/ui/currency-select"
 import { CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
+import { type CurrencyCode, DEFAULT_CURRENCY, formatCurrency, getCurrencyInfo } from "@/lib/constants/currencies"
 
 interface Member {
   id: string
@@ -54,6 +56,7 @@ interface ExpenseParticipant {
 interface Expense {
   id: string
   amount: number
+  currency: string | null
   description: string | null
   category: string | null
   image: string | null
@@ -150,6 +153,11 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   // 計算機狀態
   const [showCalculator, setShowCalculator] = useState(false)
 
+  // 幣別相關狀態
+  const [currency, setCurrency] = useState<CurrencyCode>(DEFAULT_CURRENCY)
+  const [projectCurrency, setProjectCurrency] = useState<CurrencyCode>(DEFAULT_CURRENCY)
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null)
+
   // 自動獲取當下地點
   const getCurrentLocation = useCallback(async () => {
     if (!navigator.geolocation) return
@@ -198,6 +206,26 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, expenseId, mode])
 
+  // 當幣別變更時，獲取匯率
+  useEffect(() => {
+    async function fetchExchangeRate() {
+      if (currency === projectCurrency) {
+        setExchangeRate(null)
+        return
+      }
+      try {
+        const res = await authFetch(`/api/exchange-rates?from=${currency}&to=${projectCurrency}&amount=1`)
+        if (res.ok) {
+          const data = await res.json()
+          setExchangeRate(data.exchangeRate)
+        }
+      } catch (error) {
+        console.error("獲取匯率失敗:", error)
+      }
+    }
+    fetchExchangeRate()
+  }, [currency, projectCurrency, authFetch])
+
   async function fetchProjectAndMembers() {
     try {
       const [projectRes, membersRes] = await Promise.all([
@@ -208,6 +236,10 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       if (projectRes.ok) {
         const projectData = await projectRes.json()
         setProjectName(projectData.name)
+        // 設定專案幣別
+        const projCurrency = projectData.currency || DEFAULT_CURRENCY
+        setProjectCurrency(projCurrency)
+        setCurrency(projCurrency) // 預設使用專案幣別
       }
 
       if (membersRes.ok) {
@@ -242,6 +274,9 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       if (projectRes.ok) {
         const projectData = await projectRes.json()
         setProjectName(projectData.name)
+        // 設定專案幣別
+        const projCurrency = projectData.currency || DEFAULT_CURRENCY
+        setProjectCurrency(projCurrency)
       }
 
       if (expenseRes.ok) {
@@ -249,6 +284,9 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
 
         setDescription(expense.description || "")
         setAmount(String(expense.amount))
+        // 設定費用幣別
+        const expCurrency = expense.currency || projectCurrency || DEFAULT_CURRENCY
+        setCurrency(expCurrency as CurrencyCode)
         setImageValue({
           image: expense.image || null,
           pendingFile: null,
@@ -593,6 +631,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         body: JSON.stringify({
           paidByMemberId: paidBy,
           amount: amountNum,
+          currency,
           description: description.trim() || null,
           category: finalCategory,
           image: finalImageUrl || null,
@@ -759,8 +798,13 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
             />
           ) : (
             <>
-              <div className="flex items-center gap-2">
-                <span className="text-3xl font-bold text-primary">$</span>
+              <div className="flex items-center gap-3">
+                <CurrencySelect
+                  value={currency}
+                  onChange={setCurrency}
+                  showName={false}
+                  className="shrink-0 h-12 min-w-[5rem] border-0 bg-white/50 dark:bg-slate-800/50 rounded-xl [&>span]:text-base [&>span]:font-semibold"
+                />
                 <Input
                   type="number"
                   step="0.01"
@@ -768,13 +812,22 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                   placeholder="0"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="text-4xl h-16 font-bold border-0 bg-transparent shadow-none focus-visible:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="flex-1 text-4xl h-14 font-bold border-0 bg-transparent shadow-none focus-visible:ring-0 px-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   required
                 />
               </div>
-              {amountNum > 0 && selectedParticipants.size > 0 && (
+              {/* 匯率預覽 */}
+              {exchangeRate && amountNum > 0 && (
                 <p className="text-sm text-muted-foreground mt-2">
-                  每人分攤 ${sharePerPerson.toFixed(2)}
+                  ≈ {formatCurrency(amountNum * exchangeRate, projectCurrency)}
+                  <span className="text-xs ml-1.5 opacity-70">
+                    (匯率 1:{exchangeRate.toFixed(4)})
+                  </span>
+                </p>
+              )}
+              {amountNum > 0 && selectedParticipants.size > 0 && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  每人分攤 {getCurrencyInfo(currency).symbol}{sharePerPerson.toFixed(2)}
                 </p>
               )}
             </>

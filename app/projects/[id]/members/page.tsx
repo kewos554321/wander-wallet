@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { User, Copy, Share2, UserMinus, Check, UserPlus, Search, Trash2, X, CheckSquare, MessageCircle, Link2, MoreHorizontal } from "lucide-react"
+import { User, Share2, UserMinus, Check, UserPlus, Search, Trash2, X, CheckSquare, MessageCircle, Link2, MoreHorizontal } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { getProjectShareUrl } from "@/lib/utils"

@@ -163,7 +163,7 @@ const ACTION_CONFIG: Record<ActionType, { label: string; icon: typeof Plus }> = 
   delete: { label: "刪除", icon: Trash2 },
 }
 
-const ENTITY_CONFIG: Record<EntityType, { label: string }> = {
+const _ENTITY_CONFIG: Record<EntityType, { label: string }> = {
   expense: { label: "費用" },
   member: { label: "成員" },
   project: { label: "專案" },
@@ -205,7 +205,7 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
     })
   }
 
-  const toggleEntity = (entity: EntityType) => {
+  const _toggleEntity = (entity: EntityType) => {
     setSelectedEntities((prev) => {
       const next = new Set(prev)
       if (next.has(entity)) {
@@ -341,7 +341,7 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
 
   useEffect(() => {
     fetchLogs(0, false)
-  }, [])
+  }, [fetchLogs])
 
   const loadMore = () => {
     if (!loadingMore && hasMore) {

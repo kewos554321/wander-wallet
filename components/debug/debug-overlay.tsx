@@ -14,7 +14,7 @@ interface LogEntry {
 export function DebugOverlay() {
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [isExpanded, setIsExpanded] = useState(false)
-  const [isVisible, setIsVisible] = useState(true)
+  const [isVisible, _setIsVisible] = useState(true)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {

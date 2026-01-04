@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { createActivityLog } from "@/lib/activity-log"
+import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 
 interface Participant {
   memberId: string
@@ -113,7 +114,19 @@ export async function POST(
     }
 
     const body = await req.json()
-    const { paidByMemberId, amount, description, category, image, location, latitude, longitude, participants, expenseDate } = body
+    const { paidByMemberId, amount, currency, description, category, image, location, latitude, longitude, participants, expenseDate } = body
+
+    // 獲取專案幣別
+    const project = await prisma.project.findUnique({
+      where: { id },
+      select: { currency: true },
+    })
+
+    if (!project) {
+      return NextResponse.json({ error: "專案不存在" }, { status: 404 })
+    }
+
+    const expenseCurrency = currency || project.currency || DEFAULT_CURRENCY
 
     // 驗證必填欄位
     if (!paidByMemberId || amount === undefined || amount === null || !participants || !Array.isArray(participants)) {
@@ -177,12 +190,13 @@ export async function POST(
       )
     }
 
-    // 創建費用記錄
+    // 創建費用記錄（匯率轉換在結算時執行）
     const expense = await prisma.expense.create({
       data: {
         projectId: id,
         paidByMemberId,
         amount: amountNum,
+        currency: expenseCurrency,
         description: description?.trim() || null,
         category: category?.trim() || null,
         image: image || null,
@@ -246,6 +260,7 @@ export async function POST(
       metadata: {
         description: expense.description,
         amount: Number(expense.amount),
+        currency: expense.currency,
         category: expense.category,
         payerName: expense.payer.displayName,
         expenseDate: expense.expenseDate.toISOString(),

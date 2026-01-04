@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { Camera, ImagePlus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,14 +15,12 @@ import {
  * iOS 的 LIFF 環境不支援 getUserMedia，需要使用 file input with capture
  */
 function useIsIOS() {
-  const [isIOS, setIsIOS] = useState(false)
-
-  useEffect(() => {
+  const [isIOS] = useState(() => {
+    if (typeof window === "undefined") return false
     const userAgent = navigator.userAgent || navigator.vendor
     // 偵測 iOS 裝置（iPhone, iPad, iPod）
-    const iosDevice = /iPad|iPhone|iPod/.test(userAgent) && !(window as unknown as { MSStream?: unknown }).MSStream
-    setIsIOS(iosDevice)
-  }, [])
+    return /iPad|iPhone|iPod/.test(userAgent) && !(window as unknown as { MSStream?: unknown }).MSStream
+  })
 
   return isIOS
 }

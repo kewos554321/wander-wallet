@@ -14,6 +14,14 @@ import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
 import { Calendar as CalendarIcon, Loader2, Trash2 } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 import { CoverPicker } from "@/components/cover-picker"
+import { CurrencySelect } from "@/components/ui/currency-select"
+import {
+  type CurrencyCode,
+  DEFAULT_CURRENCY,
+  SUPPORTED_CURRENCIES,
+  getCurrencyInfo,
+} from "@/lib/constants/currencies"
+import { Info } from "lucide-react"
 
 interface Project {
   id: string
@@ -21,15 +29,18 @@ interface Project {
   description: string | null
   cover: string | null
   budget: string | null
+  currency: string | null
   startDate: string | null
   endDate: string | null
   joinMode: string
+  customRates: Record<string, number> | null
   createdBy: string
   creator: {
     id: string
     name: string | null
     email: string
   }
+  expenses?: Array<{ currency: string }>
 }
 
 const JOIN_MODE_OPTIONS = [
@@ -79,6 +90,9 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
   const [endDate, setEndDate] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [joinMode, setJoinMode] = useState("both")
+  const [currency, setCurrency] = useState<CurrencyCode>(DEFAULT_CURRENCY)
+  const [customRates, setCustomRates] = useState<Record<string, string>>({})
+  const [expenseCurrencies, setExpenseCurrencies] = useState<string[]>([])
 
   const backHref = `/projects/${id}`
 
@@ -113,6 +127,27 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
         setCover(data.cover)
         setBudget(data.budget ? String(Number(data.budget)) : "")
         setJoinMode(data.joinMode || "both")
+        setCurrency((data.currency as CurrencyCode) || DEFAULT_CURRENCY)
+
+        // 設定自訂匯率
+        if (data.customRates) {
+          const ratesStr: Record<string, string> = {}
+          for (const [curr, rate] of Object.entries(data.customRates)) {
+            ratesStr[curr] = String(rate)
+          }
+          setCustomRates(ratesStr)
+        }
+
+        // 收集專案中使用的幣別（排除結算幣別）
+        if (data.expenses) {
+          const currencies = new Set<string>()
+          data.expenses.forEach((exp: { currency: string }) => {
+            if (exp.currency && exp.currency !== data.currency) {
+              currencies.add(exp.currency)
+            }
+          })
+          setExpenseCurrencies(Array.from(currencies))
+        }
 
         if (data.startDate) {
           const start = isoToLocalDate(data.startDate)
@@ -165,9 +200,17 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
           description: description.trim() || null,
           cover: cover,
           budget: budget ? Number(budget) : null,
+          currency: currency,
           startDate: startDate || null,
           endDate: endDate || null,
           joinMode: joinMode,
+          customRates: Object.keys(customRates).length > 0
+            ? Object.fromEntries(
+                Object.entries(customRates)
+                  .filter(([, v]) => v.trim() !== "")
+                  .map(([k, v]) => [k, Number(v)])
+              )
+            : null,
         }),
       })
 
@@ -328,6 +371,76 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
           </div>
           <p className="text-xs text-muted-foreground">設定預算後，可在專案頁面查看花費進度</p>
         </div>
+
+        {/* 結算幣別 */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            結算幣別
+          </label>
+          <CurrencySelect
+            value={currency}
+            onChange={setCurrency}
+            disabled={saving}
+            className="w-full"
+          />
+          <p className="text-xs text-muted-foreground">
+            所有費用將以此幣別進行結算計算
+          </p>
+        </div>
+
+        {/* 自訂匯率 */}
+        {expenseCurrencies.length > 0 && (
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">
+                自訂匯率（選填）
+              </label>
+              <p className="text-xs text-muted-foreground">
+                若不設定，將使用即時匯率進行結算
+              </p>
+            </div>
+            <div className="space-y-2">
+              {expenseCurrencies.map((curr) => {
+                const info = getCurrencyInfo(curr)
+                return (
+                  <div key={curr} className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 w-24 shrink-0">
+                      <span className="text-lg">{info.symbol}</span>
+                      <span className="text-sm font-medium">{curr}</span>
+                    </div>
+                    <span className="text-muted-foreground">=</span>
+                    <div className="flex-1 relative">
+                      <Input
+                        type="number"
+                        step="0.0001"
+                        min="0"
+                        placeholder="使用即時匯率"
+                        value={customRates[curr] || ""}
+                        onChange={(e) => {
+                          setCustomRates((prev) => ({
+                            ...prev,
+                            [curr]: e.target.value,
+                          }))
+                        }}
+                        disabled={saving}
+                        className="pr-16"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                        {currency}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-900">
+              <Info className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                自訂匯率會影響結算計算。例如 1 {expenseCurrencies[0]} = {customRates[expenseCurrencies[0]] || "?"} {currency}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* 專案描述 */}
         <div className="space-y-2">

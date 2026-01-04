@@ -1,11 +1,18 @@
 "use client"
 
-import { use, useEffect, useState } from "react"
+import { use, useEffect, useState, useCallback } from "react"
 import Image from "next/image"
 import { AppLayout } from "@/components/layout/app-layout"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -13,8 +20,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { ArrowRight, CheckCircle2, AlertCircle, TrendingUp, TrendingDown, User, Receipt, Wallet, Users, Share2, Copy, Check } from "lucide-react"
+import { ArrowRight, CheckCircle2, AlertCircle, TrendingUp, TrendingDown, User, Receipt, Wallet, Users, Share2, Copy, Check, Info, Settings } from "lucide-react"
+import Link from "next/link"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
+import { formatCurrency, DEFAULT_CURRENCY, getCurrencyInfo } from "@/lib/constants/currencies"
 
 interface Balance {
   memberId: string
@@ -45,6 +54,11 @@ interface SettleData {
     totalAmount: number
     totalShared: number
     isBalanced: boolean
+    currency?: string
+    exchangeRatesUsed?: Record<string, number>
+    defaultRates?: Record<string, number>
+    usingCustomRates?: Record<string, boolean>
+    hasCustomRates?: boolean
   }
 }
 
@@ -55,14 +69,10 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
+  const [displayCurrency, setDisplayCurrency] = useState<string | null>(null) // null = 使用專案幣別
   const authFetch = useAuthFetch()
 
-  useEffect(() => {
-    fetchSettleData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id])
-
-  async function fetchSettleData() {
+  const fetchSettleData = useCallback(async () => {
     try {
       const res = await authFetch(`/api/projects/${id}/settle`)
       if (res.ok) {
@@ -78,6 +88,33 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
     } finally {
       setLoading(false)
     }
+  }, [authFetch, id])
+
+  useEffect(() => {
+    fetchSettleData()
+  }, [fetchSettleData])
+
+  // 轉換金額到顯示幣別
+  function convertToDisplayCurrency(amount: number): number {
+    if (!displayCurrency || !data) return amount
+    const baseCurrency = data.summary.currency || DEFAULT_CURRENCY
+    if (displayCurrency === baseCurrency) return amount
+
+    // 查找匯率
+    const rates = data.summary.exchangeRatesUsed || {}
+    const defaultRates = data.summary.defaultRates || {}
+
+    // 如果顯示幣別在匯率表中，需要反向換算
+    const rate = rates[displayCurrency] || defaultRates[displayCurrency]
+    if (rate) {
+      return amount / rate
+    }
+    return amount
+  }
+
+  // 取得顯示用的幣別代碼
+  function getDisplayCurrencyCode(): string {
+    return displayCurrency || data?.summary.currency || DEFAULT_CURRENCY
   }
 
   // 生成分享文字
@@ -85,10 +122,11 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
     if (!data) return ""
 
     const { settlements, summary } = data
+    const currency = summary.currency || DEFAULT_CURRENCY
     const lines: string[] = []
 
     lines.push("💰 結算明細")
-    lines.push(`總支出：$${summary.totalAmount.toLocaleString("zh-TW")}`)
+    lines.push(`總支出：${formatCurrency(summary.totalAmount, currency)}`)
     lines.push("")
 
     if (settlements.length === 0) {
@@ -96,7 +134,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
     } else {
       lines.push("📋 轉帳清單：")
       settlements.forEach((s, idx) => {
-        lines.push(`${idx + 1}. ${s.from.displayName} ➡️ ${s.to.displayName}：$${s.amount.toLocaleString("zh-TW")}`)
+        lines.push(`${idx + 1}. ${s.from.displayName} ➡️ ${s.to.displayName}：${formatCurrency(s.amount, currency)}`)
       })
     }
 
@@ -163,15 +201,78 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
   return (
     <AppLayout title="結算" showBack backHref={backHref}>
       <div className="space-y-6 pb-20">
-        {/* 分享按鈕 */}
-        <div className="flex justify-end px-4">
-          <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Share2 className="h-4 w-4" />
-                分享結算
-              </Button>
-            </DialogTrigger>
+        {/* 匯率資訊提示 */}
+        {data?.summary.exchangeRatesUsed && Object.keys(data.summary.exchangeRatesUsed).length > 0 && (
+          <div className="mx-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+            <div className="flex items-start gap-2">
+              <Info className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+              <div className="space-y-1 flex-1">
+                <p className="text-sm font-medium">
+                  {data.summary.hasCustomRates ? "使用自訂匯率結算" : "使用即時匯率結算"}
+                </p>
+                <div className="text-xs text-muted-foreground space-y-0.5">
+                  {Object.entries(data.summary.exchangeRatesUsed).map(([curr, rate]) => {
+                    const isCustom = data.summary.usingCustomRates?.[curr]
+                    return (
+                      <div key={curr} className="flex items-center gap-2">
+                        <span>1 {curr} = {rate.toFixed(4)} {data.summary.currency}</span>
+                        {isCustom && (
+                          <span className="text-amber-600 dark:text-amber-400 text-[10px] px-1 py-0.5 bg-amber-100 dark:bg-amber-900/50 rounded">自訂</span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                <Link
+                  href={`/projects/${id}/settings`}
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
+                >
+                  <Settings className="h-3 w-3" />
+                  前往專案設定調整匯率
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 操作按鈕列 */}
+        <div className="flex justify-between items-center px-4">
+          {/* 顯示幣別選擇 */}
+          {data?.summary.exchangeRatesUsed && Object.keys(data.summary.exchangeRatesUsed).length > 0 ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">顯示幣別</span>
+              <Select
+                value={displayCurrency || data?.summary.currency || DEFAULT_CURRENCY}
+                onValueChange={(value) => setDisplayCurrency(value === (data?.summary.currency || DEFAULT_CURRENCY) ? null : value)}
+              >
+                <SelectTrigger size="sm" className="w-auto">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={data?.summary.currency || DEFAULT_CURRENCY}>
+                    {data?.summary.currency || DEFAULT_CURRENCY}
+                  </SelectItem>
+                  {Object.keys(data.summary.exchangeRatesUsed).map((currency) => (
+                    <SelectItem key={currency} value={currency}>
+                      {currency}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-[10px] text-muted-foreground">(僅供顯示參考)</span>
+            </div>
+          ) : (
+            <div />
+          )}
+
+            {/* 分享按鈕 */}
+            <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Share2 className="h-4 w-4" />
+                  分享
+                </Button>
+              </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>分享結算結果</DialogTitle>
@@ -212,7 +313,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                 </div>
               </div>
             </DialogContent>
-          </Dialog>
+            </Dialog>
         </div>
 
         {/* 總覽 */}
@@ -240,9 +341,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                   <Wallet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                  ${summary.totalAmount >= 10000
-                    ? (summary.totalAmount / 1000).toFixed(1) + 'k'
-                    : summary.totalAmount.toLocaleString("zh-TW", { maximumFractionDigits: 0 })}
+                  {formatCurrency(convertToDisplayCurrency(summary.totalAmount), getDisplayCurrencyCode())}
                 </span>
                 <span className="text-xs text-muted-foreground mt-1">總金額</span>
               </div>
@@ -254,10 +353,8 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                 </div>
                 <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
                   {balances.length > 0
-                    ? `$${(summary.totalAmount / balances.length) >= 10000
-                        ? ((summary.totalAmount / balances.length) / 1000).toFixed(1) + 'k'
-                        : (summary.totalAmount / balances.length).toLocaleString("zh-TW", { maximumFractionDigits: 0 })}`
-                    : '$0'}
+                    ? formatCurrency(convertToDisplayCurrency(summary.totalAmount / balances.length), getDisplayCurrencyCode())
+                    : formatCurrency(0, getDisplayCurrencyCode())}
                 </span>
                 <span className="text-xs text-muted-foreground mt-1">人均支出</span>
               </div>
@@ -356,7 +453,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-primary">
-                          ${s.amount.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {formatCurrency(convertToDisplayCurrency(s.amount), getDisplayCurrencyCode())}
                         </div>
                       </div>
                     </div>
@@ -416,7 +513,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                           <span className="font-medium">{b.displayName}</span>
                         </div>
                         <span className="text-green-600 font-bold">
-                          +${b.balance.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          +{formatCurrency(convertToDisplayCurrency(b.balance), getDisplayCurrencyCode())}
                         </span>
                       </div>
                     )
@@ -467,7 +564,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                           <span className="font-medium">{b.displayName}</span>
                         </div>
                         <span className="text-red-600 font-bold">
-                          ${b.balance.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {formatCurrency(convertToDisplayCurrency(Math.abs(b.balance)), getDisplayCurrencyCode())}
                         </span>
                       </div>
                     )
@@ -517,7 +614,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                           )}
                           <span className="font-medium text-muted-foreground">{b.displayName}</span>
                         </div>
-                        <span className="text-muted-foreground">$0.00</span>
+                        <span className="text-muted-foreground">{formatCurrency(0, getDisplayCurrencyCode())}</span>
                       </div>
                     )
                   })}

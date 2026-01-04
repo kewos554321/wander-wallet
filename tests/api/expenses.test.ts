@@ -68,7 +68,7 @@ const mockMembership = {
   role: "owner",
 }
 
-const mockMember2 = {
+const _mockMember2 = {
   id: "member-456",
   projectId: "project-123",
   userId: "user-456",

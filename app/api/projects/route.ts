@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 
 // 創建新專案
 export async function POST(req: NextRequest) {
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { name, description, cover, startDate, endDate, budget, joinMode } = body
+    const { name, description, cover, startDate, endDate, budget, currency, joinMode } = body
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return NextResponse.json({ error: "專案名稱必填" }, { status: 400 })
@@ -64,6 +65,7 @@ export async function POST(req: NextRequest) {
         description: description?.trim() || null,
         cover: cover || null,
         budget: budget ? Number(budget) : null,
+        currency: currency || DEFAULT_CURRENCY,
         startDate: startDateObj,
         endDate: endDateObj,
         joinMode: joinMode || "both",

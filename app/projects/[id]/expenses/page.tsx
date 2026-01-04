@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
+import { formatCurrency } from "@/lib/constants/currencies"
 import { sendDeleteNotificationToChat, sendBatchDeleteNotificationToChat } from "@/lib/liff"
 import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
 
@@ -49,6 +50,7 @@ interface ExpenseParticipant {
 interface Expense {
   id: string
   amount: number
+  currency: string
   description: string | null
   category: string | null
   image: string | null
@@ -657,7 +659,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                               {expense.description || "未知"}
                             </h3>
                             <p className="font-bold text-lg tabular-nums shrink-0">
-                              ${Number(expense.amount).toLocaleString("zh-TW")}
+                              {formatCurrency(Number(expense.amount), expense.currency)}
                             </p>
                           </div>
 
@@ -757,7 +759,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                                     key={p.id}
                                     className="h-5 w-5 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900"
                                     style={{ backgroundColor: getAvatarColor(avatarData.colorId) }}
-                                    title={`${p.member.displayName}: $${p.shareAmount}`}
+                                    title={`${p.member.displayName}: ${formatCurrency(Number(p.shareAmount), expense.currency)}`}
                                   >
                                     <Icon className="h-2.5 w-2.5 text-white" />
                                   </div>

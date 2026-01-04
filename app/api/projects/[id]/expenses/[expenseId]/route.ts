@@ -115,7 +115,7 @@ export async function PUT(
     }
 
     const body = await req.json()
-    const { paidByMemberId, amount, description, category, image, location, latitude, longitude, participants, expenseDate } = body
+    const { paidByMemberId, amount, currency, description, category, image, location, latitude, longitude, participants, expenseDate } = body
 
     // 獲取現有費用（包含付款人資訊）
     const existingExpense = await prisma.expense.findFirst({
@@ -189,10 +189,11 @@ export async function PUT(
       }
     }
 
-    // 更新費用（如果需要更新參與者，先刪除舊的再創建新的）
+    // 更新費用（匯率轉換在結算時執行）
     const updateData: {
       paidByMemberId?: string
       amount?: number
+      currency?: string
       description?: string | null
       category?: string | null
       image?: string | null
@@ -203,6 +204,7 @@ export async function PUT(
     } = {}
     if (paidByMemberId !== undefined) updateData.paidByMemberId = paidByMemberId
     if (amount !== undefined) updateData.amount = Number(amount)
+    if (currency !== undefined) updateData.currency = currency
     if (description !== undefined) updateData.description = description?.trim() || null
     if (category !== undefined) updateData.category = category?.trim() || null
     if (image !== undefined) updateData.image = image || null

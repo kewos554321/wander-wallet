@@ -32,8 +32,14 @@ declare global {
   }
 }
 
+// 檢查瀏覽器是否支援語音辨識
+function checkSpeechRecognitionSupport() {
+  if (typeof window === "undefined") return false
+  return !!(window.SpeechRecognition || window.webkitSpeechRecognition)
+}
+
 export function useSpeechRecognition() {
-  const [isSupported, setIsSupported] = useState(false)
+  const [isSupported] = useState(checkSpeechRecognitionSupport)
   const [isRecording, setIsRecording] = useState(false)
   const [transcript, setTranscript] = useState("")
   const [interimTranscript, setInterimTranscript] = useState("")
@@ -48,7 +54,6 @@ export function useSpeechRecognition() {
         : null
 
     if (SpeechRecognitionAPI) {
-      setIsSupported(true)
       const recognition = new SpeechRecognitionAPI()
       recognition.continuous = true
       recognition.interimResults = true

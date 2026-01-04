@@ -197,7 +197,7 @@ describe("POST /api/projects", () => {
       }),
     })
     const response = await POST(req)
-    const data = await response.json()
+    await response.json()
 
     expect(response.status).toBe(201)
     expect(prisma.project.create).toHaveBeenCalledWith(

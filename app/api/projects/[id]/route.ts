@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { Prisma } from "@prisma/client"
 
 // 獲取單個專案詳情
 export async function GET(
@@ -146,16 +147,18 @@ export async function PUT(
     }
 
     const body = await req.json()
-    const { name, description, cover, budget, startDate, endDate, joinMode } = body
+    const { name, description, cover, budget, currency, startDate, endDate, joinMode, customRates } = body
 
     const updateData: {
       name?: string
       description?: string | null
       cover?: string | null
       budget?: number | null
+      currency?: string
       startDate?: Date | null
       endDate?: Date | null
       joinMode?: string
+      customRates?: Prisma.InputJsonValue | typeof Prisma.DbNull
     } = {}
 
     if (name !== undefined) {
@@ -186,12 +189,34 @@ export async function PUT(
       }
     }
 
+    // 處理幣別更新
+    if (currency !== undefined) {
+      updateData.currency = currency
+    }
+
     // 處理加入模式更新
     if (joinMode !== undefined) {
       if (!["both", "create_only", "claim_only"].includes(joinMode)) {
         return NextResponse.json({ error: "無效的加入模式" }, { status: 400 })
       }
       updateData.joinMode = joinMode
+    }
+
+    // 處理自訂匯率更新
+    if (customRates !== undefined) {
+      if (customRates === null) {
+        updateData.customRates = Prisma.DbNull
+      } else if (typeof customRates === "object") {
+        // 驗證匯率格式
+        const validatedRates: Record<string, number> = {}
+        for (const [currency, rate] of Object.entries(customRates)) {
+          const rateNum = Number(rate)
+          if (!isNaN(rateNum) && rateNum > 0) {
+            validatedRates[currency] = rateNum
+          }
+        }
+        updateData.customRates = Object.keys(validatedRates).length > 0 ? validatedRates : Prisma.DbNull
+      }
     }
 
     // 處理日期更新
@@ -225,7 +250,7 @@ export async function PUT(
     // 驗證結束日期必須晚於出發日期
     const finalStartDate = startDateObj !== undefined ? startDateObj : undefined
     const finalEndDate = endDateObj !== undefined ? endDateObj : undefined
-    
+
     if (finalStartDate && finalEndDate && finalEndDate < finalStartDate) {
       return NextResponse.json({ error: "結束日期需晚於出發日期" }, { status: 400 })
     }

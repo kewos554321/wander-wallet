@@ -32,11 +32,13 @@ model Project {
   description String?
   cover       String?   // 封面圖片：preset:1-6 或 base64 data URL
   budget      Decimal?  @db.Decimal(12, 2) // 預算金額
+  currency    String    @default("TWD") // 結算幣別
   startDate   DateTime? @map("start_date")
   endDate     DateTime? @map("end_date")
   joinMode    String    @default("both") @map("join_mode") // 加入模式：create_only, claim_only, both
   memo        String?   @db.Text // 共享備忘錄
   mileageData Json?     @map("mileage_data") // 里程計算資料
+  customRates Json?     @map("custom_rates") // 自訂匯率 { "JPY": 0.22, "USD": 31.5 }
   createdBy   String    @map("created_by") @db.Uuid
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
@@ -80,6 +82,7 @@ model Expense {
   projectId   String   @map("project_id") @db.Uuid
   paidByMemberId String @map("paid_by_member_id") @db.Uuid
   amount      Decimal  @db.Decimal(10, 2)
+  currency    String   @default("TWD") // 費用幣別
   description String?
   category    String?
   image       String?  @db.Text // 收據/消費圖片：base64 data URL

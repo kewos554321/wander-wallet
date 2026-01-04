@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { convertCurrency } from "@/lib/services/exchange-rate"
 
 interface Balance {
   memberId: string
@@ -103,6 +105,15 @@ export async function GET(
       return NextResponse.json({ error: "無權限訪問此專案" }, { status: 403 })
     }
 
+    // 獲取專案幣別和自訂匯率
+    const project = await prisma.project.findUnique({
+      where: { id },
+      select: { currency: true, customRates: true },
+    })
+
+    const projectCurrency = project?.currency || DEFAULT_CURRENCY
+    const customRates = (project?.customRates as Record<string, number> | null) || {}
+
     // 獲取所有費用（只取未刪除的）
     const expenses = await prisma.expense.findMany({
       where: {
@@ -167,9 +178,39 @@ export async function GET(
       })
     })
 
-    // 計算每個成員的淨支出
+    // 收集所有不同幣別並即時換算
+    const exchangeRatesUsed: Record<string, number> = {}
+    const defaultRates: Record<string, number> = {} // 原始即時匯率
+    const uniqueCurrencies = new Set<string>()
+
     expenses.forEach((expense) => {
-      const paidAmount = Number(expense.amount)
+      if (expense.currency && expense.currency !== projectCurrency) {
+        uniqueCurrencies.add(expense.currency)
+      }
+    })
+
+    // 預先獲取所有需要的匯率（優先使用自訂匯率）
+    for (const currency of uniqueCurrencies) {
+      const conversion = await convertCurrency(1, currency, projectCurrency)
+      defaultRates[currency] = conversion.exchangeRate
+
+      // 優先使用自訂匯率，否則使用即時匯率
+      exchangeRatesUsed[currency] = customRates[currency] ?? conversion.exchangeRate
+    }
+
+    // 計算每個成員的淨支出（使用專案幣別計算的金額）
+    let totalPaid = 0
+    let totalShared = 0
+
+    for (const expense of expenses) {
+      // 即時換算
+      const rate = expense.currency === projectCurrency
+        ? 1
+        : (exchangeRatesUsed[expense.currency] || 1)
+      const paidAmount = Number(expense.amount) * rate
+
+      totalPaid += paidAmount
+
       const payerBalance = balanceMap.get(expense.paidByMemberId)
       if (payerBalance) {
         payerBalance.balance += paidAmount // 付了錢，餘額增加
@@ -177,31 +218,26 @@ export async function GET(
 
       // 扣除每個參與者應該分擔的金額
       expense.participants.forEach((participant) => {
-        const shareAmount = Number(participant.shareAmount)
+        const shareAmount = Number(participant.shareAmount) * rate
+        totalShared += shareAmount
         const participantBalance = balanceMap.get(participant.memberId)
         if (participantBalance) {
           participantBalance.balance -= shareAmount // 應該分擔，餘額減少
         }
       })
-    })
+    }
 
     const balances = Array.from(balanceMap.values())
-    const totalPaid = expenses.reduce(
-      (sum: number, e) => sum + Number(e.amount),
-      0
-    )
-    const totalShared = expenses.reduce(
-      (sum: number, e) =>
-        sum +
-        e.participants.reduce(
-          (pSum: number, p) => pSum + Number(p.shareAmount),
-          0
-        ),
-      0
-    )
 
     // 計算最優結算方案
     const settlements = calculateOptimalSettlements(balances)
+
+    // 判斷哪些幣別使用了自訂匯率
+    const usingCustomRates: Record<string, boolean> = {}
+    for (const currency of Object.keys(exchangeRatesUsed)) {
+      usingCustomRates[currency] = customRates[currency] !== undefined
+    }
+    const hasCustomRates = Object.values(usingCustomRates).some(Boolean)
 
     return NextResponse.json({
       balances,
@@ -211,6 +247,11 @@ export async function GET(
         totalAmount: totalPaid,
         totalShared,
         isBalanced: Math.abs(totalPaid - totalShared) < 0.01,
+        currency: projectCurrency,
+        exchangeRatesUsed: Object.keys(exchangeRatesUsed).length > 0 ? exchangeRatesUsed : undefined,
+        defaultRates: Object.keys(defaultRates).length > 0 ? defaultRates : undefined,
+        usingCustomRates: Object.keys(usingCustomRates).length > 0 ? usingCustomRates : undefined,
+        hasCustomRates,
       },
     })
   } catch (error) {
