@@ -10,14 +10,14 @@
   <line x1="50" y1="95" x2="150" y2="95" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
 
   <!-- Map/globe element -->
-  <circle cx="160" cy="45" r="20" stroke="var(--brand-400, #2dd4bf)" stroke-width="2" fill="none"/>
-  <ellipse cx="160" cy="45" rx="8" ry="20" stroke="var(--brand-400, #2dd4bf)" stroke-width="1.5" fill="none"/>
-  <line x1="140" y1="45" x2="180" y2="45" stroke="var(--brand-400, #2dd4bf)" stroke-width="1.5"/>
+  <circle cx="160" cy="45" r="20" stroke="var(--brand-400, #7ac9c6)" stroke-width="2" fill="none"/>
+  <ellipse cx="160" cy="45" rx="8" ry="20" stroke="var(--brand-400, #7ac9c6)" stroke-width="1.5" fill="none"/>
+  <line x1="140" y1="45" x2="180" y2="45" stroke="var(--brand-400, #7ac9c6)" stroke-width="1.5"/>
 
   <!-- Location pin -->
-  <path d="M165 40 L165 35 L170 40 L165 45 Z" fill="var(--brand-500, #14b8a6)"/>
+  <path d="M165 40 L165 35 L170 40 L165 45 Z" fill="var(--brand-500, #5eb4b0)"/>
 
   <!-- Decorative dots -->
-  <circle cx="40" cy="100" r="3" fill="var(--brand-300, #5eead4)" opacity="0.5"/>
-  <circle cx="165" cy="130" r="2" fill="var(--brand-300, #5eead4)" opacity="0.5"/>
+  <circle cx="40" cy="100" r="3" fill="var(--brand-300, #a8d8d6)" opacity="0.5"/>
+  <circle cx="165" cy="130" r="2" fill="var(--brand-300, #a8d8d6)" opacity="0.5"/>
 </svg>

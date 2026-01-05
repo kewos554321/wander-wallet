@@ -306,7 +306,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                   {/* Step 1: 支出明細 */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <div className="h-6 w-6 rounded-full bg-blue-500 text-white text-sm font-bold flex items-center justify-center">1</div>
+                      <div className="h-6 w-6 rounded-full bg-brand-500 text-white text-sm font-bold flex items-center justify-center">1</div>
                       <h3 className="font-semibold">支出明細</h3>
                       <span className="text-xs text-muted-foreground">（共 {data?.expenseDetails?.length || 0} 筆）</span>
                     </div>
@@ -355,7 +355,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                   {/* Step 2: 計算各人總額 */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <div className="h-6 w-6 rounded-full bg-blue-500 text-white text-sm font-bold flex items-center justify-center">2</div>
+                      <div className="h-6 w-6 rounded-full bg-brand-500 text-white text-sm font-bold flex items-center justify-center">2</div>
                       <h3 className="font-semibold">計算各人總額</h3>
                     </div>
                     <div className="ml-8">
@@ -396,7 +396,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                   {/* Step 3: 結算方案 */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <div className="h-6 w-6 rounded-full bg-green-500 text-white text-sm font-bold flex items-center justify-center">3</div>
+                      <div className="h-6 w-6 rounded-full bg-brand-500 text-white text-sm font-bold flex items-center justify-center">3</div>
                       <h3 className="font-semibold">結算方案</h3>
                     </div>
                     <div className="ml-8">
@@ -559,7 +559,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                   return (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
+                      className="flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50"
                     >
                       <div className="flex items-center gap-3 flex-1">
                         <div className="flex flex-col items-center gap-1">
@@ -571,7 +571,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                               {(() => { const Icon = getAvatarIcon(fromAvatarData.iconId); return <Icon className="h-5 w-5 text-white" /> })()}
                             </div>
                           ) : (
-                            <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center overflow-hidden">
+                            <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center overflow-hidden">
                               {fromHasExternalImage ? (
                                 <Image
                                   src={s.from.userImage!}
@@ -581,7 +581,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                                   className="rounded-full object-cover"
                                 />
                               ) : (
-                                <User className="h-5 w-5 text-red-500" />
+                                <User className="h-5 w-5 text-red-500 dark:text-red-400" />
                               )}
                             </div>
                           )}
@@ -600,7 +600,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                               {(() => { const Icon = getAvatarIcon(toAvatarData.iconId); return <Icon className="h-5 w-5 text-white" /> })()}
                             </div>
                           ) : (
-                            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center overflow-hidden">
+                            <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center overflow-hidden">
                               {toHasExternalImage ? (
                                 <Image
                                   src={s.to.userImage!}
@@ -610,7 +610,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                                   className="rounded-full object-cover"
                                 />
                               ) : (
-                                <User className="h-5 w-5 text-green-500" />
+                                <User className="h-5 w-5 text-green-500 dark:text-green-400" />
                               )}
                             </div>
                           )}

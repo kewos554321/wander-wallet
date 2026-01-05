@@ -88,9 +88,9 @@ function getActionColor(action: string) {
     case "create":
       return "bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400"
     case "update":
-      return "bg-orange-50 text-orange-600 dark:bg-orange-950 dark:text-orange-400"
+      return "bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400"
     case "delete":
-      return "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400"
+      return "bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-400"
     default:
       return "bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
   }
@@ -652,8 +652,8 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
                   {/* 標題列：操作類型和時間 */}
                   <div className={`px-4 py-2.5 flex items-center justify-between ${
                     log.action === "create" ? "bg-emerald-50 dark:bg-emerald-950/50" :
-                    log.action === "update" ? "bg-orange-50 dark:bg-orange-950/50" :
-                    log.action === "delete" ? "bg-red-50 dark:bg-red-950/50" :
+                    log.action === "update" ? "bg-amber-50 dark:bg-amber-950/50" :
+                    log.action === "delete" ? "bg-rose-50 dark:bg-rose-950/50" :
                     "bg-slate-50 dark:bg-slate-800/50"
                   }`}>
                     <div className="flex items-center gap-2">
@@ -662,8 +662,8 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
                       </div>
                       <span className={`font-medium text-sm ${
                         log.action === "create" ? "text-emerald-700 dark:text-emerald-300" :
-                        log.action === "update" ? "text-orange-700 dark:text-orange-300" :
-                        log.action === "delete" ? "text-red-700 dark:text-red-300" :
+                        log.action === "update" ? "text-amber-700 dark:text-amber-300" :
+                        log.action === "delete" ? "text-rose-700 dark:text-rose-300" :
                         "text-slate-700 dark:text-slate-300"
                       }`}>
                         {getActionText(log.action, log.entityType)}

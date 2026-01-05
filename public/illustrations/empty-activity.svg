@@ -14,18 +14,18 @@
   <circle cx="85" cy="70" r="3" fill="currentColor" opacity="0.4"/>
 
   <!-- Footprints path -->
-  <ellipse cx="135" cy="95" rx="6" ry="10" stroke="var(--brand-400, #2dd4bf)" stroke-width="1.5" fill="none" transform="rotate(-20 135 95)"/>
-  <ellipse cx="150" cy="85" rx="5" ry="8" stroke="var(--brand-400, #2dd4bf)" stroke-width="1.5" fill="none" transform="rotate(-15 150 85)"/>
-  <ellipse cx="163" cy="78" rx="4" ry="7" stroke="var(--brand-300, #5eead4)" stroke-width="1.5" fill="none" transform="rotate(-10 163 78)"/>
+  <ellipse cx="135" cy="95" rx="6" ry="10" stroke="var(--brand-400, #7ac9c6)" stroke-width="1.5" fill="none" transform="rotate(-20 135 95)"/>
+  <ellipse cx="150" cy="85" rx="5" ry="8" stroke="var(--brand-400, #7ac9c6)" stroke-width="1.5" fill="none" transform="rotate(-15 150 85)"/>
+  <ellipse cx="163" cy="78" rx="4" ry="7" stroke="var(--brand-300, #a8d8d6)" stroke-width="1.5" fill="none" transform="rotate(-10 163 78)"/>
 
   <!-- Trail dots -->
-  <circle cx="173" cy="72" r="2" fill="var(--brand-300, #5eead4)" opacity="0.6"/>
-  <circle cx="180" cy="68" r="1.5" fill="var(--brand-300, #5eead4)" opacity="0.4"/>
+  <circle cx="173" cy="72" r="2" fill="var(--brand-300, #a8d8d6)" opacity="0.6"/>
+  <circle cx="180" cy="68" r="1.5" fill="var(--brand-300, #a8d8d6)" opacity="0.4"/>
 
   <!-- Decorative elements -->
   <circle cx="40" cy="45" r="3" fill="var(--brand-200, #99f6e4)" opacity="0.5"/>
-  <circle cx="130" cy="120" r="2" fill="var(--brand-300, #5eead4)" opacity="0.4"/>
+  <circle cx="130" cy="120" r="2" fill="var(--brand-300, #a8d8d6)" opacity="0.4"/>
 
   <!-- Waiting indicator -->
-  <path d="M55 115 Q65 110 75 115 Q85 120 95 115" stroke="var(--brand-400, #2dd4bf)" stroke-width="1.5" stroke-dasharray="3 3" fill="none" opacity="0.5"/>
+  <path d="M55 115 Q65 110 75 115 Q85 120 95 115" stroke="var(--brand-400, #7ac9c6)" stroke-width="1.5" stroke-dasharray="3 3" fill="none" opacity="0.5"/>
 </svg>

@@ -597,8 +597,8 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
               <div className="grid grid-cols-4 gap-2">
                 <FeatureCard
                   href={`/projects/${id}/settle`}
-                  icon={<Calculator className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
-                  iconBgClass="bg-emerald-50 dark:bg-emerald-950"
+                  icon={<Calculator className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />}
+                  iconBgClass="bg-cyan-50 dark:bg-cyan-950"
                   label="結算"
                 />
                 <FeatureCard
@@ -609,8 +609,8 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
                 />
                 <FeatureCard
                   href={`/projects/${id}/stats`}
-                  icon={<BarChart3 className="h-5 w-5 text-violet-600 dark:text-violet-400" />}
-                  iconBgClass="bg-violet-50 dark:bg-violet-950"
+                  icon={<BarChart3 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />}
+                  iconBgClass="bg-indigo-50 dark:bg-indigo-950"
                   label="統計"
                 />
                 <FeatureCard
@@ -621,8 +621,8 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
                 />
                 <FeatureCard
                   href={`/projects/${id}/export`}
-                  icon={<Download className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />}
-                  iconBgClass="bg-cyan-50 dark:bg-cyan-950"
+                  icon={<Download className="h-5 w-5 text-sky-600 dark:text-sky-400" />}
+                  iconBgClass="bg-sky-50 dark:bg-sky-950"
                   label="匯出"
                 />
                 <FeatureCard
@@ -633,14 +633,14 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
                 />
                 <FeatureCard
                   href={`/projects/${id}/activity-logs`}
-                  icon={<History className="h-5 w-5 text-purple-600 dark:text-purple-400" />}
-                  iconBgClass="bg-purple-50 dark:bg-purple-950"
+                  icon={<History className="h-5 w-5 text-violet-600 dark:text-violet-400" />}
+                  iconBgClass="bg-violet-50 dark:bg-violet-950"
                   label="歷史"
                 />
                 <FeatureCard
                   href={`/projects/${id}/mileage`}
-                  icon={<Car className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
-                  iconBgClass="bg-blue-50 dark:bg-blue-950"
+                  icon={<Car className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+                  iconBgClass="bg-emerald-50 dark:bg-emerald-950"
                   label="里程"
                 />
               </div>
@@ -657,20 +657,20 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
                 />
                 <FeatureCard
                   href={`/projects/${id}/notes`}
-                  icon={<StickyNote className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />}
-                  iconBgClass="bg-yellow-50 dark:bg-yellow-950"
+                  icon={<StickyNote className="h-5 w-5 text-lime-600 dark:text-lime-400" />}
+                  iconBgClass="bg-lime-50 dark:bg-lime-950"
                   label="筆記"
                 />
                 <FeatureCard
                   href={`/projects/${id}/map`}
-                  icon={<MapPin className="h-5 w-5 text-teal-600 dark:text-teal-400" />}
-                  iconBgClass="bg-teal-50 dark:bg-teal-950"
+                  icon={<MapPin className="h-5 w-5 text-rose-600 dark:text-rose-400" />}
+                  iconBgClass="bg-rose-50 dark:bg-rose-950"
                   label="地圖"
                 />
                 <FeatureCard
                   href={`/projects/${id}/photos`}
-                  icon={<Images className="h-5 w-5 text-rose-600 dark:text-rose-400" />}
-                  iconBgClass="bg-rose-50 dark:bg-rose-950"
+                  icon={<Images className="h-5 w-5 text-fuchsia-600 dark:text-fuchsia-400" />}
+                  iconBgClass="bg-fuchsia-50 dark:bg-fuchsia-950"
                   label="照片"
                 />
               </div>
@@ -887,18 +887,18 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
 
       {/* 浮動按鈕群組 - 垂直排列 */}
       <div className="fixed bottom-6 right-4 z-50 flex flex-col items-center gap-3">
-        {/* AI 語音記帳按鈕 */}
+        {/* AI 語音記帳按鈕 - 珊瑚暖色漸層（與品牌色互補） */}
         <Button
           size="icon"
-          className="h-12 w-12 rounded-full shadow-lg shadow-fuchsia-500/25 bg-gradient-to-br from-fuchsia-500 to-violet-500 hover:from-fuchsia-600 hover:to-violet-600 hover:scale-105 active:scale-95 transition-all duration-200 text-white ring-2 ring-white/20"
+          className="h-12 w-12 rounded-full shadow-lg shadow-orange-400/30 bg-gradient-to-br from-orange-300 to-rose-400 hover:from-orange-400 hover:to-rose-500 hover:scale-105 active:scale-95 transition-all duration-200 text-white ring-2 ring-white/20"
           onClick={() => setShowVoiceDialog(true)}
         >
           <Sparkles className="h-5 w-5" />
         </Button>
 
-        {/* 新增支出按鈕 - 主要動作（黑灰漸層） */}
+        {/* 新增支出按鈕 - 品牌色漸層 */}
         <Link href={`/projects/${id}/expenses/new`}>
-          <Button size="icon" className="h-12 w-12 rounded-full shadow-lg shadow-slate-900/25 bg-gradient-to-br from-zinc-400 to-zinc-900 hover:from-zinc-300 hover:to-zinc-800 hover:scale-105 active:scale-95 transition-all duration-200 text-white ring-2 ring-white/20">
+          <Button size="icon" className="h-12 w-12 rounded-full shadow-lg shadow-brand-500/30 bg-gradient-to-br from-brand-400 to-brand-600 hover:from-brand-500 hover:to-brand-700 hover:scale-105 active:scale-95 transition-all duration-200 text-white ring-2 ring-white/20">
             <Plus className="h-5 w-5" />
           </Button>
         </Link>

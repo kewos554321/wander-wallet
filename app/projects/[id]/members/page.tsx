@@ -407,7 +407,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
                         })()}
                       </div>
                     ) : (
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center overflow-hidden ${isUnclaimed ? 'bg-muted' : 'bg-primary/10'}`}>
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center overflow-hidden ${isUnclaimed ? 'bg-slate-100 dark:bg-slate-800' : 'bg-brand-100 dark:bg-brand-900'}`}>
                         {hasExternalImage ? (
                           <Image
                             src={member.user!.image!}
@@ -417,7 +417,7 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
                             className="rounded-full object-cover"
                           />
                         ) : (
-                          <User className={`h-5 w-5 ${isUnclaimed ? 'text-muted-foreground' : 'text-primary'}`} />
+                          <User className={`h-5 w-5 ${isUnclaimed ? 'text-slate-400 dark:text-slate-500' : 'text-brand-600 dark:text-brand-400'}`} />
                         )}
                       </div>
                     )}
@@ -425,17 +425,17 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
                       <div className="font-medium truncate">
                         {member.displayName}
                         {member.role === "owner" && (
-                          <span className="ml-2 text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                          <span className="ml-2 text-xs bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-300 px-1.5 py-0.5 rounded">
                             建立者
                           </span>
                         )}
                         {isCurrentUser && (
-                          <span className="ml-2 text-xs bg-secondary px-1.5 py-0.5 rounded">
+                          <span className="ml-2 text-xs bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 px-1.5 py-0.5 rounded border border-brand-200 dark:border-brand-800">
                             你
                           </span>
                         )}
                         {isUnclaimed && (
-                          <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
+                          <span className="ml-2 text-xs bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 px-1.5 py-0.5 rounded">
                             佔位成員
                           </span>
                         )}

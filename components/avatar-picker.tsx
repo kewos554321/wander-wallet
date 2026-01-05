@@ -56,7 +56,7 @@ export const AVATAR_COLORS = [
   { id: "yellow", bg: "bg-yellow-500", hex: "#eab308" },
   { id: "lime", bg: "bg-lime-500", hex: "#84cc16" },
   { id: "green", bg: "bg-green-500", hex: "#22c55e" },
-  { id: "teal", bg: "bg-teal-500", hex: "#14b8a6" },
+  { id: "teal", bg: "bg-brand-500", hex: "#5eb4b0" },
   { id: "cyan", bg: "bg-cyan-500", hex: "#06b6d4" },
   { id: "blue", bg: "bg-blue-500", hex: "#3b82f6" },
   { id: "indigo", bg: "bg-indigo-500", hex: "#6366f1" },
