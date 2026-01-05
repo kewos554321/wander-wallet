@@ -221,7 +221,7 @@ export default function NewProjectPage() {
               value={budget}
               onChange={(e) => setBudget(e.target.value)}
               disabled={loading}
-              className="pl-10"
+              className="pl-12"
               min="0"
               step="1"
             />
