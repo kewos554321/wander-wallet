@@ -9,6 +9,7 @@ import {
   Tooltip,
 } from "recharts"
 import { getCategoryLabel, getCategoryColor } from "@/lib/constants/expenses"
+import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 
 interface CategoryTrendData {
   date: string
@@ -18,6 +19,7 @@ interface CategoryTrendData {
 interface CategoryTrendChartProps {
   data: CategoryTrendData[]
   categories: string[]
+  currency?: string
 }
 
 interface CustomTooltipPayloadItem {
@@ -30,9 +32,10 @@ interface CustomTooltipProps {
   active?: boolean
   payload?: CustomTooltipPayloadItem[]
   label?: string
+  currency: string
 }
 
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
+function CustomTooltip({ active, payload, label, currency }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) return null
 
   const total = payload.reduce((sum, entry) => sum + (entry.value || 0), 0)
@@ -50,19 +53,19 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
               />
               <span>{getCategoryLabel(entry.dataKey)}</span>
             </div>
-            <span className="font-semibold">${entry.value.toLocaleString()}</span>
+            <span className="font-semibold">{formatCurrency(entry.value, currency)}</span>
           </div>
         ))}
         <div className="border-t border-slate-700 pt-1 mt-1 flex justify-between">
           <span className="text-slate-400">總計</span>
-          <span className="font-semibold">${total.toLocaleString()}</span>
+          <span className="font-semibold">{formatCurrency(total, currency)}</span>
         </div>
       </div>
     </div>
   )
 }
 
-export function CategoryTrendChart({ data, categories }: CategoryTrendChartProps) {
+export function CategoryTrendChart({ data, categories, currency = DEFAULT_CURRENCY }: CategoryTrendChartProps) {
   if (data.length < 2) return null
 
   return (
@@ -79,7 +82,7 @@ export function CategoryTrendChart({ data, categories }: CategoryTrendChartProps
             tick={{ fontSize: 11, fill: "#94a3b8" }}
           />
           <YAxis hide />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip currency={currency} />} />
           {categories.map((cat) => (
             <Area
               key={cat}

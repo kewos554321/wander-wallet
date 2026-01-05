@@ -5,6 +5,7 @@ import type {
   SettlementExportData,
   StatisticsExportData,
 } from "./types"
+import { formatCurrency } from "@/lib/constants/currencies"
 
 // Escape CSV 特殊字元
 function escapeCSV(value: string | number | undefined | null): string {
@@ -26,7 +27,7 @@ function formatDate(dateStr: string): string {
   })
 }
 
-// 格式化金額
+// 格式化金額（純數字，不含幣別符號，用於欄位中）
 function formatAmount(amount: number): string {
   return amount.toLocaleString("zh-TW", {
     minimumFractionDigits: 0,
@@ -97,7 +98,7 @@ function generateSettlementSection(settlements: SettlementExportData[]): string 
 }
 
 // 生成統計摘要區段
-function generateStatisticsSection(statistics: StatisticsExportData): string {
+function generateStatisticsSection(statistics: StatisticsExportData, currency: string): string {
   const lines: string[] = []
 
   lines.push("【統計摘要】")
@@ -106,9 +107,9 @@ function generateStatisticsSection(statistics: StatisticsExportData): string {
   // 基本統計
   lines.push("項目,數值")
   lines.push(`支出筆數,${statistics.totalExpenses}`)
-  lines.push(`總金額,$${formatAmount(statistics.totalAmount)}`)
+  lines.push(`總金額,${formatCurrency(statistics.totalAmount, currency)}`)
   lines.push(`成員人數,${statistics.memberCount}`)
-  lines.push(`人均金額,$${formatAmount(statistics.perPerson)}`)
+  lines.push(`人均金額,${formatCurrency(statistics.perPerson, currency)}`)
 
   // 分類統計
   if (statistics.categoryBreakdown.length > 0) {
@@ -121,7 +122,7 @@ function generateStatisticsSection(statistics: StatisticsExportData): string {
       lines.push(
         [
           cat.label,
-          `$${formatAmount(cat.amount)}`,
+          formatCurrency(cat.amount, currency),
           String(cat.count),
           `${cat.percentage.toFixed(1)}%`,
         ]
@@ -142,9 +143,9 @@ function generateStatisticsSection(statistics: StatisticsExportData): string {
       lines.push(
         [
           member.name,
-          `$${formatAmount(member.paid)}`,
-          `$${formatAmount(member.share)}`,
-          `$${formatAmount(member.balance)}`,
+          formatCurrency(member.paid, currency),
+          formatCurrency(member.share, currency),
+          formatCurrency(member.balance, currency),
         ]
           .map(escapeCSV)
           .join(",")
@@ -176,7 +177,7 @@ export function generateCSV(data: ExportData, options: ExportOptions): string {
   }
 
   if (options.content.statisticsSummary) {
-    sections.push(generateStatisticsSection(data.statistics))
+    sections.push(generateStatisticsSection(data.statistics, data.currency))
   }
 
   // 添加 BOM 讓 Excel 正確識別 UTF-8

@@ -9,6 +9,7 @@ import { ExportOptionsForm } from "@/components/export/export-options-form"
 import { Download, AlertCircle, Loader2 } from "lucide-react"
 import { generateCSV, downloadCSV } from "@/lib/export/csv-generator"
 import { getCategoryLabel } from "@/lib/constants/expenses"
+import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import type {
   ExportFormat,
   ExportContentOptions,
@@ -44,6 +45,7 @@ interface ExpenseParticipant {
 interface Expense {
   id: string
   amount: number
+  currency: string
   description: string | null
   category: string | null
   createdAt: string
@@ -63,8 +65,10 @@ interface Project {
   id: string
   name: string
   description: string | null
+  currency: string
   startDate: string | null
   endDate: string | null
+  customRates: Record<string, number> | null
   creator: {
     id: string
     name: string | null
@@ -82,6 +86,7 @@ export default function ExportPage({ params }: { params: Promise<{ id: string }>
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number> | null>(null)
 
   // 匯出選項狀態
   const [format, setFormat] = useState<ExportFormat>(defaultExportOptions.format)
@@ -94,6 +99,49 @@ export default function ExportPage({ params }: { params: Promise<{ id: string }>
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
+
+  // 當有多種幣別時，獲取匯率
+  useEffect(() => {
+    if (project?.expenses) {
+      const currencies = new Set(project.expenses.map(e => e.currency))
+      if (currencies.size > 1) {
+        fetchExchangeRates()
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.expenses])
+
+  async function fetchExchangeRates() {
+    try {
+      const res = await authFetch("/api/exchange-rates")
+      if (res.ok) {
+        const data = await res.json()
+        setExchangeRates(data.rates)
+      }
+    } catch (error) {
+      console.error("獲取匯率錯誤:", error)
+    }
+  }
+
+  // 轉換單一金額到專案幣別（優先使用自訂匯率）
+  const convertToProjectCurrency = useCallback((amount: number, fromCurrency: string): number => {
+    if (!project) return amount
+    const projectCurrency = project.currency || DEFAULT_CURRENCY
+    if (fromCurrency === projectCurrency) return amount
+
+    // 優先使用自訂匯率
+    if (project.customRates && project.customRates[fromCurrency]) {
+      return Math.round(amount * project.customRates[fromCurrency] * 100) / 100
+    }
+
+    // 無即時匯率時不轉換
+    if (!exchangeRates) return amount
+
+    // 透過 USD 作為中介轉換
+    const fromRate = exchangeRates[fromCurrency] || 1
+    const toRate = exchangeRates[projectCurrency] || 1
+    return Math.round(amount * (toRate / fromRate) * 100) / 100
+  }, [project, exchangeRates])
 
   async function fetchProject() {
     try {
@@ -152,7 +200,7 @@ export default function ExportPage({ params }: { params: Promise<{ id: string }>
     return new Map(project.members.map((m) => [m.id, m.displayName]))
   }, [project])
 
-  // 計算成員餘額
+  // 計算成員餘額（轉換為專案幣別）
   const memberBalances = useMemo((): MemberBalanceData[] => {
     if (!project) return []
 
@@ -161,12 +209,15 @@ export default function ExportPage({ params }: { params: Promise<{ id: string }>
       let share = 0
 
       filteredExpenses.forEach((expense) => {
+        const convertedAmount = convertToProjectCurrency(Number(expense.amount), expense.currency)
         if (expense.payer.id === member.id) {
-          paid += Number(expense.amount)
+          paid += convertedAmount
         }
         const participant = expense.participants.find((p) => p.memberId === member.id)
         if (participant) {
-          share += Number(participant.shareAmount)
+          // 按比例轉換分擔金額
+          const shareRatio = Number(participant.shareAmount) / Number(expense.amount)
+          share += convertedAmount * shareRatio
         }
       })
 
@@ -177,7 +228,7 @@ export default function ExportPage({ params }: { params: Promise<{ id: string }>
         balance: paid - share,
       }
     })
-  }, [project, filteredExpenses])
+  }, [project, filteredExpenses, convertToProjectCurrency])
 
   // 計算結算資訊
   const settlements = useMemo((): SettlementExportData[] => {
@@ -222,36 +273,46 @@ export default function ExportPage({ params }: { params: Promise<{ id: string }>
   const buildExportData = useCallback((): ExportData | null => {
     if (!project) return null
 
-    // 轉換支出資料
-    const expenses: ExpenseExportData[] = filteredExpenses.map((expense) => ({
-      id: expense.id,
-      date: expense.expenseDate,
-      description: expense.description || "",
-      category: expense.category || "other",
-      categoryLabel: getCategoryLabel(expense.category || "other"),
-      amount: Number(expense.amount),
-      payer: expense.payer.displayName,
-      participants: expense.participants.map(
-        (p) => memberNameMap.get(p.memberId) || "未知"
-      ),
-      participantShares: expense.participants.map((p) => ({
-        name: memberNameMap.get(p.memberId) || "未知",
-        amount: Number(p.shareAmount),
-      })),
-    }))
+    // 轉換支出資料（金額轉換為專案幣別）
+    const expenses: ExpenseExportData[] = filteredExpenses.map((expense) => {
+      const convertedAmount = convertToProjectCurrency(Number(expense.amount), expense.currency)
+      return {
+        id: expense.id,
+        date: expense.expenseDate,
+        description: expense.description || "",
+        category: expense.category || "other",
+        categoryLabel: getCategoryLabel(expense.category || "other"),
+        amount: convertedAmount,
+        payer: expense.payer.displayName,
+        participants: expense.participants.map(
+          (p) => memberNameMap.get(p.memberId) || "未知"
+        ),
+        participantShares: expense.participants.map((p) => {
+          const shareRatio = Number(p.shareAmount) / Number(expense.amount)
+          return {
+            name: memberNameMap.get(p.memberId) || "未知",
+            amount: convertedAmount * shareRatio,
+          }
+        }),
+      }
+    })
 
-    // 計算分類統計
+    // 計算分類統計（使用轉換後金額）
     const categoryMap = new Map<string, { amount: number; count: number }>()
     filteredExpenses.forEach((expense) => {
       const cat = expense.category || "other"
       const existing = categoryMap.get(cat) || { amount: 0, count: 0 }
+      const convertedAmount = convertToProjectCurrency(Number(expense.amount), expense.currency)
       categoryMap.set(cat, {
-        amount: existing.amount + Number(expense.amount),
+        amount: existing.amount + convertedAmount,
         count: existing.count + 1,
       })
     })
 
-    const totalAmount = filteredExpenses.reduce((sum, e) => sum + Number(e.amount), 0)
+    // 計算總金額（轉換為專案幣別）
+    const totalAmount = filteredExpenses.reduce((sum, e) => {
+      return sum + convertToProjectCurrency(Number(e.amount), e.currency)
+    }, 0)
     const categoryBreakdown: CategoryBreakdownData[] = Array.from(categoryMap.entries())
       .map(([category, { amount, count }]) => ({
         category,
@@ -275,11 +336,12 @@ export default function ExportPage({ params }: { params: Promise<{ id: string }>
     return {
       projectName: project.name,
       exportDate: new Date().toISOString(),
+      currency: project.currency || "TWD",
       expenses,
       settlements,
       statistics,
     }
-  }, [project, filteredExpenses, memberNameMap, memberBalances, settlements])
+  }, [project, filteredExpenses, memberNameMap, memberBalances, settlements, convertToProjectCurrency])
 
   // 執行匯出
   const handleExport = async () => {

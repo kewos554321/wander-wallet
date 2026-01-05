@@ -157,6 +157,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const [currency, setCurrency] = useState<CurrencyCode>(DEFAULT_CURRENCY)
   const [projectCurrency, setProjectCurrency] = useState<CurrencyCode>(DEFAULT_CURRENCY)
   const [exchangeRate, setExchangeRate] = useState<number | null>(null)
+  const [customRates, setCustomRates] = useState<Record<string, number> | null>(null)
+  const [isCustomRate, setIsCustomRate] = useState(false)
 
   // 自動獲取當下地點
   const getCurrentLocation = useCallback(async () => {
@@ -206,25 +208,36 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, expenseId, mode])
 
-  // 當幣別變更時，獲取匯率
+  // 當幣別變更時，獲取匯率（優先使用自訂匯率）
   useEffect(() => {
     async function fetchExchangeRate() {
       if (currency === projectCurrency) {
         setExchangeRate(null)
+        setIsCustomRate(false)
         return
       }
+
+      // 優先使用自訂匯率
+      if (customRates && customRates[currency]) {
+        setExchangeRate(customRates[currency])
+        setIsCustomRate(true)
+        return
+      }
+
+      // 否則獲取即時匯率
       try {
         const res = await authFetch(`/api/exchange-rates?from=${currency}&to=${projectCurrency}&amount=1`)
         if (res.ok) {
           const data = await res.json()
           setExchangeRate(data.exchangeRate)
+          setIsCustomRate(false)
         }
       } catch (error) {
         console.error("獲取匯率失敗:", error)
       }
     }
     fetchExchangeRate()
-  }, [currency, projectCurrency, authFetch])
+  }, [currency, projectCurrency, customRates, authFetch])
 
   async function fetchProjectAndMembers() {
     try {
@@ -240,6 +253,10 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         const projCurrency = projectData.currency || DEFAULT_CURRENCY
         setProjectCurrency(projCurrency)
         setCurrency(projCurrency) // 預設使用專案幣別
+        // 設定自訂匯率
+        if (projectData.customRates) {
+          setCustomRates(projectData.customRates)
+        }
       }
 
       if (membersRes.ok) {
@@ -277,6 +294,10 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         // 設定專案幣別
         const projCurrency = projectData.currency || DEFAULT_CURRENCY
         setProjectCurrency(projCurrency)
+        // 設定自訂匯率
+        if (projectData.customRates) {
+          setCustomRates(projectData.customRates)
+        }
       }
 
       if (expenseRes.ok) {
@@ -427,8 +448,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       changes.push({
         field: "amount",
         label: "金額",
-        oldValue: `$${originalData.amount.toLocaleString("zh-TW")}`,
-        newValue: `$${amountNum.toLocaleString("zh-TW")}`,
+        oldValue: formatCurrency(originalData.amount, projectCurrency),
+        newValue: formatCurrency(amountNum, projectCurrency),
       })
     }
 
@@ -820,14 +841,9 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
               {exchangeRate && amountNum > 0 && (
                 <p className="text-sm text-muted-foreground mt-2">
                   ≈ {formatCurrency(amountNum * exchangeRate, projectCurrency)}
-                  <span className="text-xs ml-1.5 opacity-70">
-                    (匯率 1:{exchangeRate.toFixed(4)})
+                  <span className={`text-xs ml-1.5 ${isCustomRate ? "text-amber-600 dark:text-amber-400" : "opacity-70"}`}>
+                    ({isCustomRate ? "自訂" : "即時"}匯率 1:{exchangeRate.toFixed(4)})
                   </span>
-                </p>
-              )}
-              {amountNum > 0 && selectedParticipants.size > 0 && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  每人分攤 {getCurrencyInfo(currency).symbol}{sharePerPerson.toFixed(2)}
                 </p>
               )}
             </>

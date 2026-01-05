@@ -39,6 +39,9 @@ export async function GET(
           },
         },
         expenses: {
+          where: {
+            deletedAt: null, // 排除軟刪除的支出
+          },
           include: {
             payer: {
               select: {
@@ -66,7 +69,11 @@ export async function GET(
         },
         _count: {
           select: {
-            expenses: true,
+            expenses: {
+              where: {
+                deletedAt: null, // 排除軟刪除的支出
+              },
+            },
             members: true,
           },
         },

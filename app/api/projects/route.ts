@@ -187,13 +187,20 @@ export async function GET(req: NextRequest) {
           },
         },
         expenses: {
+          where: {
+            deletedAt: null, // 排除軟刪除的支出
+          },
           select: {
             amount: true,
           },
         },
         _count: {
           select: {
-            expenses: true,
+            expenses: {
+              where: {
+                deletedAt: null, // 排除軟刪除的支出
+              },
+            },
             members: true,
           },
         },

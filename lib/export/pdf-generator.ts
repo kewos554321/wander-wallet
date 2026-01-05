@@ -7,6 +7,7 @@ import type {
   SettlementExportData,
   StatisticsExportData,
 } from "./types"
+import { formatCurrency } from "@/lib/constants/currencies"
 
 // 字型快取 - 儲存 base64 資料以便重複使用
 let cachedFontBase64: string | null = null
@@ -56,19 +57,17 @@ function formatDate(dateStr: string): string {
   })
 }
 
-// 格式化金額
-function formatAmount(amount: number): string {
-  return `$${amount.toLocaleString("zh-TW", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })}`
+// 格式化金額 - 使用專案幣別
+function formatAmountWithCurrency(amount: number, currency: string): string {
+  return formatCurrency(amount, currency)
 }
 
 // 添加支出明細表格
 function addExpenseTable(
   doc: jsPDF,
   expenses: ExpenseExportData[],
-  startY: number
+  startY: number,
+  currency: string
 ): number {
   // 區段標題
   doc.setFontSize(14)
@@ -78,7 +77,7 @@ function addExpenseTable(
     formatDate(expense.date),
     expense.description || "-",
     expense.categoryLabel,
-    formatAmount(expense.amount),
+    formatAmountWithCurrency(expense.amount, currency),
     expense.payer,
     expense.participants.join("、"),
   ])
@@ -121,7 +120,8 @@ function addExpenseTable(
 function addSettlementTable(
   doc: jsPDF,
   settlements: SettlementExportData[],
-  startY: number
+  startY: number,
+  currency: string
 ): number {
   doc.setFontSize(14)
   doc.text("結算資訊", 14, startY)
@@ -135,7 +135,7 @@ function addSettlementTable(
   const tableData = settlements.map((s) => [
     s.from,
     s.to,
-    formatAmount(s.amount),
+    formatAmountWithCurrency(s.amount, currency),
   ])
 
   autoTable(doc, {
@@ -169,7 +169,8 @@ function addSettlementTable(
 function addStatisticsSection(
   doc: jsPDF,
   statistics: StatisticsExportData,
-  startY: number
+  startY: number,
+  currency: string
 ): number {
   doc.setFontSize(14)
   doc.text("統計摘要", 14, startY)
@@ -181,9 +182,9 @@ function addStatisticsSection(
 
   const summaryData = [
     ["支出筆數", String(statistics.totalExpenses)],
-    ["總金額", formatAmount(statistics.totalAmount)],
+    ["總金額", formatAmountWithCurrency(statistics.totalAmount, currency)],
     ["成員人數", String(statistics.memberCount)],
-    ["人均金額", formatAmount(statistics.perPerson)],
+    ["人均金額", formatAmountWithCurrency(statistics.perPerson, currency)],
   ]
 
   autoTable(doc, {
@@ -212,7 +213,7 @@ function addStatisticsSection(
 
     const categoryData = statistics.categoryBreakdown.map((cat) => [
       cat.label,
-      formatAmount(cat.amount),
+      formatAmountWithCurrency(cat.amount, currency),
       String(cat.count),
       `${cat.percentage.toFixed(1)}%`,
     ])
@@ -251,9 +252,9 @@ function addStatisticsSection(
 
     const memberData = statistics.memberBreakdown.map((member) => [
       member.name,
-      formatAmount(member.paid),
-      formatAmount(member.share),
-      formatAmount(member.balance),
+      formatAmountWithCurrency(member.paid, currency),
+      formatAmountWithCurrency(member.share, currency),
+      formatAmountWithCurrency(member.balance, currency),
     ])
 
     autoTable(doc, {
@@ -334,7 +335,7 @@ export async function generatePDF(
       doc.addPage()
       currentY = 20
     }
-    currentY = addExpenseTable(doc, data.expenses, currentY)
+    currentY = addExpenseTable(doc, data.expenses, currentY, data.currency)
   }
 
   if (options.content.settlementInfo) {
@@ -342,7 +343,7 @@ export async function generatePDF(
       doc.addPage()
       currentY = 20
     }
-    currentY = addSettlementTable(doc, data.settlements, currentY)
+    currentY = addSettlementTable(doc, data.settlements, currentY, data.currency)
   }
 
   if (options.content.statisticsSummary) {
@@ -350,7 +351,7 @@ export async function generatePDF(
       doc.addPage()
       currentY = 20
     }
-    addStatisticsSection(doc, data.statistics, currentY)
+    addStatisticsSection(doc, data.statistics, currentY, data.currency)
   }
 
   // 頁尾

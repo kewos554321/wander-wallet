@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { getProjectShareUrl } from "@/lib/utils"
 import { parseCover, getPresetCover } from "@/lib/covers"
+import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 
 interface ProjectMember {
   id: string
@@ -40,6 +41,7 @@ interface Project {
   cover: string | null
   startDate: string | null
   endDate: string | null
+  currency: string
   createdAt: string
   updatedAt: string
   creator: {
@@ -272,8 +274,8 @@ export default function ProjectsPage() {
                               )}
                             </div>
                             <div className="text-right">
-                              <p className="text-xl font-bold tabular-nums">${totalAmount.toLocaleString("zh-TW")}</p>
-                              <p className="text-[11px] text-white/70">人均 ${Math.round(perPerson).toLocaleString("zh-TW")}</p>
+                              <p className="text-xl font-bold tabular-nums">{formatCurrency(totalAmount, project.currency || DEFAULT_CURRENCY)}</p>
+                              <p className="text-[11px] text-white/70">人均 {formatCurrency(Math.round(perPerson), project.currency || DEFAULT_CURRENCY)}</p>
                             </div>
                           </div>
                           <div className="flex items-center justify-between text-xs text-white/80">
@@ -343,8 +345,8 @@ export default function ProjectsPage() {
                           </DropdownMenu>
                         </div>
                         <div className="flex items-baseline gap-1.5 mt-1">
-                          <span className="text-xl font-bold tabular-nums tracking-tight">${totalAmount.toLocaleString("zh-TW")}</span>
-                          <span className="text-xs text-muted-foreground">/ 人均 ${Math.round(perPerson).toLocaleString("zh-TW")}</span>
+                          <span className="text-xl font-bold tabular-nums tracking-tight">{formatCurrency(totalAmount, project.currency || DEFAULT_CURRENCY)}</span>
+                          <span className="text-xs text-muted-foreground">/ 人均 {formatCurrency(Math.round(perPerson), project.currency || DEFAULT_CURRENCY)}</span>
                         </div>
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
                           <div className="flex items-center gap-2">

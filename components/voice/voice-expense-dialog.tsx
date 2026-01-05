@@ -46,6 +46,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { uploadImageToR2 } from "@/lib/image-utils"
 import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
+import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 
 interface Member {
   id: string
@@ -67,6 +68,7 @@ interface VoiceExpenseDialogProps {
   members: Member[]
   currentUserMemberId: string
   onSuccess: () => void
+  currency?: string
 }
 
 
@@ -80,6 +82,7 @@ export function VoiceExpenseDialog({
   members,
   currentUserMemberId,
   onSuccess,
+  currency = DEFAULT_CURRENCY,
 }: VoiceExpenseDialogProps) {
   const authFetch = useAuthFetch()
   const speech = useSpeechRecognition()
@@ -1275,7 +1278,7 @@ export function VoiceExpenseDialog({
                     共 {expenses.length} 筆
                   </span>
                   <span className="text-lg font-bold text-primary">
-                    ${totalAmount.toLocaleString()}
+                    {formatCurrency(totalAmount, currency)}
                   </span>
                 </div>
 

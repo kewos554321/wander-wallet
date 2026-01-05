@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
-import { formatCurrency } from "@/lib/constants/currencies"
+import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { sendDeleteNotificationToChat, sendBatchDeleteNotificationToChat } from "@/lib/liff"
 import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
 
@@ -79,9 +79,12 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
   const [amountRange, setAmountRange] = useState<[number, number]>([0, 0])
   const [notifyLineOnDelete, setNotifyLineOnDelete] = useState(true)
   const [projectName, setProjectName] = useState("")
+  const [projectCurrency, setProjectCurrency] = useState(DEFAULT_CURRENCY)
   const [showVoiceDialog, setShowVoiceDialog] = useState(false)
   const [members, setMembers] = useState<Member[]>([])
   const [currentUserMemberId, setCurrentUserMemberId] = useState("")
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number> | null>(null)
+  const [customRates, setCustomRates] = useState<Record<string, number> | null>(null)
   const authFetch = useAuthFetch()
   const { isDevMode, canSendMessages, user } = useLiff()
 
@@ -90,6 +93,27 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
     fetchProjectName()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user?.id])
+
+  // 當有多種幣別時，獲取匯率
+  useEffect(() => {
+    const currencies = new Set(expenses.map(e => e.currency))
+    if (currencies.size > 1 && projectCurrency) {
+      fetchExchangeRates()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expenses, projectCurrency])
+
+  async function fetchExchangeRates() {
+    try {
+      const res = await authFetch("/api/exchange-rates")
+      if (res.ok) {
+        const data = await res.json()
+        setExchangeRates(data.rates)
+      }
+    } catch (error) {
+      console.error("獲取匯率錯誤:", error)
+    }
+  }
 
   async function fetchExpenses() {
     try {
@@ -111,6 +135,11 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
       if (res.ok) {
         const data = await res.json()
         setProjectName(data.name)
+        setProjectCurrency(data.currency || DEFAULT_CURRENCY)
+        // 設定自訂匯率
+        if (data.customRates) {
+          setCustomRates(data.customRates)
+        }
         // 設定成員資料供 AI 語音記帳使用
         if (data.members) {
           setMembers(data.members.map((m: Member & { user?: Member["user"] }) => ({
@@ -300,7 +329,36 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
     return matchesSearch && matchesCategory && matchesPayer && matchesMinAmount && matchesMaxAmount
   })
 
-  const totalAmount = filteredExpenses.reduce((sum, e) => sum + Number(e.amount), 0)
+  // 轉換單一金額到專案幣別（優先使用自訂匯率）
+  const convertToProjectCurrency = (amount: number, fromCurrency: string): number => {
+    if (fromCurrency === projectCurrency) return amount
+
+    // 優先使用自訂匯率
+    if (customRates && customRates[fromCurrency]) {
+      return Math.round(amount * customRates[fromCurrency] * 100) / 100
+    }
+
+    // 無即時匯率時不轉換
+    if (!exchangeRates) return amount
+
+    // 透過 USD 作為中介轉換
+    const fromRate = exchangeRates[fromCurrency] || 1
+    const toRate = exchangeRates[projectCurrency] || 1
+    return Math.round(amount * (toRate / fromRate) * 100) / 100
+  }
+
+  // 檢查是否有多種幣別
+  const hasMixedCurrencies = new Set(filteredExpenses.map(e => e.currency)).size > 1
+
+  // 檢查是否使用自訂匯率
+  const hasCustomRates = customRates && Object.keys(customRates).length > 0
+
+  // 計算總金額（轉換為專案幣別）
+  const totalAmount = filteredExpenses.reduce((sum, e) => {
+    const convertedAmount = convertToProjectCurrency(Number(e.amount), e.currency)
+    return sum + convertedAmount
+  }, 0)
+
   const maxExpenseAmount = Math.max(...expenses.map(e => Number(e.amount)), 0)
   const hasActiveFilters = searchQuery !== "" || selectedCategories.size > 0 || selectedPayers.size > 0 || amountRange[0] > 0 || amountRange[1] > 0
 
@@ -351,10 +409,17 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
         {/* 總計摘要 - 緊湊版 */}
         <div className="flex items-center justify-between py-2">
           <div>
-            <p className="text-xs text-muted-foreground">總支出</p>
-            <p className="text-2xl font-bold tabular-nums">
-              ${totalAmount.toLocaleString("zh-TW")}
+            <p className="text-xs text-muted-foreground">
+              總支出{hasMixedCurrencies && " (已換算)"}
             </p>
+            <p className="text-2xl font-bold tabular-nums">
+              {formatCurrency(totalAmount, projectCurrency)}
+            </p>
+            {hasMixedCurrencies && (
+              <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                含多種幣別，{hasCustomRates ? "依自訂匯率換算" : "依即時匯率換算"}
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-4 text-right">
             <div>
@@ -364,7 +429,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
             <div className="w-px h-8 bg-slate-200 dark:bg-slate-700" />
             <div>
               <p className="text-lg font-semibold tabular-nums text-primary">
-                ${filteredExpenses.length > 0 ? Math.round(totalAmount / filteredExpenses.length).toLocaleString("zh-TW") : 0}
+                {formatCurrency(filteredExpenses.length > 0 ? Math.round(totalAmount / filteredExpenses.length) : 0, projectCurrency)}
               </p>
               <p className="text-xs text-muted-foreground">平均每筆</p>
             </div>
@@ -460,11 +525,11 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                     {/* 顯示當前範圍 */}
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium">
-                        ${amountRange[0].toLocaleString()}
+                        {formatCurrency(amountRange[0], projectCurrency)}
                       </span>
                       <span className="text-muted-foreground">~</span>
                       <span className="font-medium">
-                        {amountRange[1] === 0 ? "不限" : `$${amountRange[1].toLocaleString()}`}
+                        {amountRange[1] === 0 ? "不限" : formatCurrency(amountRange[1], projectCurrency)}
                       </span>
                     </div>
 
@@ -770,7 +835,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                                 <div
                                   key={p.id}
                                   className="h-5 w-5 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center overflow-hidden border-2 border-white dark:border-slate-900"
-                                  title={`${p.member.displayName}: $${p.shareAmount}`}
+                                  title={`${p.member.displayName}: ${formatCurrency(Number(p.shareAmount), expense.currency)}`}
                                 >
                                   {hasExternalImage ? (
                                     <Image
@@ -929,6 +994,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
         projectName={projectName}
         members={members}
         currentUserMemberId={currentUserMemberId}
+        currency={projectCurrency}
         onSuccess={() => {
           fetchExpenses()
         }}

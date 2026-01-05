@@ -76,6 +76,7 @@ export interface StatisticsExportData {
 export interface ExportData {
   projectName: string
   exportDate: string
+  currency: string
   expenses: ExpenseExportData[]
   settlements: SettlementExportData[]
   statistics: StatisticsExportData

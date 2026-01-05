@@ -13,6 +13,14 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Calendar as CalendarIcon } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 import { CoverPicker } from "@/components/cover-picker"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { SUPPORTED_CURRENCIES, DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/constants/currencies"
 
 // Helper function to format date as YYYY-MM-DD in local timezone
 function formatLocalDate(date: Date): string {
@@ -46,6 +54,7 @@ export default function NewProjectPage() {
   const [endDate, setEndDate] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [budget, setBudget] = useState("")
+  const [currency, setCurrency] = useState(DEFAULT_CURRENCY)
   const [joinMode, setJoinMode] = useState("both")
 
   async function handleSubmit(e: React.FormEvent) {
@@ -75,6 +84,7 @@ export default function NewProjectPage() {
           description: description.trim() || null,
           cover: cover,
           budget: budget ? Number(budget) : null,
+          currency: currency,
           startDate: startDate || null,
           endDate: endDate || null,
           joinMode: joinMode,
@@ -178,11 +188,32 @@ export default function NewProjectPage() {
         </div>
 
         <div className="space-y-2">
+          <label htmlFor="currency" className="text-sm font-medium">
+            結算幣別
+          </label>
+          <Select value={currency} onValueChange={(value) => setCurrency(value as CurrencyCode)} disabled={loading}>
+            <SelectTrigger>
+              <SelectValue placeholder="選擇幣別" />
+            </SelectTrigger>
+            <SelectContent>
+              {SUPPORTED_CURRENCIES.map((c) => (
+                <SelectItem key={c.code} value={c.code}>
+                  {c.symbol} {c.name} ({c.code})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">此幣別用於結算和統計顯示</p>
+        </div>
+
+        <div className="space-y-2">
           <label htmlFor="budget" className="text-sm font-medium">
             旅程預算（選填）
           </label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+              {SUPPORTED_CURRENCIES.find(c => c.code === currency)?.symbol || "$"}
+            </span>
             <Input
               id="budget"
               type="number"
@@ -190,7 +221,7 @@ export default function NewProjectPage() {
               value={budget}
               onChange={(e) => setBudget(e.target.value)}
               disabled={loading}
-              className="pl-7"
+              className="pl-10"
               min="0"
               step="1"
             />

@@ -8,6 +8,7 @@ import {
   Tooltip,
 } from "recharts"
 import { getCategoryLabel, getCategoryColor } from "@/lib/constants/expenses"
+import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 
 interface CategoryData {
   name: string
@@ -17,6 +18,7 @@ interface CategoryData {
 
 interface CategoryPieChartProps {
   data: CategoryData[]
+  currency?: string
 }
 
 interface ChartCategoryData extends CategoryData {
@@ -26,9 +28,10 @@ interface ChartCategoryData extends CategoryData {
 interface CustomTooltipProps {
   active?: boolean
   payload?: Array<{ payload: ChartCategoryData }>
+  currency: string
 }
 
-function CustomTooltip({ active, payload }: CustomTooltipProps) {
+function CustomTooltip({ active, payload, currency }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) return null
 
   const data = payload[0].payload
@@ -43,14 +46,14 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
         <span className="font-semibold">{data.name}</span>
       </div>
       <div className="flex items-baseline gap-2">
-        <span className="text-lg font-semibold">${data.value.toLocaleString()}</span>
+        <span className="text-lg font-semibold">{formatCurrency(data.value, currency)}</span>
         <span className="text-slate-400">{data.percentage}%</span>
       </div>
     </div>
   )
 }
 
-export function CategoryPieChart({ data }: CategoryPieChartProps) {
+export function CategoryPieChart({ data, currency = DEFAULT_CURRENCY }: CategoryPieChartProps) {
   const total = data.reduce((sum, item) => sum + item.value, 0)
   const chartData = data.map((item) => ({
     ...item,
@@ -81,7 +84,7 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
               ))}
             </Pie>
             <Tooltip
-              content={<CustomTooltip />}
+              content={<CustomTooltip currency={currency} />}
               wrapperStyle={{ zIndex: 100 }}
               allowEscapeViewBox={{ x: true, y: true }}
             />
@@ -106,7 +109,7 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
                 </span>
               </div>
               <span className="font-semibold text-slate-900 dark:text-slate-100">
-                ${cat.value.toLocaleString()}
+                {formatCurrency(cat.value, currency)}
               </span>
             </div>
           ))}

@@ -50,6 +50,7 @@ import {
 import { getProjectShareUrl } from "@/lib/utils"
 import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
+import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 
 interface ProjectMember {
   id: string
@@ -72,6 +73,7 @@ interface ExpenseParticipant {
 interface Expense {
   id: string
   amount: number
+  currency: string
   description: string | null
   category: string | null
   createdAt: string
@@ -91,8 +93,10 @@ interface Project {
   name: string
   description: string | null
   budget: string | null
+  currency: string
   startDate: string | null
   endDate: string | null
+  customRates: Record<string, number> | null
   creator: {
     id: string
     name: string | null
@@ -165,6 +169,9 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
   // AI 語音記帳相關狀態
   const [showVoiceDialog, setShowVoiceDialog] = useState(false)
 
+  // 匯率相關狀態
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number> | null>(null)
+
   // 功能 carousel 相關
   const [currentPage, setCurrentPage] = useState(0)
   const carouselRef = useRef<HTMLDivElement>(null)
@@ -189,6 +196,49 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
+
+  // 當有多種幣別時，獲取匯率
+  useEffect(() => {
+    if (project?.expenses) {
+      const currencies = new Set(project.expenses.map(e => e.currency))
+      if (currencies.size > 1) {
+        fetchExchangeRates()
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.expenses])
+
+  async function fetchExchangeRates() {
+    try {
+      const res = await authFetch("/api/exchange-rates")
+      if (res.ok) {
+        const data = await res.json()
+        setExchangeRates(data.rates)
+      }
+    } catch (error) {
+      console.error("獲取匯率錯誤:", error)
+    }
+  }
+
+  // 轉換單一金額到專案幣別（優先使用自訂匯率）
+  const convertToProjectCurrency = useCallback((amount: number, fromCurrency: string): number => {
+    if (!project) return amount
+    const projectCurrency = project.currency || DEFAULT_CURRENCY
+    if (fromCurrency === projectCurrency) return amount
+
+    // 優先使用自訂匯率
+    if (project.customRates && project.customRates[fromCurrency]) {
+      return Math.round(amount * project.customRates[fromCurrency] * 100) / 100
+    }
+
+    // 無即時匯率時不轉換
+    if (!exchangeRates) return amount
+
+    // 透過 USD 作為中介轉換
+    const fromRate = exchangeRates[fromCurrency] || 1
+    const toRate = exchangeRates[projectCurrency] || 1
+    return Math.round(amount * (toRate / fromRate) * 100) / 100
+  }, [project, exchangeRates])
 
   async function fetchProject() {
     try {
@@ -318,7 +368,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
     }
   }
 
-  // 計算用戶的餘額
+  // 計算用戶的餘額（使用幣別轉換）
   const userBalance = useMemo(() => {
     if (!project || !user) return 0
 
@@ -329,17 +379,20 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
     let owed = 0
 
     project.expenses.forEach((expense) => {
+      const convertedAmount = convertToProjectCurrency(Number(expense.amount), expense.currency)
       if (expense.payer.id === membership.id) {
-        paid += Number(expense.amount)
+        paid += convertedAmount
       }
       const participant = expense.participants.find((p) => p.memberId === membership.id)
       if (participant) {
-        owed += Number(participant.shareAmount)
+        // 按比例轉換分擔金額
+        const shareRatio = Number(participant.shareAmount) / Number(expense.amount)
+        owed += convertedAmount * shareRatio
       }
     })
 
     return paid - owed
-  }, [project, user])
+  }, [project, user, convertToProjectCurrency])
 
 
   if (loading) {
@@ -541,7 +594,14 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
     )
   }
 
-  const totalAmount = project.expenses.reduce((sum, e) => sum + Number(e.amount), 0)
+  // 檢查是否有多種幣別
+  const hasMixedCurrencies = new Set(project.expenses.map(e => e.currency)).size > 1
+
+  // 計算總金額（轉換為專案幣別）
+  const totalAmount = project.expenses.reduce((sum, e) => {
+    const convertedAmount = convertToProjectCurrency(Number(e.amount), e.currency)
+    return sum + convertedAmount
+  }, 0)
   const perPerson = project.members.length > 0 ? totalAmount / project.members.length : 0
   const budget = project.budget ? Number(project.budget) : null
   const budgetProgress = budget ? Math.min((totalAmount / budget) * 100, 100) : 0
@@ -670,14 +730,14 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
           <div className="grid grid-cols-2 gap-3">
             <StatCard
               title="總支出"
-              value={`$${totalAmount.toLocaleString("zh-TW")}`}
+              value={formatCurrency(totalAmount, project.currency || DEFAULT_CURRENCY)}
               icon={<DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
               iconBgClass="bg-emerald-50 dark:bg-emerald-950"
               subtitle={`${project.expenses.length} 筆支出`}
             />
             <StatCard
               title="平均每人"
-              value={`$${Math.round(perPerson).toLocaleString("zh-TW")}`}
+              value={formatCurrency(Math.round(perPerson), project.currency || DEFAULT_CURRENCY)}
               icon={<UserCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />}
               iconBgClass="bg-blue-50 dark:bg-blue-950"
               subtitle={`${project.members.length} 位成員`}
@@ -700,7 +760,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
             <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-muted-foreground">
-                  已花費 ${totalAmount.toLocaleString("zh-TW")} / ${budget.toLocaleString("zh-TW")}
+                  已花費 {formatCurrency(totalAmount, project.currency || DEFAULT_CURRENCY)} / {formatCurrency(budget, project.currency || DEFAULT_CURRENCY)}
                 </span>
                 <span className={`text-sm font-medium ${budgetProgress >= 100 ? "text-red-500" : budgetProgress >= 80 ? "text-amber-500" : "text-emerald-500"}`}>
                   {budgetProgress.toFixed(0)}%
@@ -721,8 +781,8 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
               <div className="flex items-center justify-between mt-2">
                 <span className="text-xs text-muted-foreground">
                   {budgetRemaining !== null && budgetRemaining >= 0
-                    ? `剩餘 $${budgetRemaining.toLocaleString("zh-TW")}`
-                    : `超支 $${Math.abs(budgetRemaining || 0).toLocaleString("zh-TW")}`}
+                    ? `剩餘 ${formatCurrency(budgetRemaining, project.currency || DEFAULT_CURRENCY)}`
+                    : `超支 ${formatCurrency(Math.abs(budgetRemaining || 0), project.currency || DEFAULT_CURRENCY)}`}
                 </span>
                 {budgetProgress >= 100 && (
                   <span className="text-xs text-red-500 font-medium">已超出預算</span>
@@ -761,7 +821,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
                     displayBalance >= 0 ? "text-emerald-500" : "text-red-500"
                   }`}
                 >
-                  {displayBalance >= 0 ? "+" : ""}${Math.abs(displayBalance).toLocaleString("zh-TW")}
+                  {displayBalance >= 0 ? "+" : "-"}{formatCurrency(Math.abs(displayBalance), project.currency || DEFAULT_CURRENCY)}
                 </p>
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                   {displayBalance > 0
@@ -841,7 +901,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
                     </p>
                   </div>
                   <p className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-                    ${Number(expense.amount).toLocaleString("zh-TW")}
+                    {formatCurrency(Number(expense.amount), expense.currency || DEFAULT_CURRENCY)}
                   </p>
                 </Link>
               ))}
@@ -883,6 +943,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
             user: m.user,
           }))}
           currentUserMemberId={project.members.find((m) => m.user?.id === user?.id)?.id || ""}
+          currency={project.currency || DEFAULT_CURRENCY}
           onSuccess={() => {
             fetchProject()
           }}

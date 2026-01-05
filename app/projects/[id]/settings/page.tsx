@@ -93,6 +93,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
   const [currency, setCurrency] = useState<CurrencyCode>(DEFAULT_CURRENCY)
   const [customRates, setCustomRates] = useState<Record<string, string>>({})
   const [expenseCurrencies, setExpenseCurrencies] = useState<string[]>([])
+  const [defaultRates, setDefaultRates] = useState<Record<string, number>>({})
 
   const backHref = `/projects/${id}`
 
@@ -101,6 +102,36 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
     fetchCurrentUser()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
+
+  // 當有不同幣別的支出時，獲取預設匯率
+  useEffect(() => {
+    if (expenseCurrencies.length > 0) {
+      fetchDefaultRates()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expenseCurrencies])
+
+  async function fetchDefaultRates() {
+    try {
+      const res = await authFetch("/api/exchange-rates")
+      if (res.ok) {
+        const data = await res.json()
+        setDefaultRates(data.rates || {})
+      }
+    } catch (error) {
+      console.error("獲取匯率錯誤:", error)
+    }
+  }
+
+  // 計算從一種幣別到另一種幣別的匯率
+  function getConversionRate(fromCurrency: string, toCurrency: string): number | null {
+    if (!defaultRates || Object.keys(defaultRates).length === 0) return null
+    const fromRate = defaultRates[fromCurrency]
+    const toRate = defaultRates[toCurrency]
+    if (!fromRate || !toRate) return null
+    // 透過 USD 作為中介轉換
+    return Math.round((toRate / fromRate) * 10000) / 10000
+  }
 
   async function fetchCurrentUser() {
     try {
@@ -402,32 +433,48 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
             <div className="space-y-2">
               {expenseCurrencies.map((curr) => {
                 const info = getCurrencyInfo(curr)
+                const defaultRate = getConversionRate(curr, currency)
+                const currentRate = customRates[curr] ? Number(customRates[curr]) : defaultRate
+                const isCustom = customRates[curr] && customRates[curr].trim() !== ""
                 return (
-                  <div key={curr} className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 w-24 shrink-0">
-                      <span className="text-lg">{info.symbol}</span>
-                      <span className="text-sm font-medium">{curr}</span>
+                  <div key={curr} className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1 w-24 shrink-0">
+                        <span className="text-lg w-8 text-right">{info.symbol}</span>
+                        <span className="text-sm font-medium">{curr}</span>
+                      </div>
+                      <span className="text-muted-foreground">=</span>
+                      <div className="flex-1 relative">
+                        <Input
+                          type="number"
+                          step="0.0001"
+                          min="0"
+                          placeholder={defaultRate ? `${defaultRate}` : "輸入匯率"}
+                          value={customRates[curr] || ""}
+                          onChange={(e) => {
+                            setCustomRates((prev) => ({
+                              ...prev,
+                              [curr]: e.target.value,
+                            }))
+                          }}
+                          disabled={saving}
+                          className="pr-16"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                          {currency}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-muted-foreground">=</span>
-                    <div className="flex-1 relative">
-                      <Input
-                        type="number"
-                        step="0.0001"
-                        min="0"
-                        placeholder="使用即時匯率"
-                        value={customRates[curr] || ""}
-                        onChange={(e) => {
-                          setCustomRates((prev) => ({
-                            ...prev,
-                            [curr]: e.target.value,
-                          }))
-                        }}
-                        disabled={saving}
-                        className="pr-16"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                        {currency}
-                      </span>
+                    <div className="text-xs text-muted-foreground ml-27">
+                      {isCustom ? (
+                        <span className="text-amber-600 dark:text-amber-400">
+                          使用自訂匯率：1 {curr} = {currentRate} {currency}
+                        </span>
+                      ) : (
+                        <span>
+                          使用即時匯率：1 {curr} = {defaultRate || "..."} {currency}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )
@@ -436,7 +483,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
             <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-900">
               <Info className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
               <p className="text-xs text-blue-600 dark:text-blue-400">
-                自訂匯率會影響結算計算。例如 1 {expenseCurrencies[0]} = {customRates[expenseCurrencies[0]] || "?"} {currency}
+                自訂匯率會覆蓋即時匯率，用於結算計算。留空則使用即時匯率。
               </p>
             </div>
           </div>

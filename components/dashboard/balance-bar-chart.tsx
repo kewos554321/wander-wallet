@@ -8,6 +8,7 @@ import {
   YAxis,
   Tooltip,
 } from "recharts"
+import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 
 interface MemberBalance {
   name: string
@@ -19,14 +20,16 @@ interface MemberBalance {
 interface BalanceBarChartProps {
   data: MemberBalance[]
   height?: number
+  currency?: string
 }
 
 interface CustomTooltipProps {
   active?: boolean
   payload?: Array<{ payload: MemberBalance }>
+  currency: string
 }
 
-function CustomTooltip({ active, payload }: CustomTooltipProps) {
+function CustomTooltip({ active, payload, currency }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) return null
 
   const data = payload[0].payload
@@ -38,16 +41,16 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
       <div className="space-y-1">
         <div className="flex justify-between gap-4">
           <span className="text-slate-400">已付</span>
-          <span className="text-emerald-400">${data.paid.toLocaleString()}</span>
+          <span className="text-emerald-400">{formatCurrency(data.paid, currency)}</span>
         </div>
         <div className="flex justify-between gap-4">
           <span className="text-slate-400">應付</span>
-          <span>${data.share.toLocaleString()}</span>
+          <span>{formatCurrency(data.share, currency)}</span>
         </div>
         <div className="border-t border-slate-700 pt-1 mt-1 flex justify-between gap-4">
           <span className="text-slate-400">結餘</span>
           <span className={balance >= 0 ? "text-emerald-400" : "text-red-400"}>
-            {balance >= 0 ? "+" : ""}${balance.toLocaleString()}
+            {balance >= 0 ? "+" : "-"}{formatCurrency(Math.abs(balance), currency)}
           </span>
         </div>
       </div>
@@ -55,7 +58,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   )
 }
 
-export function BalanceBarChart({ data, height = 160 }: BalanceBarChartProps) {
+export function BalanceBarChart({ data, height = 160, currency = DEFAULT_CURRENCY }: BalanceBarChartProps) {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">
@@ -72,7 +75,7 @@ export function BalanceBarChart({ data, height = 160 }: BalanceBarChartProps) {
             tick={{ fontSize: 12, fill: "#64748b" }}
             width={50}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(0,0,0,0.05)" }} />
+          <Tooltip content={<CustomTooltip currency={currency} />} cursor={{ fill: "rgba(0,0,0,0.05)" }} />
           <Bar
             dataKey="paid"
             fill="#22c55e"

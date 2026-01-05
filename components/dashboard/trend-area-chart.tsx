@@ -13,6 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 
 interface DataPoint {
   date: string
@@ -22,15 +23,17 @@ interface DataPoint {
 interface TrendAreaChartProps {
   data: DataPoint[]
   height?: number
+  currency?: string
 }
 
 interface CustomTooltipProps {
   active?: boolean
   payload?: Array<{ value: number }>
   label?: string
+  currency: string
 }
 
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
+function CustomTooltip({ active, payload, label, currency }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) return null
 
   const amount = payload[0].value
@@ -39,13 +42,13 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
     <div className="bg-slate-900 rounded-lg p-3 text-white text-xs shadow-lg">
       <p className="text-slate-400 mb-1">{label}</p>
       <p className="text-lg font-semibold text-emerald-400">
-        ${amount.toLocaleString()}
+        {formatCurrency(amount, currency)}
       </p>
     </div>
   )
 }
 
-export function TrendAreaChart({ data, height = 140 }: TrendAreaChartProps) {
+export function TrendAreaChart({ data, height = 140, currency = DEFAULT_CURRENCY }: TrendAreaChartProps) {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
       <div className="flex items-center gap-1.5 mb-4">
@@ -77,7 +80,7 @@ export function TrendAreaChart({ data, height = 140 }: TrendAreaChartProps) {
             tickLine={false}
             tick={{ fontSize: 11, fill: "#94a3b8" }}
           />
-          <RechartsTooltip content={<CustomTooltip />} />
+          <RechartsTooltip content={<CustomTooltip currency={currency} />} />
           <Area
             type="monotone"
             dataKey="amount"

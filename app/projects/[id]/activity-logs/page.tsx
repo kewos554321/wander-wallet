@@ -37,6 +37,7 @@ import { format } from "date-fns"
 import type { DateRange } from "react-day-picker"
 import { formatDistanceToNow } from "date-fns"
 import { zhTW } from "date-fns/locale"
+import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 
 interface ExpenseMetadata {
   description?: string | null
@@ -118,7 +119,7 @@ const categoryLabels: Record<string, string> = {
   other: "其他",
 }
 
-function formatChanges(changes: Record<string, { from: unknown; to: unknown }> | null) {
+function formatChanges(changes: Record<string, { from: unknown; to: unknown }> | null, currency: string) {
   if (!changes) return null
 
   const fieldLabels: Record<string, string> = {
@@ -133,7 +134,7 @@ function formatChanges(changes: Record<string, { from: unknown; to: unknown }> |
   const formatValue = (field: string, value: unknown): string => {
     if (value === null || value === undefined) return "無"
     if (field === "category") return categoryLabels[value as string] || String(value)
-    if (field === "amount") return `$${Number(value).toLocaleString("zh-TW")}`
+    if (field === "amount") return formatCurrency(Number(value), currency)
     if (field === "expenseDate") {
       const date = new Date(value as string)
       return date.toLocaleDateString("zh-TW")
@@ -182,6 +183,7 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
   const [createdDateRange, setCreatedDateRange] = useState<DateRange | undefined>(undefined)
   const [expenseDateRange, setExpenseDateRange] = useState<DateRange | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState("")
+  const [projectCurrency, setProjectCurrency] = useState(DEFAULT_CURRENCY)
   const authFetch = useAuthFetch()
 
   const hasActiveFilters =
@@ -339,9 +341,23 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
     }
   }, [authFetch, id])
 
+  // 獲取專案幣別
+  const fetchProjectCurrency = useCallback(async () => {
+    try {
+      const res = await authFetch(`/api/projects/${id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setProjectCurrency(data.currency || DEFAULT_CURRENCY)
+      }
+    } catch (error) {
+      console.error("獲取專案幣別錯誤:", error)
+    }
+  }, [authFetch, id])
+
   useEffect(() => {
     fetchLogs(0, false)
-  }, [fetchLogs])
+    fetchProjectCurrency()
+  }, [fetchLogs, fetchProjectCurrency])
 
   const loadMore = () => {
     if (!loadingMore && hasMore) {
@@ -457,7 +473,7 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
                   <span className="flex items-center gap-1.5">
                     <DollarSign className="h-3.5 w-3.5" />
                     {amountRange[0] > 0 || amountRange[1] > 0
-                      ? `$${amountRange[0].toLocaleString()}~${amountRange[1] > 0 ? `$${amountRange[1].toLocaleString()}` : "不限"}`
+                      ? `${formatCurrency(amountRange[0], projectCurrency)}~${amountRange[1] > 0 ? formatCurrency(amountRange[1], projectCurrency) : "不限"}`
                       : "金額"}
                   </span>
                   <ChevronDown className="h-3.5 w-3.5 ml-1" />
@@ -466,10 +482,10 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
               <DropdownMenuContent align="start" className="w-64 p-3">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">${amountRange[0].toLocaleString()}</span>
+                    <span className="font-medium">{formatCurrency(amountRange[0], projectCurrency)}</span>
                     <span className="text-muted-foreground">~</span>
                     <span className="font-medium">
-                      {amountRange[1] === 0 ? "不限" : `$${amountRange[1].toLocaleString()}`}
+                      {amountRange[1] === 0 ? "不限" : formatCurrency(amountRange[1], projectCurrency)}
                     </span>
                   </div>
                   <div className="space-y-1">
@@ -625,7 +641,7 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
         ) : (
           <div className="space-y-3">
             {filteredLogs.map((log) => {
-              const changes = formatChanges(log.changes)
+              const changes = formatChanges(log.changes, projectCurrency)
               const categoryLabel = formatCategory(log.metadata?.category)
 
               return (
@@ -716,7 +732,7 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
                           <div className="text-right shrink-0">
                             {log.metadata.amount !== undefined && (
                               <p className="font-semibold text-slate-900 dark:text-slate-100">
-                                ${log.metadata.amount.toLocaleString("zh-TW")}
+                                {formatCurrency(log.metadata.amount, projectCurrency)}
                               </p>
                             )}
                             {categoryLabel && (

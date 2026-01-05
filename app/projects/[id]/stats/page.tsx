@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 
 // 圖表 loading skeleton
 function ChartSkeleton({ height = 160 }: { height?: number }) {
@@ -64,6 +65,7 @@ interface ExpenseParticipant {
 interface Expense {
   id: string
   amount: number
+  currency: string
   description: string | null
   category: string | null
   createdAt: string
@@ -83,8 +85,10 @@ interface Project {
   id: string
   name: string
   description: string | null
+  currency: string
   startDate: string | null
   endDate: string | null
+  customRates: Record<string, number> | null
   creator: {
     id: string
     name: string | null
@@ -99,6 +103,7 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
   const { id } = use(params)
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number> | null>(null)
   const authFetch = useAuthFetch()
 
   useEffect(() => {
@@ -107,6 +112,29 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
+
+  // 當有多種幣別時，獲取匯率
+  useEffect(() => {
+    if (project?.expenses) {
+      const currencies = new Set(project.expenses.map(e => e.currency))
+      if (currencies.size > 1) {
+        fetchExchangeRates()
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.expenses])
+
+  async function fetchExchangeRates() {
+    try {
+      const res = await authFetch("/api/exchange-rates")
+      if (res.ok) {
+        const data = await res.json()
+        setExchangeRates(data.rates)
+      }
+    } catch (error) {
+      console.error("獲取匯率錯誤:", error)
+    }
+  }
 
   async function fetchProject() {
     try {
@@ -127,6 +155,26 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
     }
   }
 
+  // 轉換單一金額到專案幣別（優先使用自訂匯率）
+  const convertToProjectCurrency = (amount: number, fromCurrency: string): number => {
+    if (!project) return amount
+    const projectCurrency = project.currency || DEFAULT_CURRENCY
+    if (fromCurrency === projectCurrency) return amount
+
+    // 優先使用自訂匯率
+    if (project.customRates && project.customRates[fromCurrency]) {
+      return Math.round(amount * project.customRates[fromCurrency] * 100) / 100
+    }
+
+    // 無即時匯率時不轉換
+    if (!exchangeRates) return amount
+
+    // 透過 USD 作為中介轉換
+    const fromRate = exchangeRates[fromCurrency] || 1
+    const toRate = exchangeRates[projectCurrency] || 1
+    return Math.round(amount * (toRate / fromRate) * 100) / 100
+  }
+
   // 按日期分組的支出趨勢數據
   const trendData = useMemo(() => {
     if (!project) return []
@@ -140,8 +188,9 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
         day: "numeric",
       })
       const existing = dateMap.get(dateKey)
+      const convertedAmount = convertToProjectCurrency(Number(expense.amount), expense.currency)
       dateMap.set(dateKey, {
-        amount: (existing?.amount || 0) + Number(expense.amount),
+        amount: (existing?.amount || 0) + convertedAmount,
         timestamp: expenseDate.getTime(),
       })
     })
@@ -151,7 +200,8 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
       .sort((a, b) => a.timestamp - b.timestamp)
       .slice(-7)
       .map(({ date, amount }) => ({ date, amount }))
-  }, [project])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project, exchangeRates])
 
   // 類別統計數據
   const categoryData = useMemo(() => {
@@ -160,13 +210,15 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
     const categoryMap = new Map<string, number>()
     project.expenses.forEach((expense) => {
       const cat = expense.category || "other"
-      categoryMap.set(cat, (categoryMap.get(cat) || 0) + Number(expense.amount))
+      const convertedAmount = convertToProjectCurrency(Number(expense.amount), expense.currency)
+      categoryMap.set(cat, (categoryMap.get(cat) || 0) + convertedAmount)
     })
 
     return Array.from(categoryMap.entries())
       .map(([name, value]) => ({ name, value, color: "" }))
       .sort((a, b) => b.value - a.value)
-  }, [project])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project, exchangeRates])
 
   // 成員付款比較數據
   const memberBalanceData = useMemo(() => {
@@ -177,12 +229,15 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
       let share = 0
 
       project.expenses.forEach((expense) => {
+        const convertedAmount = convertToProjectCurrency(Number(expense.amount), expense.currency)
         if (expense.payer.id === member.id) {
-          paid += Number(expense.amount)
+          paid += convertedAmount
         }
         const participant = expense.participants.find((p) => p.memberId === member.id)
         if (participant) {
-          share += Number(participant.shareAmount)
+          // 按比例轉換分擔金額
+          const shareRatio = Number(participant.shareAmount) / Number(expense.amount)
+          share += convertedAmount * shareRatio
         }
       })
 
@@ -195,7 +250,8 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
         balance: paid - share,
       }
     })
-  }, [project])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project, exchangeRates])
 
   // S8: 付款排行榜（誰付最多）
   const paymentRanking = useMemo(() => {
@@ -274,7 +330,8 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
       usedCategories.add(cat)
 
       const existing = dateMap.get(dateKey) || { timestamp: expenseDate.getTime(), categories: {} }
-      existing.categories[cat] = (existing.categories[cat] || 0) + Number(expense.amount)
+      const convertedAmount = convertToProjectCurrency(Number(expense.amount), expense.currency)
+      existing.categories[cat] = (existing.categories[cat] || 0) + convertedAmount
       dateMap.set(dateKey, existing)
     })
 
@@ -290,7 +347,8 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
       .map(({ timestamp: _timestamp, ...rest }) => rest)
 
     return { categoryTrendData: data, trendCategories: categories }
-  }, [project])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project, exchangeRates])
 
   const backHref = `/projects/${id}`
 
@@ -310,9 +368,14 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
     )
   }
 
-  const totalAmount = project.expenses.reduce((sum, e) => sum + Number(e.amount), 0)
+  // 計算總金額（轉換為專案幣別）
+  const totalAmount = project.expenses.reduce((sum, e) => {
+    const convertedAmount = convertToProjectCurrency(Number(e.amount), e.currency)
+    return sum + convertedAmount
+  }, 0)
   const perPerson = project.members.length > 0 ? totalAmount / project.members.length : 0
   const hasData = project.expenses.length > 0
+  const currency = project.currency || DEFAULT_CURRENCY
 
   // 計算每日平均（根據有支出的天數，使用 expenseDate）
   const uniqueDays = new Set(
@@ -320,10 +383,17 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
   ).size
   const dailyAverage = uniqueDays > 0 ? totalAmount / uniqueDays : 0
 
-  // 找出最高單筆支出
+  // 找出最高單筆支出（以轉換後金額計算）
   const highestExpense = project.expenses.length > 0
-    ? project.expenses.reduce((max, e) => Number(e.amount) > Number(max.amount) ? e : max)
+    ? project.expenses.reduce((max, e) => {
+        const convertedMax = convertToProjectCurrency(Number(max.amount), max.currency)
+        const convertedCurrent = convertToProjectCurrency(Number(e.amount), e.currency)
+        return convertedCurrent > convertedMax ? e : max
+      })
     : null
+  const highestExpenseAmount = highestExpense
+    ? convertToProjectCurrency(Number(highestExpense.amount), highestExpense.currency)
+    : 0
 
   return (
     <AppLayout title="統計" showBack backHref={backHref}>
@@ -348,7 +418,7 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
           <div className="text-center py-2">
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">總支出</p>
             <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-              ${totalAmount.toLocaleString("zh-TW")}
+              {formatCurrency(totalAmount, currency)}
             </p>
           </div>
           <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
@@ -358,15 +428,15 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
             </div>
             <div className="text-center">
               <p className="text-xs text-slate-500 dark:text-slate-400">每人</p>
-              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">${Math.round(perPerson).toLocaleString("zh-TW")}</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(Math.round(perPerson), currency)}</p>
             </div>
             <div className="text-center">
               <p className="text-xs text-slate-500 dark:text-slate-400">日均</p>
-              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">${Math.round(dailyAverage).toLocaleString("zh-TW")}</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(Math.round(dailyAverage), currency)}</p>
             </div>
             <div className="text-center">
               <p className="text-xs text-slate-500 dark:text-slate-400">單筆</p>
-              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">${Math.round(project.expenses.length > 0 ? totalAmount / project.expenses.length : 0).toLocaleString("zh-TW")}</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(Math.round(project.expenses.length > 0 ? totalAmount / project.expenses.length : 0), currency)}</p>
             </div>
           </div>
         </div>
@@ -384,18 +454,18 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
         ) : (
           <>
             {/* 消費趨勢圖 */}
-            {trendData.length > 0 && <TrendAreaChart data={trendData} />}
+            {trendData.length > 0 && <TrendAreaChart data={trendData} currency={currency} />}
 
             {/* 分類統計 */}
-            {categoryData.length > 0 && <CategoryPieChart data={categoryData} />}
+            {categoryData.length > 0 && <CategoryPieChart data={categoryData} currency={currency} />}
 
             {/* S11: 類別趨勢 */}
             {categoryTrendData.length >= 2 && (
-              <CategoryTrendChart data={categoryTrendData} categories={trendCategories} />
+              <CategoryTrendChart data={categoryTrendData} categories={trendCategories} currency={currency} />
             )}
 
             {/* 成員付款比較 */}
-            {memberBalanceData.length > 0 && <BalanceBarChart data={memberBalanceData} />}
+            {memberBalanceData.length > 0 && <BalanceBarChart data={memberBalanceData} currency={currency} />}
 
             {/* 排行榜（整合最高單筆支出、付款王、消費王） */}
             {(highestExpense || memberBalanceData.length > 0) && (
@@ -438,7 +508,7 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
                           </div>
                         </div>
                         <span className="text-sm font-semibold text-amber-500 ml-2">
-                          ${Number(highestExpense.amount).toLocaleString("zh-TW")}
+                          {formatCurrency(highestExpenseAmount, currency)}
                         </span>
                       </div>
                     </div>
@@ -467,7 +537,7 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
                               </span>
                             </div>
                             <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                              ${member.paid.toLocaleString()}
+                              {formatCurrency(member.paid, currency)}
                             </span>
                           </div>
                         ))}
@@ -498,7 +568,7 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
                               </span>
                             </div>
                             <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                              ${member.share.toLocaleString()}
+                              {formatCurrency(member.share, currency)}
                             </span>
                           </div>
                         ))}
@@ -539,7 +609,7 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
                         </span>
                       </div>
                       <span className="text-sm font-semibold text-red-500">
-                        ${s.amount.toLocaleString()}
+                        {formatCurrency(s.amount, currency)}
                       </span>
                     </div>
                   ))}
