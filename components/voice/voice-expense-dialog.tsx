@@ -46,7 +46,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { uploadImageToR2 } from "@/lib/image-utils"
 import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
-import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { formatCurrency, DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/constants/currencies"
+import { CurrencySelect } from "@/components/ui/currency-select"
 
 interface Member {
   id: string
@@ -306,6 +307,7 @@ export function VoiceExpenseDialog({
           transcript,
           members: members.map((m) => ({ id: m.id, displayName: m.displayName })),
           currentUserMemberId,
+          defaultCurrency: currency,
         }),
       })
 
@@ -379,6 +381,7 @@ export function VoiceExpenseDialog({
         amount: parsed.amount,
         description: parsed.description,
         category: parsed.category as ExpenseItemResult["category"],
+        currency: currency, // 使用專案預設幣別
         payerId: currentUserMemberId,
         participantIds: allMemberIds,
         selected: true,
@@ -554,6 +557,7 @@ export function VoiceExpenseDialog({
         amount: 50,
         description: "早餐",
         category: "food" as const,
+        currency: currency,
         payerId: currentUserMemberId,
         participantIds: allMemberIds,
         selected: true,
@@ -563,6 +567,7 @@ export function VoiceExpenseDialog({
         amount: 60,
         description: "午餐",
         category: "food" as const,
+        currency: currency,
         payerId: currentUserMemberId,
         participantIds: allMemberIds,
         selected: true,
@@ -572,6 +577,7 @@ export function VoiceExpenseDialog({
         amount: 100,
         description: "晚餐",
         category: "food" as const,
+        currency: currency,
         payerId: members[1]?.id || currentUserMemberId,
         participantIds: allMemberIds,
         selected: true,
@@ -581,6 +587,7 @@ export function VoiceExpenseDialog({
         amount: 90,
         description: "交通",
         category: "transport" as const,
+        currency: currency,
         payerId: members[1]?.id || currentUserMemberId,
         participantIds: members.slice(0, 2).map((m) => m.id),
         selected: true,
@@ -664,6 +671,7 @@ export function VoiceExpenseDialog({
           body: JSON.stringify({
             paidByMemberId: expense.payerId,
             amount: expense.amount,
+            currency: expense.currency,
             description: expense.description.trim() || null,
             category: expense.category,
             image: finalImageUrl,
@@ -1042,14 +1050,19 @@ export function VoiceExpenseDialog({
                                 </Button>
                               </div>
 
-                              {/* 金額 */}
-                              <div className="flex items-center gap-2">
-                                <span className="text-2xl font-bold">$</span>
+                              {/* 金額與幣別 */}
+                              <div className="flex items-stretch gap-2">
+                                <CurrencySelect
+                                  value={expense.currency as CurrencyCode}
+                                  onChange={(value) => updateExpense(expense.id, "currency", value)}
+                                  showName={false}
+                                  className="w-24 text-lg font-bold"
+                                />
                                 <Input
                                   type="number"
                                   value={expense.amount}
                                   onChange={(e) => updateExpense(expense.id, "amount", Number(e.target.value))}
-                                  className="text-2xl font-bold h-12"
+                                  className="text-2xl font-bold flex-1"
                                 />
                               </div>
 
@@ -1137,7 +1150,7 @@ export function VoiceExpenseDialog({
                             {/* 分擔者 */}
                             <div>
                               <label className="block text-xs text-muted-foreground mb-2">
-                                幫誰付？（{expense.participantIds.length}人均分 · 每人 ${expense.participantIds.length > 0 ? Math.round(expense.amount / expense.participantIds.length) : 0}）
+                                幫誰付？（{expense.participantIds.length}人均分 · 每人 {expense.currency} {expense.participantIds.length > 0 ? Math.round(expense.amount / expense.participantIds.length) : 0}）
                               </label>
                               <div className="flex flex-wrap gap-1.5">
                                 {members.map((member) => {

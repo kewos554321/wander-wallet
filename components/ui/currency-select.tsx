@@ -39,7 +39,7 @@ export function CurrencySelect({
         <SelectValue>
           {selectedCurrency && (
             <span className="flex items-center gap-1.5">
-              <span className="font-mono">{selectedCurrency.code}</span>
+              <span className="font-mono text-inherit">{selectedCurrency.code}</span>
             </span>
           )}
         </SelectValue>
@@ -48,9 +48,9 @@ export function CurrencySelect({
         {SUPPORTED_CURRENCIES.map((currency) => (
           <SelectItem key={currency.code} value={currency.code}>
             <span className="flex items-center gap-2">
-              <span className="font-mono w-12">{currency.code}</span>
+              <span className="font-mono w-12 text-base">{currency.code}</span>
               {showName && (
-                <span className="text-muted-foreground text-xs">
+                <span className="text-muted-foreground text-sm">
                   {currency.name}
                 </span>
               )}

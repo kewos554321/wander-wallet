@@ -2,8 +2,11 @@ import { z } from "zod"
 import { ChatPromptTemplate } from "@langchain/core/prompts"
 import { createDeepSeekModel } from "./deepseek"
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/lib/constants/expenses"
+import { SUPPORTED_CURRENCIES, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 
 export { EXPENSE_CATEGORIES, type ExpenseCategory }
+
+const CURRENCY_CODES = SUPPORTED_CURRENCIES.map(c => c.code) as [string, ...string[]]
 
 /**
  * 單筆費用 Schema（用於 AI 輸出）
@@ -14,6 +17,10 @@ const ExpenseItemSchema = z.object({
   category: z
     .enum(EXPENSE_CATEGORIES)
     .describe("分類：food=餐飲, transport=交通, accommodation=住宿, ticket=票券, shopping=購物, entertainment=娛樂, gift=禮品, other=其他"),
+  currency: z
+    .enum(CURRENCY_CODES)
+    .optional()
+    .describe("貨幣代碼：若有提到日圓/円/JPY=JPY, 韓元/韓幣/KRW=KRW, 美金/美元/USD=USD, 台幣/TWD=TWD, 等。若沒提到則不填"),
   payerName: z
     .string()
     .describe("這筆費用的付款人名字，如果說「我付」「我先付」則填入目前用戶名字"),
@@ -53,6 +60,7 @@ export interface ParseExpenseInput {
   transcript: string
   members: MemberInfo[]
   currentUserName: string
+  defaultCurrency?: string // 專案預設幣別
 }
 
 /**
@@ -63,6 +71,7 @@ export interface ExpenseItemResult {
   amount: number
   description: string
   category: ExpenseCategory
+  currency: string // 幣別代碼
   payerId: string // 這筆費用的付款人 ID
   participantIds: string[] // 這筆費用的分擔者 ID 陣列
   selected: boolean // 是否選中要儲存
@@ -155,7 +164,7 @@ function createExpensesParserChain() {
 export async function parseExpenses(
   input: ParseExpenseInput
 ): Promise<ParseExpensesResult> {
-  const { transcript, members, currentUserName } = input
+  const { transcript, members, currentUserName, defaultCurrency = DEFAULT_CURRENCY } = input
 
   if (!transcript.trim()) {
     throw new Error("請輸入或說出消費內容")
@@ -194,11 +203,15 @@ export async function parseExpenses(
     // 如果沒有找到任何分擔者，預設全部成員
     const finalParticipantIds = participantIds.length > 0 ? participantIds : allMemberIds
 
+    // 幣別：AI 有解析到就用，否則用專案預設
+    const expenseCurrency = expense.currency || defaultCurrency
+
     return {
       id: `temp-${Date.now()}-${index}`,
       amount: expense.amount,
       description: expense.description,
       category: expense.category,
+      currency: expenseCurrency,
       payerId,
       participantIds: finalParticipantIds,
       selected: true, // 預設全部選中

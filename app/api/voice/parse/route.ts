@@ -6,6 +6,7 @@ interface RequestBody {
   transcript: string
   members: MemberInfo[]
   currentUserMemberId: string
+  defaultCurrency?: string
 }
 
 /**
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     // 解析請求
     const body: RequestBody = await req.json()
-    const { transcript, members, currentUserMemberId } = body
+    const { transcript, members, currentUserMemberId, defaultCurrency } = body
 
     // 驗證輸入
     if (!transcript?.trim()) {
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
       transcript,
       members,
       currentUserName,
+      defaultCurrency,
     })
 
     return NextResponse.json({
