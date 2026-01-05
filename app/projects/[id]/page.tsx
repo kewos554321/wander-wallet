@@ -690,7 +690,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
                   href={`/projects/${id}/currency`}
                   icon={<ArrowRightLeft className="h-5 w-5 text-amber-600 dark:text-amber-400" />}
                   iconBgClass="bg-amber-50 dark:bg-amber-950"
-                  label="幣種"
+                  label="匯率"
                 />
                 <FeatureCard
                   href={`/projects/${id}/notes`}

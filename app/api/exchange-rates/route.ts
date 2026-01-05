@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import {
   getExchangeRates,
+  getHistoricalRates,
   convertCurrency,
   isUsingFallbackRates,
 } from "@/lib/services/exchange-rate"
@@ -17,6 +18,8 @@ export async function GET(req: NextRequest) {
     const from = searchParams.get("from")
     const to = searchParams.get("to")
     const amount = searchParams.get("amount")
+    const date = searchParams.get("date") // YYYY-MM-DD for historical rates
+    const base = searchParams.get("base") || "USD"
 
     // If specific conversion requested
     if (from && to) {
@@ -36,12 +39,17 @@ export async function GET(req: NextRequest) {
       })
     }
 
-    // Return all rates
-    const rates = await getExchangeRates()
+    // Get historical or current rates
+    const rates = date
+      ? await getHistoricalRates(date, base)
+      : await getExchangeRates(base)
+
     return NextResponse.json({
       base: rates.base,
       rates: rates.rates,
       timestamp: rates.timestamp,
+      date: date || new Date().toISOString().split("T")[0],
+      isHistorical: !!date,
       usingFallback: isUsingFallbackRates(),
     })
   } catch (error) {

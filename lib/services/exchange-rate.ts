@@ -9,6 +9,9 @@ let cachedRates: ExchangeRates | null = null
 let cacheTimestamp = 0
 const CACHE_DURATION = 60 * 60 * 1000 // 1 hour
 
+// Historical rates cache (date -> rates)
+const historicalCache = new Map<string, ExchangeRates>()
+
 // Fallback static rates (USD as base, updated periodically)
 const FALLBACK_RATES: Record<string, number> = {
   USD: 1,
@@ -24,6 +27,12 @@ const FALLBACK_RATES: Record<string, number> = {
   SGD: 1.34,
   THB: 35.8,
   VND: 24500,
+  MYR: 4.47,
+  PHP: 56.5,
+  IDR: 15800,
+  INR: 83.5,
+  NZD: 1.64,
+  CHF: 0.88,
 }
 
 let usingFallback = false
@@ -68,6 +77,49 @@ export async function getExchangeRates(
     console.error("Exchange rate fetch error:", error)
     usingFallback = true
     return { base: "USD", rates: FALLBACK_RATES, timestamp: now }
+  }
+}
+
+// 獲取歷史匯率
+export async function getHistoricalRates(
+  date: string, // YYYY-MM-DD format
+  baseCurrency: string = "USD"
+): Promise<ExchangeRates> {
+  // Check cache first
+  const cacheKey = `${date}_${baseCurrency}`
+  if (historicalCache.has(cacheKey)) {
+    return historicalCache.get(cacheKey)!
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.exchangerate.host/${date}?base=${baseCurrency}`,
+      { next: { revalidate: 86400 } } // Cache for 24 hours (historical data won't change)
+    )
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch historical rates")
+    }
+
+    const data = await response.json()
+
+    if (!data.success) {
+      throw new Error("API returned unsuccessful response")
+    }
+
+    const result: ExchangeRates = {
+      base: data.base || baseCurrency,
+      rates: data.rates,
+      timestamp: new Date(date).getTime(),
+    }
+
+    // Cache historical data
+    historicalCache.set(cacheKey, result)
+
+    return result
+  } catch (error) {
+    console.error("Historical rate fetch error:", error)
+    return { base: "USD", rates: FALLBACK_RATES, timestamp: Date.now() }
   }
 }
 
