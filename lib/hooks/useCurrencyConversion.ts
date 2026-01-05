@@ -9,6 +9,7 @@ interface ExchangeRates {
 interface UseCurrencyConversionOptions {
   projectCurrency?: string
   customRates?: Record<string, number> | null
+  precision?: number
   autoFetch?: boolean
 }
 
@@ -37,6 +38,7 @@ export function useCurrencyConversion(
   const {
     projectCurrency = DEFAULT_CURRENCY,
     customRates = null,
+    precision = 2,
     autoFetch = true,
   } = options
 
@@ -95,9 +97,10 @@ export function useCurrencyConversion(
       if (fromCurrency === projectCurrency) return amount
 
       const rate = getRate(fromCurrency, projectCurrency)
-      return Math.round(amount * rate * 100) / 100
+      const factor = Math.pow(10, precision)
+      return Math.round(amount * rate * factor) / factor
     },
-    [projectCurrency, getRate]
+    [projectCurrency, getRate, precision]
   )
 
   return {

@@ -159,6 +159,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const [exchangeRate, setExchangeRate] = useState<number | null>(null)
   const [customRates, setCustomRates] = useState<Record<string, number> | null>(null)
   const [isCustomRate, setIsCustomRate] = useState(false)
+  const [precision, setPrecision] = useState(2)
 
   // 自動獲取當下地點
   const getCurrentLocation = useCallback(async () => {
@@ -257,6 +258,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         if (projectData.customRates) {
           setCustomRates(projectData.customRates)
         }
+        // 設定精度
+        setPrecision(projectData.exchangeRatePrecision ?? 2)
       }
 
       if (membersRes.ok) {
@@ -298,6 +301,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         if (projectData.customRates) {
           setCustomRates(projectData.customRates)
         }
+        // 設定精度
+        setPrecision(projectData.exchangeRatePrecision ?? 2)
       }
 
       if (expenseRes.ok) {
@@ -842,7 +847,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                 <p className="text-sm text-muted-foreground mt-2">
                   ≈ {formatCurrency(amountNum * exchangeRate, projectCurrency)}
                   <span className={`text-xs ml-1.5 ${isCustomRate ? "text-amber-600 dark:text-amber-400" : "opacity-70"}`}>
-                    ({isCustomRate ? "自訂" : "即時"}匯率 1:{exchangeRate.toFixed(4)})
+                    ({isCustomRate ? "自訂" : "即時"}匯率 1:{exchangeRate.toFixed(precision)})
                   </span>
                 </p>
               )}

@@ -39,6 +39,7 @@ model Project {
   memo        String?   @db.Text // 共享備忘錄
   mileageData Json?     @map("mileage_data") // 里程計算資料
   customRates Json?     @map("custom_rates") // 自訂匯率 { "JPY": 0.22, "USD": 31.5 }
+  exchangeRatePrecision Int @default(2) @map("exchange_rate_precision") // 匯率計算精度（小數位數）
   createdBy   String    @map("created_by") @db.Uuid
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")

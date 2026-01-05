@@ -97,6 +97,7 @@ interface Project {
   description: string | null
   budget: string | null
   currency: string
+  exchangeRatePrecision: number
   startDate: string | null
   endDate: string | null
   customRates: Record<string, number> | null
@@ -176,6 +177,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
   const { convert: convertToProjectCurrency } = useCurrencyConversion({
     projectCurrency: project?.currency || DEFAULT_CURRENCY,
     customRates: project?.customRates || null,
+    precision: project?.exchangeRatePrecision ?? 2,
   })
 
   // 功能 carousel 相關

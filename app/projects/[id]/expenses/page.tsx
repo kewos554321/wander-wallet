@@ -86,6 +86,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
     loading: projectLoading,
     projectCurrency,
     customRates,
+    precision,
   } = useProjectData(id)
 
   const {
@@ -104,6 +105,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
   const { convert: convertToProjectCurrency } = useCurrencyConversion({
     projectCurrency,
     customRates,
+    precision,
   })
 
   // 找出當前用戶的 memberId

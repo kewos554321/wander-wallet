@@ -87,6 +87,7 @@ interface Project {
   name: string
   description: string | null
   currency: string
+  exchangeRatePrecision: number
   startDate: string | null
   endDate: string | null
   customRates: Record<string, number> | null
@@ -110,6 +111,7 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
   const { convert: convertToProjectCurrency, exchangeRates } = useCurrencyConversion({
     projectCurrency: project?.currency || DEFAULT_CURRENCY,
     customRates: project?.customRates || null,
+    precision: project?.exchangeRatePrecision ?? 2,
   })
 
   useEffect(() => {

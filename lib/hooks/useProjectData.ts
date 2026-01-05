@@ -26,6 +26,7 @@ export interface Project {
   description: string | null
   budget: string | null
   currency: string
+  exchangeRatePrecision: number
   startDate: string | null
   endDate: string | null
   customRates: Record<string, number> | null
@@ -53,6 +54,8 @@ interface UseProjectDataReturn {
   projectCurrency: string
   /** 自訂匯率 */
   customRates: Record<string, number> | null
+  /** 匯率計算精度（預設 2） */
+  precision: number
   /** 重新載入專案資料 */
   refetch: () => Promise<void>
   /** 重新載入成員資料 */
@@ -171,6 +174,7 @@ export function useProjectData(
     error,
     projectCurrency: project?.currency || DEFAULT_CURRENCY,
     customRates: project?.customRates || null,
+    precision: project?.exchangeRatePrecision ?? 2,
     refetch: fetchProject.bind(null, false),
     refetchMembers: fetchMembers.bind(null, false),
     invalidate,

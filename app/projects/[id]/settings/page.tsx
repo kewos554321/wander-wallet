@@ -41,6 +41,7 @@ interface Project {
   endDate: string | null
   joinMode: string
   customRates: Record<string, number> | null
+  exchangeRatePrecision: number
   createdBy: string
   creator: {
     id: string
@@ -100,6 +101,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
   const [joinMode, setJoinMode] = useState("both")
   const [currency, setCurrency] = useState<CurrencyCode>(DEFAULT_CURRENCY)
   const [customRates, setCustomRates] = useState<Record<string, string>>({})
+  const [exchangeRatePrecision, setExchangeRatePrecision] = useState(2)
   const [expenseCurrencies, setExpenseCurrencies] = useState<string[]>([])
   const [defaultRates, setDefaultRates] = useState<Record<string, number>>({})
 
@@ -137,8 +139,9 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
     const fromRate = defaultRates[fromCurrency]
     const toRate = defaultRates[toCurrency]
     if (!fromRate || !toRate) return null
-    // 透過 USD 作為中介轉換
-    return Math.round((toRate / fromRate) * 10000) / 10000
+    // 透過 USD 作為中介轉換，使用精度設定
+    const factor = Math.pow(10, exchangeRatePrecision)
+    return Math.round((toRate / fromRate) * factor) / factor
   }
 
   async function fetchCurrentUser() {
@@ -167,6 +170,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
         setBudget(data.budget ? String(Number(data.budget)) : "")
         setJoinMode(data.joinMode || "both")
         setCurrency((data.currency as CurrencyCode) || DEFAULT_CURRENCY)
+        setExchangeRatePrecision(data.exchangeRatePrecision ?? 2)
 
         // 設定自訂匯率
         if (data.customRates) {
@@ -243,6 +247,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
           startDate: startDate || null,
           endDate: endDate || null,
           joinMode: joinMode,
+          exchangeRatePrecision: exchangeRatePrecision,
           customRates: Object.keys(customRates).length > 0
             ? Object.fromEntries(
                 Object.entries(customRates)
@@ -483,11 +488,11 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                     <div className="text-xs text-muted-foreground ml-27">
                       {isCustom ? (
                         <span className="text-amber-600 dark:text-amber-400">
-                          使用自訂匯率：1 {curr} = {currentRate} {currency}
+                          使用自訂匯率：1 {curr} = {Number(currentRate).toFixed(exchangeRatePrecision)} {currency}
                         </span>
                       ) : (
                         <span>
-                          使用即時匯率：1 {curr} = {defaultRate || "..."} {currency}
+                          使用即時匯率：1 {curr} = {defaultRate !== null ? defaultRate.toFixed(exchangeRatePrecision) : "..."} {currency}
                         </span>
                       )}
                     </div>
@@ -503,6 +508,42 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
             </div>
           </div>
         )}
+
+        {/* 匯率精度設定 */}
+        <div className="space-y-2">
+          <label htmlFor="exchangeRatePrecision" className="text-sm font-medium">
+            匯率計算精度
+          </label>
+          <div className="flex items-center gap-3">
+            <Input
+              id="exchangeRatePrecision"
+              type="number"
+              min="0"
+              max="8"
+              step="1"
+              value={exchangeRatePrecision}
+              onChange={(e) => {
+                const val = Math.max(0, Math.min(8, Number(e.target.value) || 0))
+                setExchangeRatePrecision(val)
+              }}
+              disabled={saving}
+              className="w-24"
+            />
+            <span className="text-sm text-muted-foreground">位小數（0-8）</span>
+          </div>
+          <div className="text-xs text-muted-foreground space-y-1">
+            <p>控制匯率換算時的小數位數精度，影響：</p>
+            <ul className="list-disc list-inside ml-2 space-y-0.5">
+              <li>即時匯率顯示的小數位數</li>
+              <li>費用換算成專案幣別時的計算精度</li>
+              <li>結算金額的四捨五入位數</li>
+            </ul>
+            <p className="mt-2">
+              <span className="font-medium">建議值：</span>
+              一般旅遊記帳設為 2；需要精確計算設為 4-6
+            </p>
+          </div>
+        </div>
 
         {/* 專案描述 */}
         <div className="space-y-2">

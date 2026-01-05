@@ -154,7 +154,7 @@ export async function PUT(
     }
 
     const body = await req.json()
-    const { name, description, cover, budget, currency, startDate, endDate, joinMode, customRates } = body
+    const { name, description, cover, budget, currency, startDate, endDate, joinMode, exchangeRatePrecision, customRates } = body
 
     const updateData: {
       name?: string
@@ -165,6 +165,7 @@ export async function PUT(
       startDate?: Date | null
       endDate?: Date | null
       joinMode?: string
+      exchangeRatePrecision?: number
       customRates?: Prisma.InputJsonValue | typeof Prisma.DbNull
     } = {}
 
@@ -207,6 +208,12 @@ export async function PUT(
         return NextResponse.json({ error: "無效的加入模式" }, { status: 400 })
       }
       updateData.joinMode = joinMode
+    }
+
+    // 處理匯率精度更新
+    if (exchangeRatePrecision !== undefined) {
+      const precision = Math.max(0, Math.min(8, Number(exchangeRatePrecision) || 0))
+      updateData.exchangeRatePrecision = precision
     }
 
     // 處理自訂匯率更新

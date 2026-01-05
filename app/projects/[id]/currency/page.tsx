@@ -38,6 +38,7 @@ interface Project {
   id: string
   name: string
   currency: string
+  exchangeRatePrecision: number
   customRates?: Record<string, number>
 }
 
@@ -162,11 +163,10 @@ export default function CurrencyPage({ params }: { params: Promise<{ id: string 
     return toRate / fromRate
   }
 
-  // 格式化匯率顯示
+  // 格式化匯率顯示（使用專案精度設定）
+  const precision = project?.exchangeRatePrecision ?? 2
   function formatRate(rate: number): string {
-    if (rate >= 100) return rate.toFixed(2)
-    if (rate >= 1) return rate.toFixed(4)
-    return rate.toFixed(6)
+    return rate.toFixed(precision)
   }
 
   if (loading && !rates) {

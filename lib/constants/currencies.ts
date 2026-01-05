@@ -6,13 +6,13 @@ export const SUPPORTED_CURRENCIES = [
   { code: "AUD", name: "澳幣", locale: "en-AU" },
   { code: "CAD", name: "加幣", locale: "en-CA" },
   // Asian
-  { code: "TWD", name: "新台幣", locale: "zh-TW" },
+  { code: "TWD", name: "新台幣", locale: "zh-TW", decimals: 0 },
   { code: "JPY", name: "日圓", locale: "ja-JP", decimals: 0 },
   { code: "KRW", name: "韓元", locale: "ko-KR", decimals: 0 },
-  { code: "CNY", name: "人民幣", locale: "zh-CN" },
+  { code: "CNY", name: "人民幣", locale: "zh-CN", decimals: 0 },
   { code: "HKD", name: "港幣", locale: "zh-HK" },
   { code: "SGD", name: "新加坡幣", locale: "en-SG" },
-  { code: "THB", name: "泰銖", locale: "th-TH" },
+  { code: "THB", name: "泰銖", locale: "th-TH", decimals: 0 },
   { code: "VND", name: "越南盾", locale: "vi-VN", decimals: 0 },
 ] as const
 

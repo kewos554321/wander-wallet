@@ -76,6 +76,7 @@ interface SettleData {
     totalShared: number
     isBalanced: boolean
     currency?: string
+    precision?: number
     exchangeRatesUsed?: Record<string, number>
     defaultRates?: Record<string, number>
     usingCustomRates?: Record<string, boolean>
@@ -237,7 +238,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                     const isCustom = data.summary.usingCustomRates?.[curr]
                     return (
                       <div key={curr} className="flex items-center gap-2">
-                        <span>1 {curr} = {rate.toFixed(4)} {data.summary.currency}</span>
+                        <span>1 {curr} = {rate.toFixed(data.summary.precision ?? 2)} {data.summary.currency}</span>
                         {isCustom && (
                           <span className="text-amber-600 dark:text-amber-400 text-[10px] px-1 py-0.5 bg-amber-100 dark:bg-amber-900/50 rounded">自訂</span>
                         )}
@@ -332,15 +333,31 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                                 </div>
                                 <div>
                                   <span className="text-amber-600">分攤：</span>
-                                  {expense.participants.map((p, i) => (
-                                    <span key={p.memberId}>
-                                      {i > 0 && "、"}
-                                      {p.displayName}
-                                      <span className="text-muted-foreground/70">
-                                        ({formatCurrency(p.convertedShareAmount, summary.currency || DEFAULT_CURRENCY)})
-                                      </span>
-                                    </span>
-                                  ))}
+                                  {(() => {
+                                    const count = expense.participants.length
+                                    const total = expense.convertedAmount
+                                    const perPerson = total / count
+                                    const precision = summary.precision ?? 2
+                                    const hasRounding = !Number.isInteger(perPerson)
+                                    return (
+                                      <>
+                                        {hasRounding && (
+                                          <span className="text-muted-foreground/50 mr-1">
+                                            ({total} ÷ {count} ≈ {perPerson.toFixed(precision)})
+                                          </span>
+                                        )}
+                                        {expense.participants.map((p, i) => (
+                                          <span key={p.memberId}>
+                                            {i > 0 && "、"}
+                                            {p.displayName}
+                                            <span className="text-muted-foreground/70">
+                                              ({formatCurrency(p.convertedShareAmount, summary.currency || DEFAULT_CURRENCY)})
+                                            </span>
+                                          </span>
+                                        ))}
+                                      </>
+                                    )
+                                  })()}
                                 </div>
                               </div>
                             </div>
@@ -492,40 +509,40 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
             <CardDescription>專案支出統計</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               {/* 總支出筆數 */}
-              <div className="flex flex-col items-center p-3 rounded-xl bg-blue-50 dark:bg-blue-950/50 min-w-0">
-                <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mb-2">
-                  <Receipt className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div className="flex flex-col items-center p-3 rounded-xl bg-blue-50 dark:bg-blue-950/50">
+                <div className="h-9 w-9 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mb-2">
+                  <Receipt className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 </div>
-                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                <span className="text-xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">
                   {summary.totalExpenses}
                 </span>
-                <span className="text-xs text-muted-foreground mt-1">支出筆數</span>
+                <span className="text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">支出筆數</span>
               </div>
 
               {/* 總金額 */}
-              <div className="flex flex-col items-center p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 min-w-0">
-                <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center mb-2">
-                  <Wallet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <div className="flex flex-col items-center p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50">
+                <div className="h-9 w-9 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center mb-2">
+                  <Wallet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 text-center break-all">
-                  {formatCurrency(convertToDisplayCurrency(summary.totalAmount), getDisplayCurrencyCode())}
+                <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                  {Math.round(convertToDisplayCurrency(summary.totalAmount)).toLocaleString()}
                 </span>
-                <span className="text-xs text-muted-foreground mt-1">總金額</span>
+                <span className="text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">總金額 ({getDisplayCurrencyCode()})</span>
               </div>
 
               {/* 人均支出 */}
-              <div className="flex flex-col items-center p-3 rounded-xl bg-purple-50 dark:bg-purple-950/50 min-w-0">
-                <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center mb-2">
-                  <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              <div className="flex flex-col items-center p-3 rounded-xl bg-purple-50 dark:bg-purple-950/50">
+                <div className="h-9 w-9 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center mb-2">
+                  <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                 </div>
-                <span className="text-sm font-bold text-purple-600 dark:text-purple-400 text-center break-all">
+                <span className="text-xl font-bold text-purple-600 dark:text-purple-400 tabular-nums">
                   {balances.length > 0
-                    ? formatCurrency(convertToDisplayCurrency(summary.totalAmount / balances.length), getDisplayCurrencyCode())
-                    : formatCurrency(0, getDisplayCurrencyCode())}
+                    ? Math.round(convertToDisplayCurrency(summary.totalAmount / balances.length)).toLocaleString()
+                    : 0}
                 </span>
-                <span className="text-xs text-muted-foreground mt-1">人均支出</span>
+                <span className="text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">人均 ({getDisplayCurrencyCode()})</span>
               </div>
             </div>
           </CardContent>

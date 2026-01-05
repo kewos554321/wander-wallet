@@ -45,8 +45,14 @@ interface Settlement {
   amount: number
 }
 
+// 根據精度四捨五入
+function roundToPrecision(value: number, precision: number): number {
+  const factor = Math.pow(10, precision)
+  return Math.round(value * factor) / factor
+}
+
 // 最優結算算法：最小化轉帳次數
-function calculateOptimalSettlements(balances: Balance[]): Settlement[] {
+function calculateOptimalSettlements(balances: Balance[], precision: number = 2): Settlement[] {
   const settlements: Settlement[] = []
 
   // 深拷貝餘額物件，避免修改原始資料
@@ -82,7 +88,7 @@ function calculateOptimalSettlements(balances: Balance[]): Settlement[] {
         displayName: creditor.displayName,
         userImage: creditor.userImage,
       },
-      amount: Math.round(amount * 100) / 100, // 保留兩位小數
+      amount: roundToPrecision(amount, precision),
     })
 
     // 更新餘額
@@ -125,14 +131,15 @@ export async function GET(
       return NextResponse.json({ error: "無權限訪問此專案" }, { status: 403 })
     }
 
-    // 獲取專案幣別和自訂匯率
+    // 獲取專案幣別、自訂匯率和精度設定
     const project = await prisma.project.findUnique({
       where: { id },
-      select: { currency: true, customRates: true },
+      select: { currency: true, customRates: true, exchangeRatePrecision: true },
     })
 
     const projectCurrency = project?.currency || DEFAULT_CURRENCY
     const customRates = (project?.customRates as Record<string, number> | null) || {}
+    const precision = project?.exchangeRatePrecision ?? 2
 
     // 獲取所有費用（只取未刪除的）
     const expenses = await prisma.expense.findMany({
@@ -230,7 +237,7 @@ export async function GET(
       const rate = expense.currency === projectCurrency
         ? 1
         : (exchangeRatesUsed[expense.currency] || 1)
-      const paidAmount = Number(expense.amount) * rate
+      const paidAmount = roundToPrecision(Number(expense.amount) * rate, precision)
 
       totalPaid += paidAmount
 
@@ -256,7 +263,7 @@ export async function GET(
 
       // 扣除每個參與者應該分擔的金額
       expense.participants.forEach((participant) => {
-        const shareAmount = Number(participant.shareAmount) * rate
+        const shareAmount = roundToPrecision(Number(participant.shareAmount) * rate, precision)
         totalShared += shareAmount
         const participantBalance = balanceMap.get(participant.memberId)
         if (participantBalance) {
@@ -275,10 +282,16 @@ export async function GET(
       expenseDetails.push(expenseDetail)
     }
 
-    const balances = Array.from(balanceMap.values())
+    // 對餘額進行精度處理
+    const balances = Array.from(balanceMap.values()).map(b => ({
+      ...b,
+      balance: roundToPrecision(b.balance, precision),
+      totalPaid: roundToPrecision(b.totalPaid, precision),
+      totalShare: roundToPrecision(b.totalShare, precision),
+    }))
 
     // 計算最優結算方案
-    const settlements = calculateOptimalSettlements(balances)
+    const settlements = calculateOptimalSettlements(balances, precision)
 
     // 判斷哪些幣別使用了自訂匯率
     const usingCustomRates: Record<string, boolean> = {}
@@ -293,10 +306,11 @@ export async function GET(
       expenseDetails,
       summary: {
         totalExpenses: expenses.length,
-        totalAmount: totalPaid,
-        totalShared,
+        totalAmount: roundToPrecision(totalPaid, precision),
+        totalShared: roundToPrecision(totalShared, precision),
         isBalanced: Math.abs(totalPaid - totalShared) < 0.01,
         currency: projectCurrency,
+        precision,
         exchangeRatesUsed: Object.keys(exchangeRatesUsed).length > 0 ? exchangeRatesUsed : undefined,
         defaultRates: Object.keys(defaultRates).length > 0 ? defaultRates : undefined,
         usingCustomRates: Object.keys(usingCustomRates).length > 0 ? usingCustomRates : undefined,
