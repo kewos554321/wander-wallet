@@ -37,6 +37,7 @@ import {
   History,
   DollarSign,
   UserCheck,
+  MapPin,
 } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import {
@@ -697,6 +698,12 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
                   icon={<StickyNote className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />}
                   iconBgClass="bg-yellow-50 dark:bg-yellow-950"
                   label="筆記"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/map`}
+                  icon={<MapPin className="h-5 w-5 text-teal-600 dark:text-teal-400" />}
+                  iconBgClass="bg-teal-50 dark:bg-teal-950"
+                  label="地圖"
                 />
               </div>
             </div>
