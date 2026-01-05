@@ -1,0 +1,30 @@
+<svg viewBox="0 0 200 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Empty wallet outline -->
+  <rect x="45" y="45" width="90" height="60" rx="8" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4" opacity="0.4"/>
+
+  <!-- Wallet fold -->
+  <path d="M45 65 H135" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+
+  <!-- Empty card slot -->
+  <rect x="95" y="75" width="30" height="18" rx="3" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.3"/>
+
+  <!-- Flying receipts (empty) -->
+  <rect x="140" y="30" width="25" height="35" rx="3" stroke="var(--brand-400, #2dd4bf)" stroke-width="1.5" stroke-dasharray="3 3" transform="rotate(15 152 47)"/>
+  <rect x="150" y="45" width="20" height="28" rx="2" stroke="var(--brand-300, #5eead4)" stroke-width="1.5" stroke-dasharray="3 3" transform="rotate(-10 160 59)"/>
+
+  <!-- Flight path -->
+  <path d="M155 85 Q175 70 185 90" stroke="var(--brand-400, #2dd4bf)" stroke-width="1.5" stroke-dasharray="4 2" fill="none"/>
+
+  <!-- Small airplane -->
+  <g transform="translate(180 85) rotate(30)">
+    <path d="M0 0 L8 3 L0 6 L2 3 Z" fill="var(--brand-500, #14b8a6)"/>
+  </g>
+
+  <!-- Coins scattered (empty) -->
+  <circle cx="55" cy="125" r="8" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.3"/>
+  <circle cx="75" cy="120" r="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.25"/>
+
+  <!-- Decorative elements -->
+  <circle cx="30" cy="60" r="3" fill="var(--brand-300, #5eead4)" opacity="0.4"/>
+  <circle cx="170" cy="120" r="2" fill="var(--brand-300, #5eead4)" opacity="0.4"/>
+</svg>

@@ -1,0 +1,29 @@
+<svg viewBox="0 0 200 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Camera body -->
+  <rect x="55" y="50" width="70" height="55" rx="8" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4" opacity="0.4"/>
+
+  <!-- Camera lens -->
+  <circle cx="90" cy="77" r="18" stroke="currentColor" stroke-width="2" stroke-dasharray="3 3" opacity="0.4"/>
+  <circle cx="90" cy="77" r="10" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.3"/>
+
+  <!-- Camera flash -->
+  <rect x="62" y="43" width="15" height="10" rx="2" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+
+  <!-- Viewfinder -->
+  <rect x="100" y="55" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+
+  <!-- Postcards stack -->
+  <rect x="135" y="35" width="45" height="35" rx="3" stroke="var(--brand-400, #2dd4bf)" stroke-width="1.5" fill="none" transform="rotate(8 157 52)"/>
+  <rect x="140" y="40" width="45" height="35" rx="3" stroke="var(--brand-300, #5eead4)" stroke-width="1.5" fill="none" transform="rotate(-5 162 57)"/>
+
+  <!-- Postcard image placeholder -->
+  <path d="M145 55 L155 48 L165 60 L175 52 L180 62 V70 H145 Z" fill="var(--brand-200, #99f6e4)" opacity="0.4"/>
+
+  <!-- Photo memories -->
+  <rect x="25" y="85" width="30" height="25" rx="2" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.3" transform="rotate(-10 40 97)"/>
+
+  <!-- Stars/sparkles -->
+  <circle cx="170" cy="95" r="2" fill="var(--brand-400, #2dd4bf)" opacity="0.6"/>
+  <circle cx="35" cy="45" r="2.5" fill="var(--brand-300, #5eead4)" opacity="0.5"/>
+  <circle cx="155" cy="110" r="1.5" fill="var(--brand-300, #5eead4)" opacity="0.4"/>
+</svg>

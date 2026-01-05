@@ -4,7 +4,8 @@ import { ReactNode } from "react"
 import { useLiff } from "./liff-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Wallet, AlertTriangle } from "lucide-react"
+import { AlertTriangle } from "lucide-react"
+import { Logo } from "@/components/brand/logo"
 
 interface AuthGateProps {
   children: ReactNode
@@ -16,10 +17,20 @@ export function AuthGate({ children }: AuthGateProps) {
   // 載入中
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
-          <p className="text-muted-foreground">載入中...</p>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 via-background to-brand-100 dark:from-brand-100 dark:via-background dark:to-brand-200">
+        <div className="text-center animate-fade-in">
+          {/* Logo with pulse animation */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 rounded-2xl bg-brand-400/20 animate-pulse-ring" />
+            <Logo variant="simple" size="xl" />
+          </div>
+
+          {/* Brand name */}
+          <h1 className="text-xl font-bold text-foreground mb-1">Wander Wallet</h1>
+          <p className="text-sm text-muted-foreground mb-6">旅行分帳好幫手</p>
+
+          {/* Loading spinner */}
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-500 border-t-transparent mx-auto" />
         </div>
       </div>
     )
@@ -28,13 +39,11 @@ export function AuthGate({ children }: AuthGateProps) {
   // 未登入
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 via-background to-brand-100 dark:from-brand-100 dark:via-background dark:to-brand-200">
+        <Card className="w-full max-w-md animate-fade-in">
           <CardHeader className="text-center space-y-4">
             <div className="flex justify-center">
-              <div className="rounded-full bg-primary p-3">
-                <Wallet className="h-8 w-8 text-primary-foreground" />
-              </div>
+              <Logo variant="simple" size="lg" />
             </div>
             <div>
               <CardTitle className="text-2xl">Wander Wallet</CardTitle>

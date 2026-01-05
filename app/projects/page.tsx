@@ -161,20 +161,20 @@ export default function ProjectsPage() {
             ))}
           </div>
         ) : projects.length === 0 ? (
-          <Card className="border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+          <Card className="border border-border shadow-sm overflow-hidden">
             <CardContent className="py-16 text-center relative">
               {/* 背景裝飾 */}
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-transparent to-blue-50/50 dark:from-emerald-950/20 dark:to-blue-950/20" />
+              <div className="absolute inset-0 bg-gradient-to-br from-brand-50/50 via-transparent to-brand-100/50 dark:from-brand-100/20 dark:to-brand-200/20" />
               <div className="relative">
-                <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-emerald-100 to-blue-100 dark:from-emerald-900 dark:to-blue-900 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-emerald-100/50 dark:shadow-emerald-900/20">
-                  <Wallet className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
+                <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-200 dark:to-brand-300 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-brand-200/50 dark:shadow-brand-400/20">
+                  <Wallet className="h-10 w-10 text-brand-600 dark:text-brand-400" />
                 </div>
-                <h3 className="font-bold text-xl mb-2 text-slate-900 dark:text-slate-100">開始你的第一個專案</h3>
+                <h3 className="font-bold text-xl mb-2 text-foreground">開始你的第一個專案</h3>
                 <p className="text-muted-foreground text-sm mb-6 max-w-xs mx-auto">
                   建立專案來追蹤旅行或活動的共同開銷，輕鬆分帳
                 </p>
                 <Link href="/projects/new">
-                  <Button size="lg" className="rounded-full px-8 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all">
+                  <Button size="lg" className="rounded-full px-8 shadow-lg shadow-brand-500/25 hover:shadow-xl hover:shadow-brand-500/30 transition-all">
                     <Plus className="h-4 w-4 mr-2" />
                     建立專案
                   </Button>

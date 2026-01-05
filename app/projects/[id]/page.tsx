@@ -838,11 +838,11 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
           </div>
 
           {project.expenses.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 py-12 text-center">
-              <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
-                <Receipt className="h-6 w-6 text-slate-400" />
+            <div className="bg-card rounded-xl border border-border py-12 text-center">
+              <div className="h-12 w-12 rounded-full bg-brand-50 dark:bg-brand-100 flex items-center justify-center mx-auto mb-3">
+                <Receipt className="h-6 w-6 text-brand-500" />
               </div>
-              <p className="text-slate-500 dark:text-slate-400 mb-4">還沒有支出記錄</p>
+              <p className="text-muted-foreground mb-4">還沒有支出記錄</p>
               <Link href={`/projects/${id}/expenses/new`}>
                 <Button variant="outline" size="sm">
                   <Plus className="h-4 w-4 mr-1" />
