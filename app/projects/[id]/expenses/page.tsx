@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useEffect, useState } from "react"
+import React, { use, useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { AppLayout } from "@/components/layout/app-layout"
@@ -29,6 +29,7 @@ import { formatCurrency } from "@/lib/constants/currencies"
 import { sendDeleteNotificationToChat, sendBatchDeleteNotificationToChat } from "@/lib/liff"
 import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
 import { useProjectData, useExpenseFilters, useCurrencyConversion } from "@/lib/hooks"
+import { AdSlot } from "@/components/ads/ad-container"
 
 interface Member {
   id: string
@@ -574,7 +575,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
           </div>
         ) : (
           <>
-            {filteredExpenses.map((expense) => {
+            {filteredExpenses.map((expense, index) => {
               const isSelected = selectedIds.has(expense.id)
               const categoryInfo = getCategoryInfo(expense.category)
               const CategoryIcon = categoryInfo?.icon || Receipt
@@ -780,14 +781,25 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                   </div>
               )
 
-              return selectMode ? (
-                <div key={expense.id} onClick={() => toggleSelect(expense.id)}>
-                  {cardContent}
-                </div>
-              ) : (
-                <Link key={expense.id} href={`/projects/${id}/expenses/${expense.id}/edit`}>
-                  {cardContent}
-                </Link>
+              return (
+                <React.Fragment key={expense.id}>
+                  {selectMode ? (
+                    <div onClick={() => toggleSelect(expense.id)}>
+                      {cardContent}
+                    </div>
+                  ) : (
+                    <Link href={`/projects/${id}/expenses/${expense.id}/edit`}>
+                      {cardContent}
+                    </Link>
+                  )}
+                  {/* 每 5 筆支出後顯示廣告 */}
+                  <AdSlot
+                    placement="expense-list"
+                    index={index}
+                    interval={5}
+                    variant="native"
+                  />
+                </React.Fragment>
               )
             })}
           </>

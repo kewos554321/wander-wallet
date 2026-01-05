@@ -24,6 +24,7 @@ import { ArrowRight, CheckCircle2, AlertCircle, TrendingUp, TrendingDown, User, 
 import Link from "next/link"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { AdContainer } from "@/components/ads/ad-container"
 
 interface Balance {
   memberId: string
@@ -815,6 +816,13 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
             )}
           </CardContent>
         </Card>
+
+        {/* 底部橫幅廣告 */}
+        <AdContainer
+          placement="settle"
+          variant="banner"
+          className="mt-4"
+        />
       </div>
     </AppLayout>
   )

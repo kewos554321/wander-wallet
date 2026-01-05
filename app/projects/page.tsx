@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Plus, Wallet } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { AdContainer, AdSlot } from "@/components/ads/ad-container"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { parseCover, getPresetCover } from "@/lib/covers"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
@@ -80,7 +81,13 @@ export default function ProjectsPage() {
 
   return (
     <AppLayout title="所有專案">
-      <div className="space-y-6 pb-20">
+      <div className="space-y-3 pb-20">
+        {/* 頂部橫幅廣告 */}
+        <AdContainer
+          placement="home"
+          variant="banner"
+        />
+
         {loading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
@@ -136,7 +143,7 @@ export default function ProjectsPage() {
           <>
             {/* 專案列表 */}
             <div className="space-y-3">
-              {projects.map((project) => {
+              {projects.map((project, index) => {
                 const totalAmount = project.totalAmount
                 const memberCount = project._count.members || project.members.length
                 const expenseCount = project._count.expenses
@@ -158,9 +165,9 @@ export default function ProjectsPage() {
                 const presetCover = coverData.type === "preset" ? getPresetCover(coverData.presetId!) : null
 
                 return (
-                  <Card
-                    key={project.id}
-                    className={`relative shadow-md hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 cursor-pointer overflow-hidden py-0 gap-0 ${coverData.type !== "none" ? "h-36 border-0" : "border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"}`}
+                  <React.Fragment key={project.id}>
+                    <Card
+                      className={`relative shadow-md hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 cursor-pointer overflow-hidden py-0 gap-0 ${coverData.type !== "none" ? "h-36 border-0" : "border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"}`}
                     onClick={() => router.push(`/projects/${project.id}`)}
                   >
                     {/* 有封面：全景覆蓋設計 */}
@@ -289,6 +296,15 @@ export default function ProjectsPage() {
                       </CardContent>
                     )}
                   </Card>
+
+                    {/* 每 3 個專案後顯示廣告 */}
+                    <AdSlot
+                      placement="project-list"
+                      index={index}
+                      interval={3}
+                      variant="native"
+                    />
+                  </React.Fragment>
                 )
               })}
             </div>

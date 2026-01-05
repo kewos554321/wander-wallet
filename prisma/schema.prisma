@@ -143,3 +143,108 @@ model ActivityLog {
   @@map("activity_logs")
 }
 
+// ============================================
+// 廣告管理系統
+// ============================================
+
+// 管理員帳號（獨立於一般用戶）
+model Admin {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  name          String
+  role          String    @default("admin") // admin | super_admin
+  isActive      Boolean   @default(true) @map("is_active")
+  lastLoginAt   DateTime? @map("last_login_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  advertisements Advertisement[]
+
+  @@map("admins")
+}
+
+// 廣告主表
+model Advertisement {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title             String
+  description       String?   @db.Text
+  imageUrl          String?   @map("image_url")
+  targetUrl         String    @map("target_url")
+  type              String    @default("banner") // banner | native | interstitial
+  status            String    @default("draft") // draft | active | paused | archived
+  priority          Int       @default(0)
+
+  // 排程
+  startDate         DateTime? @map("start_date")
+  endDate           DateTime? @map("end_date")
+
+  // 目標設定
+  targetImpressions Int?      @map("target_impressions")
+  targetClicks      Int?      @map("target_clicks")
+  dailyBudget       Decimal?  @map("daily_budget") @db.Decimal(12, 2)
+
+  // 統計快取（定期從 AdAnalytics 聚合）
+  totalImpressions  Int       @default(0) @map("total_impressions")
+  totalClicks       Int       @default(0) @map("total_clicks")
+
+  // 審計
+  createdBy         String    @map("created_by") @db.Uuid
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
+
+  creator           Admin         @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  placements        AdPlacement[]
+  analytics         AdAnalytics[]
+
+  @@index([status])
+  @@index([createdBy])
+  @@index([startDate, endDate])
+  @@map("advertisements")
+}
+
+// 廣告版位配置
+model AdPlacement {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  advertisementId String   @map("advertisement_id") @db.Uuid
+  placement       String   // home | project-list | expense-list | settle
+  position        Int      @default(0)
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  advertisement   Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
+
+  @@unique([advertisementId, placement])
+  @@index([placement, isActive])
+  @@map("ad_placements")
+}
+
+// 廣告數據分析（按日聚合）
+model AdAnalytics {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  advertisementId String   @map("advertisement_id") @db.Uuid
+  date            DateTime @db.Date
+  impressions     Int      @default(0)
+  clicks          Int      @default(0)
+  uniqueUsers     Int      @default(0) @map("unique_users")
+
+  advertisement   Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
+
+  @@unique([advertisementId, date])
+  @@index([advertisementId, date])
+  @@map("ad_analytics")
+}
+
+// 第三方廣告配置
+model AdProvider {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String   // LINE Ads | AdMob | Custom
+  isActive   Boolean  @default(false) @map("is_active")
+  config     Json?    // SDK 配置
+  placements Json?    // 版位 ID 映射
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("ad_providers")
+}
