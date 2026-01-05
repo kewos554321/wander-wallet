@@ -4,6 +4,9 @@ import { NextRequest } from "next/server"
 // Mock Prisma client
 vi.mock("@/lib/db", () => ({
   prisma: {
+    project: {
+      findUnique: vi.fn(),
+    },
     projectMember: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
@@ -136,6 +139,14 @@ const mockExpense = {
   ],
 }
 
+// Mock project for currency/precision
+const mockProject = {
+  id: "project-123",
+  currency: "TWD",
+  customRates: null,
+  exchangeRatePrecision: 2,
+}
+
 // Helper to create params promise
 const createParams = (id: string) => Promise.resolve({ id })
 const createExpenseParams = (id: string, expenseId: string) =>
@@ -144,6 +155,7 @@ const createExpenseParams = (id: string, expenseId: string) =>
 describe("GET /api/projects/[id]/expenses", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
   })
 
   it("should return 401 if user is not authenticated", async () => {
@@ -229,6 +241,7 @@ describe("GET /api/projects/[id]/expenses", () => {
 describe("POST /api/projects/[id]/expenses", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
   })
 
   it("should return 401 if user is not authenticated", async () => {
@@ -488,6 +501,14 @@ describe("POST /api/projects/[id]/expenses", () => {
       entityId: "expense-123",
       action: "create",
       changes: null,
+      metadata: {
+        description: mockExpense.description,
+        amount: mockExpense.amount,
+        currency: undefined, // mockExpense doesn't have currency
+        category: mockExpense.category,
+        payerName: mockExpense.payer.displayName,
+        expenseDate: mockExpense.expenseDate.toISOString(),
+      },
     })
   })
 
@@ -553,6 +574,7 @@ describe("POST /api/projects/[id]/expenses", () => {
 describe("GET /api/projects/[id]/expenses/[expenseId]", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
   })
 
   it("should return 401 if user is not authenticated", async () => {
@@ -647,6 +669,7 @@ describe("GET /api/projects/[id]/expenses/[expenseId]", () => {
 describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
   })
 
   it("should return 401 if user is not authenticated", async () => {
@@ -931,6 +954,7 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
 describe("DELETE /api/projects/[id]/expenses/[expenseId]", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
   })
 
   it("should return 401 if user is not authenticated", async () => {
@@ -1044,6 +1068,13 @@ describe("DELETE /api/projects/[id]/expenses/[expenseId]", () => {
       entityId: "expense-123",
       action: "delete",
       changes: null,
+      metadata: {
+        description: "Test Expense",
+        amount: 1000,
+        category: "food",
+        payerName: "Test User",
+        expenseDate: mockExpense.expenseDate.toISOString(),
+      },
     })
   })
 
@@ -1070,6 +1101,7 @@ describe("DELETE /api/projects/[id]/expenses/[expenseId]", () => {
 describe("DELETE /api/projects/[id]/expenses/batch", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
   })
 
   it("should return 401 if user is not authenticated", async () => {
@@ -1183,9 +1215,27 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(
       mockMembership as never
     )
+    const batchExpense1 = {
+      id: "expense-123",
+      description: "Expense 1",
+      amount: 100,
+      category: "food",
+      expenseDate: new Date("2024-12-01"),
+      image: null,
+      payer: { displayName: "Test User" },
+    }
+    const batchExpense2 = {
+      id: "expense-456",
+      description: "Expense 2",
+      amount: 200,
+      category: "transport",
+      expenseDate: new Date("2024-12-02"),
+      image: null,
+      payer: { displayName: "Test User" },
+    }
     vi.mocked(prisma.expense.findMany).mockResolvedValue([
-      { id: "expense-123" },
-      { id: "expense-456" },
+      batchExpense1,
+      batchExpense2,
     ] as never)
     vi.mocked(prisma.expense.updateMany).mockResolvedValue({ count: 2 } as never)
 
@@ -1221,9 +1271,27 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(
       mockMembership as never
     )
+    const batchExpense1 = {
+      id: "expense-123",
+      description: "Expense 1",
+      amount: 100,
+      category: "food",
+      expenseDate: new Date("2024-12-01"),
+      image: null,
+      payer: { displayName: "Test User" },
+    }
+    const batchExpense2 = {
+      id: "expense-456",
+      description: "Expense 2",
+      amount: 200,
+      category: "transport",
+      expenseDate: new Date("2024-12-02"),
+      image: null,
+      payer: { displayName: "Test User" },
+    }
     vi.mocked(prisma.expense.findMany).mockResolvedValue([
-      { id: "expense-123" },
-      { id: "expense-456" },
+      batchExpense1,
+      batchExpense2,
     ] as never)
     vi.mocked(prisma.expense.updateMany).mockResolvedValue({ count: 2 } as never)
 
@@ -1246,6 +1314,13 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
       entityId: "expense-123",
       action: "delete",
       changes: null,
+      metadata: {
+        description: "Expense 1",
+        amount: 100,
+        category: "food",
+        payerName: "Test User",
+        expenseDate: batchExpense1.expenseDate.toISOString(),
+      },
     })
     expect(createActivityLog).toHaveBeenCalledWith({
       projectId: "project-123",
@@ -1254,6 +1329,13 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
       entityId: "expense-456",
       action: "delete",
       changes: null,
+      metadata: {
+        description: "Expense 2",
+        amount: 200,
+        category: "transport",
+        payerName: "Test User",
+        expenseDate: batchExpense2.expenseDate.toISOString(),
+      },
     })
   })
 
@@ -1262,8 +1344,17 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(
       mockMembership as never
     )
+    const validExpense = {
+      id: "expense-123",
+      description: "Valid Expense",
+      amount: 100,
+      category: "food",
+      expenseDate: new Date("2024-12-01"),
+      image: null,
+      payer: { displayName: "Test User" },
+    }
     vi.mocked(prisma.expense.findMany).mockResolvedValue([
-      { id: "expense-123" },
+      validExpense,
     ] as never)
     vi.mocked(prisma.expense.updateMany).mockResolvedValue({ count: 1 } as never)
 

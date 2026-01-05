@@ -60,14 +60,9 @@ describe("ParsedExpensesSchema (multi-expense)", () => {
   it("should validate correct multi-expense data", () => {
     const validData = {
       expenses: [
-        { amount: 280, description: "午餐拉麵", category: "food" },
-        { amount: 150, description: "計程車", category: "transport" },
+        { amount: 280, description: "午餐拉麵", category: "food", payerName: "小明", participantNames: ["小明", "小華"] },
+        { amount: 150, description: "計程車", category: "transport", payerName: "小明", participantNames: ["小明", "小華"] },
       ],
-      sharedContext: {
-        payerName: "小明",
-        participantNames: ["小明", "小華"],
-        splitMode: "equal",
-      },
       confidence: 0.95,
     }
 
@@ -78,13 +73,8 @@ describe("ParsedExpensesSchema (multi-expense)", () => {
   it("should validate single expense", () => {
     const validData = {
       expenses: [
-        { amount: 280, description: "午餐拉麵", category: "food" },
+        { amount: 280, description: "午餐拉麵", category: "food", payerName: "小明", participantNames: ["小明"] },
       ],
-      sharedContext: {
-        payerName: "小明",
-        participantNames: ["小明"],
-        splitMode: "equal",
-      },
       confidence: 0.9,
     }
 
@@ -95,11 +85,6 @@ describe("ParsedExpensesSchema (multi-expense)", () => {
   it("should accept empty expenses array", () => {
     const data = {
       expenses: [],
-      sharedContext: {
-        payerName: "小明",
-        participantNames: ["小明"],
-        splitMode: "equal",
-      },
       confidence: 0.5,
     }
 
@@ -107,16 +92,23 @@ describe("ParsedExpensesSchema (multi-expense)", () => {
     expect(result.success).toBe(true)
   })
 
+  it("should validate expense with optional currency", () => {
+    const validData = {
+      expenses: [
+        { amount: 1000, description: "拉麵", category: "food", payerName: "小明", participantNames: ["小明"], currency: "JPY" },
+      ],
+      confidence: 0.9,
+    }
+
+    const result = ParsedExpensesSchema.safeParse(validData)
+    expect(result.success).toBe(true)
+  })
+
   it("should reject invalid category in expenses", () => {
     const invalidData = {
       expenses: [
-        { amount: 280, description: "午餐拉麵", category: "invalid" },
+        { amount: 280, description: "午餐拉麵", category: "invalid", payerName: "小明", participantNames: ["小明"] },
       ],
-      sharedContext: {
-        payerName: "小明",
-        participantNames: ["小明"],
-        splitMode: "equal",
-      },
       confidence: 0.9,
     }
 
@@ -124,16 +116,11 @@ describe("ParsedExpensesSchema (multi-expense)", () => {
     expect(result.success).toBe(false)
   })
 
-  it("should reject invalid splitMode", () => {
+  it("should reject invalid currency code", () => {
     const invalidData = {
       expenses: [
-        { amount: 280, description: "午餐拉麵", category: "food" },
+        { amount: 280, description: "午餐拉麵", category: "food", payerName: "小明", participantNames: ["小明"], currency: "INVALID" },
       ],
-      sharedContext: {
-        payerName: "小明",
-        participantNames: ["小明"],
-        splitMode: "invalid",
-      },
       confidence: 0.9,
     }
 
@@ -144,13 +131,8 @@ describe("ParsedExpensesSchema (multi-expense)", () => {
   it("should reject confidence out of range", () => {
     const invalidData = {
       expenses: [
-        { amount: 280, description: "午餐拉麵", category: "food" },
+        { amount: 280, description: "午餐拉麵", category: "food", payerName: "小明", participantNames: ["小明"] },
       ],
-      sharedContext: {
-        payerName: "小明",
-        participantNames: ["小明"],
-        splitMode: "equal",
-      },
       confidence: 1.5,
     }
 

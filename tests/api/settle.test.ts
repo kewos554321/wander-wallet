@@ -4,6 +4,9 @@ import { NextRequest } from "next/server"
 // Mock Prisma client
 vi.mock("@/lib/db", () => ({
   prisma: {
+    project: {
+      findUnique: vi.fn(),
+    },
     projectMember: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
@@ -61,6 +64,7 @@ const mockExpense = {
   projectId: "project-123",
   paidByMemberId: "member-123",
   amount: 1000,
+  currency: "TWD",
   description: "Test Expense",
   category: "food",
   deletedAt: null,
@@ -98,9 +102,17 @@ const mockExpense = {
 // Helper to create params promise
 const createParams = (id: string) => Promise.resolve({ id })
 
+const mockProject = {
+  currency: "TWD",
+  customRates: null,
+  exchangeRatePrecision: 2,
+}
+
 describe("GET /api/projects/[id]/settle", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Default project mock for all tests
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
   })
 
   it("should return 401 if user is not authenticated", async () => {
@@ -238,16 +250,18 @@ describe("GET /api/projects/[id]/settle", () => {
       ...mockExpense,
       id: "expense-1",
       amount: 1000,
+      currency: "TWD",
       paidByMemberId: "member-123",
       participants: [
-        { memberId: "member-123", shareAmount: 500 },
-        { memberId: "member-456", shareAmount: 500 },
+        { memberId: "member-123", shareAmount: 500, member: { id: "member-123", displayName: "User 1", user: null } },
+        { memberId: "member-456", shareAmount: 500, member: { id: "member-456", displayName: "User 2", user: null } },
       ],
     }
     const expense2 = {
       ...mockExpense,
       id: "expense-2",
       amount: 600,
+      currency: "TWD",
       paidByMemberId: "member-456",
       payer: {
         id: "member-456",
@@ -255,8 +269,8 @@ describe("GET /api/projects/[id]/settle", () => {
         user: { image: "http://example.com/avatar.jpg" },
       },
       participants: [
-        { memberId: "member-123", shareAmount: 300 },
-        { memberId: "member-456", shareAmount: 300 },
+        { memberId: "member-123", shareAmount: 300, member: { id: "member-123", displayName: "User 1", user: null } },
+        { memberId: "member-456", shareAmount: 300, member: { id: "member-456", displayName: "User 2", user: null } },
       ],
     }
 
@@ -342,5 +356,63 @@ describe("GET /api/projects/[id]/settle", () => {
     const data = await response.json()
 
     expect(data.summary.isBalanced).toBe(true)
+  })
+
+  describe("multi-currency support", () => {
+    it("should return precision in summary", async () => {
+      vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+      vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+      vi.mocked(prisma.expense.findMany).mockResolvedValue([mockExpense] as never)
+      vi.mocked(prisma.projectMember.findMany).mockResolvedValue(mockMembers as never)
+
+      const req = new NextRequest(
+        "http://localhost:3000/api/projects/project-123/settle"
+      )
+      const response = await GET(req, { params: createParams("project-123") })
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.summary.precision).toBe(2)
+      expect(data.summary.currency).toBe("TWD")
+    })
+
+    it("should use custom precision when set", async () => {
+      vi.mocked(prisma.project.findUnique).mockResolvedValue({
+        ...mockProject,
+        exchangeRatePrecision: 4,
+      } as never)
+      vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+      vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+      vi.mocked(prisma.expense.findMany).mockResolvedValue([mockExpense] as never)
+      vi.mocked(prisma.projectMember.findMany).mockResolvedValue(mockMembers as never)
+
+      const req = new NextRequest(
+        "http://localhost:3000/api/projects/project-123/settle"
+      )
+      const response = await GET(req, { params: createParams("project-123") })
+      const data = await response.json()
+
+      expect(data.summary.precision).toBe(4)
+    })
+
+    it("should default to precision 2 when not set", async () => {
+      vi.mocked(prisma.project.findUnique).mockResolvedValue({
+        currency: "TWD",
+        customRates: null,
+        exchangeRatePrecision: undefined,
+      } as never)
+      vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+      vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+      vi.mocked(prisma.expense.findMany).mockResolvedValue([mockExpense] as never)
+      vi.mocked(prisma.projectMember.findMany).mockResolvedValue(mockMembers as never)
+
+      const req = new NextRequest(
+        "http://localhost:3000/api/projects/project-123/settle"
+      )
+      const response = await GET(req, { params: createParams("project-123") })
+      const data = await response.json()
+
+      expect(data.summary.precision).toBe(2)
+    })
   })
 })

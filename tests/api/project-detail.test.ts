@@ -406,4 +406,159 @@ describe("DELETE /api/projects/[id]", () => {
       where: { id: "project-123" },
     })
   })
+
+  it("should handle delete error", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue({
+      id: "project-123",
+      createdBy: "user-123",
+    } as never)
+    vi.mocked(prisma.project.delete).mockRejectedValue(new Error("Delete failed"))
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123", {
+      method: "DELETE",
+    })
+    const response = await DELETE(req, { params: Promise.resolve({ id: "project-123" }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(data.error).toBe("刪除專案失敗")
+  })
+})
+
+describe("PUT /api/projects/[id] - additional tests", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("should update budget to null", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue({ id: "member-1" } as never)
+    vi.mocked(prisma.project.update).mockResolvedValue({
+      ...mockProjectAsMember,
+      budget: null,
+    } as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123", {
+      method: "PUT",
+      body: JSON.stringify({ budget: null }),
+    })
+    const response = await PUT(req, { params: Promise.resolve({ id: "project-123" }) })
+
+    expect(response.status).toBe(200)
+  })
+
+  it("should return 400 for negative budget", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue({ id: "member-1" } as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123", {
+      method: "PUT",
+      body: JSON.stringify({ budget: -100 }),
+    })
+    const response = await PUT(req, { params: Promise.resolve({ id: "project-123" }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe("預算金額必須為正數")
+  })
+
+  it("should return 400 for invalid start date", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue({ id: "member-1" } as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123", {
+      method: "PUT",
+      body: JSON.stringify({ startDate: "invalid-date" }),
+    })
+    const response = await PUT(req, { params: Promise.resolve({ id: "project-123" }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe("無效的出發日期")
+  })
+
+  it("should return 400 for invalid end date", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue({ id: "member-1" } as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123", {
+      method: "PUT",
+      body: JSON.stringify({ endDate: "invalid-date" }),
+    })
+    const response = await PUT(req, { params: Promise.resolve({ id: "project-123" }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe("無效的結束日期")
+  })
+
+  it("should update currency", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue({ id: "member-1" } as never)
+    vi.mocked(prisma.project.update).mockResolvedValue({
+      ...mockProjectAsMember,
+      currency: "USD",
+    } as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123", {
+      method: "PUT",
+      body: JSON.stringify({ currency: "USD" }),
+    })
+    const response = await PUT(req, { params: Promise.resolve({ id: "project-123" }) })
+
+    expect(response.status).toBe(200)
+    expect(prisma.project.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          currency: "USD",
+        }),
+      })
+    )
+  })
+
+  it("should update exchangeRatePrecision", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue({ id: "member-1" } as never)
+    vi.mocked(prisma.project.update).mockResolvedValue({
+      ...mockProjectAsMember,
+      exchangeRatePrecision: 4,
+    } as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123", {
+      method: "PUT",
+      body: JSON.stringify({ exchangeRatePrecision: 4 }),
+    })
+    const response = await PUT(req, { params: Promise.resolve({ id: "project-123" }) })
+
+    expect(response.status).toBe(200)
+  })
+
+  it("should handle update error", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue({ id: "member-1" } as never)
+    vi.mocked(prisma.project.update).mockRejectedValue(new Error("Update failed"))
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123", {
+      method: "PUT",
+      body: JSON.stringify({ name: "Updated" }),
+    })
+    const response = await PUT(req, { params: Promise.resolve({ id: "project-123" }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(data.error).toBe("更新專案失敗")
+  })
+
+  it("should handle GET database error", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.project.findUnique).mockRejectedValue(new Error("DB Error"))
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123")
+    const response = await GET(req, { params: Promise.resolve({ id: "project-123" }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(data.error).toBe("獲取專案失敗")
+  })
 })

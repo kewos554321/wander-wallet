@@ -69,7 +69,7 @@ describe("useCurrencyConversion", () => {
       expect(result.current.convert(100, "USD")).toBe(3000)
     })
 
-    it("should round to 2 decimal places", async () => {
+    it("should round to default 2 decimal places", async () => {
       mockAuthFetch.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ rates: { USD: 1, TWD: 32.567 } }),
@@ -81,9 +81,60 @@ describe("useCurrencyConversion", () => {
 
       await waitFor(() => expect(result.current.exchangeRates).not.toBeNull())
 
-      // 100 * 32.567 = 3256.7, rounded
+      // 100 * 32.567 = 3256.7, rounded to 2 decimals
       const converted = result.current.convert(100, "USD")
       expect(converted).toBe(3256.7)
+    })
+
+    it("should round to custom precision when specified", async () => {
+      mockAuthFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ rates: { USD: 1, TWD: 32.56789 } }),
+      })
+
+      const { result } = renderHook(() =>
+        useCurrencyConversion({ projectCurrency: "TWD", precision: 4 })
+      )
+
+      await waitFor(() => expect(result.current.exchangeRates).not.toBeNull())
+
+      // 100 * 32.56789 = 3256.789, rounded to 4 decimals
+      const converted = result.current.convert(100, "USD")
+      expect(converted).toBe(3256.789)
+    })
+
+    it("should round to 0 decimal places when precision is 0", async () => {
+      mockAuthFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ rates: { USD: 1, TWD: 32.567 } }),
+      })
+
+      const { result } = renderHook(() =>
+        useCurrencyConversion({ projectCurrency: "TWD", precision: 0 })
+      )
+
+      await waitFor(() => expect(result.current.exchangeRates).not.toBeNull())
+
+      // 100 * 32.567 = 3256.7, rounded to 0 decimals = 3257
+      const converted = result.current.convert(100, "USD")
+      expect(converted).toBe(3257)
+    })
+
+    it("should handle high precision (8 decimals)", async () => {
+      mockAuthFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ rates: { USD: 1, TWD: 32.123456789 } }),
+      })
+
+      const { result } = renderHook(() =>
+        useCurrencyConversion({ projectCurrency: "TWD", precision: 8 })
+      )
+
+      await waitFor(() => expect(result.current.exchangeRates).not.toBeNull())
+
+      // 100 * 32.123456789 = 3212.3456789, rounded to 8 decimals
+      const converted = result.current.convert(100, "USD")
+      expect(converted).toBe(3212.34567890)
     })
   })
 
