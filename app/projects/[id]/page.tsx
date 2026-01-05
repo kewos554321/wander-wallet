@@ -38,6 +38,7 @@ import {
   DollarSign,
   UserCheck,
   MapPin,
+  Images,
 } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import {
@@ -704,6 +705,12 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
                   icon={<MapPin className="h-5 w-5 text-teal-600 dark:text-teal-400" />}
                   iconBgClass="bg-teal-50 dark:bg-teal-950"
                   label="地圖"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/photos`}
+                  icon={<Images className="h-5 w-5 text-rose-600 dark:text-rose-400" />}
+                  iconBgClass="bg-rose-50 dark:bg-rose-950"
+                  label="照片"
                 />
               </div>
             </div>
