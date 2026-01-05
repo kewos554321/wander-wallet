@@ -402,7 +402,7 @@ export default function ExportPage({ params }: { params: Promise<{ id: string }>
 
   return (
     <AppLayout title="匯出" showBack backHref={backHref}>
-      <div className="px-4 py-6 pb-24">
+      <div className="py-6 pb-24">
         <div className="max-w-lg mx-auto">
           {/* 匯出選項表單 */}
           <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4">

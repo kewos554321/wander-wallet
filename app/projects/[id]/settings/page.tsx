@@ -304,7 +304,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
   if (!project) {
     return (
       <AppLayout title="專案設定" showBack backHref={backHref}>
-        <div className="px-4 py-20 text-center text-muted-foreground">
+        <div className="py-20 text-center text-muted-foreground">
           專案不存在
         </div>
       </AppLayout>

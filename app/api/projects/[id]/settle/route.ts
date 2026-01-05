@@ -9,6 +9,26 @@ interface Balance {
   displayName: string
   userImage: string | null
   balance: number // 正數表示應該收到錢，負數表示應該付錢
+  totalPaid: number // 總付款金額
+  totalShare: number // 總分攤金額
+}
+
+interface ExpenseDetail {
+  id: string
+  description: string
+  amount: number
+  currency: string
+  convertedAmount: number // 轉換後的專案幣別金額
+  payer: {
+    memberId: string
+    displayName: string
+  }
+  participants: {
+    memberId: string
+    displayName: string
+    shareAmount: number
+    convertedShareAmount: number
+  }[]
 }
 
 interface Settlement {
@@ -175,6 +195,8 @@ export async function GET(
         displayName: member.displayName,
         userImage: member.user?.image || null,
         balance: 0,
+        totalPaid: 0,
+        totalShare: 0,
       })
     })
 
@@ -201,6 +223,7 @@ export async function GET(
     // 計算每個成員的淨支出（使用專案幣別計算的金額）
     let totalPaid = 0
     let totalShared = 0
+    const expenseDetails: ExpenseDetail[] = []
 
     for (const expense of expenses) {
       // 即時換算
@@ -214,6 +237,21 @@ export async function GET(
       const payerBalance = balanceMap.get(expense.paidByMemberId)
       if (payerBalance) {
         payerBalance.balance += paidAmount // 付了錢，餘額增加
+        payerBalance.totalPaid += paidAmount // 記錄總付款
+      }
+
+      // 記錄支出詳情
+      const expenseDetail: ExpenseDetail = {
+        id: expense.id,
+        description: expense.description || "未命名支出",
+        amount: Number(expense.amount),
+        currency: expense.currency,
+        convertedAmount: paidAmount,
+        payer: {
+          memberId: expense.paidByMemberId,
+          displayName: expense.payer.displayName,
+        },
+        participants: [],
       }
 
       // 扣除每個參與者應該分擔的金額
@@ -223,8 +261,18 @@ export async function GET(
         const participantBalance = balanceMap.get(participant.memberId)
         if (participantBalance) {
           participantBalance.balance -= shareAmount // 應該分擔，餘額減少
+          participantBalance.totalShare += shareAmount // 記錄總分攤
         }
+
+        expenseDetail.participants.push({
+          memberId: participant.memberId,
+          displayName: participant.member.displayName,
+          shareAmount: Number(participant.shareAmount),
+          convertedShareAmount: shareAmount,
+        })
       })
+
+      expenseDetails.push(expenseDetail)
     }
 
     const balances = Array.from(balanceMap.values())
@@ -242,6 +290,7 @@ export async function GET(
     return NextResponse.json({
       balances,
       settlements,
+      expenseDetails,
       summary: {
         totalExpenses: expenses.length,
         totalAmount: totalPaid,

@@ -13,7 +13,7 @@ export default function CurrencyPage({ params }: { params: Promise<{ id: string 
 
   return (
     <AppLayout title="幣種轉換" showBack backHref={backHref}>
-      <div className="px-4 py-8">
+      <div className="py-8">
         <div className="max-w-md mx-auto text-center">
           {/* 圖標 */}
           <div className="h-20 w-20 rounded-2xl bg-amber-50 dark:bg-amber-950 flex items-center justify-center mx-auto mb-6">

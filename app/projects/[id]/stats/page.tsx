@@ -397,7 +397,7 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
 
   return (
     <AppLayout title="統計" showBack backHref={backHref}>
-      <div className="pb-8 space-y-4 px-4">
+      <div className="pb-8 space-y-4">
         {/* 總覽卡片 */}
         <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-1.5 mb-3">

@@ -100,7 +100,7 @@ export default function MileagePage({ params }: { params: Promise<{ id: string }
 
   return (
     <AppLayout title="里程" showBack backHref={backHref}>
-      <div className="px-4 py-4 pb-32 space-y-6">
+      <div className="py-4 pb-32 space-y-6">
         {/* 路線規劃 */}
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4">
           <h2 className="font-medium text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">

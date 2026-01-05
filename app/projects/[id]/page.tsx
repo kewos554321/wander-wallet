@@ -398,7 +398,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
   if (loading) {
     return (
       <AppLayout title="專案" showBack>
-        <div className="pb-24 space-y-6 px-3 sm:px-4">
+        <div className="pb-24 space-y-6">
           {/* 標題骨架 */}
           <div>
             <Skeleton className="h-8 w-48 mb-2" />
@@ -611,7 +611,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
 
   return (
     <AppLayout title="專案" showBack>
-      <div className="pb-24 space-y-6 px-3 sm:px-4">
+      <div className="pb-24 space-y-6">
         {/* 專案標題 */}
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{project.name}</h1>

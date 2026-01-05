@@ -375,7 +375,7 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
 
   return (
     <AppLayout title="歷史紀錄" showBack backHref={`/projects/${id}`}>
-      <div className="pb-6 px-3 sm:px-4">
+      <div className="pb-6">
         {/* 篩選器 */}
         <div className="mb-4 space-y-2">
           {/* 搜尋框 */}
