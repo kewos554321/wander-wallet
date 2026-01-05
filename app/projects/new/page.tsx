@@ -198,7 +198,7 @@ export default function NewProjectPage() {
             <SelectContent>
               {SUPPORTED_CURRENCIES.map((c) => (
                 <SelectItem key={c.code} value={c.code}>
-                  {c.symbol} {c.name} ({c.code})
+                  {c.code} {c.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -211,8 +211,8 @@ export default function NewProjectPage() {
             旅程預算（選填）
           </label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-              {SUPPORTED_CURRENCIES.find(c => c.code === currency)?.symbol || "$"}
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+              {currency}
             </span>
             <Input
               id="budget"

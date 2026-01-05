@@ -211,7 +211,7 @@ export default function CurrencyPage({ params }: { params: Promise<{ id: string 
                       const info = getCurrencyInfo(code)
                       return (
                         <SelectItem key={code} value={code}>
-                          {info.symbol} {code}
+                          {code} {info.name}
                         </SelectItem>
                       )
                     })}
@@ -251,7 +251,7 @@ export default function CurrencyPage({ params }: { params: Promise<{ id: string 
                       const info = getCurrencyInfo(code)
                       return (
                         <SelectItem key={code} value={code}>
-                          {info.symbol} {code}
+                          {code} {info.name}
                         </SelectItem>
                       )
                     })}
@@ -368,10 +368,9 @@ export default function CurrencyPage({ params }: { params: Promise<{ id: string 
                       className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800"
                     >
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-lg">{info.symbol}</span>
                         <span className="font-medium">{currency}</span>
+                        <span className="text-xs text-muted-foreground">{info.name}</span>
                       </div>
-                      <div className="text-xs text-muted-foreground">{info.name}</div>
                       <div className="mt-2 font-semibold text-primary text-sm">
                         1 {currency} = {rate ? formatRate(rate) : "-"} {projectCurrency}
                       </div>
@@ -437,8 +436,8 @@ export default function CurrencyPage({ params }: { params: Promise<{ id: string 
                           className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800"
                         >
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-lg">{info.symbol}</span>
                             <span className="font-medium">{currency}</span>
+                            <span className="text-xs text-muted-foreground">{info.name}</span>
                           </div>
                           <div className="mt-2 font-semibold text-sm">
                             {histRate ? formatRate(histRate) : "-"} {projectCurrency}

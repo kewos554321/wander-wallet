@@ -25,9 +25,10 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
-import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { formatCurrency } from "@/lib/constants/currencies"
 import { sendDeleteNotificationToChat, sendBatchDeleteNotificationToChat } from "@/lib/liff"
 import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
+import { useProjectData, useExpenseFilters, useCurrencyConversion } from "@/lib/hooks"
 
 interface Member {
   id: string
@@ -66,54 +67,54 @@ interface Expense {
 export default function ExpensesList({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [expenses, setExpenses] = useState<Expense[]>([])
-  const [loading, setLoading] = useState(true)
+  const [expensesLoading, setExpensesLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState(false)
   const [viewingImage, setViewingImage] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set())
-  const [selectedPayers, setSelectedPayers] = useState<Set<string>>(new Set())
-  const [amountRange, setAmountRange] = useState<[number, number]>([0, 0])
   const [notifyLineOnDelete, setNotifyLineOnDelete] = useState(true)
-  const [projectName, setProjectName] = useState("")
-  const [projectCurrency, setProjectCurrency] = useState(DEFAULT_CURRENCY)
   const [showVoiceDialog, setShowVoiceDialog] = useState(false)
-  const [members, setMembers] = useState<Member[]>([])
-  const [currentUserMemberId, setCurrentUserMemberId] = useState("")
-  const [exchangeRates, setExchangeRates] = useState<Record<string, number> | null>(null)
-  const [customRates, setCustomRates] = useState<Record<string, number> | null>(null)
   const authFetch = useAuthFetch()
   const { isDevMode, canSendMessages, user } = useLiff()
 
+  // 使用共用 hooks
+  const {
+    project,
+    members,
+    loading: projectLoading,
+    projectCurrency,
+    customRates,
+  } = useProjectData(id)
+
+  const {
+    filters,
+    filteredExpenses,
+    hasActiveFilters,
+    setSearchQuery,
+    toggleCategory,
+    togglePayer,
+    setAmountRange,
+    clearFilters,
+    uniquePayers,
+    maxAmount: maxExpenseAmount,
+  } = useExpenseFilters(expenses)
+
+  const { convert: convertToProjectCurrency } = useCurrencyConversion({
+    projectCurrency,
+    customRates,
+  })
+
+  // 找出當前用戶的 memberId
+  const currentUserMemberId = members.find((m) => m.user?.id === user?.id)?.id || ""
+
+  const loading = projectLoading || expensesLoading
+
   useEffect(() => {
     fetchExpenses()
-    fetchProjectName()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, user?.id])
-
-  // 當有多種幣別時，獲取匯率
-  useEffect(() => {
-    const currencies = new Set(expenses.map(e => e.currency))
-    if (currencies.size > 1 && projectCurrency) {
-      fetchExchangeRates()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [expenses, projectCurrency])
-
-  async function fetchExchangeRates() {
-    try {
-      const res = await authFetch("/api/exchange-rates")
-      if (res.ok) {
-        const data = await res.json()
-        setExchangeRates(data.rates)
-      }
-    } catch (error) {
-      console.error("獲取匯率錯誤:", error)
-    }
-  }
+  }, [id])
 
   async function fetchExpenses() {
     try {
@@ -125,38 +126,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
     } catch (error) {
       console.error("獲取支出列表錯誤:", error)
     } finally {
-      setLoading(false)
-    }
-  }
-
-  async function fetchProjectName() {
-    try {
-      const res = await authFetch(`/api/projects/${id}`)
-      if (res.ok) {
-        const data = await res.json()
-        setProjectName(data.name)
-        setProjectCurrency(data.currency || DEFAULT_CURRENCY)
-        // 設定自訂匯率
-        if (data.customRates) {
-          setCustomRates(data.customRates)
-        }
-        // 設定成員資料供 AI 語音記帳使用
-        if (data.members) {
-          setMembers(data.members.map((m: Member & { user?: Member["user"] }) => ({
-            id: m.id,
-            displayName: m.displayName,
-            userId: m.user?.id || null,
-            user: m.user || null,
-          })))
-          // 找出當前用戶的 memberId
-          const currentMember = data.members.find((m: Member) => m.user?.id === user?.id)
-          if (currentMember) {
-            setCurrentUserMemberId(currentMember.id)
-          }
-        }
-      }
-    } catch (error) {
-      console.error("獲取專案名稱錯誤:", error)
+      setExpensesLoading(false)
     }
   }
 
@@ -176,7 +146,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
         // 發送 LINE 通知
         if (notifyLineOnDelete && canSendMessages && !isDevMode && expenseToDelete) {
           sendDeleteNotificationToChat({
-            projectName,
+            projectName: project?.name || "",
             projectId: id,
             payerName: expenseToDelete.payer.displayName,
             amount: expenseToDelete.amount,
@@ -220,7 +190,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
         // 發送 LINE 通知（合併為單一通知）
         if (notifyLineOnDelete && canSendMessages && !isDevMode && expensesToDelete.length > 0) {
           sendBatchDeleteNotificationToChat({
-            projectName,
+            projectName: project?.name || "",
             projectId: id,
             expenses: expensesToDelete.map((expense) => ({
               amount: expense.amount,
@@ -301,52 +271,6 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
     return CATEGORY_CONFIG[category] || { label: category, icon: Receipt, color: "bg-slate-100 text-slate-600" }
   }
 
-  // Get unique payers for filter
-  const uniquePayers = Array.from(
-    new Map(expenses.map((e) => [e.payer.id, e.payer])).values()
-  )
-
-  // Filter expenses based on search query and filters
-  const filteredExpenses = expenses.filter((expense) => {
-    // Search filter
-    const matchesSearch = searchQuery === "" ||
-      (expense.description?.toLowerCase().includes(searchQuery.toLowerCase()))
-
-    // Category filter
-    const matchesCategory = selectedCategories.size === 0 ||
-      (expense.category && selectedCategories.has(expense.category))
-
-    // Payer filter
-    const matchesPayer = selectedPayers.size === 0 ||
-      selectedPayers.has(expense.payer.id)
-
-    // Amount filter
-    const expenseAmount = Number(expense.amount)
-    const [minVal, maxVal] = amountRange
-    const matchesMinAmount = minVal === 0 || expenseAmount >= minVal
-    const matchesMaxAmount = maxVal === 0 || expenseAmount <= maxVal
-
-    return matchesSearch && matchesCategory && matchesPayer && matchesMinAmount && matchesMaxAmount
-  })
-
-  // 轉換單一金額到專案幣別（優先使用自訂匯率）
-  const convertToProjectCurrency = (amount: number, fromCurrency: string): number => {
-    if (fromCurrency === projectCurrency) return amount
-
-    // 優先使用自訂匯率
-    if (customRates && customRates[fromCurrency]) {
-      return Math.round(amount * customRates[fromCurrency] * 100) / 100
-    }
-
-    // 無即時匯率時不轉換
-    if (!exchangeRates) return amount
-
-    // 透過 USD 作為中介轉換
-    const fromRate = exchangeRates[fromCurrency] || 1
-    const toRate = exchangeRates[projectCurrency] || 1
-    return Math.round(amount * (toRate / fromRate) * 100) / 100
-  }
-
   // 檢查是否有多種幣別
   const hasMixedCurrencies = new Set(filteredExpenses.map(e => e.currency)).size > 1
 
@@ -358,36 +282,6 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
     const convertedAmount = convertToProjectCurrency(Number(e.amount), e.currency)
     return sum + convertedAmount
   }, 0)
-
-  const maxExpenseAmount = Math.max(...expenses.map(e => Number(e.amount)), 0)
-  const hasActiveFilters = searchQuery !== "" || selectedCategories.size > 0 || selectedPayers.size > 0 || amountRange[0] > 0 || amountRange[1] > 0
-
-  function toggleCategory(category: string) {
-    const newCategories = new Set(selectedCategories)
-    if (newCategories.has(category)) {
-      newCategories.delete(category)
-    } else {
-      newCategories.add(category)
-    }
-    setSelectedCategories(newCategories)
-  }
-
-  function togglePayer(payerId: string) {
-    const newPayers = new Set(selectedPayers)
-    if (newPayers.has(payerId)) {
-      newPayers.delete(payerId)
-    } else {
-      newPayers.add(payerId)
-    }
-    setSelectedPayers(newPayers)
-  }
-
-  function clearAllFilters() {
-    setSearchQuery("")
-    setSelectedCategories(new Set())
-    setSelectedPayers(new Set())
-    setAmountRange([0, 0])
-  }
 
   const backHref = `/projects/${id}`
 
@@ -448,9 +342,9 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                     <span className="flex items-center gap-1.5">
                       <Filter className="h-3.5 w-3.5" />
                       類別
-                      {selectedCategories.size > 0 && (
+                      {filters.selectedCategories.size > 0 && (
                         <span className="px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
-                          {selectedCategories.size}
+                          {filters.selectedCategories.size}
                         </span>
                       )}
                     </span>
@@ -463,7 +357,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                   {Object.entries(CATEGORY_CONFIG).map(([key, { label, icon: Icon }]) => (
                     <DropdownMenuCheckboxItem
                       key={key}
-                      checked={selectedCategories.has(key)}
+                      checked={filters.selectedCategories.has(key)}
                       onCheckedChange={() => toggleCategory(key)}
                     >
                       <Icon className="h-4 w-4 mr-2" />
@@ -480,9 +374,9 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                     <span className="flex items-center gap-1.5">
                       <User className="h-3.5 w-3.5" />
                       付款人
-                      {selectedPayers.size > 0 && (
+                      {filters.selectedPayers.size > 0 && (
                         <span className="px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
-                          {selectedPayers.size}
+                          {filters.selectedPayers.size}
                         </span>
                       )}
                     </span>
@@ -495,7 +389,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                   {uniquePayers.map((payer) => (
                     <DropdownMenuCheckboxItem
                       key={payer.id}
-                      checked={selectedPayers.has(payer.id)}
+                      checked={filters.selectedPayers.has(payer.id)}
                       onCheckedChange={() => togglePayer(payer.id)}
                     >
                       {payer.displayName}
@@ -510,7 +404,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                   <Button variant="outline" size="sm" className="w-full justify-between">
                     <span className="flex items-center gap-1.5">
                       $ 金額
-                      {(amountRange[0] > 0 || amountRange[1] > 0) && (
+                      {(filters.amountRange[0] > 0 || filters.amountRange[1] > 0) && (
                         <span className="px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
                           1
                         </span>
@@ -525,11 +419,11 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                     {/* 顯示當前範圍 */}
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium">
-                        {formatCurrency(amountRange[0], projectCurrency)}
+                        {formatCurrency(filters.amountRange[0], projectCurrency)}
                       </span>
                       <span className="text-muted-foreground">~</span>
                       <span className="font-medium">
-                        {amountRange[1] === 0 ? "不限" : formatCurrency(amountRange[1], projectCurrency)}
+                        {filters.amountRange[1] === 0 ? "不限" : formatCurrency(filters.amountRange[1], projectCurrency)}
                       </span>
                     </div>
 
@@ -541,8 +435,8 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                         min={0}
                         max={maxExpenseAmount || 10000}
                         step={Math.max(1, Math.floor((maxExpenseAmount || 10000) / 100))}
-                        value={amountRange[0]}
-                        onChange={(e) => setAmountRange([Number(e.target.value), amountRange[1]])}
+                        value={filters.amountRange[0]}
+                        onChange={(e) => setAmountRange([Number(e.target.value), filters.amountRange[1]])}
                         className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
                       />
                     </div>
@@ -555,13 +449,13 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                         min={0}
                         max={maxExpenseAmount || 10000}
                         step={Math.max(1, Math.floor((maxExpenseAmount || 10000) / 100))}
-                        value={amountRange[1]}
-                        onChange={(e) => setAmountRange([amountRange[0], Number(e.target.value)])}
+                        value={filters.amountRange[1]}
+                        onChange={(e) => setAmountRange([filters.amountRange[0], Number(e.target.value)])}
                         className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
                       />
                     </div>
 
-                    {(amountRange[0] > 0 || amountRange[1] > 0) && (
+                    {(filters.amountRange[0] > 0 || filters.amountRange[1] > 0) && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -584,11 +478,11 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="搜尋支出描述..."
-                  value={searchQuery}
+                  value={filters.searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 pr-9"
                 />
-                {searchQuery && (
+                {filters.searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
@@ -600,7 +494,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
 
               {/* 清除篩選 */}
               {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-muted-foreground shrink-0">
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground shrink-0">
                   清除
                 </Button>
               )}
@@ -672,7 +566,7 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
             </div>
             <h3 className="font-semibold text-lg mb-2">找不到符合的支出</h3>
             <p className="text-muted-foreground text-sm mb-6">嘗試調整搜尋條件或篩選器</p>
-            <Button variant="outline" onClick={clearAllFilters}>
+            <Button variant="outline" onClick={clearFilters}>
               清除所有篩選
             </Button>
           </div>
@@ -991,8 +885,13 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
         open={showVoiceDialog}
         onOpenChange={setShowVoiceDialog}
         projectId={id}
-        projectName={projectName}
-        members={members}
+        projectName={project?.name || ""}
+        members={members.map((m) => ({
+          id: m.id,
+          displayName: m.displayName,
+          userId: m.userId,
+          user: m.user,
+        }))}
         currentUserMemberId={currentUserMemberId}
         currency={projectCurrency}
         onSuccess={() => {

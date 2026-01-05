@@ -53,6 +53,7 @@ import { getProjectShareUrl } from "@/lib/utils"
 import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { useCurrencyConversion } from "@/lib/hooks"
 
 interface ProjectMember {
   id: string
@@ -171,8 +172,11 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
   // AI 語音記帳相關狀態
   const [showVoiceDialog, setShowVoiceDialog] = useState(false)
 
-  // 匯率相關狀態
-  const [exchangeRates, setExchangeRates] = useState<Record<string, number> | null>(null)
+  // 使用共用 hook 處理匯率轉換
+  const { convert: convertToProjectCurrency } = useCurrencyConversion({
+    projectCurrency: project?.currency || DEFAULT_CURRENCY,
+    customRates: project?.customRates || null,
+  })
 
   // 功能 carousel 相關
   const [currentPage, setCurrentPage] = useState(0)
@@ -198,49 +202,6 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
-
-  // 當有多種幣別時，獲取匯率
-  useEffect(() => {
-    if (project?.expenses) {
-      const currencies = new Set(project.expenses.map(e => e.currency))
-      if (currencies.size > 1) {
-        fetchExchangeRates()
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project?.expenses])
-
-  async function fetchExchangeRates() {
-    try {
-      const res = await authFetch("/api/exchange-rates")
-      if (res.ok) {
-        const data = await res.json()
-        setExchangeRates(data.rates)
-      }
-    } catch (error) {
-      console.error("獲取匯率錯誤:", error)
-    }
-  }
-
-  // 轉換單一金額到專案幣別（優先使用自訂匯率）
-  const convertToProjectCurrency = useCallback((amount: number, fromCurrency: string): number => {
-    if (!project) return amount
-    const projectCurrency = project.currency || DEFAULT_CURRENCY
-    if (fromCurrency === projectCurrency) return amount
-
-    // 優先使用自訂匯率
-    if (project.customRates && project.customRates[fromCurrency]) {
-      return Math.round(amount * project.customRates[fromCurrency] * 100) / 100
-    }
-
-    // 無即時匯率時不轉換
-    if (!exchangeRates) return amount
-
-    // 透過 USD 作為中介轉換
-    const fromRate = exchangeRates[fromCurrency] || 1
-    const toRate = exchangeRates[projectCurrency] || 1
-    return Math.round(amount * (toRate / fromRate) * 100) / 100
-  }, [project, exchangeRates])
 
   async function fetchProject() {
     try {

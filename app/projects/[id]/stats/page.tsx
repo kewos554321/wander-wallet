@@ -12,6 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { useCurrencyConversion } from "@/lib/hooks"
 
 // 圖表 loading skeleton
 function ChartSkeleton({ height = 160 }: { height?: number }) {
@@ -103,8 +104,13 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
   const { id } = use(params)
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
-  const [exchangeRates, setExchangeRates] = useState<Record<string, number> | null>(null)
   const authFetch = useAuthFetch()
+
+  // 使用共用 hook 處理匯率轉換
+  const { convert: convertToProjectCurrency, exchangeRates } = useCurrencyConversion({
+    projectCurrency: project?.currency || DEFAULT_CURRENCY,
+    customRates: project?.customRates || null,
+  })
 
   useEffect(() => {
     if (id) {
@@ -112,29 +118,6 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
-
-  // 當有多種幣別時，獲取匯率
-  useEffect(() => {
-    if (project?.expenses) {
-      const currencies = new Set(project.expenses.map(e => e.currency))
-      if (currencies.size > 1) {
-        fetchExchangeRates()
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project?.expenses])
-
-  async function fetchExchangeRates() {
-    try {
-      const res = await authFetch("/api/exchange-rates")
-      if (res.ok) {
-        const data = await res.json()
-        setExchangeRates(data.rates)
-      }
-    } catch (error) {
-      console.error("獲取匯率錯誤:", error)
-    }
-  }
 
   async function fetchProject() {
     try {
@@ -153,26 +136,6 @@ export default function ProjectStats({ params }: { params: Promise<{ id: string 
     } finally {
       setLoading(false)
     }
-  }
-
-  // 轉換單一金額到專案幣別（優先使用自訂匯率）
-  const convertToProjectCurrency = (amount: number, fromCurrency: string): number => {
-    if (!project) return amount
-    const projectCurrency = project.currency || DEFAULT_CURRENCY
-    if (fromCurrency === projectCurrency) return amount
-
-    // 優先使用自訂匯率
-    if (project.customRates && project.customRates[fromCurrency]) {
-      return Math.round(amount * project.customRates[fromCurrency] * 100) / 100
-    }
-
-    // 無即時匯率時不轉換
-    if (!exchangeRates) return amount
-
-    // 透過 USD 作為中介轉換
-    const fromRate = exchangeRates[fromCurrency] || 1
-    const toRate = exchangeRates[projectCurrency] || 1
-    return Math.round(amount * (toRate / fromRate) * 100) / 100
   }
 
   // 按日期分組的支出趨勢數據

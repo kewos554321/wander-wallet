@@ -1,19 +1,19 @@
 export const SUPPORTED_CURRENCIES = [
   // International
-  { code: "USD", symbol: "$", name: "美元", locale: "en-US" },
-  { code: "EUR", symbol: "€", name: "歐元", locale: "de-DE" },
-  { code: "GBP", symbol: "£", name: "英鎊", locale: "en-GB" },
-  { code: "AUD", symbol: "A$", name: "澳幣", locale: "en-AU" },
-  { code: "CAD", symbol: "C$", name: "加幣", locale: "en-CA" },
+  { code: "USD", name: "美元", locale: "en-US" },
+  { code: "EUR", name: "歐元", locale: "de-DE" },
+  { code: "GBP", name: "英鎊", locale: "en-GB" },
+  { code: "AUD", name: "澳幣", locale: "en-AU" },
+  { code: "CAD", name: "加幣", locale: "en-CA" },
   // Asian
-  { code: "TWD", symbol: "NT$", name: "新台幣", locale: "zh-TW" },
-  { code: "JPY", symbol: "¥", name: "日圓", locale: "ja-JP", decimals: 0 },
-  { code: "KRW", symbol: "₩", name: "韓元", locale: "ko-KR", decimals: 0 },
-  { code: "CNY", symbol: "¥", name: "人民幣", locale: "zh-CN" },
-  { code: "HKD", symbol: "HK$", name: "港幣", locale: "zh-HK" },
-  { code: "SGD", symbol: "S$", name: "新加坡幣", locale: "en-SG" },
-  { code: "THB", symbol: "฿", name: "泰銖", locale: "th-TH" },
-  { code: "VND", symbol: "₫", name: "越南盾", locale: "vi-VN", decimals: 0 },
+  { code: "TWD", name: "新台幣", locale: "zh-TW" },
+  { code: "JPY", name: "日圓", locale: "ja-JP", decimals: 0 },
+  { code: "KRW", name: "韓元", locale: "ko-KR", decimals: 0 },
+  { code: "CNY", name: "人民幣", locale: "zh-CN" },
+  { code: "HKD", name: "港幣", locale: "zh-HK" },
+  { code: "SGD", name: "新加坡幣", locale: "en-SG" },
+  { code: "THB", name: "泰銖", locale: "th-TH" },
+  { code: "VND", name: "越南盾", locale: "vi-VN", decimals: 0 },
 ] as const
 
 export type CurrencyCode = (typeof SUPPORTED_CURRENCIES)[number]["code"]
@@ -30,7 +30,7 @@ export function getCurrencyInfo(code: string) {
 export function formatCurrency(amount: number, currencyCode: string): string {
   const info = getCurrencyInfo(currencyCode)
   const decimals = "decimals" in info ? info.decimals : 2
-  return `${info.symbol}${amount.toLocaleString(info.locale, {
+  return `${info.code} ${amount.toLocaleString(info.locale, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   })}`

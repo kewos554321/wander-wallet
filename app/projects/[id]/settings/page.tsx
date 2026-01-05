@@ -440,7 +440,6 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                   <div key={curr} className="space-y-1">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1 w-24 shrink-0">
-                        <span className="text-lg w-8 text-right">{info.symbol}</span>
                         <span className="text-sm font-medium">{curr}</span>
                       </div>
                       <span className="text-muted-foreground">=</span>
