@@ -8,17 +8,9 @@ import { AppLayout } from "@/components/layout/app-layout"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MoreVertical, Plus, Share2, Trash2, Edit, Wallet } from "lucide-react"
+import { Plus, Wallet } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
-import { getProjectShareUrl } from "@/lib/utils"
 import { parseCover, getPresetCover } from "@/lib/covers"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 
@@ -85,48 +77,6 @@ export default function ProjectsPage() {
     }
   }
 
-  async function handleDelete(projectId: string) {
-    if (!confirm("確定要刪除這個專案嗎？此操作無法復原。")) {
-      return
-    }
-
-    try {
-      const res = await authFetch(`/api/projects/${projectId}`, {
-        method: "DELETE",
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        alert(error.error || "刪除專案失敗")
-        return
-      }
-
-      // 重新獲取專案列表
-      fetchProjects()
-    } catch (error) {
-      console.error("刪除專案錯誤:", error)
-      alert("刪除專案失敗")
-    }
-  }
-
-  async function handleShare(projectId: string, projectName: string) {
-    const shareUrl = getProjectShareUrl(projectId)
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `加入「${projectName}」`,
-          text: "點擊連結加入旅行專案",
-          url: shareUrl,
-        })
-      } catch {
-        // 用戶取消分享
-      }
-    } else {
-      await navigator.clipboard.writeText(shareUrl)
-      alert("分享連結已複製")
-    }
-  }
 
   return (
     <AppLayout title="所有專案">
@@ -235,42 +185,16 @@ export default function ProjectsPage() {
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                         </div>
 
-                        {/* 選項按鈕 */}
-                        <div className="absolute top-2 right-2 z-10">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger
-                              asChild
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/20">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShare(project.id, project.name) }}>
-                                <Share2 className="h-4 w-4 mr-2" />
-                                分享專案
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/projects/${project.id}`) }}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                查看詳情
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(project.id) }} className="text-destructive">
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                刪除專案
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-
                         {/* 資訊區 - 底部 */}
                         <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                           <div className="flex items-start justify-between mb-2">
-                            <div>
+                            <div className="flex-1 min-w-0 mr-3">
                               <h3 className="font-bold text-lg leading-tight">{project.name}</h3>
+                              {project.description && (
+                                <p className="text-xs text-white/80 mt-0.5 truncate">{project.description}</p>
+                              )}
                               {dateRange && (
-                                <p className="text-xs text-white/70 mt-0.5">{dateRange}</p>
+                                <p className="text-xs text-white/60 mt-0.5">{dateRange}</p>
                               )}
                             </div>
                             <div className="text-right">
@@ -312,37 +236,20 @@ export default function ProjectsPage() {
                         </div>
                       </>
                     ) : (
-                      /* 無封面：原始設計 */
-                      <CardContent className="p-4">
+                      /* 無封面：加入左側色條 */
+                      <CardContent className="p-4 pl-5 relative overflow-hidden">
+                        {/* 左側色條 */}
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-brand-400 to-brand-600" />
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-base truncate">{project.name}</h3>
+                            {project.description && (
+                              <p className="text-xs text-muted-foreground truncate mt-0.5">{project.description}</p>
+                            )}
                             {dateRange && (
                               <span className="text-[11px] text-muted-foreground">{dateRange}</span>
                             )}
                           </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 -mr-2 -mt-1">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShare(project.id, project.name) }}>
-                                <Share2 className="h-4 w-4 mr-2" />
-                                分享專案
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/projects/${project.id}`) }}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                查看詳情
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(project.id) }} className="text-destructive">
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                刪除專案
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
                         </div>
                         <div className="flex items-baseline gap-1.5 mt-1">
                           <span className="text-xl font-bold tabular-nums tracking-tight">{formatCurrency(totalAmount, project.currency || DEFAULT_CURRENCY)}</span>

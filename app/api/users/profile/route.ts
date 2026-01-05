@@ -2,6 +2,36 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
+export async function GET(request: NextRequest) {
+  const authUser = await getAuthUser(request)
+
+  if (!authUser) {
+    return NextResponse.json({ error: "未登入" }, { status: 401 })
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: authUser.id },
+      select: {
+        id: true,
+        lineUserId: true,
+        name: true,
+        email: true,
+        image: true,
+      },
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: "用戶不存在" }, { status: 404 })
+    }
+
+    return NextResponse.json(user)
+  } catch (error) {
+    console.error("獲取用戶資料失敗:", error)
+    return NextResponse.json({ error: "獲取失敗" }, { status: 500 })
+  }
+}
+
 export async function PUT(request: NextRequest) {
   const authUser = await getAuthUser(request)
 

@@ -10,7 +10,14 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
-import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Calendar as CalendarIcon, Loader2, Trash2 } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 import { CoverPicker } from "@/components/cover-picker"
@@ -79,6 +86,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState("")
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   // Form states
@@ -279,6 +287,14 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
     } finally {
       setDeleting(false)
       setShowDeleteDialog(false)
+      setDeleteConfirmText("")
+    }
+  }
+
+  function handleDeleteDialogChange(open: boolean) {
+    setShowDeleteDialog(open)
+    if (!open) {
+      setDeleteConfirmText("")
     }
   }
 
@@ -289,7 +305,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
     return `${start} 至 ${end}`
   }
 
-  const isCreator = currentUserId && project?.createdBy === currentUserId
+  const isCreator = currentUserId && (project?.createdBy === currentUserId || project?.creator?.id === currentUserId)
 
   if (loading) {
     return (
@@ -573,15 +589,44 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
       </form>
 
       {/* 刪除確認對話框 */}
-      <ConfirmDeleteDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        title="確認刪除專案"
-        description={`確定要刪除「${project.name}」嗎？所有成員、支出紀錄都會永久移除，此操作無法復原。`}
-        onConfirm={handleDelete}
-        loading={deleting}
-        confirmText="確認刪除"
-      />
+      <Dialog open={showDeleteDialog} onOpenChange={handleDeleteDialogChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>確認刪除專案</DialogTitle>
+            <DialogDescription>
+              確定要刪除「{project.name}」嗎？所有成員、支出紀錄都會永久移除，此操作無法復原。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">
+              請輸入 <span className="font-mono font-semibold text-destructive">delete</span> 以確認刪除
+            </p>
+            <Input
+              placeholder="輸入 delete"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              disabled={deleting}
+              autoComplete="off"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => handleDeleteDialogChange(false)}
+              disabled={deleting}
+            >
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting || deleteConfirmText !== "delete"}
+            >
+              {deleting ? "刪除中..." : "確認刪除"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   )
 }
