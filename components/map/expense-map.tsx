@@ -24,7 +24,7 @@ interface ExpenseLocation {
 // 地圖風格類型
 export type MapStyle = "standard" | "watercolor" | "voyager" | "terrain" | "toner"
 
-// 地圖風格設定
+// 地圖風格設定（全部使用免費無需 API key 的圖磚服務）
 export const MAP_STYLES: Record<MapStyle, { name: string; emoji: string; url: string; labelUrl?: string }> = {
   standard: {
     name: "標準",
@@ -32,10 +32,9 @@ export const MAP_STYLES: Record<MapStyle, { name: string; emoji: string; url: st
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
   },
   watercolor: {
-    name: "水彩風",
-    emoji: "🎨",
-    url: "https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg",
-    labelUrl: "https://tiles.stadiamaps.com/tiles/stamen_toner_labels/{z}/{x}/{y}.png",
+    name: "衛星圖",
+    emoji: "🛰️",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
   },
   voyager: {
     name: "繽紛風",
@@ -45,12 +44,12 @@ export const MAP_STYLES: Record<MapStyle, { name: string; emoji: string; url: st
   terrain: {
     name: "地形風",
     emoji: "🏔️",
-    url: "https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}.png",
+    url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
   },
   toner: {
     name: "極簡風",
     emoji: "✏️",
-    url: "https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png",
+    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
   },
 }
 
@@ -100,7 +99,7 @@ export function ExpenseMap({ expenses, projectCurrency, mapStyle = "watercolor",
     // 加入地圖圖層
     const styleConfig = MAP_STYLES[mapStyle]
     tileLayerRef.current = L.tileLayer(styleConfig.url, {
-      attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      attribution: '&copy; <a href="https://openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://opentopomap.org/">OpenTopoMap</a>',
       maxZoom: 18,
     }).addTo(map)
 
