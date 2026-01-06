@@ -68,7 +68,7 @@ export default function MapPage({ params }: { params: Promise<{ id: string }> })
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [showList, setShowList] = useState(false)
-  const [mapStyle, setMapStyle] = useState<MapStyle>("watercolor")
+  const [mapStyle, setMapStyle] = useState<MapStyle>("standard")
   const [showStylePicker, setShowStylePicker] = useState(false)
 
   const backHref = `/projects/${id}`

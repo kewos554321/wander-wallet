@@ -22,7 +22,7 @@ interface ExpenseLocation {
 }
 
 // 地圖風格類型
-export type MapStyle = "standard" | "watercolor" | "voyager" | "terrain" | "toner"
+export type MapStyle = "standard" | "watercolor" | "voyager" | "toner"
 
 // 地圖風格設定（全部使用免費無需 API key 的圖磚服務）
 export const MAP_STYLES: Record<MapStyle, { name: string; emoji: string; url: string; labelUrl?: string }> = {
@@ -40,11 +40,6 @@ export const MAP_STYLES: Record<MapStyle, { name: string; emoji: string; url: st
     name: "繽紛風",
     emoji: "🌈",
     url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-  },
-  terrain: {
-    name: "地形風",
-    emoji: "🏔️",
-    url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
   },
   toner: {
     name: "極簡風",
@@ -72,7 +67,7 @@ const categoryEmojis: Record<string, string> = {
   other: "📍",
 }
 
-export function ExpenseMap({ expenses, projectCurrency, mapStyle = "watercolor", onExpenseClick }: ExpenseMapProps) {
+export function ExpenseMap({ expenses, projectCurrency, mapStyle = "standard", onExpenseClick }: ExpenseMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<L.Map | null>(null)
   const tileLayerRef = useRef<L.TileLayer | null>(null)
