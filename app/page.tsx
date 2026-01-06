@@ -49,6 +49,15 @@ function XIcon({ className }: { className?: string }) {
   )
 }
 
+// PayPal icon component
+function PaypalIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/>
+    </svg>
+  )
+}
+
 const faqs = [
   {
     category: "基本使用",
@@ -313,11 +322,11 @@ export default function HomePage() {
           </div>
 
           {/* Share buttons */}
-          <div className="flex flex-wrap justify-center gap-3">
+          <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto">
             <Button
               variant="outline"
               size="lg"
-              className="border-[#06C755] text-[#06C755] hover:bg-[#06C755]/10"
+              className="w-full border-[#06C755] text-[#06C755] hover:bg-[#06C755]/10"
               onClick={handleShareLine}
             >
               <LineIcon className="w-5 h-5 mr-2" />
@@ -326,7 +335,7 @@ export default function HomePage() {
             <Button
               variant="outline"
               size="lg"
-              className="border-[#1877F2] text-[#1877F2] hover:bg-[#1877F2]/10"
+              className="w-full border-[#1877F2] text-[#1877F2] hover:bg-[#1877F2]/10"
               onClick={handleShareFacebook}
             >
               <FacebookIcon className="w-5 h-5 mr-2" />
@@ -335,7 +344,7 @@ export default function HomePage() {
             <Button
               variant="outline"
               size="lg"
-              className="border-foreground text-foreground hover:bg-foreground/10"
+              className="w-full border-foreground text-foreground hover:bg-foreground/10"
               onClick={handleShareX}
             >
               <XIcon className="w-4 h-4 mr-2" />
@@ -344,7 +353,7 @@ export default function HomePage() {
             <Button
               variant="outline"
               size="lg"
-              className="border-muted-foreground text-muted-foreground hover:bg-muted"
+              className="w-full border-muted-foreground text-muted-foreground hover:bg-muted"
               onClick={handleShareEmail}
             >
               <Mail className="w-4 h-4 mr-2" />
@@ -397,19 +406,10 @@ export default function HomePage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.location.href = "mailto:ads@wanderwallet.app?subject=廣告合作洽詢"}
+                onClick={() => window.location.href = "mailto:kewos554321@gmail.com?subject=Wander Wallet 廣告合作洽詢"}
               >
                 <Mail className="w-4 h-4 mr-2" />
-                ads@wanderwallet.app
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-[#06C755] text-[#06C755] hover:bg-[#06C755]/10"
-                onClick={() => window.open("https://line.me/ti/p/@wanderwallet", "_blank")}
-              >
-                <LineIcon className="w-4 h-4 mr-2" />
-                LINE 聯繫
+                聯繫我們
               </Button>
             </div>
           </div>
@@ -426,31 +426,45 @@ export default function HomePage() {
               </div>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Wander Wallet 是免費服務，由小團隊用愛維護。如果這個工具對你有幫助，歡迎請我們喝杯咖啡，支持我們持續開發新功能！
+              Wander Wallet 是免費服務，由小團隊用愛維護。如果這個工具對你有幫助，歡迎支持我們持續開發新功能！
             </p>
             <div className="flex flex-wrap gap-2">
               <Button
+                variant="outline"
                 size="sm"
-                className="bg-[#FF5F5F] hover:bg-[#FF5F5F]/90 text-white"
-                onClick={() => window.open("https://www.buymeacoffee.com/wanderwallet", "_blank")}
+                className="border-[#FFDD00] text-[#000000] hover:bg-[#FFDD00]/10"
+                onClick={() => window.open("https://buymeacoffee.com/your-username", "_blank")}
               >
                 <Coffee className="w-4 h-4 mr-2" />
-                Buy me a coffee
-                <ExternalLink className="w-3 h-3 ml-1" />
+                Buy Me a Coffee
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.open("https://p.ecpay.com.tw/wanderwallet", "_blank")}
+                className="border-[#FF5E5B] text-[#FF5E5B] hover:bg-[#FF5E5B]/10"
+                onClick={() => window.open("https://ko-fi.com/your-username", "_blank")}
               >
-                <Heart className="w-4 h-4 mr-2 text-pink-500" />
-                綠界贊助
-                <ExternalLink className="w-3 h-3 ml-1" />
+                <Heart className="w-4 h-4 mr-2" />
+                Ko-fi
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-[#003087] text-[#003087] hover:bg-[#003087]/10"
+                onClick={() => window.open("https://paypal.me/your-username", "_blank")}
+              >
+                <PaypalIcon className="w-4 h-4 mr-2" />
+                PayPal
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = "mailto:kewos554321@gmail.com?subject=Wander Wallet 贊助詢問"}
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                其他方式
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              每一份支持都是我們前進的動力 💪
-            </p>
           </div>
         </div>
       </section>
