@@ -225,6 +225,12 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
   return (
     <AppLayout title="結算" showBack backHref={backHref}>
       <div className="space-y-6 pb-20">
+        {/* 頂部橫幅廣告 */}
+        <AdContainer
+          placement="settle"
+          variant="banner"
+        />
+
         {/* 匯率資訊提示 */}
         {data?.summary.exchangeRatesUsed && Object.keys(data.summary.exchangeRatesUsed).length > 0 && (
           <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -817,12 +823,6 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
           </CardContent>
         </Card>
 
-        {/* 底部橫幅廣告 */}
-        <AdContainer
-          placement="settle"
-          variant="banner"
-          className="mt-4"
-        />
       </div>
     </AppLayout>
   )
