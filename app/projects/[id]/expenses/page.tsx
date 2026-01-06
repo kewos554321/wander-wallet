@@ -29,6 +29,7 @@ import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/a
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { formatCurrency } from "@/lib/constants/currencies"
 import { sendDeleteNotificationToChat, sendBatchDeleteNotificationToChat } from "@/lib/liff"
+import { mergePreferences } from "@/types/user-preferences"
 import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
 import { useProjectData, useExpenseFilters, useCurrencyConversion } from "@/lib/hooks"
 import { AdContainer } from "@/components/ads/ad-container"
@@ -120,6 +121,9 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
   // 找出當前用戶的 memberId
   const currentUserMemberId = members.find((m) => m.user?.id === user?.id)?.id || ""
 
+  // 獲取用戶偏好設定
+  const userPreferences = mergePreferences(user?.preferences)
+
   const loading = projectLoading || expensesLoading
 
   useEffect(() => {
@@ -154,8 +158,8 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
       })
 
       if (res.ok) {
-        // 發送 LINE 通知
-        if (notifyLineOnDelete && canSendMessages && !isDevMode && expenseToDelete) {
+        // 發送 LINE 通知（檢查用戶偏好）
+        if (notifyLineOnDelete && canSendMessages && !isDevMode && expenseToDelete && userPreferences.notifications.expenseDeleted) {
           sendDeleteNotificationToChat({
             projectName: project?.name || "",
             projectId: id,
@@ -198,8 +202,8 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
       })
 
       if (res.ok) {
-        // 發送 LINE 通知（合併為單一通知）
-        if (notifyLineOnDelete && canSendMessages && !isDevMode && expensesToDelete.length > 0) {
+        // 發送 LINE 通知（檢查用戶偏好）
+        if (notifyLineOnDelete && canSendMessages && !isDevMode && expensesToDelete.length > 0 && userPreferences.notifications.expenseDeleted) {
           sendBatchDeleteNotificationToChat({
             projectName: project?.name || "",
             projectId: id,

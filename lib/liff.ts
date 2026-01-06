@@ -106,7 +106,7 @@ export async function sendMessagesToChat(messages: Parameters<typeof liff.sendMe
 }
 
 export interface ExpenseChange {
-  field: "amount" | "description" | "category" | "payer" | "date" | "location" | "participants" | "image"
+  field: "amount" | "currency" | "description" | "category" | "payer" | "date" | "location" | "participants" | "image"
   label: string
   oldValue?: string
   newValue?: string

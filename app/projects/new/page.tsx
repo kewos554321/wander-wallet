@@ -276,14 +276,14 @@ export default function NewProjectPage() {
         </div>
 
         <div className="flex gap-3 pt-4">
-          <Button type="submit" className="flex-1" disabled={loading}>
-            {loading ? "建立中..." : "建立專案"}
-          </Button>
           <Link href="/projects" className="flex-1">
             <Button type="button" variant="outline" className="w-full" disabled={loading}>
               取消
             </Button>
           </Link>
+          <Button type="submit" className="flex-1" disabled={loading}>
+            {loading ? "建立中..." : "建立專案"}
+          </Button>
         </div>
       </form>
     </AppLayout>

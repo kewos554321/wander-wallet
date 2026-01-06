@@ -18,6 +18,8 @@ import {
   isSendMessagesAvailable,
   LiffUser,
 } from "@/lib/liff"
+import type { UserPreferences } from "@/types/user-preferences"
+import { DEFAULT_PREFERENCES } from "@/types/user-preferences"
 
 // 開發模式：當 LIFF_ID 未設定時，使用模擬數據
 const DEV_MODE = !process.env.NEXT_PUBLIC_LIFF_ID
@@ -27,6 +29,7 @@ interface AuthUser {
   lineUserId: string
   name: string | null
   image: string | null
+  preferences: UserPreferences | null
 }
 
 interface LiffContextType {
@@ -40,6 +43,7 @@ interface LiffContextType {
   login: () => void
   logout: () => void
   refreshSession: () => Promise<void>
+  updatePreferences: (preferences: UserPreferences) => void // 更新用戶偏好設定
 }
 
 const LiffContext = createContext<LiffContextType | undefined>(undefined)
@@ -53,6 +57,7 @@ const DEV_USER: AuthUser = {
   lineUserId: "U1234567890dev",
   name: "開發測試用戶",
   image: null,
+  preferences: DEFAULT_PREFERENCES,
 }
 
 const DEV_LIFF_PROFILE: LiffUser = {
@@ -183,6 +188,14 @@ export function LiffProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // 更新用戶偏好設定（本地狀態更新，API 呼叫由設定頁面負責）
+  const updatePreferences = useCallback((preferences: UserPreferences) => {
+    setUser((prev) => {
+      if (!prev) return prev
+      return { ...prev, preferences }
+    })
+  }, [])
+
   const value: LiffContextType = {
     user,
     liffProfile,
@@ -194,6 +207,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
     login,
     logout,
     refreshSession,
+    updatePreferences,
   }
 
   return <LiffContext.Provider value={value}>{children}</LiffContext.Provider>

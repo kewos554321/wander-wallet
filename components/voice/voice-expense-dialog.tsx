@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useSpeechRecognition } from "@/lib/speech"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { sendExpenseNotificationToChat, sendBatchExpenseNotificationToChat } from "@/lib/liff"
+import { mergePreferences } from "@/types/user-preferences"
 import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import type { ExpenseItemResult, ParseExpensesResult } from "@/lib/ai/expense-parser"
@@ -87,7 +88,10 @@ export function VoiceExpenseDialog({
 }: VoiceExpenseDialogProps) {
   const authFetch = useAuthFetch()
   const speech = useSpeechRecognition()
-  const { isDevMode, canSendMessages } = useLiff()
+  const { isDevMode, canSendMessages, user } = useLiff()
+
+  // 獲取用戶偏好設定
+  const userPreferences = mergePreferences(user?.preferences)
 
   // 拖拉狀態
   const [isDragging, setIsDragging] = useState(false)
@@ -689,8 +693,8 @@ export function VoiceExpenseDialog({
         }
       }
 
-      // 發送 LINE 通知
-      if (notifyLine && canSendMessages && !isDevMode && expenses.length > 0) {
+      // 發送 LINE 通知（檢查用戶偏好）
+      if (notifyLine && canSendMessages && !isDevMode && expenses.length > 0 && userPreferences.notifications.expenseCreated) {
         if (expenses.length === 1) {
           // 單筆時使用單筆模板
           const expense = expenses[0]

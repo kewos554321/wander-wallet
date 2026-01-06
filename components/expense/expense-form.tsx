@@ -23,6 +23,7 @@ import { Calculator } from "@/components/ui/calculator"
 import { CurrencySelect } from "@/components/ui/currency-select"
 import { CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
 import { type CurrencyCode, DEFAULT_CURRENCY, formatCurrency, getCurrencyInfo } from "@/lib/constants/currencies"
+import { mergePreferences } from "@/types/user-preferences"
 
 interface Member {
   id: string
@@ -85,6 +86,7 @@ interface ParticipantShare {
 
 interface OriginalExpenseData {
   amount: number
+  currency: string
   description: string | null
   category: string | null
   paidByMemberId: string
@@ -105,7 +107,10 @@ interface ExpenseFormProps {
 export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const router = useRouter()
   const authFetch = useAuthFetch()
-  const { isDevMode, canSendMessages } = useLiff()
+  const { isDevMode, canSendMessages, user } = useLiff()
+
+  // 獲取用戶偏好設定
+  const userPreferences = mergePreferences(user?.preferences)
 
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
@@ -253,7 +258,9 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         // 設定專案幣別
         const projCurrency = projectData.currency || DEFAULT_CURRENCY
         setProjectCurrency(projCurrency)
-        setCurrency(projCurrency) // 預設使用專案幣別
+        // 幣別優先順序：用戶偏好 > 專案設定 > 預設
+        const defaultCurrency = userPreferences.defaultCurrency || projCurrency
+        setCurrency(defaultCurrency as CurrencyCode)
         // 設定自訂匯率
         if (projectData.customRates) {
           setCustomRates(projectData.customRates)
@@ -270,6 +277,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         if (data.length > 0) {
           setPaidBy(data[0].id)
         }
+        // 設定分帳方式為用戶偏好
+        setSplitMode(userPreferences.defaultSplitMode)
       }
     } catch (error) {
       console.error("獲取資料錯誤:", error)
@@ -364,6 +373,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         // 儲存原始資料用於計算變更（確保 amount 是數字類型）
         setOriginalData({
           amount: Number(expense.amount),
+          currency: expCurrency,
           description: expense.description,
           category: expense.category,
           paidByMemberId: expense.payer.id,
@@ -455,6 +465,18 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         label: "金額",
         oldValue: formatCurrency(originalData.amount, projectCurrency),
         newValue: formatCurrency(amountNum, projectCurrency),
+      })
+    }
+
+    // 幣別變更
+    if (originalData.currency !== currency) {
+      const oldInfo = getCurrencyInfo(originalData.currency)
+      const newInfo = getCurrencyInfo(currency)
+      changes.push({
+        field: "currency",
+        label: "幣別",
+        oldValue: `${oldInfo.code} ${oldInfo.name}`,
+        newValue: `${newInfo.code} ${newInfo.name}`,
       })
     }
 
@@ -565,6 +587,9 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
 
     // 金額變更
     if (originalData.amount !== amountNum) return true
+
+    // 幣別變更
+    if (originalData.currency !== currency) return true
 
     // 描述變更
     if (originalData.description !== newDescription) return true
@@ -680,7 +705,11 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         }
 
         // 如果勾選了通知且可以發送訊息，則發送通知
-        if (notifyLine && canSendMessages && !isDevMode) {
+        // 檢查用戶偏好：新增時檢查 expenseCreated，更新時檢查 expenseUpdated
+        const notificationEnabled = mode === "create"
+          ? userPreferences.notifications.expenseCreated
+          : userPreferences.notifications.expenseUpdated
+        if (notifyLine && canSendMessages && !isDevMode && notificationEnabled) {
           const payerMember = members.find((m) => m.id === paidBy)
           const payerName = payerMember?.displayName || "未知"
           const operationType: "create" | "update" = mode === "create" ? "create" : "update"
@@ -728,8 +757,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       })
 
       if (res.ok) {
-        // 發送 LINE 通知
-        if (notifyLine && canSendMessages && !isDevMode && originalData) {
+        // 發送 LINE 通知（檢查用戶偏好）
+        if (notifyLine && canSendMessages && !isDevMode && originalData && userPreferences.notifications.expenseDeleted) {
           const payerMember = members.find((m) => m.id === originalData.paidByMemberId)
           sendDeleteNotificationToChat({
             projectName,

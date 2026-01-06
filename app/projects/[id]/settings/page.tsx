@@ -592,16 +592,16 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
           </div>
         </div>
 
-        {/* 儲存與取消按鈕 */}
+        {/* 取消與儲存按鈕 */}
         <div className="flex gap-3 pt-4">
-          <Button type="submit" className="flex-1" disabled={saving}>
-            {saving ? "儲存中..." : "儲存變更"}
-          </Button>
           <Link href={backHref} className="flex-1">
             <Button type="button" variant="outline" className="w-full" disabled={saving}>
               取消
             </Button>
           </Link>
+          <Button type="submit" className="flex-1" disabled={saving}>
+            {saving ? "儲存中..." : "儲存變更"}
+          </Button>
         </div>
 
         {/* 危險區域 - 刪除專案 */}

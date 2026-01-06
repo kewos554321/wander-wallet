@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { AppLayout } from "@/components/layout/app-layout"
@@ -14,18 +14,71 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { useLiff } from "@/components/auth/liff-provider"
+import { useLiff, useAuthFetch } from "@/components/auth/liff-provider"
 import { useTheme } from "@/components/system/theme-provider"
-import { LogOut, ChevronRight, ChevronDown, Sun, Moon, Monitor, User } from "lucide-react"
+import { LogOut, ChevronRight, ChevronDown, Sun, Moon, Monitor, User, Wallet, Bell, Loader2 } from "lucide-react"
 import { AvatarDisplay, parseAvatarString } from "@/components/avatar-picker"
+import { CurrencySelect } from "@/components/ui/currency-select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import type { CurrencyCode } from "@/lib/constants/currencies"
+import type { UserPreferences } from "@/types/user-preferences"
+import { DEFAULT_PREFERENCES, mergePreferences } from "@/types/user-preferences"
 
 export default function SettingsPage() {
   const [open, setOpen] = useState(false)
   const [themeExpanded, setThemeExpanded] = useState(false)
-  const { user, logout } = useLiff()
+  const [expenseExpanded, setExpenseExpanded] = useState(false)
+  const [notificationExpanded, setNotificationExpanded] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const { user, logout, updatePreferences } = useLiff()
+  const authFetch = useAuthFetch()
   const isCustomAvatar = parseAvatarString(user?.image) !== null
   const { theme, setTheme } = useTheme()
   const router = useRouter()
+
+  // 合併用戶偏好與預設值
+  const preferences = mergePreferences(user?.preferences)
+
+  // 保存偏好設定
+  async function savePreferences(newPrefs: UserPreferences) {
+    setSaving(true)
+    try {
+      const res = await authFetch("/api/users/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preferences: newPrefs }),
+      })
+      if (res.ok) {
+        updatePreferences(newPrefs)
+      }
+    } catch (error) {
+      console.error("保存偏好設定失敗:", error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // 更新預設幣別
+  function handleCurrencyChange(currency: CurrencyCode) {
+    const newPrefs = { ...preferences, defaultCurrency: currency }
+    savePreferences(newPrefs)
+  }
+
+  // 更新預設分帳方式
+  function handleSplitModeChange(mode: "equal" | "custom") {
+    const newPrefs = { ...preferences, defaultSplitMode: mode }
+    savePreferences(newPrefs)
+  }
+
+  // 更新通知設定
+  function handleNotificationChange(key: keyof UserPreferences["notifications"], value: boolean) {
+    const newPrefs = {
+      ...preferences,
+      notifications: { ...preferences.notifications, [key]: value },
+    }
+    savePreferences(newPrefs)
+  }
 
   async function handleLogout() {
     await logout()
@@ -38,7 +91,7 @@ export default function SettingsPage() {
   ] as const
 
   return (
-    <AppLayout title="設定" showBack onBack={() => router.back()}>
+    <AppLayout title="設定" showBack>
       <div className="space-y-4">
         {/* 用戶資料預覽 */}
         <Card
@@ -109,6 +162,132 @@ export default function SettingsPage() {
                     </button>
                   )
                 })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 記帳偏好設定 */}
+        <Card>
+          <CardContent className="space-y-3">
+            <button
+              onClick={() => setExpenseExpanded(!expenseExpanded)}
+              className="w-full flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <Wallet className="size-4 text-muted-foreground" />
+                <span className="font-medium">記帳偏好</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {saving && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+                <ChevronDown
+                  className={`size-5 text-muted-foreground transition-transform ${
+                    expenseExpanded ? "rotate-180" : ""
+                  }`}
+                />
+              </div>
+            </button>
+            {expenseExpanded && (
+              <div className="space-y-4 pt-2">
+                {/* 預設幣別 */}
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">預設幣別</Label>
+                  <CurrencySelect
+                    value={preferences.defaultCurrency as CurrencyCode}
+                    onChange={handleCurrencyChange}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    新增支出時優先使用此幣別
+                  </p>
+                </div>
+
+                {/* 預設分帳方式 */}
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">預設分帳方式</Label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleSplitModeChange("equal")}
+                      className={`flex-1 p-3 rounded-lg border-2 transition-colors text-sm ${
+                        preferences.defaultSplitMode === "equal"
+                          ? "border-primary bg-primary/10 font-medium"
+                          : "border-transparent bg-muted/50 hover:bg-muted"
+                      }`}
+                    >
+                      均分
+                    </button>
+                    <button
+                      onClick={() => handleSplitModeChange("custom")}
+                      className={`flex-1 p-3 rounded-lg border-2 transition-colors text-sm ${
+                        preferences.defaultSplitMode === "custom"
+                          ? "border-primary bg-primary/10 font-medium"
+                          : "border-transparent bg-muted/50 hover:bg-muted"
+                      }`}
+                    >
+                      自訂金額
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 通知設定 */}
+        <Card>
+          <CardContent className="space-y-3">
+            <button
+              onClick={() => setNotificationExpanded(!notificationExpanded)}
+              className="w-full flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <Bell className="size-4 text-muted-foreground" />
+                <span className="font-medium">LINE 通知</span>
+              </div>
+              <ChevronDown
+                className={`size-5 text-muted-foreground transition-transform ${
+                  notificationExpanded ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            {notificationExpanded && (
+              <div className="space-y-3 pt-2">
+                <p className="text-xs text-muted-foreground">
+                  控制支出操作時是否發送 LINE 群組通知
+                </p>
+
+                {/* 新增支出通知 */}
+                <label className="flex items-center justify-between cursor-pointer">
+                  <span className="text-sm">新增支出時通知</span>
+                  <Checkbox
+                    checked={preferences.notifications.expenseCreated}
+                    onCheckedChange={(checked) =>
+                      handleNotificationChange("expenseCreated", checked === true)
+                    }
+                  />
+                </label>
+
+                {/* 更新支出通知 */}
+                <label className="flex items-center justify-between cursor-pointer">
+                  <span className="text-sm">更新支出時通知</span>
+                  <Checkbox
+                    checked={preferences.notifications.expenseUpdated}
+                    onCheckedChange={(checked) =>
+                      handleNotificationChange("expenseUpdated", checked === true)
+                    }
+                  />
+                </label>
+
+                {/* 刪除支出通知 */}
+                <label className="flex items-center justify-between cursor-pointer">
+                  <span className="text-sm">刪除支出時通知</span>
+                  <Checkbox
+                    checked={preferences.notifications.expenseDeleted}
+                    onCheckedChange={(checked) =>
+                      handleNotificationChange("expenseDeleted", checked === true)
+                    }
+                  />
+                </label>
               </div>
             )}
           </CardContent>

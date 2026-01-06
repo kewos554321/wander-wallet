@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import type { Prisma } from "@prisma/client"
 
 export async function GET(request: NextRequest) {
   const authUser = await getAuthUser(request)
@@ -18,6 +19,7 @@ export async function GET(request: NextRequest) {
         name: true,
         email: true,
         image: true,
+        preferences: true,
       },
     })
 
@@ -41,9 +43,9 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { image, name } = body
+    const { image, name, preferences } = body
 
-    const updateData: { image?: string; name?: string } = {}
+    const updateData: Prisma.UserUpdateInput = {}
 
     if (image !== undefined) {
       // 驗證圖片格式：支援 URL 或自訂頭像格式 (avatar:icon:color)
@@ -57,6 +59,29 @@ export async function PUT(request: NextRequest) {
       updateData.name = name
     }
 
+    if (preferences !== undefined) {
+      // 驗證 preferences 結構
+      if (typeof preferences !== "object" || preferences === null) {
+        return NextResponse.json({ error: "無效的偏好設定格式" }, { status: 400 })
+      }
+
+      // 驗證 defaultSplitMode
+      if (preferences.defaultSplitMode !== undefined) {
+        if (!["equal", "custom"].includes(preferences.defaultSplitMode)) {
+          return NextResponse.json({ error: "無效的分帳方式" }, { status: 400 })
+        }
+      }
+
+      // 驗證 notifications
+      if (preferences.notifications !== undefined) {
+        if (typeof preferences.notifications !== "object") {
+          return NextResponse.json({ error: "無效的通知設定格式" }, { status: 400 })
+        }
+      }
+
+      updateData.preferences = preferences
+    }
+
     const user = await prisma.user.update({
       where: { id: authUser.id },
       data: updateData,
@@ -65,6 +90,7 @@ export async function PUT(request: NextRequest) {
         lineUserId: true,
         name: true,
         image: true,
+        preferences: true,
       },
     })
 

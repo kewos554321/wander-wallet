@@ -120,16 +120,24 @@ const categoryLabels: Record<string, string> = {
   other: "其他",
 }
 
+interface ParticipantsChange {
+  count: number
+  added?: string[]
+  removed?: string[]
+}
+
 function formatChanges(changes: Record<string, { from: unknown; to: unknown }> | null, currency: string) {
   if (!changes) return null
 
   const fieldLabels: Record<string, string> = {
     amount: "金額",
+    currency: "幣別",
     description: "描述",
     category: "類別",
     paidByMemberId: "付款人",
     expenseDate: "日期",
     location: "地點",
+    participants: "分攤者",
   }
 
   const formatValue = (field: string, value: unknown): string => {
@@ -143,11 +151,43 @@ function formatChanges(changes: Record<string, { from: unknown; to: unknown }> |
     return String(value)
   }
 
-  return Object.entries(changes).map(([field, { from, to }]) => ({
-    field: fieldLabels[field] || field,
-    from: formatValue(field, from),
-    to: formatValue(field, to),
-  }))
+  // 處理 participants 的特殊格式
+  const formatParticipantsChange = (from: ParticipantsChange, to: ParticipantsChange): { from: string; to: string } => {
+    const parts: string[] = []
+
+    // 顯示移除的成員
+    if (from.removed && from.removed.length > 0) {
+      parts.push(`移除：${from.removed.join("、")}`)
+    }
+
+    // 顯示加入的成員
+    if (to.added && to.added.length > 0) {
+      parts.push(`加入：${to.added.join("、")}`)
+    }
+
+    return {
+      from: `${from.count}人`,
+      to: parts.length > 0 ? `${to.count}人（${parts.join("；")}）` : `${to.count}人`,
+    }
+  }
+
+  return Object.entries(changes).map(([field, { from, to }]) => {
+    // 特殊處理 participants 欄位
+    if (field === "participants" && typeof from === "object" && typeof to === "object") {
+      const formatted = formatParticipantsChange(from as ParticipantsChange, to as ParticipantsChange)
+      return {
+        field: fieldLabels[field] || field,
+        from: formatted.from,
+        to: formatted.to,
+      }
+    }
+
+    return {
+      field: fieldLabels[field] || field,
+      from: formatValue(field, from),
+      to: formatValue(field, to),
+    }
+  })
 }
 
 // 格式化類別標籤

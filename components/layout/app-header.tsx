@@ -26,9 +26,10 @@ export function AppHeader({ title = "Wander Wallet", showBack = false, backHref,
   // /projects/[id] 專案主頁 (不含子頁面)
   const projectMatch = pathname.match(/^\/projects\/([^/]+)$/)
   const isProjectMainPage = projectMatch !== null && projectMatch[1] !== "new"
-  // 隱藏「所有專案」導航：在 /projects 或任何專案頁面時
+  // 隱藏「所有專案」導航：在 /projects、任何專案頁面、或設定頁面時
   const hideProjectsNav = pathname === "/projects" ||
-    (pathname.startsWith("/projects/") && !pathname.startsWith("/projects/new"))
+    (pathname.startsWith("/projects/") && !pathname.startsWith("/projects/new")) ||
+    pathname.startsWith("/settings")
 
   const handleBack = () => {
     if (onBack) onBack()

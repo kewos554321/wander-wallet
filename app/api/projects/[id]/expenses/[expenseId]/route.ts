@@ -117,7 +117,7 @@ export async function PUT(
     const body = await req.json()
     const { paidByMemberId, amount, currency, description, category, image, location, latitude, longitude, participants, expenseDate } = body
 
-    // 獲取現有費用（包含付款人資訊）
+    // 獲取現有費用（包含付款人和參與者資訊）
     const existingExpense = await prisma.expense.findFirst({
       where: {
         id: expenseId,
@@ -128,6 +128,16 @@ export async function PUT(
         payer: {
           select: {
             displayName: true,
+          },
+        },
+        participants: {
+          include: {
+            member: {
+              select: {
+                id: true,
+                displayName: true,
+              },
+            },
           },
         },
       },
@@ -217,7 +227,7 @@ export async function PUT(
     const changes = diffChanges(
       existingExpense as unknown as Record<string, unknown>,
       updateData as unknown as Record<string, unknown>,
-      ["paidByMemberId", "amount", "description", "category", "location", "expenseDate"]
+      ["paidByMemberId", "amount", "currency", "description", "category", "location", "expenseDate"]
     )
 
     // 如果付款人有變更，獲取成員名稱映射
@@ -232,7 +242,7 @@ export async function PUT(
     }
 
     // 將 paidByMemberId 變更轉換為名稱顯示
-    const changesWithNames = changes ? {
+    let changesWithNames: Record<string, { from: unknown; to: unknown }> | null = changes ? {
       ...changes,
       ...(changes.paidByMemberId && {
         paidByMemberId: {
@@ -241,6 +251,53 @@ export async function PUT(
         }
       })
     } : null
+
+    // 計算參與者變更（具體顯示加入/移除的成員名稱）
+    if (participants && Array.isArray(participants)) {
+      const oldParticipantIds = new Set(existingExpense.participants.map(p => p.member.id))
+      const newParticipantIds = new Set(participants.map((p: Participant) => p.memberId))
+
+      // 找出加入和移除的成員
+      const addedIds = [...newParticipantIds].filter(id => !oldParticipantIds.has(id))
+      const removedIds = [...oldParticipantIds].filter(id => !newParticipantIds.has(id))
+
+      // 只有在有變更時才記錄
+      if (addedIds.length > 0 || removedIds.length > 0) {
+        // 獲取所有相關成員的名稱
+        const allMemberIds = [...addedIds, ...removedIds]
+        const membersForParticipants = await prisma.projectMember.findMany({
+          where: { id: { in: allMemberIds } },
+          select: { id: true, displayName: true },
+        })
+        const participantNameMap = Object.fromEntries(membersForParticipants.map(m => [m.id, m.displayName]))
+
+        // 舊成員名稱（從現有資料取得）
+        const oldMemberNameMap = Object.fromEntries(
+          existingExpense.participants.map(p => [p.member.id, p.member.displayName])
+        )
+
+        const addedNames = addedIds.map(id => participantNameMap[id] || id)
+        const removedNames = removedIds.map(id => oldMemberNameMap[id] || participantNameMap[id] || id)
+
+        // 建立變更記錄
+        const participantsChange = {
+          from: {
+            count: oldParticipantIds.size,
+            removed: removedNames,
+          },
+          to: {
+            count: newParticipantIds.size,
+            added: addedNames,
+          },
+        }
+
+        if (changesWithNames) {
+          changesWithNames.participants = participantsChange
+        } else {
+          changesWithNames = { participants: participantsChange }
+        }
+      }
+    }
 
     // 獲取新的付款人名稱（如果有變更）
     let newPayerName = existingExpense.payer.displayName
