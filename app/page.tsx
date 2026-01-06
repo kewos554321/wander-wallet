@@ -21,6 +21,7 @@ import {
   ExternalLink
 } from "lucide-react"
 import Link from "next/link"
+import { AdContainer } from "@/components/ads/ad-container"
 
 // LINE icon component
 function LineIcon({ className }: { className?: string }) {
@@ -172,8 +173,16 @@ export default function HomePage() {
         </div>
       </nav>
 
+      {/* Top Banner Ad */}
+      <div className="px-4 pt-4">
+        <AdContainer
+          placement="home"
+          variant="banner"
+        />
+      </div>
+
       {/* Hero Section */}
-      <section className="relative overflow-hidden px-6 pt-12 pb-16 bg-gradient-to-b from-brand-50 to-background">
+      <section className="relative overflow-hidden px-6 pt-8 pb-16 bg-gradient-to-b from-brand-50 to-background">
         {/* Background decoration */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-brand-200/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-brand-300/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Plus, Wallet } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { AdContainer, AdSlot } from "@/components/ads/ad-container"
+import { AdContainer } from "@/components/ads/ad-container"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { parseCover, getPresetCover } from "@/lib/covers"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
@@ -297,13 +297,6 @@ export default function ProjectsPage() {
                     )}
                   </Card>
 
-                    {/* 每 3 個專案後顯示廣告 */}
-                    <AdSlot
-                      placement="project-list"
-                      index={index}
-                      interval={3}
-                      variant="native"
-                    />
                   </React.Fragment>
                 )
               })}

@@ -29,7 +29,7 @@ import { formatCurrency } from "@/lib/constants/currencies"
 import { sendDeleteNotificationToChat, sendBatchDeleteNotificationToChat } from "@/lib/liff"
 import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
 import { useProjectData, useExpenseFilters, useCurrencyConversion } from "@/lib/hooks"
-import { AdSlot } from "@/components/ads/ad-container"
+import { AdContainer } from "@/components/ads/ad-container"
 
 interface Member {
   id: string
@@ -303,6 +303,9 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
       backHref={backHref}
     >
       <div className="flex flex-col gap-4 pb-24">
+        {/* 頂部廣告 */}
+        <AdContainer placement="expense-list" variant="banner" />
+
         {/* 總計摘要 - 緊湊版 */}
         <div className="flex items-center justify-between py-2">
           <div>
@@ -792,13 +795,6 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                       {cardContent}
                     </Link>
                   )}
-                  {/* 每 5 筆支出後顯示廣告 */}
-                  <AdSlot
-                    placement="expense-list"
-                    index={index}
-                    interval={5}
-                    variant="native"
-                  />
                 </React.Fragment>
               )
             })}
