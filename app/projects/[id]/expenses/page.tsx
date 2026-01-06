@@ -12,17 +12,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
-import { Plus, Trash2, User, Utensils, Car, Home, Gamepad2, ShoppingBag, Wallet, Ticket, Gift, Receipt, CheckSquare, X, Search, Filter, ChevronDown, MapPin, Sparkles } from "lucide-react"
+import { Plus, Trash2, User, Users, Utensils, Car, Home, Gamepad2, ShoppingBag, Wallet, Ticket, Gift, Receipt, CheckSquare, X, Search, Filter, MapPin, Sparkles, CalendarDays, DollarSign, ChevronDown, Coins } from "lucide-react"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuCheckboxItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+import { SearchInput } from "@/components/ui/search-input"
+import { FilterDropdown } from "@/components/ui/filter-dropdown"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { format } from "date-fns"
+import type { DateRange } from "react-day-picker"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { formatCurrency } from "@/lib/constants/currencies"
@@ -97,9 +99,15 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
     setSearchQuery,
     toggleCategory,
     togglePayer,
+    toggleParticipant,
+    toggleCurrency,
     setAmountRange,
+    setCreatedDateRange,
+    setExpenseDateRange,
     clearFilters,
     uniquePayers,
+    uniqueParticipants,
+    uniqueCurrencies,
     maxAmount: maxExpenseAmount,
   } = useExpenseFilters(expenses)
 
@@ -339,60 +347,47 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
         {/* 搜尋與篩選 */}
         {expenses.length > 0 && (
           <div className="space-y-3">
-            {/* 第一行：篩選按鈕 */}
+            {/* 搜尋框 */}
+            <SearchInput
+              value={filters.searchQuery}
+              onChange={setSearchQuery}
+              placeholder="搜尋支出描述..."
+            />
+
+            {/* 篩選按鈕 - 3x2 網格 */}
             <div className="grid grid-cols-3 gap-2">
               {/* 類別篩選 */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full justify-between">
-                    <span className="flex items-center gap-1.5">
-                      <Filter className="h-3.5 w-3.5" />
-                      類別
-                      {filters.selectedCategories.size > 0 && (
-                        <span className="px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
-                          {filters.selectedCategories.size}
-                        </span>
-                      )}
-                    </span>
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48">
-                  <DropdownMenuLabel>選擇類別</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {Object.entries(CATEGORY_CONFIG).map(([key, { label, icon: Icon }]) => (
-                    <DropdownMenuCheckboxItem
-                      key={key}
-                      checked={filters.selectedCategories.has(key)}
-                      onCheckedChange={() => toggleCategory(key)}
-                    >
-                      <Icon className="h-4 w-4 mr-2" />
-                      {label}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <FilterDropdown
+                label="類別"
+                icon={<Filter className="h-3.5 w-3.5" />}
+                activeCount={filters.selectedCategories.size}
+                contentClassName="w-32"
+              >
+                <DropdownMenuLabel>消費類別</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {Object.entries(CATEGORY_CONFIG).map(([key, { label, icon: Icon }]) => (
+                  <DropdownMenuCheckboxItem
+                    key={key}
+                    checked={filters.selectedCategories.has(key)}
+                    onCheckedChange={() => toggleCategory(key)}
+                  >
+                    <Icon className="h-4 w-4 mr-2" />
+                    {label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </FilterDropdown>
 
               {/* 付款人篩選 */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full justify-between">
-                    <span className="flex items-center gap-1.5">
-                      <User className="h-3.5 w-3.5" />
-                      付款人
-                      {filters.selectedPayers.size > 0 && (
-                        <span className="px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
-                          {filters.selectedPayers.size}
-                        </span>
-                      )}
-                    </span>
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48">
-                  <DropdownMenuLabel>選擇付款人</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {uniquePayers.map((payer) => (
+              <FilterDropdown
+                label="付款人"
+                icon={<User className="h-3.5 w-3.5" />}
+                activeCount={filters.selectedPayers.size}
+                contentClassName="w-36 max-h-60 overflow-y-auto"
+              >
+                <DropdownMenuLabel>誰付錢</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {uniquePayers.length > 0 ? (
+                  uniquePayers.map((payer) => (
                     <DropdownMenuCheckboxItem
                       key={payer.id}
                       checked={filters.selectedPayers.has(payer.id)}
@@ -400,131 +395,228 @@ export default function ExpensesList({ params }: { params: Promise<{ id: string 
                     >
                       {payer.displayName}
                     </DropdownMenuCheckboxItem>
+                  ))
+                ) : (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">無付款人</div>
+                )}
+              </FilterDropdown>
+
+              {/* 參與者篩選 */}
+              <FilterDropdown
+                label="參與者"
+                icon={<Users className="h-3.5 w-3.5" />}
+                activeCount={filters.selectedParticipants.size}
+                align="end"
+                contentClassName="w-36 max-h-60 overflow-y-auto"
+              >
+                <DropdownMenuLabel>有參與分攤</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {uniqueParticipants.length > 0 ? (
+                  uniqueParticipants.map((participant) => (
+                    <DropdownMenuCheckboxItem
+                      key={participant.id}
+                      checked={filters.selectedParticipants.has(participant.id)}
+                      onCheckedChange={() => toggleParticipant(participant.id)}
+                    >
+                      {participant.displayName}
+                    </DropdownMenuCheckboxItem>
+                  ))
+                ) : (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">無參與者</div>
+                )}
+              </FilterDropdown>
+
+              {/* 幣別篩選 */}
+              {uniqueCurrencies.length > 1 && (
+                <FilterDropdown
+                  label="幣別"
+                  icon={<Coins className="h-3.5 w-3.5" />}
+                  activeCount={filters.selectedCurrencies.size}
+                  contentClassName="w-28"
+                >
+                  <DropdownMenuLabel>幣別</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {uniqueCurrencies.map((currency) => (
+                    <DropdownMenuCheckboxItem
+                      key={currency}
+                      checked={filters.selectedCurrencies.has(currency)}
+                      onCheckedChange={() => toggleCurrency(currency)}
+                    >
+                      {currency}
+                    </DropdownMenuCheckboxItem>
                   ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </FilterDropdown>
+              )}
 
               {/* 金額篩選 */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+              <FilterDropdown
+                label="金額"
+                icon={<DollarSign className="h-3.5 w-3.5" />}
+                activeCount={(filters.amountRange[0] > 0 || filters.amountRange[1] > 0) ? 1 : 0}
+                contentClassName="w-44 p-2.5"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium">
+                      {formatCurrency(filters.amountRange[0], projectCurrency)}
+                    </span>
+                    <span className="text-muted-foreground">~</span>
+                    <span className="font-medium">
+                      {filters.amountRange[1] === 0 ? "不限" : formatCurrency(filters.amountRange[1], projectCurrency)}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-muted-foreground">最低</label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={maxExpenseAmount || 10000}
+                      step={Math.max(1, Math.floor((maxExpenseAmount || 10000) / 100))}
+                      value={filters.amountRange[0]}
+                      onChange={(e) => setAmountRange([Number(e.target.value), filters.amountRange[1]])}
+                      className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-muted-foreground">最高 (0=不限)</label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={maxExpenseAmount || 10000}
+                      step={Math.max(1, Math.floor((maxExpenseAmount || 10000) / 100))}
+                      value={filters.amountRange[1]}
+                      onChange={(e) => setAmountRange([filters.amountRange[0], Number(e.target.value)])}
+                      className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                  </div>
+                  {(filters.amountRange[0] > 0 || filters.amountRange[1] > 0) && (
+                    <Button variant="ghost" size="sm" className="w-full h-6 text-xs" onClick={() => setAmountRange([0, 0])}>
+                      清除
+                    </Button>
+                  )}
+                </div>
+              </FilterDropdown>
+
+              {/* 建立日期篩選 */}
+              <Popover>
+                <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="w-full justify-between">
-                    <span className="flex items-center gap-1.5">
-                      $ 金額
-                      {(filters.amountRange[0] > 0 || filters.amountRange[1] > 0) && (
-                        <span className="px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
-                          1
-                        </span>
+                    <span className="flex items-center gap-1 truncate">
+                      <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">
+                        {filters.createdDateRange?.from ? (
+                          filters.createdDateRange.to ? (
+                            `${format(filters.createdDateRange.from, "M/d")}~${format(filters.createdDateRange.to, "M/d")}`
+                          ) : (
+                            format(filters.createdDateRange.from, "M/d") + "~"
+                          )
+                        ) : (
+                          "建立日期"
+                        )}
+                      </span>
+                      {filters.createdDateRange?.from && (
+                        <span className="px-1 py-0.5 text-[10px] bg-primary text-primary-foreground rounded-full shrink-0">1</span>
                       )}
                     </span>
-                    <ChevronDown className="h-3.5 w-3.5" />
+                    <ChevronDown className="h-3 w-3 shrink-0" />
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64 p-3">
-                  <DropdownMenuLabel className="px-0 pb-3">金額範圍</DropdownMenuLabel>
-                  <div className="space-y-4">
-                    {/* 顯示當前範圍 */}
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">
-                        {formatCurrency(filters.amountRange[0], projectCurrency)}
-                      </span>
-                      <span className="text-muted-foreground">~</span>
-                      <span className="font-medium">
-                        {filters.amountRange[1] === 0 ? "不限" : formatCurrency(filters.amountRange[1], projectCurrency)}
-                      </span>
-                    </div>
-
-                    {/* 最低金額滑桿 */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs text-muted-foreground">最低</label>
-                      <input
-                        type="range"
-                        min={0}
-                        max={maxExpenseAmount || 10000}
-                        step={Math.max(1, Math.floor((maxExpenseAmount || 10000) / 100))}
-                        value={filters.amountRange[0]}
-                        onChange={(e) => setAmountRange([Number(e.target.value), filters.amountRange[1]])}
-                        className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
-                      />
-                    </div>
-
-                    {/* 最高金額滑桿 */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs text-muted-foreground">最高 (0 = 不限)</label>
-                      <input
-                        type="range"
-                        min={0}
-                        max={maxExpenseAmount || 10000}
-                        step={Math.max(1, Math.floor((maxExpenseAmount || 10000) / 100))}
-                        value={filters.amountRange[1]}
-                        onChange={(e) => setAmountRange([filters.amountRange[0], Number(e.target.value)])}
-                        className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
-                      />
-                    </div>
-
-                    {(filters.amountRange[0] > 0 || filters.amountRange[1] > 0) && (
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="center">
+                  <div className="p-2 border-b flex items-center justify-between">
+                    <span className="text-sm font-medium">建立日期</span>
+                    {filters.createdDateRange && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full"
-                        onClick={() => setAmountRange([0, 0])}
+                        className="h-7 px-2 text-xs"
+                        onClick={() => setCreatedDateRange(undefined)}
                       >
-                        清除金額篩選
+                        清除
                       </Button>
                     )}
                   </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <Calendar
+                    mode="range"
+                    selected={filters.createdDateRange}
+                    onSelect={setCreatedDateRange}
+                    numberOfMonths={1}
+                  />
+                </PopoverContent>
+              </Popover>
 
-              </div>
-
-            {/* 第二行：搜尋 + 批次管理 + 清除篩選 */}
-            <div className="flex items-center gap-2">
-              {/* 搜尋輸入框 */}
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="搜尋支出描述..."
-                  value={filters.searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-9"
-                />
-                {filters.searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-
-              {/* 清除篩選 */}
-              {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground shrink-0">
-                  清除
-                </Button>
-              )}
-
-              {/* 批次按鈕 */}
-              {!selectMode ? (
-                <Button variant="outline" size="sm" onClick={() => setSelectMode(true)} className="gap-1.5 shrink-0">
-                  <CheckSquare className="h-4 w-4" />
-                  批次
-                </Button>
-              ) : (
-                <Button variant="outline" size="sm" onClick={exitSelectMode} className="gap-1.5 shrink-0">
-                  <X className="h-4 w-4" />
-                  取消
-                </Button>
-              )}
+              {/* 付款日期篩選 */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-between">
+                    <span className="flex items-center gap-1 truncate">
+                      <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">
+                        {filters.expenseDateRange?.from ? (
+                          filters.expenseDateRange.to ? (
+                            `${format(filters.expenseDateRange.from, "M/d")}~${format(filters.expenseDateRange.to, "M/d")}`
+                          ) : (
+                            format(filters.expenseDateRange.from, "M/d") + "~"
+                          )
+                        ) : (
+                          "付款日期"
+                        )}
+                      </span>
+                      {filters.expenseDateRange?.from && (
+                        <span className="px-1 py-0.5 text-[10px] bg-primary text-primary-foreground rounded-full shrink-0">1</span>
+                      )}
+                    </span>
+                    <ChevronDown className="h-3 w-3 shrink-0" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <div className="p-2 border-b flex items-center justify-between">
+                    <span className="text-sm font-medium">付款日期</span>
+                    {filters.expenseDateRange && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => setExpenseDateRange(undefined)}
+                      >
+                        清除
+                      </Button>
+                    )}
+                  </div>
+                  <Calendar
+                    mode="range"
+                    selected={filters.expenseDateRange}
+                    onSelect={setExpenseDateRange}
+                    numberOfMonths={1}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
-            {/* 篩選結果提示 */}
-            {hasActiveFilters && (
-              <p className="text-xs text-muted-foreground">
-                顯示 {filteredExpenses.length} / {expenses.length} 筆
-              </p>
-            )}
+            {/* 篩選結果與操作按鈕 */}
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">
+                顯示 <span className="font-medium text-foreground">{filteredExpenses.length}</span> / {expenses.length} 筆
+              </span>
+              <div className="flex items-center gap-2">
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground h-7 px-2">
+                    <X className="h-3.5 w-3.5 mr-1" />
+                    清除
+                  </Button>
+                )}
+                {!selectMode ? (
+                  <Button variant="outline" size="sm" onClick={() => setSelectMode(true)} className="h-7 gap-1">
+                    <CheckSquare className="h-3.5 w-3.5" />
+                    批次
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={exitSelectMode} className="h-7 gap-1">
+                    <X className="h-3.5 w-3.5" />
+                    取消
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

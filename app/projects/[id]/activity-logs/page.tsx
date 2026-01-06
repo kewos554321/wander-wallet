@@ -10,23 +10,23 @@ import {
   Receipt,
   Clock,
   User,
+  Users,
   Filter,
   ChevronDown,
   X,
   Calendar as CalendarIcon,
   DollarSign,
-  Search,
+  Tag,
+  Coins,
 } from "lucide-react"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuCheckboxItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { SearchInput } from "@/components/ui/search-input"
+import { FilterDropdown } from "@/components/ui/filter-dropdown"
 import {
   Popover,
   PopoverContent,
@@ -45,6 +45,7 @@ interface ExpenseMetadata {
   category?: string | null
   payerName?: string
   expenseDate?: string
+  currency?: string
 }
 
 interface ActivityLog {
@@ -179,6 +180,9 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
   const [selectedActions, setSelectedActions] = useState<Set<ActionType>>(new Set())
   const [selectedEntities, setSelectedEntities] = useState<Set<EntityType>>(new Set())
   const [selectedPayers, setSelectedPayers] = useState<Set<string>>(new Set())
+  const [selectedActors, setSelectedActors] = useState<Set<string>>(new Set())
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set())
+  const [selectedCurrencies, setSelectedCurrencies] = useState<Set<string>>(new Set())
   const [amountRange, setAmountRange] = useState<[number, number]>([0, 0])
   const [createdDateRange, setCreatedDateRange] = useState<DateRange | undefined>(undefined)
   const [expenseDateRange, setExpenseDateRange] = useState<DateRange | undefined>(undefined)
@@ -191,6 +195,9 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
     selectedActions.size > 0 ||
     selectedEntities.size > 0 ||
     selectedPayers.size > 0 ||
+    selectedActors.size > 0 ||
+    selectedCategories.size > 0 ||
+    selectedCurrencies.size > 0 ||
     amountRange[0] > 0 || amountRange[1] > 0 ||
     createdDateRange?.from !== undefined ||
     expenseDateRange?.from !== undefined
@@ -231,11 +238,50 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
     })
   }
 
+  const toggleActor = (actor: string) => {
+    setSelectedActors((prev) => {
+      const next = new Set(prev)
+      if (next.has(actor)) {
+        next.delete(actor)
+      } else {
+        next.add(actor)
+      }
+      return next
+    })
+  }
+
+  const toggleCategory = (category: string) => {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev)
+      if (next.has(category)) {
+        next.delete(category)
+      } else {
+        next.add(category)
+      }
+      return next
+    })
+  }
+
+  const toggleCurrency = (currency: string) => {
+    setSelectedCurrencies((prev) => {
+      const next = new Set(prev)
+      if (next.has(currency)) {
+        next.delete(currency)
+      } else {
+        next.add(currency)
+      }
+      return next
+    })
+  }
+
   const clearAllFilters = () => {
     setSearchQuery("")
     setSelectedActions(new Set())
     setSelectedEntities(new Set())
     setSelectedPayers(new Set())
+    setSelectedActors(new Set())
+    setSelectedCategories(new Set())
+    setSelectedCurrencies(new Set())
     setAmountRange([0, 0])
     setCreatedDateRange(undefined)
     setExpenseDateRange(undefined)
@@ -247,6 +293,33 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
       logs
         .map((log) => log.metadata?.payerName)
         .filter((name): name is string => !!name)
+    )
+  )
+
+  // 從 logs 中提取唯一的操作者列表
+  const uniqueActors = Array.from(
+    new Set(
+      logs
+        .map((log) => log.actor?.displayName)
+        .filter((name): name is string => !!name)
+    )
+  )
+
+  // 從 logs 中提取唯一的類別列表
+  const uniqueCategories = Array.from(
+    new Set(
+      logs
+        .map((log) => log.metadata?.category)
+        .filter((cat): cat is string => !!cat)
+    )
+  )
+
+  // 從 logs 中提取唯一的幣別列表
+  const uniqueCurrencies = Array.from(
+    new Set(
+      logs
+        .map((log) => log.metadata?.currency)
+        .filter((cur): cur is string => !!cur)
     )
   )
 
@@ -278,6 +351,18 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
     }
     // 付款人篩選
     if (selectedPayers.size > 0 && log.metadata?.payerName && !selectedPayers.has(log.metadata.payerName)) {
+      return false
+    }
+    // 操作者篩選
+    if (selectedActors.size > 0 && log.actor?.displayName && !selectedActors.has(log.actor.displayName)) {
+      return false
+    }
+    // 類別篩選
+    if (selectedCategories.size > 0 && log.metadata?.category && !selectedCategories.has(log.metadata.category)) {
+      return false
+    }
+    // 幣別篩選
+    if (selectedCurrencies.size > 0 && log.metadata?.currency && !selectedCurrencies.has(log.metadata.currency)) {
       return false
     }
     // 金額篩選
@@ -377,174 +462,139 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
     <AppLayout title="歷史紀錄" showBack backHref={`/projects/${id}`}>
       <div className="pb-6">
         {/* 篩選器 */}
-        <div className="mb-4 space-y-2">
+        <div className="mb-4 space-y-3">
           {/* 搜尋框 */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="搜尋描述、付款人、操作者..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-9"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="搜尋描述、付款人、操作者..."
+          />
 
-          {/* 第一行：主要篩選 */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* 篩選按鈕 - 3x2 網格 */}
+          <div className="grid grid-cols-3 gap-2">
             {/* 操作類型篩選 */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Filter className="h-3.5 w-3.5" />
-                    操作
-                    {selectedActions.size > 0 && (
-                      <span className="px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
-                        {selectedActions.size}
-                      </span>
-                    )}
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-36">
-                <DropdownMenuLabel>操作類型</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {(Object.entries(ACTION_CONFIG) as [ActionType, { label: string; icon: typeof Plus }][]).map(
-                  ([key, { label, icon: Icon }]) => (
-                    <DropdownMenuCheckboxItem
-                      key={key}
-                      checked={selectedActions.has(key)}
-                      onCheckedChange={() => toggleAction(key)}
-                    >
-                      <Icon className="h-4 w-4 mr-2" />
-                      {label}
-                    </DropdownMenuCheckboxItem>
-                  )
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <FilterDropdown
+              label="操作"
+              icon={<Filter className="h-3.5 w-3.5" />}
+              activeCount={selectedActions.size}
+              contentClassName="w-32"
+            >
+              <DropdownMenuLabel>操作類型</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {(Object.entries(ACTION_CONFIG) as [ActionType, { label: string; icon: typeof Plus }][]).map(
+                ([key, { label, icon: Icon }]) => (
+                  <DropdownMenuCheckboxItem
+                    key={key}
+                    checked={selectedActions.has(key)}
+                    onCheckedChange={() => toggleAction(key)}
+                  >
+                    <Icon className="h-4 w-4 mr-2" />
+                    {label}
+                  </DropdownMenuCheckboxItem>
+                )
+              )}
+            </FilterDropdown>
+
+            {/* 操作者篩選 */}
+            <FilterDropdown
+              label="操作者"
+              icon={<Users className="h-3.5 w-3.5" />}
+              activeCount={selectedActors.size}
+              contentClassName="w-36 max-h-60 overflow-y-auto"
+            >
+              <DropdownMenuLabel>誰執行操作</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {uniqueActors.length > 0 ? (
+                uniqueActors.map((actor) => (
+                  <DropdownMenuCheckboxItem
+                    key={actor}
+                    checked={selectedActors.has(actor)}
+                    onCheckedChange={() => toggleActor(actor)}
+                  >
+                    {actor}
+                  </DropdownMenuCheckboxItem>
+                ))
+              ) : (
+                <div className="px-2 py-1.5 text-sm text-muted-foreground">無操作者</div>
+              )}
+            </FilterDropdown>
+
+            {/* 類別篩選 */}
+            <FilterDropdown
+              label="類別"
+              icon={<Tag className="h-3.5 w-3.5" />}
+              activeCount={selectedCategories.size}
+              contentClassName="w-32"
+              align="end"
+            >
+              <DropdownMenuLabel>消費類別</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {uniqueCategories.length > 0 ? (
+                uniqueCategories.map((cat) => (
+                  <DropdownMenuCheckboxItem
+                    key={cat}
+                    checked={selectedCategories.has(cat)}
+                    onCheckedChange={() => toggleCategory(cat)}
+                  >
+                    {categoryLabels[cat] || cat}
+                  </DropdownMenuCheckboxItem>
+                ))
+              ) : (
+                <div className="px-2 py-1.5 text-sm text-muted-foreground">無類別</div>
+              )}
+            </FilterDropdown>
 
             {/* 付款人篩選 */}
-            {uniquePayers.length > 0 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="justify-between">
-                    <span className="flex items-center gap-1.5">
-                      <User className="h-3.5 w-3.5" />
-                      付款人
-                      {selectedPayers.size > 0 && (
-                        <span className="px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
-                          {selectedPayers.size}
-                        </span>
-                      )}
-                    </span>
-                    <ChevronDown className="h-3.5 w-3.5 ml-1" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-40">
-                  <DropdownMenuLabel>付款人</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {uniquePayers.map((payer) => (
-                    <DropdownMenuCheckboxItem
-                      key={payer}
-                      checked={selectedPayers.has(payer)}
-                      onCheckedChange={() => togglePayer(payer)}
-                    >
-                      {payer}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            <FilterDropdown
+              label="付款人"
+              icon={<User className="h-3.5 w-3.5" />}
+              activeCount={selectedPayers.size}
+              contentClassName="w-36 max-h-60 overflow-y-auto"
+            >
+              <DropdownMenuLabel>誰付錢</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {uniquePayers.length > 0 ? (
+                uniquePayers.map((payer) => (
+                  <DropdownMenuCheckboxItem
+                    key={payer}
+                    checked={selectedPayers.has(payer)}
+                    onCheckedChange={() => togglePayer(payer)}
+                  >
+                    {payer}
+                  </DropdownMenuCheckboxItem>
+                ))
+              ) : (
+                <div className="px-2 py-1.5 text-sm text-muted-foreground">無付款人</div>
+              )}
+            </FilterDropdown>
 
-            {/* 金額篩選 - 範圍滑桿 */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <DollarSign className="h-3.5 w-3.5" />
-                    {amountRange[0] > 0 || amountRange[1] > 0
-                      ? `${formatCurrency(amountRange[0], projectCurrency)}~${amountRange[1] > 0 ? formatCurrency(amountRange[1], projectCurrency) : "不限"}`
-                      : "金額"}
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64 p-3">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">{formatCurrency(amountRange[0], projectCurrency)}</span>
-                    <span className="text-muted-foreground">~</span>
-                    <span className="font-medium">
-                      {amountRange[1] === 0 ? "不限" : formatCurrency(amountRange[1], projectCurrency)}
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">最低金額</label>
-                    <input
-                      type="range"
-                      min={0}
-                      max={maxAmount}
-                      step={Math.max(1, Math.floor(maxAmount / 50))}
-                      value={amountRange[0]}
-                      onChange={(e) => setAmountRange([Number(e.target.value), amountRange[1]])}
-                      className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">最高金額 (0=不限)</label>
-                    <input
-                      type="range"
-                      min={0}
-                      max={maxAmount}
-                      step={Math.max(1, Math.floor(maxAmount / 50))}
-                      value={amountRange[1]}
-                      onChange={(e) => setAmountRange([amountRange[0], Number(e.target.value)])}
-                      className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
-                    />
-                  </div>
-                  {(amountRange[0] > 0 || amountRange[1] > 0) && (
-                    <Button variant="ghost" size="sm" className="w-full h-7" onClick={() => setAmountRange([0, 0])}>
-                      清除
-                    </Button>
-                  )}
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* 紀錄時間篩選 - 日曆範圍選擇 */}
+            {/* 建立日期篩選 */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5" />
-                    {createdDateRange?.from ? (
-                      createdDateRange.to ? (
-                        <>
-                          {format(createdDateRange.from, "MM/dd")} ~ {format(createdDateRange.to, "MM/dd")}
-                        </>
+                <Button variant="outline" size="sm" className="w-full justify-between">
+                  <span className="flex items-center gap-1 truncate">
+                    <CalendarIcon className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">
+                      {createdDateRange?.from ? (
+                        createdDateRange.to ? (
+                          `${format(createdDateRange.from, "M/d")}~${format(createdDateRange.to, "M/d")}`
+                        ) : (
+                          format(createdDateRange.from, "M/d") + "~"
+                        )
                       ) : (
-                        format(createdDateRange.from, "MM/dd") + " ~"
-                      )
-                    ) : (
-                      "紀錄時間"
+                        "建立日期"
+                      )}
+                    </span>
+                    {createdDateRange && (
+                      <span className="px-1 py-0.5 text-[10px] bg-primary text-primary-foreground rounded-full shrink-0">1</span>
                     )}
                   </span>
-                  <ChevronDown className="h-3.5 w-3.5 ml-1" />
+                  <ChevronDown className="h-3 w-3 shrink-0" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0" align="center">
                 <div className="p-2 border-b flex items-center justify-between">
-                  <span className="text-sm font-medium">選擇日期範圍</span>
+                  <span className="text-sm font-medium">建立日期</span>
                   {createdDateRange && (
                     <Button
                       variant="ghost"
@@ -565,30 +615,33 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
               </PopoverContent>
             </Popover>
 
-            {/* 支付時間篩選 - 日曆範圍選擇 */}
+            {/* 付款日期篩選 */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                    {expenseDateRange?.from ? (
-                      expenseDateRange.to ? (
-                        <>
-                          {format(expenseDateRange.from, "MM/dd")} ~ {format(expenseDateRange.to, "MM/dd")}
-                        </>
+                <Button variant="outline" size="sm" className="w-full justify-between">
+                  <span className="flex items-center gap-1 truncate">
+                    <CalendarIcon className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">
+                      {expenseDateRange?.from ? (
+                        expenseDateRange.to ? (
+                          `${format(expenseDateRange.from, "M/d")}~${format(expenseDateRange.to, "M/d")}`
+                        ) : (
+                          format(expenseDateRange.from, "M/d") + "~"
+                        )
                       ) : (
-                        format(expenseDateRange.from, "MM/dd") + " ~"
-                      )
-                    ) : (
-                      "支付時間"
+                        "付款日期"
+                      )}
+                    </span>
+                    {expenseDateRange && (
+                      <span className="px-1 py-0.5 text-[10px] bg-primary text-primary-foreground rounded-full shrink-0">1</span>
                     )}
                   </span>
-                  <ChevronDown className="h-3.5 w-3.5 ml-1" />
+                  <ChevronDown className="h-3 w-3 shrink-0" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0" align="end">
                 <div className="p-2 border-b flex items-center justify-between">
-                  <span className="text-sm font-medium">選擇日期範圍</span>
+                  <span className="text-sm font-medium">付款日期</span>
                   {expenseDateRange && (
                     <Button
                       variant="ghost"
@@ -608,20 +661,89 @@ export default function ActivityLogsPage({ params }: { params: Promise<{ id: str
                 />
               </PopoverContent>
             </Popover>
+
+            {/* 金額篩選 */}
+            <FilterDropdown
+              label="金額"
+              icon={<DollarSign className="h-3.5 w-3.5" />}
+              activeCount={(amountRange[0] > 0 || amountRange[1] > 0) ? 1 : 0}
+              contentClassName="w-44 p-2.5"
+            >
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium">{formatCurrency(amountRange[0], projectCurrency)}</span>
+                  <span className="text-muted-foreground">~</span>
+                  <span className="font-medium">
+                    {amountRange[1] === 0 ? "不限" : formatCurrency(amountRange[1], projectCurrency)}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-muted-foreground">最低</label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={maxAmount}
+                    step={Math.max(1, Math.floor(maxAmount / 50))}
+                    value={amountRange[0]}
+                    onChange={(e) => setAmountRange([Number(e.target.value), amountRange[1]])}
+                    className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-muted-foreground">最高 (0=不限)</label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={maxAmount}
+                    step={Math.max(1, Math.floor(maxAmount / 50))}
+                    value={amountRange[1]}
+                    onChange={(e) => setAmountRange([amountRange[0], Number(e.target.value)])}
+                    className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                  />
+                </div>
+                {(amountRange[0] > 0 || amountRange[1] > 0) && (
+                  <Button variant="ghost" size="sm" className="w-full h-6 text-xs" onClick={() => setAmountRange([0, 0])}>
+                    清除
+                  </Button>
+                )}
+              </div>
+            </FilterDropdown>
+
+            {/* 幣別篩選 - 僅在有多種幣別時顯示 */}
+            {uniqueCurrencies.length > 1 && (
+              <FilterDropdown
+                label="幣別"
+                icon={<Coins className="h-3.5 w-3.5" />}
+                activeCount={selectedCurrencies.size}
+                contentClassName="w-32"
+              >
+                <DropdownMenuLabel>幣別</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {uniqueCurrencies.map((currency) => (
+                  <DropdownMenuCheckboxItem
+                    key={currency}
+                    checked={selectedCurrencies.has(currency)}
+                    onCheckedChange={() => toggleCurrency(currency)}
+                  >
+                    {currency}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </FilterDropdown>
+            )}
           </div>
 
-          {/* 第二行：清除篩選和結果統計 */}
-          {hasActiveFilters && (
-            <div className="flex items-center justify-between">
+          {/* 篩選結果統計 */}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              顯示 <span className="font-medium text-foreground">{filteredLogs.length}</span> / {logs.length} 筆
+            </span>
+            {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-muted-foreground h-7 px-2">
                 <X className="h-3.5 w-3.5 mr-1" />
-                清除所有篩選
+                清除篩選
               </Button>
-              <span className="text-xs text-muted-foreground">
-                顯示 {filteredLogs.length} / {logs.length} 筆
-              </span>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {filteredLogs.length === 0 ? (

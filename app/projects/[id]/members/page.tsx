@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { User, Share2, UserMinus, Check, UserPlus, Search, Trash2, X, CheckSquare, MessageCircle, Link2, MoreHorizontal } from "lucide-react"
+import { User, Share2, UserMinus, Check, UserPlus, Trash2, X, CheckSquare, MessageCircle, Link2, MoreHorizontal } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { getProjectShareUrl } from "@/lib/utils"
@@ -63,7 +63,6 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
   const [newMemberName, setNewMemberName] = useState("")
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState("")
-  const [searchQuery, setSearchQuery] = useState("")
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set())
   const [batchMode, setBatchMode] = useState(false)
   const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState(false)
@@ -265,19 +264,8 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
   const isOwner = project.createdBy === user?.id || project.creator?.id === user?.id
   const shareUrl = getProjectShareUrl(project.id)
 
-  // 過濾成員（搜尋）
-  const filteredMembers = project.members.filter(member => {
-    if (!searchQuery.trim()) return true
-    const query = searchQuery.toLowerCase()
-    return (
-      member.displayName.toLowerCase().includes(query) ||
-      member.user?.email?.toLowerCase().includes(query) ||
-      member.user?.name?.toLowerCase().includes(query)
-    )
-  })
-
   // 可選擇的成員（排除自己）
-  const selectableMembers = filteredMembers.filter(
+  const selectableMembers = project.members.filter(
     member => member.user?.id !== user?.id
   )
 
@@ -317,27 +305,6 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
 
-        {/* 搜尋欄 */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="搜尋成員..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-              onClick={() => setSearchQuery("")}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-
         {/* 批次操作列 */}
         {batchMode && (
           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl border border-border">
@@ -363,11 +330,11 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
         {/* 成員列表 */}
         <Card>
           <CardContent className="p-0 divide-y">
-            {filteredMembers.length === 0 ? (
+            {project.members.length === 0 ? (
               <div className="p-4 text-center text-muted-foreground">
-                {searchQuery ? "找不到符合的成員" : "尚無成員"}
+                尚無成員
               </div>
-            ) : filteredMembers.map((member) => {
+            ) : project.members.map((member) => {
                 const isUnclaimed = !member.userId
                 const isCurrentUser = member.user?.id === user?.id
                 const avatarData = parseAvatarString(member.user?.image)
