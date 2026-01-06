@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useSpeechRecognition } from "@/lib/speech"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
-import { sendBatchExpenseNotificationToChat } from "@/lib/liff"
+import { sendExpenseNotificationToChat, sendBatchExpenseNotificationToChat } from "@/lib/liff"
 import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import type { ExpenseItemResult, ParseExpensesResult } from "@/lib/ai/expense-parser"
@@ -689,21 +689,39 @@ export function VoiceExpenseDialog({
         }
       }
 
-      // 發送 LINE 批次新增通知
+      // 發送 LINE 通知
       if (notifyLine && canSendMessages && !isDevMode && expenses.length > 0) {
-        sendBatchExpenseNotificationToChat({
-          projectName,
-          projectId,
-          expenses: expenses.map((expense) => ({
+        if (expenses.length === 1) {
+          // 單筆時使用單筆模板
+          const expense = expenses[0]
+          sendExpenseNotificationToChat({
+            operationType: "create",
+            projectName,
+            projectId,
+            payerName: members.find((m) => m.id === expense.payerId)?.displayName || "未知",
             amount: expense.amount,
             description: expense.description || undefined,
             category: expense.category || undefined,
-            payerName: members.find((m) => m.id === expense.payerId)?.displayName || "未知",
             participantCount: expense.participantIds.length,
-          })),
-        }).catch(() => {
-          // 發送失敗時靜默處理，不影響使用者體驗
-        })
+          }).catch(() => {
+            // 發送失敗時靜默處理，不影響使用者體驗
+          })
+        } else {
+          // 多筆時使用批次模板
+          sendBatchExpenseNotificationToChat({
+            projectName,
+            projectId,
+            expenses: expenses.map((expense) => ({
+              amount: expense.amount,
+              description: expense.description || undefined,
+              category: expense.category || undefined,
+              payerName: members.find((m) => m.id === expense.payerId)?.displayName || "未知",
+              participantCount: expense.participantIds.length,
+            })),
+          }).catch(() => {
+            // 發送失敗時靜默處理，不影響使用者體驗
+          })
+        }
       }
 
       onSuccess()
