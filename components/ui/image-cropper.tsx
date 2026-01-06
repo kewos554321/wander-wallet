@@ -44,13 +44,8 @@ async function urlToBase64(url: string): Promise<string> {
 function createImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image()
-    image.onload = () => {
-      console.log("圖片載入成功:", image.width, "x", image.height)
-      resolve(image)
-    }
-    image.onerror = () => {
-      reject(new Error("圖片載入失敗"))
-    }
+    image.onload = () => resolve(image)
+    image.onerror = () => reject(new Error("圖片載入失敗"))
     image.src = url
   })
 }
@@ -60,13 +55,10 @@ async function getCroppedImg(
   imageSrc: string,
   pixelCrop: Area
 ): Promise<string> {
-  console.log("開始裁切，區域:", pixelCrop)
-
   // 先轉換為 base64 避免 CORS 問題
   const base64Src = await urlToBase64(imageSrc)
   const image = await createImage(base64Src)
 
-  console.log("建立 canvas")
   const canvas = document.createElement("canvas")
   const ctx = canvas.getContext("2d")
 
@@ -77,8 +69,6 @@ async function getCroppedImg(
   // 設置 canvas 大小為裁切區域大小
   canvas.width = Math.round(pixelCrop.width)
   canvas.height = Math.round(pixelCrop.height)
-
-  console.log("Canvas 大小:", canvas.width, "x", canvas.height)
 
   // 繪製裁切後的圖片
   ctx.drawImage(
@@ -93,11 +83,7 @@ async function getCroppedImg(
     Math.round(pixelCrop.height)
   )
 
-  console.log("繪製完成，轉換為 base64")
-  // 返回 base64 URL
-  const result = canvas.toDataURL("image/jpeg", 0.9)
-  console.log("裁切完成，長度:", result.length)
-  return result
+  return canvas.toDataURL("image/jpeg", 0.9)
 }
 
 export function ImageCropper({
@@ -128,24 +114,18 @@ export function ImageCropper({
   )
 
   const handleConfirm = async () => {
-    if (!croppedAreaPixels) {
-      console.error("沒有裁切區域")
-      return
-    }
-
-    console.log("確認裁切，imageSrc 長度:", imageSrc?.length)
+    if (!croppedAreaPixels) return
 
     setProcessing(true)
     try {
       const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels)
       onCropComplete(croppedImage)
       onOpenChange(false)
-      // 重置狀態
       setCrop({ x: 0, y: 0 })
       setZoom(1)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "未知錯誤"
-      console.error("裁切圖片失敗:", errorMessage, error)
+      console.error("裁切圖片失敗:", errorMessage)
       alert(`裁切圖片失敗: ${errorMessage}`)
     } finally {
       setProcessing(false)

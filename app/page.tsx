@@ -14,7 +14,11 @@ import {
   HelpCircle,
   Check,
   Copy,
-  Mail
+  Mail,
+  Megaphone,
+  Heart,
+  Coffee,
+  ExternalLink
 } from "lucide-react"
 import Link from "next/link"
 
@@ -368,6 +372,85 @@ export default function HomePage() {
                 </>
               )}
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Advertising & Donation Section */}
+      <section className="px-6 py-12 bg-muted/50">
+        <div className="max-w-lg mx-auto space-y-8">
+          {/* Advertising */}
+          <div className="bg-card rounded-xl border border-border/50 p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                <Megaphone className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">廣告合作</h3>
+                <p className="text-sm text-muted-foreground">讓更多旅行者認識您的品牌</p>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Wander Wallet 每月服務數千位旅行愛好者。如果您有旅遊、住宿、交通相關的產品或服務，歡迎與我們合作推廣。
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = "mailto:ads@wanderwallet.app?subject=廣告合作洽詢"}
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                ads@wanderwallet.app
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-[#06C755] text-[#06C755] hover:bg-[#06C755]/10"
+                onClick={() => window.open("https://line.me/ti/p/@wanderwallet", "_blank")}
+              >
+                <LineIcon className="w-4 h-4 mr-2" />
+                LINE 聯繫
+              </Button>
+            </div>
+          </div>
+
+          {/* Donation */}
+          <div className="bg-card rounded-xl border border-border/50 p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-pink-100 flex items-center justify-center">
+                <Heart className="w-6 h-6 text-pink-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">支持我們</h3>
+                <p className="text-sm text-muted-foreground">讓服務持續運作與進步</p>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Wander Wallet 是免費服務，由小團隊用愛維護。如果這個工具對你有幫助，歡迎請我們喝杯咖啡，支持我們持續開發新功能！
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                className="bg-[#FF5F5F] hover:bg-[#FF5F5F]/90 text-white"
+                onClick={() => window.open("https://www.buymeacoffee.com/wanderwallet", "_blank")}
+              >
+                <Coffee className="w-4 h-4 mr-2" />
+                Buy me a coffee
+                <ExternalLink className="w-3 h-3 ml-1" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open("https://p.ecpay.com.tw/wanderwallet", "_blank")}
+              >
+                <Heart className="w-4 h-4 mr-2 text-pink-500" />
+                綠界贊助
+                <ExternalLink className="w-3 h-3 ml-1" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              每一份支持都是我們前進的動力 💪
+            </p>
           </div>
         </div>
       </section>

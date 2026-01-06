@@ -344,19 +344,34 @@ export default function NewAdPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startDate">開始日期</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={formData.startDate}
-                onChange={(e) => updateField("startDate", e.target.value)}
-              />
+              <Label htmlFor="startDate">開始時間</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="startDate"
+                  type="datetime-local"
+                  value={formData.startDate}
+                  onChange={(e) => updateField("startDate", e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const now = new Date()
+                    now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+                    updateField("startDate", now.toISOString().slice(0, 16))
+                  }}
+                >
+                  現在
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endDate">結束日期</Label>
+              <Label htmlFor="endDate">結束時間</Label>
               <Input
                 id="endDate"
-                type="date"
+                type="datetime-local"
                 value={formData.endDate}
                 onChange={(e) => updateField("endDate", e.target.value)}
               />

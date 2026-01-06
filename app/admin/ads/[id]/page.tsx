@@ -287,26 +287,26 @@ export default function EditAdPage() {
           <CardTitle>成效數據</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
+          <div className="grid grid-cols-3 gap-2">
+            <div className="text-center p-2 rounded-lg bg-slate-50 dark:bg-slate-800 overflow-hidden">
               <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                <Eye className="h-4 w-4" />
-                <span className="text-xs">曝光次數</span>
+                <Eye className="h-3.5 w-3.5 flex-shrink-0" />
+                <span className="text-xs">曝光</span>
               </div>
-              <p className="text-xl font-bold">{stats.totalImpressions.toLocaleString()}</p>
+              <p className="text-lg font-bold truncate">{stats.totalImpressions.toLocaleString()}</p>
             </div>
-            <div className="text-center p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
+            <div className="text-center p-2 rounded-lg bg-slate-50 dark:bg-slate-800 overflow-hidden">
               <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                <MousePointerClick className="h-4 w-4" />
-                <span className="text-xs">點擊次數</span>
+                <MousePointerClick className="h-3.5 w-3.5 flex-shrink-0" />
+                <span className="text-xs">點擊</span>
               </div>
-              <p className="text-xl font-bold">{stats.totalClicks.toLocaleString()}</p>
+              <p className="text-lg font-bold truncate">{stats.totalClicks.toLocaleString()}</p>
             </div>
-            <div className="text-center p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
-              <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                <span className="text-xs">點擊率 CTR</span>
+            <div className="text-center p-2 rounded-lg bg-slate-50 dark:bg-slate-800 overflow-hidden">
+              <div className="text-muted-foreground mb-1">
+                <span className="text-xs">CTR</span>
               </div>
-              <p className="text-xl font-bold">{ctr}%</p>
+              <p className="text-lg font-bold truncate">{ctr}%</p>
             </div>
           </div>
         </CardContent>
@@ -501,19 +501,34 @@ export default function EditAdPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startDate">開始日期</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={formData.startDate}
-                onChange={(e) => updateField("startDate", e.target.value)}
-              />
+              <Label htmlFor="startDate">開始時間</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="startDate"
+                  type="datetime-local"
+                  value={formData.startDate}
+                  onChange={(e) => updateField("startDate", e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const now = new Date()
+                    now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+                    updateField("startDate", now.toISOString().slice(0, 16))
+                  }}
+                >
+                  現在
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endDate">結束日期</Label>
+              <Label htmlFor="endDate">結束時間</Label>
               <Input
                 id="endDate"
-                type="date"
+                type="datetime-local"
                 value={formData.endDate}
                 onChange={(e) => updateField("endDate", e.target.value)}
               />
