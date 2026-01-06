@@ -20,11 +20,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { ArrowRight, CheckCircle2, AlertCircle, TrendingUp, TrendingDown, User, Receipt, Wallet, Users, Share2, Copy, Check, Info, Settings, Calculator, HelpCircle } from "lucide-react"
+import { ArrowRight, CheckCircle2, AlertCircle, TrendingUp, TrendingDown, User, Receipt, Wallet, Users, Share2, Copy, Check, Info, Settings, Calculator, HelpCircle, Heart, Coffee, Mail } from "lucide-react"
 import Link from "next/link"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { AdContainer } from "@/components/ads/ad-container"
+
+// PayPal icon component
+function PaypalIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/>
+    </svg>
+  )
+}
 
 interface Balance {
   memberId: string
@@ -820,6 +829,61 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                 尚無成員餘額數據
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* 贊助區塊 */}
+        <Card className="border-pink-200 dark:border-pink-900 bg-gradient-to-br from-pink-50 to-background dark:from-pink-950/30 dark:to-background">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-pink-100 dark:bg-pink-900/50 flex items-center justify-center">
+                <Heart className="w-6 h-6 text-pink-600 dark:text-pink-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">喜歡 Wander Wallet 嗎？</h3>
+                <p className="text-sm text-muted-foreground">支持我們持續開發新功能</p>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+              Wander Wallet 是免費服務，由小團隊用愛維護。如果分帳工具對你有幫助，歡迎請我們喝杯咖啡！
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-[#FFDD00] text-[#000000] hover:bg-[#FFDD00]/10"
+                onClick={() => window.open("https://buymeacoffee.com/your-username", "_blank")}
+              >
+                <Coffee className="w-4 h-4 mr-2" />
+                Buy Me a Coffee
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-[#FF5E5B] text-[#FF5E5B] hover:bg-[#FF5E5B]/10"
+                onClick={() => window.open("https://ko-fi.com/your-username", "_blank")}
+              >
+                <Heart className="w-4 h-4 mr-2" />
+                Ko-fi
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-[#003087] text-[#003087] hover:bg-[#003087]/10"
+                onClick={() => window.open("https://paypal.me/your-username", "_blank")}
+              >
+                <PaypalIcon className="w-4 h-4 mr-2" />
+                PayPal
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = "mailto:kewos554321@gmail.com?subject=Wander Wallet 贊助詢問"}
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                其他方式
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
