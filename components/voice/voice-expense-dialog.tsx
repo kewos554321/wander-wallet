@@ -103,7 +103,7 @@ export function VoiceExpenseDialog({
   const [debugExpanded, setDebugExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  // 輸入階段的圖片（用於 AI 發票辨識）
+  // 輸入階段的圖片（用於 AI 收據辨識）
   const [inputImage, setInputImage] = useState<ImagePickerValue>({
     image: null,
     pendingFile: null,
@@ -339,10 +339,10 @@ export function VoiceExpenseDialog({
     })
   }
 
-  // 處理圖片發票辨識
+  // 處理圖片收據辨識
   async function handleImageParse() {
     if (!inputImage.pendingFile) {
-      setError("請先選擇或拍攝發票圖片")
+      setError("請先選擇或拍攝收據圖片")
       return
     }
 
@@ -353,7 +353,7 @@ export function VoiceExpenseDialog({
       // 1. 將圖片轉換為 base64
       const imageData = await fileToBase64(inputImage.pendingFile)
 
-      // 2. 調用 AI 解析發票（使用 base64）
+      // 2. 調用 AI 解析收據（使用 base64）
       const res = await authFetch("/api/receipt/parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -363,7 +363,7 @@ export function VoiceExpenseDialog({
       const data = await res.json()
 
       if (!res.ok) {
-        throw new Error(data.error || "發票辨識失敗")
+        throw new Error(data.error || "收據辨識失敗")
       }
 
       const parsed = data.data as {
@@ -414,7 +414,7 @@ export function VoiceExpenseDialog({
       setDebugInfo(null)
       setDebugExpanded(false)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "發票辨識失敗，請重試"
+      const errorMessage = err instanceof Error ? err.message : "收據辨識失敗，請重試"
       setError(errorMessage)
 
       // 建立詳細的 debug 資訊
@@ -744,7 +744,7 @@ export function VoiceExpenseDialog({
                     <Info className="h-3.5 w-3.5" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent side="bottom" align="start" className="w-auto max-w-[280px] p-3 text-xs">
+                <PopoverContent side="bottom" align="center" sideOffset={4} collisionPadding={16} className="w-auto max-w-[280px] p-3 text-xs">
                   <p className="font-medium mb-1">範例格式：</p>
                   <ul className="space-y-0.5 text-muted-foreground">
                     <li>• 早餐 50、午餐 60，我付</li>
@@ -852,18 +852,18 @@ export function VoiceExpenseDialog({
                 <div className="w-full border-t border-slate-200 dark:border-slate-700" />
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="px-2 bg-background text-muted-foreground">或掃描發票</span>
+                <span className="px-2 bg-background text-muted-foreground">或掃描收據</span>
               </div>
             </div>
 
-            {/* 發票圖片上傳 */}
+            {/* 收據圖片上傳 */}
             {inputImage.preview ? (
               <div className="space-y-3">
                 <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={inputImage.preview}
-                    alt="發票預覽"
+                    alt="收據預覽"
                     className="w-full h-auto max-h-48 object-contain bg-slate-50 dark:bg-slate-900"
                   />
                   <button
@@ -894,7 +894,7 @@ export function VoiceExpenseDialog({
                   ) : (
                     <>
                       <Sparkles className="h-4 w-4" />
-                      AI 發票辨識
+                      AI 收據辨識
                     </>
                   )}
                 </Button>

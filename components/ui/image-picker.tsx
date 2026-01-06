@@ -129,8 +129,8 @@ export function ImagePicker({
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "environment",
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
+          width: { ideal: 1080 },
+          height: { ideal: 1440 },  // 4:3 直立，適合拍收據
         },
       })
       setCameraStream(stream)
@@ -287,7 +287,7 @@ export function ImagePicker({
               autoPlay
               playsInline
               muted
-              className="w-full aspect-[4/3] object-cover bg-black"
+              className="w-full aspect-[3/4] object-contain bg-black"
             />
             <canvas ref={canvasRef} className="hidden" />
           </div>
@@ -367,8 +367,8 @@ export function SimpleImagePicker({
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "environment",
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
+          width: { ideal: 1080 },
+          height: { ideal: 1440 },  // 4:3 直立，適合拍收據
         },
       })
       setCameraStream(stream)
