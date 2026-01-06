@@ -16,9 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ArrowLeft, Upload, X, Loader2 } from "lucide-react"
+import { ArrowLeft, Upload, X, Loader2, Crop } from "lucide-react"
 import Link from "next/link"
 import type { AdPlacementType, AdType, AdStatus } from "@/types/ads"
+import { ImageCropper } from "@/components/ui/image-cropper"
 
 const adTypes: { value: AdType; label: string }[] = [
   { value: "banner", label: "橫幅廣告" },
@@ -36,6 +37,8 @@ export default function NewAdPage() {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [showCropper, setShowCropper] = useState(false)
+  const [imageToCrop, setImageToCrop] = useState<string>("")
 
   const [formData, setFormData] = useState({
     title: "",
@@ -70,14 +73,31 @@ export default function NewAdPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // 讀取檔案為 base64 並打開裁切器
+    const reader = new FileReader()
+    reader.onload = () => {
+      setImageToCrop(reader.result as string)
+      setShowCropper(true)
+    }
+    reader.readAsDataURL(file)
+
+    // 清空 input 以便重新選擇同一檔案
+    e.target.value = ""
+  }
+
+  async function handleCropComplete(croppedImageBase64: string) {
     setUploading(true)
     try {
-      const formData = new FormData()
-      formData.append("file", file)
+      // 將 base64 轉為 Blob 再上傳
+      const response = await fetch(croppedImageBase64)
+      const blob = await response.blob()
+
+      const uploadFormData = new FormData()
+      uploadFormData.append("file", blob, "cropped-image.jpg")
 
       const res = await fetch("/api/upload", {
         method: "POST",
-        body: formData,
+        body: uploadFormData,
       })
 
       if (res.ok) {
@@ -91,6 +111,13 @@ export default function NewAdPage() {
       alert("圖片上傳失敗")
     } finally {
       setUploading(false)
+    }
+  }
+
+  function handleEditImage() {
+    if (formData.imageUrl) {
+      setImageToCrop(formData.imageUrl)
+      setShowCropper(true)
     }
   }
 
@@ -236,14 +263,26 @@ export default function NewAdPage() {
                   fill
                   className="object-cover"
                 />
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2 h-8 w-8"
-                  onClick={() => updateField("imageUrl", "")}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={handleEditImage}
+                    title="裁切圖片"
+                  >
+                    <Crop className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => updateField("imageUrl", "")}
+                    title="移除圖片"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ) : (
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
@@ -346,6 +385,15 @@ export default function NewAdPage() {
           立即發布
         </Button>
       </div>
+
+      {/* 圖片裁切器 */}
+      <ImageCropper
+        open={showCropper}
+        onOpenChange={setShowCropper}
+        imageSrc={imageToCrop}
+        aspectRatio={4 / 1}
+        onCropComplete={handleCropComplete}
+      />
     </div>
   )
 }

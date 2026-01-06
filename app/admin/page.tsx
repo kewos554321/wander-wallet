@@ -146,33 +146,33 @@ export default function AdminDashboardPage() {
         <CardContent>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-2xl font-bold">
+              <div className="text-2xl font-bold">
                 {loading ? (
                   <Skeleton className="h-8 w-16 mx-auto" />
                 ) : (
                   stats?.todayImpressions?.toLocaleString() ?? 0
                 )}
-              </p>
+              </div>
               <p className="text-sm text-muted-foreground">曝光</p>
             </div>
             <div>
-              <p className="text-2xl font-bold">
+              <div className="text-2xl font-bold">
                 {loading ? (
                   <Skeleton className="h-8 w-16 mx-auto" />
                 ) : (
                   stats?.todayClicks?.toLocaleString() ?? 0
                 )}
-              </p>
+              </div>
               <p className="text-sm text-muted-foreground">點擊</p>
             </div>
             <div>
-              <p className="text-2xl font-bold">
+              <div className="text-2xl font-bold">
                 {loading ? (
                   <Skeleton className="h-8 w-16 mx-auto" />
                 ) : (
                   `${todayCtr}%`
                 )}
-              </p>
+              </div>
               <p className="text-sm text-muted-foreground">CTR</p>
             </div>
           </div>

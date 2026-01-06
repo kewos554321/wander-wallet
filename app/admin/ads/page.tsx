@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -39,6 +40,7 @@ const typeLabels: Record<string, string> = {
 }
 
 export default function AdsListPage() {
+  const router = useRouter()
   const [ads, setAds] = useState<Advertisement[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -149,7 +151,11 @@ export default function AdsListPage() {
               : "0.00"
 
             return (
-              <Card key={ad.id} className="overflow-hidden">
+              <Card
+                key={ad.id}
+                className="overflow-hidden cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                onClick={() => router.push(`/admin/ads/${ad.id}`)}
+              >
                 <CardContent className="p-4">
                   <div className="flex gap-4">
                     {/* Preview Image */}
@@ -184,39 +190,41 @@ export default function AdsListPage() {
                           </div>
                         </div>
 
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link href={`/admin/ads/${ad.id}`}>
-                                <Pencil className="h-4 w-4 mr-2" />
-                                編輯
-                              </Link>
-                            </DropdownMenuItem>
-                            {ad.status === "active" ? (
-                              <DropdownMenuItem onClick={() => updateStatus(ad.id, "paused")}>
-                                <Pause className="h-4 w-4 mr-2" />
-                                暫停
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link href={`/admin/ads/${ad.id}`}>
+                                  <Pencil className="h-4 w-4 mr-2" />
+                                  編輯
+                                </Link>
                               </DropdownMenuItem>
-                            ) : ad.status !== "archived" ? (
-                              <DropdownMenuItem onClick={() => updateStatus(ad.id, "active")}>
-                                <Play className="h-4 w-4 mr-2" />
-                                啟用
+                              {ad.status === "active" ? (
+                                <DropdownMenuItem onClick={() => updateStatus(ad.id, "paused")}>
+                                  <Pause className="h-4 w-4 mr-2" />
+                                  暫停
+                                </DropdownMenuItem>
+                              ) : ad.status !== "archived" ? (
+                                <DropdownMenuItem onClick={() => updateStatus(ad.id, "active")}>
+                                  <Play className="h-4 w-4 mr-2" />
+                                  啟用
+                                </DropdownMenuItem>
+                              ) : null}
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => deleteAd(ad.id)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                刪除
                               </DropdownMenuItem>
-                            ) : null}
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => deleteAd(ad.id)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              刪除
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
 
                       {/* Stats */}
