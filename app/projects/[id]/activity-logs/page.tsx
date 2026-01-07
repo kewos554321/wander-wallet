@@ -126,12 +126,11 @@ interface ParticipantsChange {
   removed?: string[]
 }
 
-function formatChanges(changes: Record<string, { from: unknown; to: unknown }> | null, currency: string) {
+function formatChanges(changes: Record<string, { from: unknown; to: unknown }> | null, defaultCurrency: string) {
   if (!changes) return null
 
   const fieldLabels: Record<string, string> = {
     amount: "金額",
-    currency: "幣別",
     description: "描述",
     category: "類別",
     paidByMemberId: "付款人",
@@ -143,7 +142,6 @@ function formatChanges(changes: Record<string, { from: unknown; to: unknown }> |
   const formatValue = (field: string, value: unknown): string => {
     if (value === null || value === undefined) return "無"
     if (field === "category") return categoryLabels[value as string] || String(value)
-    if (field === "amount") return formatCurrency(Number(value), currency)
     if (field === "expenseDate") {
       const date = new Date(value as string)
       return date.toLocaleDateString("zh-TW")
@@ -171,23 +169,56 @@ function formatChanges(changes: Record<string, { from: unknown; to: unknown }> |
     }
   }
 
-  return Object.entries(changes).map(([field, { from, to }]) => {
+  // 合併金額和幣別變更為一行（如：JPY 120 → TWD 224）
+  const amountChange = changes.amount
+  const currencyChange = changes.currency
+  const hasAmountOrCurrency = amountChange || currencyChange
+
+  const result: Array<{ field: string; from: string; to: string }> = []
+
+  // 處理金額+幣別合併顯示
+  if (hasAmountOrCurrency) {
+    const oldCurrency = currencyChange ? String(currencyChange.from) : defaultCurrency
+    const newCurrency = currencyChange ? String(currencyChange.to) : defaultCurrency
+    const oldAmount = amountChange ? Number(amountChange.from) : null
+    const newAmount = amountChange ? Number(amountChange.to) : null
+
+    // 格式：{幣別} {金額}
+    const formatAmountWithCurrency = (cur: string, amt: number | null) => {
+      if (amt === null) return cur
+      return `${cur} ${amt.toLocaleString()}`
+    }
+
+    result.push({
+      field: "金額",
+      from: formatAmountWithCurrency(oldCurrency, oldAmount ?? (newAmount ?? 0)),
+      to: formatAmountWithCurrency(newCurrency, newAmount ?? (oldAmount ?? 0)),
+    })
+  }
+
+  // 處理其他欄位（排除 amount 和 currency）
+  for (const [field, { from, to }] of Object.entries(changes)) {
+    if (field === "amount" || field === "currency") continue
+
     // 特殊處理 participants 欄位
     if (field === "participants" && typeof from === "object" && typeof to === "object") {
       const formatted = formatParticipantsChange(from as ParticipantsChange, to as ParticipantsChange)
-      return {
+      result.push({
         field: fieldLabels[field] || field,
         from: formatted.from,
         to: formatted.to,
-      }
+      })
+      continue
     }
 
-    return {
+    result.push({
       field: fieldLabels[field] || field,
       from: formatValue(field, from),
       to: formatValue(field, to),
-    }
-  })
+    })
+  }
+
+  return result
 }
 
 // 格式化類別標籤

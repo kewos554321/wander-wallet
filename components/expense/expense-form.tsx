@@ -458,25 +458,15 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
 
     const changes: ExpenseChange[] = []
 
-    // 金額變更
-    if (originalData.amount !== amountNum) {
+    // 金額或幣別變更（合併為一行顯示，如：JPY 120 → TWD 224）
+    const amountChanged = originalData.amount !== amountNum
+    const currencyChanged = originalData.currency !== currency
+    if (amountChanged || currencyChanged) {
       changes.push({
         field: "amount",
         label: "金額",
-        oldValue: formatCurrency(originalData.amount, projectCurrency),
-        newValue: formatCurrency(amountNum, projectCurrency),
-      })
-    }
-
-    // 幣別變更
-    if (originalData.currency !== currency) {
-      const oldInfo = getCurrencyInfo(originalData.currency)
-      const newInfo = getCurrencyInfo(currency)
-      changes.push({
-        field: "currency",
-        label: "幣別",
-        oldValue: `${oldInfo.code} ${oldInfo.name}`,
-        newValue: `${newInfo.code} ${newInfo.name}`,
+        oldValue: `${originalData.currency} ${originalData.amount.toLocaleString()}`,
+        newValue: `${currency} ${amountNum.toLocaleString()}`,
       })
     }
 
