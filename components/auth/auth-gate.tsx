@@ -91,7 +91,7 @@ export function AuthGate({ children }: AuthGateProps) {
 
             <Button
               className="w-full h-12"
-              onClick={login}
+              onClick={() => login()}
             >
               {isDevMode ? (
                 <>開發模式登入</>
