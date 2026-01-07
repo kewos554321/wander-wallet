@@ -18,7 +18,7 @@ function FullScreenLoading() {
       <div className="text-center animate-fade-in">
         {/* Logo with pulse animation */}
         <div className="relative mb-6">
-          <div className="absolute inset-0 rounded-2xl bg-brand-400/20 animate-pulse-ring" />
+          <div className="absolute inset-0 rounded-2xl bg-brand-400/20 dark:bg-brand-400/40 animate-pulse-ring" />
           <Logo variant="simple" size="xl" />
         </div>
 

@@ -432,7 +432,7 @@ export default function HomePage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-[#FFDD00] text-[#000000] hover:bg-[#FFDD00]/10"
+                className="border-[#FFDD00] text-[#946C00] dark:text-[#FFDD00] hover:bg-[#FFDD00]/10"
                 onClick={() => window.open("https://buymeacoffee.com/your-username", "_blank")}
               >
                 <Coffee className="w-4 h-4 mr-2" />
@@ -450,7 +450,7 @@ export default function HomePage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-[#003087] text-[#003087] hover:bg-[#003087]/10"
+                className="border-[#003087] text-[#003087] dark:border-[#0070BA] dark:text-[#0070BA] hover:bg-[#003087]/10 dark:hover:bg-[#0070BA]/10"
                 onClick={() => window.open("https://paypal.me/your-username", "_blank")}
               >
                 <PaypalIcon className="w-4 h-4 mr-2" />
