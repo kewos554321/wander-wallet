@@ -149,13 +149,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
         const sendMessagesAvailable = isSendMessagesAvailable()
         setCanSendMessages(sendMessagesAvailable)
 
-        // 公開路由且非 OAuth callback：初始化完成，但不自動登入
-        if (isPublicRoute && !hasOAuthCallback) {
-          setIsLoading(false)
-          return
-        }
-
-        console.log("[LIFF] isLoggedIn:", isLoggedIn(), "liffState:", liffState, "hasOAuthCallback:", hasOAuthCallback)
+        console.log("[LIFF] isLoggedIn:", isLoggedIn(), "liffState:", liffState, "hasOAuthCallback:", hasOAuthCallback, "isPublicRoute:", isPublicRoute)
 
         if (isLoggedIn()) {
           // 取得 LINE 用戶資料
@@ -188,7 +182,8 @@ export function LiffProvider({ children }: { children: ReactNode }) {
           console.log("[LIFF] Not logged in, triggering login")
           liffLogin()
         } else {
-          console.log("[LIFF] Public route, OAuth callback but not logged in - possible error")
+          // 公開路由且未登入：不強制登入，允許瀏覽
+          console.log("[LIFF] Public route, not logged in - allowing anonymous access")
         }
       } catch (error) {
         console.error("LIFF initialization error:", error)
