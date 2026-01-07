@@ -24,9 +24,9 @@ import { DEFAULT_PREFERENCES } from "@/types/user-preferences"
 // 開發模式：當 LIFF_ID 未設定時，使用模擬數據
 const DEV_MODE = !process.env.NEXT_PUBLIC_LIFF_ID
 
-// 公開路由：不自動初始化 LIFF
-const PUBLIC_ROUTES = ["/", "/brand-preview"]
-const PUBLIC_PREFIXES = ["/admin"]
+// 公開路由：不需要登入
+export const PUBLIC_ROUTES = ["/", "/brand-preview"]
+export const PUBLIC_PREFIXES = ["/admin"]
 
 interface AuthUser {
   id: string

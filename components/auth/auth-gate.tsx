@@ -1,7 +1,8 @@
 "use client"
 
 import { ReactNode } from "react"
-import { useLiff } from "./liff-provider"
+import { usePathname } from "next/navigation"
+import { useLiff, PUBLIC_ROUTES, PUBLIC_PREFIXES } from "./liff-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertTriangle } from "lucide-react"
@@ -12,7 +13,16 @@ interface AuthGateProps {
 }
 
 export function AuthGate({ children }: AuthGateProps) {
+  const pathname = usePathname()
   const { user, isLoading, isDevMode, login } = useLiff()
+
+  // 公開路由：直接顯示內容
+  const isPublicRoute = PUBLIC_ROUTES.includes(pathname) ||
+    PUBLIC_PREFIXES.some(prefix => pathname.startsWith(prefix))
+
+  if (isPublicRoute) {
+    return <>{children}</>
+  }
 
   // 載入中
   if (isLoading) {
