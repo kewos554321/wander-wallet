@@ -16,7 +16,7 @@ interface AppHeaderProps {
 
 const navItems = [
   { href: "/projects", label: "所有專案", icon: Folders },
-  { href: "/settings", label: "設定", icon: Settings },
+  { href: "/settings", label: "個人設定", icon: Settings },
 ]
 
 export function AppHeader({ title = "Wander Wallet", showBack = false, backHref, onBack }: AppHeaderProps) {
@@ -26,9 +26,9 @@ export function AppHeader({ title = "Wander Wallet", showBack = false, backHref,
   // /projects/[id] 專案主頁 (不含子頁面)
   const projectMatch = pathname.match(/^\/projects\/([^/]+)$/)
   const isProjectMainPage = projectMatch !== null && projectMatch[1] !== "new"
-  // 隱藏「所有專案」導航：在 /projects、任何專案頁面、或設定頁面時
+  // 隱藏「所有專案」導航：在 /projects、任何專案頁面（含新增）、或設定頁面時
   const hideProjectsNav = pathname === "/projects" ||
-    (pathname.startsWith("/projects/") && !pathname.startsWith("/projects/new")) ||
+    pathname.startsWith("/projects/") ||
     pathname.startsWith("/settings")
 
   const handleBack = () => {
@@ -60,22 +60,27 @@ export function AppHeader({ title = "Wander Wallet", showBack = false, backHref,
         <div className="flex items-center gap-1">
           {navItems
             .filter(({ href }) => !(href === "/projects" && hideProjectsNav))
-            .map(({ href, label, icon: Icon }) => (
-              <Button
-                key={href}
-                variant="ghost"
-                size="icon"
-                asChild
-                className={cn(
-                  "h-8 w-8",
-                  pathname === href ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Link href={href} title={label}>
-                  <Icon className={cn("h-4 w-4", pathname === href && "fill-current")} />
-                </Link>
-              </Button>
-            ))}
+            .map(({ href, label, icon: Icon }) => {
+              const isActive = pathname === href
+              return (
+                <Button
+                  key={href}
+                  variant="ghost"
+                  size="icon"
+                  asChild
+                  className={cn(
+                    "h-8 w-8 transition-colors",
+                    isActive
+                      ? "text-primary bg-primary/10 hover:bg-primary/15"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  <Link href={href} title={label}>
+                    <Icon className="h-4 w-4" />
+                  </Link>
+                </Button>
+              )
+            })}
           <ModeToggle />
         </div>
       </div>

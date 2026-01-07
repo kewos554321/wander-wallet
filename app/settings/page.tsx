@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { useLiff, useAuthFetch } from "@/components/auth/liff-provider"
 import { useTheme } from "@/components/system/theme-provider"
-import { LogOut, ChevronRight, ChevronDown, Sun, Moon, Monitor, User, Wallet, Bell, Loader2, MessageCircle, ExternalLink } from "lucide-react"
+import { LogOut, ChevronRight, ChevronDown, Sun, Moon, Monitor, User, Wallet, Bell, Loader2, MessageCircle, ExternalLink, BookOpen } from "lucide-react"
 import { AvatarDisplay, parseAvatarString } from "@/components/avatar-picker"
 import { CurrencySelect } from "@/components/ui/currency-select"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -91,7 +91,7 @@ export default function SettingsPage() {
   ] as const
 
   return (
-    <AppLayout title="設定" showBack>
+    <AppLayout title="個人設定" showBack>
       <div className="space-y-4">
         {/* 用戶資料預覽 */}
         <Card
@@ -290,6 +290,25 @@ export default function SettingsPage() {
                 </label>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* 功能介紹 */}
+        <Card
+          className="cursor-pointer hover:bg-accent/50 transition-colors"
+          onClick={() => window.open("/", "_blank")}
+        >
+          <CardContent className="flex items-center gap-4">
+            <div className="size-10 rounded-full bg-brand-100 dark:bg-brand-500/20 flex items-center justify-center">
+              <BookOpen className="size-5 text-brand-600 dark:text-brand-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium">功能介紹</p>
+              <p className="text-sm text-muted-foreground">
+                了解 Wander Wallet 的功能與使用方式
+              </p>
+            </div>
+            <ExternalLink className="size-5 text-muted-foreground" />
           </CardContent>
         </Card>
 

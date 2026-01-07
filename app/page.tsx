@@ -472,7 +472,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="px-6 py-8 border-t bg-background">
         <div className="max-w-lg mx-auto text-center text-sm text-muted-foreground">
-          <p>Wander Wallet © 2024</p>
+          <p>Wander Wallet © 2025</p>
           <p className="mt-1">專為 LINE 用戶打造的旅行分帳工具</p>
         </div>
       </footer>
