@@ -88,7 +88,11 @@ export function CoverPicker({ value, onChange, disabled }: CoverPickerProps) {
           className="w-full h-24 rounded-lg flex items-center justify-center relative overflow-hidden"
           style={{ background: presetCover.gradient }}
         >
-          <span className="text-4xl">{presetCover.emoji}</span>
+          {presetCover.emoji === "logo" ? (
+            <Image src="/icons/logo.svg" alt="Logo" width={40} height={40} className="rounded-lg" />
+          ) : (
+            <span className="text-4xl">{presetCover.emoji}</span>
+          )}
           <div
             role="button"
             tabIndex={0}
@@ -179,7 +183,11 @@ export function CoverPicker({ value, onChange, disabled }: CoverPickerProps) {
                     )}
                     style={{ background: cover.gradient }}
                   >
-                    <span className="text-xl">{cover.emoji}</span>
+                    {cover.emoji === "logo" ? (
+                      <Image src="/icons/logo.svg" alt="Logo" width={24} height={24} className="rounded" />
+                    ) : (
+                      <span className="text-xl">{cover.emoji}</span>
+                    )}
                     <span className="text-[10px] text-white/90 font-medium">{cover.name}</span>
                     {isSelected && (
                       <div className="absolute top-1 right-1 h-4 w-4 rounded-full bg-primary flex items-center justify-center">
