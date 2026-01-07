@@ -20,6 +20,22 @@ export function AuthGate({ children }: AuthGateProps) {
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname) ||
     PUBLIC_PREFIXES.some(prefix => pathname.startsWith(prefix))
 
+  // 檢查是否有 liff.state（即將跳轉到其他頁面）
+  const hasLiffState = typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("liff.state")
+
+  // 如果有 liff.state，顯示載入畫面（避免閃首頁）
+  if (hasLiffState) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 via-background to-brand-100 dark:from-brand-100 dark:via-background dark:to-brand-200">
+        <div className="text-center animate-fade-in">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-500 border-t-transparent mx-auto" />
+          <p className="text-sm text-muted-foreground mt-4">正在跳轉...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (isPublicRoute) {
     return <>{children}</>
   }
