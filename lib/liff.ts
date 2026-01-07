@@ -17,7 +17,10 @@ export async function initLiff(): Promise<void> {
     throw new Error("NEXT_PUBLIC_LIFF_ID is not set")
   }
 
-  await liff.init({ liffId })
+  await liff.init({
+    liffId,
+    withLoginOnExternalBrowser: true,  // 外部瀏覽器自動執行登入
+  })
   isInitialized = true
 }
 
