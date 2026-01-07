@@ -8,7 +8,6 @@ import {
   useCallback,
   ReactNode,
 } from "react"
-import { useRouter } from "next/navigation"
 import {
   initLiff,
   getProfile,
@@ -74,7 +73,6 @@ const DEV_LIFF_PROFILE: LiffUser = {
 }
 
 export function LiffProvider({ children }: { children: ReactNode }) {
-  const router = useRouter()
   const [user, setUser] = useState<AuthUser | null>(null)
   const [liffProfile, setLiffProfile] = useState<LiffUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -180,11 +178,10 @@ export function LiffProvider({ children }: { children: ReactNode }) {
               debugLog(`[LIFF] User set: ${authData.user?.name || authData.user?.id}`)
 
               // 如果有 liff.state，跳轉到該路徑（處理深層連結）
-              // 使用 router.replace 做 client-side 導航，避免整頁重載造成二次 loading
               if (liffState && liffState !== currentPath) {
                 debugLog(`[LIFF] Redirecting to liff.state: ${liffState}`)
-                router.replace(liffState)
-                return // 讓目標路由處理後續，不在這裡設 isLoading
+                window.location.href = liffState
+                return
               }
             }
           }
@@ -205,7 +202,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
     }
 
     initialize()
-  }, [authenticateWithBackend, router])
+  }, [authenticateWithBackend])
 
   const login = useCallback(() => {
     if (DEV_MODE) {
