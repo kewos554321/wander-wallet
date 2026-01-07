@@ -45,8 +45,12 @@ export function AuthGate({ children }: AuthGateProps) {
   const hasLiffState = typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).has("liff.state")
 
-  // 如果有 liff.state，顯示載入畫面（避免閃首頁）
-  if (hasLiffState) {
+  // 檢查是否有儲存的跳轉路徑（登入後即將跳轉）
+  const hasSavedRedirectPath = typeof window !== "undefined" &&
+    !!localStorage.getItem("wander_wallet_redirect_path")
+
+  // 如果有 liff.state 或儲存的跳轉路徑，顯示載入畫面（避免閃首頁）
+  if (hasLiffState || hasSavedRedirectPath) {
     return <FullScreenLoading />
   }
 
