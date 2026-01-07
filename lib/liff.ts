@@ -807,7 +807,6 @@ export async function sendBatchDeleteNotificationToChat(data: BatchDeleteNotific
                 color: themeColor,
                 align: "end" as const,
                 weight: "bold" as const,
-                decoration: "line-through" as const,
               },
             ],
             paddingBottom: "md" as const,
