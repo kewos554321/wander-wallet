@@ -20,6 +20,7 @@ import {
 } from "@/lib/liff"
 import type { UserPreferences } from "@/types/user-preferences"
 import { DEFAULT_PREFERENCES } from "@/types/user-preferences"
+import { debugLog } from "@/lib/debug"
 
 // 開發模式：當 LIFF_ID 未設定時，使用模擬數據
 const DEV_MODE = !process.env.NEXT_PUBLIC_LIFF_ID
@@ -118,11 +119,15 @@ export function LiffProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function initialize() {
+      debugLog("[LIFF] Starting initialization...")
+
       // 開發模式：使用模擬數據
       if (DEV_MODE) {
+        debugLog("[LIFF] DEV_MODE enabled, using mock data")
         // 檢查是否有已保存的開發 session
         const savedDevSession = localStorage.getItem(DEV_SESSION_KEY)
         if (savedDevSession) {
+          debugLog("[LIFF] Found saved dev session, restoring user")
           setUser(DEV_USER)
           setLiffProfile(DEV_LIFF_PROFILE)
           setSessionToken("dev-session-token")
@@ -144,50 +149,53 @@ export function LiffProvider({ children }: { children: ReactNode }) {
       try {
         // 總是初始化 LIFF（登入按鈕需要）
         await initLiff()
+        debugLog("[LIFF] SDK initialized successfully")
 
         // 檢查 sendMessages API 是否可用
         const sendMessagesAvailable = isSendMessagesAvailable()
         setCanSendMessages(sendMessagesAvailable)
 
-        console.log("[LIFF] isLoggedIn:", isLoggedIn(), "liffState:", liffState, "hasOAuthCallback:", hasOAuthCallback, "isPublicRoute:", isPublicRoute)
+        debugLog(`[LIFF] isLoggedIn: ${isLoggedIn()}, liffState: ${liffState}, hasOAuthCallback: ${hasOAuthCallback}, isPublicRoute: ${isPublicRoute}`)
 
         if (isLoggedIn()) {
           // 取得 LINE 用戶資料
           const profile = await getProfile()
           setLiffProfile(profile)
-          console.log("[LIFF] Got profile:", profile?.displayName)
+          debugLog(`[LIFF] Got profile: ${profile?.displayName}`)
 
           // 取得 access token 並向後端驗證
           const accessToken = getAccessToken()
-          console.log("[LIFF] Access token exists:", !!accessToken)
+          debugLog(`[LIFF] Access token exists: ${!!accessToken}`)
 
           if (accessToken) {
             const authData = await authenticateWithBackend(accessToken)
-            console.log("[LIFF] Backend auth result:", !!authData)
+            debugLog(`[LIFF] Backend auth result: ${!!authData}`)
 
             if (authData) {
               setUser(authData.user)
               setSessionToken(authData.sessionToken)
               localStorage.setItem(SESSION_TOKEN_KEY, authData.sessionToken)
+              debugLog(`[LIFF] User set: ${authData.user?.name || authData.user?.id}`)
 
               // 如果有 liff.state，跳轉到該路徑
               if (liffState && liffState !== currentPath) {
-                console.log("[LIFF] Redirecting to:", liffState)
+                debugLog(`[LIFF] Redirecting to: ${liffState}`)
                 window.location.href = liffState
               }
             }
           }
         } else if (!isPublicRoute) {
           // 非公開路由且未登入：自動觸發登入
-          console.log("[LIFF] Not logged in, triggering login")
+          debugLog("[LIFF] Not logged in, triggering login")
           liffLogin()
         } else {
           // 公開路由且未登入：不強制登入，允許瀏覽
-          console.log("[LIFF] Public route, not logged in - allowing anonymous access")
+          debugLog("[LIFF] Public route, not logged in - allowing anonymous access")
         }
       } catch (error) {
-        console.error("LIFF initialization error:", error)
+        debugLog(`[LIFF] Initialization error: ${error}`, "error")
       } finally {
+        debugLog("[LIFF] Initialization complete")
         setIsLoading(false)
       }
     }
