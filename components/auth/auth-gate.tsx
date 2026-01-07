@@ -14,7 +14,7 @@ interface AuthGateProps {
 
 function FullScreenLoading() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 via-background to-brand-100 dark:from-brand-100 dark:via-background dark:to-brand-200">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 via-background to-brand-100 dark:from-brand-700/20 dark:via-background dark:to-brand-600/20">
       <div className="text-center animate-fade-in">
         {/* Logo with pulse animation */}
         <div className="relative mb-6">
@@ -62,7 +62,7 @@ export function AuthGate({ children }: AuthGateProps) {
   // 未登入
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 via-background to-brand-100 dark:from-brand-100 dark:via-background dark:to-brand-200">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 via-background to-brand-100 dark:from-brand-700/20 dark:via-background dark:to-brand-600/20">
         <Card className="w-full max-w-md animate-fade-in">
           <CardHeader className="text-center space-y-4">
             <div className="flex justify-center">
