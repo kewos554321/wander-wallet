@@ -25,8 +25,9 @@ export function isLoggedIn(): boolean {
   return liff.isLoggedIn()
 }
 
-export function login(redirectUri?: string): void {
-  liff.login({ redirectUri: redirectUri || window.location.href })
+export function login(): void {
+  // 不傳 redirectUri，LIFF 會使用 endpoint URL 作為 redirect 目標
+  liff.login()
 }
 
 export function logout(): void {

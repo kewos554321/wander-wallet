@@ -24,6 +24,10 @@ import { DEFAULT_PREFERENCES } from "@/types/user-preferences"
 // 開發模式：當 LIFF_ID 未設定時，使用模擬數據
 const DEV_MODE = !process.env.NEXT_PUBLIC_LIFF_ID
 
+// 公開路由：不自動初始化 LIFF
+const PUBLIC_ROUTES = ["/", "/brand-preview"]
+const PUBLIC_PREFIXES = ["/admin"]
+
 interface AuthUser {
   id: string
   lineUserId: string
@@ -128,32 +132,63 @@ export function LiffProvider({ children }: { children: ReactNode }) {
         return
       }
 
+      // 判斷是否為公開路由
+      const currentPath = window.location.pathname
+      const urlParams = new URLSearchParams(window.location.search)
+      const liffState = urlParams.get("liff.state")
+      const hasOAuthCallback = urlParams.has("code") // OAuth callback 帶有 code 參數
+
+      const isPublicRoute = PUBLIC_ROUTES.includes(currentPath) ||
+        PUBLIC_PREFIXES.some(prefix => currentPath.startsWith(prefix))
+
       try {
+        // 總是初始化 LIFF（登入按鈕需要）
         await initLiff()
 
         // 檢查 sendMessages API 是否可用
         const sendMessagesAvailable = isSendMessagesAvailable()
         setCanSendMessages(sendMessagesAvailable)
 
+        // 公開路由且非 OAuth callback：初始化完成，但不自動登入
+        if (isPublicRoute && !hasOAuthCallback) {
+          setIsLoading(false)
+          return
+        }
+
+        console.log("[LIFF] isLoggedIn:", isLoggedIn(), "liffState:", liffState, "hasOAuthCallback:", hasOAuthCallback)
+
         if (isLoggedIn()) {
           // 取得 LINE 用戶資料
           const profile = await getProfile()
           setLiffProfile(profile)
+          console.log("[LIFF] Got profile:", profile?.displayName)
 
           // 取得 access token 並向後端驗證
           const accessToken = getAccessToken()
+          console.log("[LIFF] Access token exists:", !!accessToken)
 
           if (accessToken) {
             const authData = await authenticateWithBackend(accessToken)
+            console.log("[LIFF] Backend auth result:", !!authData)
+
             if (authData) {
               setUser(authData.user)
               setSessionToken(authData.sessionToken)
               localStorage.setItem(SESSION_TOKEN_KEY, authData.sessionToken)
+
+              // 如果有 liff.state，跳轉到該路徑
+              if (liffState && liffState !== currentPath) {
+                console.log("[LIFF] Redirecting to:", liffState)
+                window.location.href = liffState
+              }
             }
           }
-        } else {
-          // 自動登入（在 LINE App 內或外部瀏覽器都會跳轉到 LINE Login）
+        } else if (!isPublicRoute) {
+          // 非公開路由且未登入：自動觸發登入
+          console.log("[LIFF] Not logged in, triggering login")
           liffLogin()
+        } else {
+          console.log("[LIFF] Public route, OAuth callback but not logged in - possible error")
         }
       } catch (error) {
         console.error("LIFF initialization error:", error)
