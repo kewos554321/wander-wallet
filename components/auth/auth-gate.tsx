@@ -1,6 +1,6 @@
 "use client"
 
-import { ReactNode, useState, useEffect } from "react"
+import { ReactNode } from "react"
 import { usePathname } from "next/navigation"
 import { useLiff, PUBLIC_ROUTES, PUBLIC_PREFIXES } from "./liff-provider"
 import { Button } from "@/components/ui/button"
@@ -12,23 +12,7 @@ interface AuthGateProps {
   children: ReactNode
 }
 
-const LOADING_MESSAGES = [
-  "正在連線...",
-  "驗證身份中...",
-  "準備資料...",
-  "即將完成..."
-]
-
 function FullScreenLoading() {
-  const [messageIndex, setMessageIndex] = useState(0)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMessageIndex(prev => Math.min(prev + 1, LOADING_MESSAGES.length - 1))
-    }, 800)
-    return () => clearInterval(interval)
-  }, [])
-
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 via-background to-brand-100 dark:from-brand-700/20 dark:via-background dark:to-brand-600/20">
       <div className="text-center animate-fade-in">
@@ -40,21 +24,10 @@ function FullScreenLoading() {
 
         {/* Brand name */}
         <h1 className="text-xl font-bold text-foreground mb-1">Wander Wallet</h1>
-        <p className="text-sm text-muted-foreground mb-4">旅行分帳好幫手</p>
+        <p className="text-sm text-muted-foreground mb-6">旅行分帳好幫手</p>
 
-        {/* Progress bar */}
-        <div className="w-48 mx-auto mb-3">
-          <div className="h-1 bg-muted rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-brand-400 to-brand-500 rounded-full animate-loading-progress relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-            </div>
-          </div>
-        </div>
-
-        {/* Loading status text */}
-        <p className="text-xs text-muted-foreground transition-opacity duration-300">
-          {LOADING_MESSAGES[messageIndex]}
-        </p>
+        {/* Loading spinner */}
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-500 border-t-transparent mx-auto" />
       </div>
     </div>
   )
