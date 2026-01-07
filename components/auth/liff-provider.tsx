@@ -45,7 +45,7 @@ interface LiffContextType {
   sessionToken: string | null
   isDevMode: boolean
   canSendMessages: boolean // 是否可以發送訊息到當前聊天室
-  login: () => void
+  login: (redirectUri?: string) => void
   logout: () => void
   refreshSession: () => Promise<void>
   updatePreferences: (preferences: UserPreferences) => void // 更新用戶偏好設定
@@ -55,6 +55,7 @@ const LiffContext = createContext<LiffContextType | undefined>(undefined)
 
 const SESSION_TOKEN_KEY = "wander_wallet_session"
 const DEV_SESSION_KEY = "wander_wallet_dev_session"
+const REDIRECT_PATH_KEY = "wander_wallet_redirect_path"
 
 // 開發模式的模擬用戶
 const DEV_USER: AuthUser = {
@@ -177,16 +178,27 @@ export function LiffProvider({ children }: { children: ReactNode }) {
               localStorage.setItem(SESSION_TOKEN_KEY, authData.sessionToken)
               debugLog(`[LIFF] User set: ${authData.user?.name || authData.user?.id}`)
 
+              // 檢查是否有儲存的跳轉路徑
+              const savedRedirectPath = localStorage.getItem(REDIRECT_PATH_KEY)
+              if (savedRedirectPath && savedRedirectPath !== currentPath) {
+                localStorage.removeItem(REDIRECT_PATH_KEY)
+                debugLog(`[LIFF] Redirecting to saved path: ${savedRedirectPath}`)
+                window.location.href = savedRedirectPath
+                return
+              }
+
               // 如果有 liff.state，跳轉到該路徑
               if (liffState && liffState !== currentPath) {
-                debugLog(`[LIFF] Redirecting to: ${liffState}`)
+                debugLog(`[LIFF] Redirecting to liff.state: ${liffState}`)
                 window.location.href = liffState
               }
             }
           }
         } else if (!isPublicRoute) {
-          // 非公開路由且未登入：自動觸發登入
-          debugLog("[LIFF] Not logged in, triggering login")
+          // 非公開路由且未登入：儲存目標路徑後觸發登入
+          const targetPath = window.location.pathname + window.location.search
+          localStorage.setItem(REDIRECT_PATH_KEY, targetPath)
+          debugLog(`[LIFF] Not logged in, saving redirect path: ${targetPath}, triggering login`)
           liffLogin()
         } else {
           // 公開路由且未登入：不強制登入，允許瀏覽
@@ -203,7 +215,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
     initialize()
   }, [authenticateWithBackend])
 
-  const login = useCallback(() => {
+  const login = useCallback((redirectPath?: string) => {
     if (DEV_MODE) {
       // 開發模式：直接設置模擬用戶
       setUser(DEV_USER)
@@ -212,6 +224,10 @@ export function LiffProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(DEV_SESSION_KEY, "true")
       return
     }
+    // 儲存跳轉路徑（預設 /projects）
+    const targetPath = redirectPath || "/projects"
+    localStorage.setItem(REDIRECT_PATH_KEY, targetPath)
+    debugLog(`[LIFF] Manual login triggered, saved redirect path: ${targetPath}`)
     liffLogin()
   }, [])
 

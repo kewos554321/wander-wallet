@@ -26,7 +26,6 @@ export function isLoggedIn(): boolean {
 }
 
 export function login(): void {
-  // 不傳 redirectUri，LIFF 會使用 endpoint URL 作為 redirect 目標
   liff.login()
 }
 
