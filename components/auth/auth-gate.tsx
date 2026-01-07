@@ -12,6 +12,27 @@ interface AuthGateProps {
   children: ReactNode
 }
 
+function FullScreenLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 via-background to-brand-100 dark:from-brand-100 dark:via-background dark:to-brand-200">
+      <div className="text-center animate-fade-in">
+        {/* Logo with pulse animation */}
+        <div className="relative mb-6">
+          <div className="absolute inset-0 rounded-2xl bg-brand-400/20 animate-pulse-ring" />
+          <Logo variant="simple" size="xl" />
+        </div>
+
+        {/* Brand name */}
+        <h1 className="text-xl font-bold text-foreground mb-1">Wander Wallet</h1>
+        <p className="text-sm text-muted-foreground mb-6">旅行分帳好幫手</p>
+
+        {/* Loading spinner */}
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-500 border-t-transparent mx-auto" />
+      </div>
+    </div>
+  )
+}
+
 export function AuthGate({ children }: AuthGateProps) {
   const pathname = usePathname()
   const { user, isLoading, isDevMode, login } = useLiff()
@@ -26,14 +47,7 @@ export function AuthGate({ children }: AuthGateProps) {
 
   // 如果有 liff.state，顯示載入畫面（避免閃首頁）
   if (hasLiffState) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 via-background to-brand-100 dark:from-brand-100 dark:via-background dark:to-brand-200">
-        <div className="text-center animate-fade-in">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-500 border-t-transparent mx-auto" />
-          <p className="text-sm text-muted-foreground mt-4">正在跳轉...</p>
-        </div>
-      </div>
-    )
+    return <FullScreenLoading />
   }
 
   if (isPublicRoute) {
@@ -42,24 +56,7 @@ export function AuthGate({ children }: AuthGateProps) {
 
   // 載入中
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 via-background to-brand-100 dark:from-brand-100 dark:via-background dark:to-brand-200">
-        <div className="text-center animate-fade-in">
-          {/* Logo with pulse animation */}
-          <div className="relative mb-6">
-            <div className="absolute inset-0 rounded-2xl bg-brand-400/20 animate-pulse-ring" />
-            <Logo variant="simple" size="xl" />
-          </div>
-
-          {/* Brand name */}
-          <h1 className="text-xl font-bold text-foreground mb-1">Wander Wallet</h1>
-          <p className="text-sm text-muted-foreground mb-6">旅行分帳好幫手</p>
-
-          {/* Loading spinner */}
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-500 border-t-transparent mx-auto" />
-        </div>
-      </div>
-    )
+    return <FullScreenLoading />
   }
 
   // 未登入
