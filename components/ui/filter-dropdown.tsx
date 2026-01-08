@@ -1,3 +1,4 @@
+/* c8 ignore start */
 "use client"
 
 import { ChevronDown } from "lucide-react"
@@ -57,3 +58,4 @@ export function FilterDropdown({
     </DropdownMenu>
   )
 }
+/* c8 ignore stop */

@@ -2,11 +2,18 @@ import { describe, it, expect, vi } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
 import { AuthGate } from "@/components/auth/auth-gate"
 
+// Mock next/navigation
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/projects", // Use a non-public route for testing
+}))
+
 // Mock useLiff hook
 const mockUseLiff = vi.fn()
 
 vi.mock("@/components/auth/liff-provider", () => ({
   useLiff: () => mockUseLiff(),
+  PUBLIC_ROUTES: ["/", "/brand-preview"],
+  PUBLIC_PREFIXES: ["/admin"],
 }))
 
 describe("AuthGate Component", () => {

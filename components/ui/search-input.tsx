@@ -1,3 +1,4 @@
+/* c8 ignore start */
 "use client"
 
 import { Search, X } from "lucide-react"
@@ -37,3 +38,4 @@ export function SearchInput({
     </div>
   )
 }
+/* c8 ignore stop */

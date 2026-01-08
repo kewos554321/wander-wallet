@@ -10,7 +10,13 @@ const mockExpenses: Expense[] = [
     currency: "TWD",
     description: "午餐便當",
     category: "food",
+    expenseDate: "2025-01-01",
+    createdAt: "2025-01-01T10:00:00Z",
     payer: { id: "user1", displayName: "Alice" },
+    participants: [
+      { id: "p1", member: { id: "user1", displayName: "Alice" } },
+      { id: "p2", member: { id: "user2", displayName: "Bob" } },
+    ],
   },
   {
     id: "2",
@@ -18,7 +24,14 @@ const mockExpenses: Expense[] = [
     currency: "TWD",
     description: "計程車",
     category: "transport",
+    expenseDate: "2025-01-02",
+    createdAt: "2025-01-02T11:00:00Z",
     payer: { id: "user2", displayName: "Bob" },
+    participants: [
+      { id: "p3", member: { id: "user1", displayName: "Alice" } },
+      { id: "p4", member: { id: "user2", displayName: "Bob" } },
+      { id: "p5", member: { id: "user3", displayName: "Charlie" } },
+    ],
   },
   {
     id: "3",
@@ -26,7 +39,12 @@ const mockExpenses: Expense[] = [
     currency: "TWD",
     description: "飯店住宿",
     category: "accommodation",
+    expenseDate: "2025-01-03",
+    createdAt: "2025-01-03T12:00:00Z",
     payer: { id: "user1", displayName: "Alice" },
+    participants: [
+      { id: "p6", member: { id: "user1", displayName: "Alice" } },
+    ],
   },
   {
     id: "4",
@@ -34,7 +52,13 @@ const mockExpenses: Expense[] = [
     currency: "TWD",
     description: "晚餐火鍋",
     category: "food",
+    expenseDate: "2025-01-04",
+    createdAt: "2025-01-04T18:00:00Z",
     payer: { id: "user3", displayName: "Charlie" },
+    participants: [
+      { id: "p7", member: { id: "user2", displayName: "Bob" } },
+      { id: "p8", member: { id: "user3", displayName: "Charlie" } },
+    ],
   },
   {
     id: "5",
@@ -42,7 +66,12 @@ const mockExpenses: Expense[] = [
     currency: "TWD",
     description: null,
     category: null,
+    expenseDate: "2025-01-05",
+    createdAt: "2025-01-05T09:00:00Z",
     payer: { id: "user2", displayName: "Bob" },
+    participants: [
+      { id: "p9", member: { id: "user2", displayName: "Bob" } },
+    ],
   },
 ]
 
@@ -406,7 +435,12 @@ describe("useExpenseFilters", () => {
             currency: "TWD",
             description: "Big expense",
             category: "other",
+            expenseDate: "2025-01-06",
+            createdAt: "2025-01-06T10:00:00Z",
             payer: { id: "user1", displayName: "Alice" },
+            participants: [
+              { id: "p10", member: { id: "user1", displayName: "Alice" } },
+            ],
           },
         ],
       })

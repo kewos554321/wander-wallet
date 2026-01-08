@@ -137,7 +137,7 @@ describe("AppHeader Component", () => {
       render(<AppHeader />)
 
       expect(screen.getByTitle("所有專案")).toBeInTheDocument()
-      expect(screen.getByTitle("設定")).toBeInTheDocument()
+      expect(screen.getByTitle("個人設定")).toBeInTheDocument()
     })
 
     it("should hide projects nav on /projects page", () => {
@@ -145,7 +145,7 @@ describe("AppHeader Component", () => {
       render(<AppHeader />)
 
       expect(screen.queryByTitle("所有專案")).not.toBeInTheDocument()
-      expect(screen.getByTitle("設定")).toBeInTheDocument()
+      expect(screen.getByTitle("個人設定")).toBeInTheDocument()
     })
 
     it("should hide projects nav on project detail page", () => {
@@ -153,7 +153,7 @@ describe("AppHeader Component", () => {
       render(<AppHeader />)
 
       expect(screen.queryByTitle("所有專案")).not.toBeInTheDocument()
-      expect(screen.getByTitle("設定")).toBeInTheDocument()
+      expect(screen.getByTitle("個人設定")).toBeInTheDocument()
     })
 
     it("should hide projects nav on project sub-pages", () => {
@@ -161,23 +161,23 @@ describe("AppHeader Component", () => {
       render(<AppHeader />)
 
       expect(screen.queryByTitle("所有專案")).not.toBeInTheDocument()
-      expect(screen.getByTitle("設定")).toBeInTheDocument()
+      expect(screen.getByTitle("個人設定")).toBeInTheDocument()
     })
 
     it("should show projects nav on /projects/new page", () => {
       mockPathname = "/projects/new"
       render(<AppHeader />)
 
-      expect(screen.getByTitle("所有專案")).toBeInTheDocument()
-      expect(screen.getByTitle("設定")).toBeInTheDocument()
+      expect(screen.queryByTitle("所有專案")).not.toBeInTheDocument()
+      expect(screen.getByTitle("個人設定")).toBeInTheDocument()
     })
 
-    it("should show projects nav on settings page", () => {
+    it("should hide projects nav on settings page", () => {
       mockPathname = "/settings"
       render(<AppHeader />)
 
-      expect(screen.getByTitle("所有專案")).toBeInTheDocument()
-      expect(screen.getByTitle("設定")).toBeInTheDocument()
+      expect(screen.queryByTitle("所有專案")).not.toBeInTheDocument()
+      expect(screen.getByTitle("個人設定")).toBeInTheDocument()
     })
 
     it("should have correct href for nav items", () => {
@@ -185,14 +185,14 @@ describe("AppHeader Component", () => {
       render(<AppHeader />)
 
       expect(screen.getByTitle("所有專案")).toHaveAttribute("href", "/projects")
-      expect(screen.getByTitle("設定")).toHaveAttribute("href", "/settings")
+      expect(screen.getByTitle("個人設定")).toHaveAttribute("href", "/settings")
     })
 
     it("should apply active styles when on current page", () => {
       mockPathname = "/settings"
       render(<AppHeader />)
 
-      const settingsLink = screen.getByTitle("設定")
+      const settingsLink = screen.getByTitle("個人設定")
       expect(settingsLink).toHaveClass("text-primary")
     })
   })

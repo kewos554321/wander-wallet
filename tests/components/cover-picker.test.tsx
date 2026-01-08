@@ -14,14 +14,14 @@ describe("CoverPicker Component", () => {
 
   describe("with preset cover", () => {
     it("should render preset cover preview", () => {
-      render(<CoverPicker value="preset:1" onChange={vi.fn()} />)
+      render(<CoverPicker value="preset:2" onChange={vi.fn()} />)
 
-      // Should show the preset emoji
+      // Should show the preset emoji (海灘度假 🏖️)
       expect(screen.getByText("🏖️")).toBeInTheDocument()
     })
 
     it("should show remove button on preset cover", () => {
-      render(<CoverPicker value="preset:1" onChange={vi.fn()} />)
+      render(<CoverPicker value="preset:2" onChange={vi.fn()} />)
 
       // Remove button has X icon
       const removeButton = document.querySelector('[role="button"]')
@@ -80,11 +80,11 @@ describe("CoverPicker Component", () => {
       const presetButton = screen.getByText("海灘度假").closest("button")
       await fireEvent.click(presetButton!)
 
-      expect(onChange).toHaveBeenCalledWith("preset:1")
+      expect(onChange).toHaveBeenCalledWith("preset:2")
     })
 
     it("should show remove cover button when cover is set", async () => {
-      render(<CoverPicker value="preset:1" onChange={vi.fn()} />)
+      render(<CoverPicker value="preset:2" onChange={vi.fn()} />)
 
       // First open the dialog
       const trigger = screen.getByText("🏖️").closest("button")
@@ -95,7 +95,7 @@ describe("CoverPicker Component", () => {
 
     it("should call onChange with null when remove cover is clicked", async () => {
       const onChange = vi.fn()
-      render(<CoverPicker value="preset:1" onChange={onChange} />)
+      render(<CoverPicker value="preset:2" onChange={onChange} />)
 
       const trigger = screen.getByText("🏖️").closest("button")
       await fireEvent.click(trigger!)

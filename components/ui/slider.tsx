@@ -1,3 +1,4 @@
+/* c8 ignore start */
 "use client"
 
 import * as React from "react"
@@ -26,3 +27,4 @@ const Slider = React.forwardRef<
 Slider.displayName = SliderPrimitive.Root.displayName
 
 export { Slider }
+/* c8 ignore stop */

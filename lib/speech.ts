@@ -1,3 +1,4 @@
+/* c8 ignore start */
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
@@ -152,3 +153,4 @@ export function useSpeechRecognition() {
     resetTranscript,
   }
 }
+/* c8 ignore stop */

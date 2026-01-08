@@ -13,6 +13,15 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // Test file overrides
+  {
+    files: ["tests/**/*.ts", "tests/**/*.tsx"],
+    rules: {
+      "@next/next/no-assign-module-variable": "off",
+      "@next/next/no-img-element": "off",
+      "react-hooks/globals": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

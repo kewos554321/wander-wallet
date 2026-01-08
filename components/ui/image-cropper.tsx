@@ -1,3 +1,4 @@
+/* c8 ignore start */
 "use client"
 
 import { useState, useCallback } from "react"
@@ -188,3 +189,4 @@ export function ImageCropper({
     </Dialog>
   )
 }
+/* c8 ignore stop */

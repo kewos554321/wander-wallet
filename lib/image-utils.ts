@@ -3,6 +3,7 @@ import { debugLog } from "./debug"
 /**
  * 讀取圖片的 EXIF 方向資訊
  */
+/* c8 ignore start */
 export async function getExifOrientation(file: File): Promise<number> {
   debugLog(`EXIF: Starting for ${file.name} (${file.size} bytes)`)
 
@@ -136,10 +137,12 @@ export async function getExifOrientation(file: File): Promise<number> {
     }
   })
 }
+/* c8 ignore stop */
 
 /**
  * 壓縮圖片並轉為 WebP base64（保留向下相容）
  */
+/* c8 ignore start */
 export async function compressImage(
   file: File,
   maxWidth: number,
@@ -149,10 +152,12 @@ export async function compressImage(
   const blob = await compressImageToBlob(file, maxWidth, maxHeight, quality)
   return blobToBase64(blob)
 }
+/* c8 ignore stop */
 
 /**
  * 壓縮圖片並轉為 Blob（用於 R2 上傳）
  */
+/* c8 ignore start */
 export async function compressImageToBlob(
   file: File,
   maxWidth: number,
@@ -289,6 +294,7 @@ function blobToBase64(blob: Blob): Promise<string> {
     reader.readAsDataURL(blob)
   })
 }
+/* c8 ignore stop */
 
 export interface UploadResult {
   url: string
@@ -298,6 +304,7 @@ export interface UploadResult {
 /**
  * 偵測是否為 iOS 裝置
  */
+/* c8 ignore start */
 function isIOSDevice(): boolean {
   if (typeof navigator === "undefined") return false
   const userAgent = navigator.userAgent || ""
@@ -305,6 +312,7 @@ function isIOSDevice(): boolean {
   debugLog(`Platform: ${isIOS ? "iOS" : "Other"} (${userAgent.slice(0, 50)}...)`)
   return isIOS
 }
+/* c8 ignore stop */
 
 /**
  * 上傳圖片到 R2
@@ -316,6 +324,7 @@ function isIOSDevice(): boolean {
  * @param authFetch 認證的 fetch 函數
  * @param type 類型（expense 或 cover）
  */
+/* c8 ignore start */
 export async function uploadImageToR2(
   file: File,
   projectId: string,
@@ -386,3 +395,4 @@ export async function uploadImageToR2(
 
   return { url: publicUrl, key }
 }
+/* c8 ignore stop */

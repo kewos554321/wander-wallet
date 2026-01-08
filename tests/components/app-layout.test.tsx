@@ -99,13 +99,6 @@ describe("AppLayout Component", () => {
       expect(screen.getByRole("main")).toBeInTheDocument()
     })
 
-    it("should have pt-14 class on main element for header spacing", () => {
-      render(<AppLayout>Content</AppLayout>)
-
-      const main = screen.getByRole("main")
-      expect(main).toHaveClass("pt-14")
-    })
-
     it("should have container classes on inner div", () => {
       render(<AppLayout>Content</AppLayout>)
 

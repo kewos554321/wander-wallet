@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest"
-import { EXPENSE_CATEGORIES, ParsedExpensesSchema } from "@/lib/ai/expense-parser"
+import { EXPENSE_CATEGORIES, ParsedExpensesSchema, findMemberIdByName, mapNamesToIds } from "@/lib/ai/expense-parser"
 import type {
   MemberInfo,
   ParseExpenseInput,
@@ -284,6 +284,90 @@ describe("expense-parser types and schemas", () => {
         const result = ParsedExpensesSchema.safeParse(data)
         expect(result.success).toBe(true)
       })
+    })
+  })
+
+  describe("findMemberIdByName", () => {
+    const members: MemberInfo[] = [
+      { id: "user-1", displayName: "小明" },
+      { id: "user-2", displayName: "小華" },
+      { id: "user-3", displayName: "小美" },
+    ]
+    const currentUserName = "小明"
+
+    it("should find member by exact name match", () => {
+      expect(findMemberIdByName("小明", members, currentUserName)).toBe("user-1")
+      expect(findMemberIdByName("小華", members, currentUserName)).toBe("user-2")
+      expect(findMemberIdByName("小美", members, currentUserName)).toBe("user-3")
+    })
+
+    it("should find member by partial match (name includes query)", () => {
+      const membersWithLongNames: MemberInfo[] = [
+        { id: "user-1", displayName: "王小明" },
+        { id: "user-2", displayName: "李小華" },
+      ]
+      expect(findMemberIdByName("小明", membersWithLongNames, "王小明")).toBe("user-1")
+      expect(findMemberIdByName("小華", membersWithLongNames, "王小明")).toBe("user-2")
+    })
+
+    it("should find member by partial match (query includes name)", () => {
+      expect(findMemberIdByName("小明同學", members, currentUserName)).toBe("user-1")
+    })
+
+    it("should return current user for '我' related keywords", () => {
+      expect(findMemberIdByName("我", members, currentUserName)).toBe("user-1")
+      expect(findMemberIdByName("自己", members, currentUserName)).toBe("user-1")
+      expect(findMemberIdByName("本人", members, currentUserName)).toBe("user-1")
+    })
+
+    it("should return first member if no match found", () => {
+      expect(findMemberIdByName("不存在的人", members, currentUserName)).toBe("user-1")
+    })
+
+    it("should return null for empty members array", () => {
+      expect(findMemberIdByName("小明", [], currentUserName)).toBeNull()
+    })
+  })
+
+  describe("mapNamesToIds", () => {
+    const members: MemberInfo[] = [
+      { id: "user-1", displayName: "小明" },
+      { id: "user-2", displayName: "小華" },
+      { id: "user-3", displayName: "小美" },
+    ]
+
+    it("should map multiple names to IDs", () => {
+      const result = mapNamesToIds(["小明", "小華"], members)
+      expect(result).toEqual(["user-1", "user-2"])
+    })
+
+    it("should map single name to ID", () => {
+      const result = mapNamesToIds(["小美"], members)
+      expect(result).toEqual(["user-3"])
+    })
+
+    it("should return empty array for empty names", () => {
+      const result = mapNamesToIds([], members)
+      expect(result).toEqual([])
+    })
+
+    it("should skip names that do not match any member", () => {
+      const result = mapNamesToIds(["小明", "不存在"], members)
+      expect(result).toEqual(["user-1"])
+    })
+
+    it("should avoid duplicates", () => {
+      const result = mapNamesToIds(["小明", "小明"], members)
+      expect(result).toEqual(["user-1"])
+    })
+
+    it("should handle partial matches", () => {
+      const membersWithLongNames: MemberInfo[] = [
+        { id: "user-1", displayName: "王小明" },
+        { id: "user-2", displayName: "李小華" },
+      ]
+      const result = mapNamesToIds(["小明", "小華"], membersWithLongNames)
+      expect(result).toEqual(["user-1", "user-2"])
     })
   })
 })

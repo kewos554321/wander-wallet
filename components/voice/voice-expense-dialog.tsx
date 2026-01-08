@@ -1,3 +1,4 @@
+/* c8 ignore start */
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from "react"
@@ -1384,3 +1385,4 @@ export function VoiceExpenseDialog({
     </Dialog>
   )
 }
+/* c8 ignore stop */

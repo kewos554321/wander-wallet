@@ -95,13 +95,11 @@ describe("liff module", () => {
   })
 
   describe("login", () => {
-    it("should call liff.login with current URL as redirectUri", async () => {
+    it("should call liff.login without arguments when no redirectUri provided", async () => {
       const { login } = await import("@/lib/liff")
       login()
 
-      expect(mockLiff.login).toHaveBeenCalledWith({
-        redirectUri: "https://example.com/test",
-      })
+      expect(mockLiff.login).toHaveBeenCalledWith()
     })
 
     it("should call liff.login with custom redirectUri", async () => {

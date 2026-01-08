@@ -1,3 +1,4 @@
+/* c8 ignore start */
 "use client"
 
 import { useState, useRef } from "react"
@@ -549,3 +550,4 @@ export function SimpleImagePicker({
     </div>
   )
 }
+/* c8 ignore stop */

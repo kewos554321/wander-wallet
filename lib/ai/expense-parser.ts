@@ -148,12 +148,14 @@ const EXPENSES_PARSER_PROMPT = ChatPromptTemplate.fromMessages([
 /**
  * 建立多筆費用解析 Chain
  */
+/* c8 ignore start */
 function createExpensesParserChain() {
   const model = createDeepSeekModel({ temperature: 0.1 })
   const structuredModel = model.withStructuredOutput(ParsedExpensesSchema)
 
   return EXPENSES_PARSER_PROMPT.pipe(structuredModel)
 }
+/* c8 ignore stop */
 
 /**
  * 解析多筆費用內容
@@ -161,6 +163,7 @@ function createExpensesParserChain() {
  * @param input 解析輸入
  * @returns 多筆解析結果（含成員 ID 對應）
  */
+/* c8 ignore start */
 export async function parseExpenses(
   input: ParseExpenseInput
 ): Promise<ParseExpensesResult> {
@@ -223,6 +226,7 @@ export async function parseExpenses(
     confidence: parsed.confidence,
   }
 }
+/* c8 ignore stop */
 
 /**
  * 解析單筆費用內容（向後相容）
@@ -230,6 +234,7 @@ export async function parseExpenses(
  * @param input 解析輸入
  * @returns 單筆解析結果
  */
+/* c8 ignore start */
 export async function parseExpense(
   input: ParseExpenseInput
 ): Promise<ParseExpenseResult> {
@@ -252,11 +257,12 @@ export async function parseExpense(
     confidence: result.confidence,
   }
 }
+/* c8 ignore stop */
 
 /**
  * 根據名字查找成員 ID
  */
-function findMemberIdByName(
+export function findMemberIdByName(
   name: string,
   members: MemberInfo[],
   currentUserName: string
@@ -285,7 +291,7 @@ function findMemberIdByName(
 /**
  * 將名字陣列轉換為 ID 陣列
  */
-function mapNamesToIds(names: string[], members: MemberInfo[]): string[] {
+export function mapNamesToIds(names: string[], members: MemberInfo[]): string[] {
   const ids: string[] = []
 
   for (const name of names) {

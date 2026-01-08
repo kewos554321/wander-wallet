@@ -8,8 +8,8 @@ import {
 
 describe("Covers Utilities (lib/covers.ts)", () => {
   describe("PRESET_COVERS constant", () => {
-    it("should have 6 preset covers", () => {
-      expect(PRESET_COVERS).toHaveLength(6)
+    it("should have 12 preset covers", () => {
+      expect(PRESET_COVERS).toHaveLength(12)
     })
 
     it("should have id, name, gradient, and emoji for each cover", () => {
@@ -23,6 +23,7 @@ describe("Covers Utilities (lib/covers.ts)", () => {
 
     it("should include expected cover names", () => {
       const names = PRESET_COVERS.map((c) => c.name)
+      expect(names).toContain("經典")
       expect(names).toContain("海灘度假")
       expect(names).toContain("山林探險")
       expect(names).toContain("城市漫遊")
@@ -77,8 +78,8 @@ describe("Covers Utilities (lib/covers.ts)", () => {
     it("should return preset cover for valid id", () => {
       const cover = getPresetCover("1")
       expect(cover).toBeDefined()
-      expect(cover?.name).toBe("海灘度假")
-      expect(cover?.emoji).toBe("🏖️")
+      expect(cover?.name).toBe("經典")
+      expect(cover?.emoji).toBe("logo")
     })
 
     it("should return undefined for invalid id", () => {
@@ -87,11 +88,11 @@ describe("Covers Utilities (lib/covers.ts)", () => {
     })
 
     it("should return correct cover for each id", () => {
-      expect(getPresetCover("2")?.name).toBe("山林探險")
-      expect(getPresetCover("3")?.name).toBe("城市漫遊")
-      expect(getPresetCover("4")?.name).toBe("美食之旅")
-      expect(getPresetCover("5")?.name).toBe("文化巡禮")
-      expect(getPresetCover("6")?.name).toBe("自然風光")
+      expect(getPresetCover("2")?.name).toBe("海灘度假")
+      expect(getPresetCover("3")?.name).toBe("山林探險")
+      expect(getPresetCover("4")?.name).toBe("城市漫遊")
+      expect(getPresetCover("5")?.name).toBe("美食之旅")
+      expect(getPresetCover("6")?.name).toBe("飛行旅程")
     })
   })
 

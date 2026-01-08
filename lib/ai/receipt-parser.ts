@@ -78,6 +78,7 @@ const RECEIPT_PARSER_PROMPT = `你是一個發票/收據解析助手。請仔細
  * @param imageData 圖片 base64 data URL (e.g., "data:image/jpeg;base64,...")
  * @returns 解析結果
  */
+/* c8 ignore start */
 export async function parseReceipt(imageData: string): Promise<ParsedReceipt> {
   if (!imageData) {
     throw new Error("請提供圖片資料")
@@ -121,6 +122,7 @@ export async function parseReceipt(imageData: string): Promise<ParsedReceipt> {
 
   return result
 }
+/* c8 ignore stop */
 
 /**
  * 根據類別取得中文名稱

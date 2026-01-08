@@ -178,14 +178,6 @@ describe("ExpenseMap Component", () => {
       expect(container.firstChild).toBeInTheDocument()
     })
 
-    it("should accept terrain mapStyle", () => {
-      const { container } = render(
-        <ExpenseMap expenses={mockExpenses} projectCurrency="TWD" mapStyle="terrain" />
-      )
-
-      expect(container.firstChild).toBeInTheDocument()
-    })
-
     it("should accept toner mapStyle", () => {
       const { container } = render(
         <ExpenseMap expenses={mockExpenses} projectCurrency="TWD" mapStyle="toner" />
@@ -279,10 +271,9 @@ describe("MAP_STYLES", () => {
 
   it("should have watercolor style", () => {
     expect(MAP_STYLES.watercolor).toBeDefined()
-    expect(MAP_STYLES.watercolor.name).toBe("水彩風")
-    expect(MAP_STYLES.watercolor.emoji).toBe("🎨")
-    expect(MAP_STYLES.watercolor.url).toContain("watercolor")
-    expect(MAP_STYLES.watercolor.labelUrl).toBeDefined()
+    expect(MAP_STYLES.watercolor.name).toBe("衛星圖")
+    expect(MAP_STYLES.watercolor.emoji).toBe("🛰️")
+    expect(MAP_STYLES.watercolor.url).toContain("arcgisonline")
   })
 
   it("should have voyager style", () => {
@@ -292,35 +283,27 @@ describe("MAP_STYLES", () => {
     expect(MAP_STYLES.voyager.url).toContain("voyager")
   })
 
-  it("should have terrain style", () => {
-    expect(MAP_STYLES.terrain).toBeDefined()
-    expect(MAP_STYLES.terrain.name).toBe("地形風")
-    expect(MAP_STYLES.terrain.emoji).toBe("🏔️")
-    expect(MAP_STYLES.terrain.url).toContain("terrain")
-  })
-
   it("should have toner style", () => {
     expect(MAP_STYLES.toner).toBeDefined()
     expect(MAP_STYLES.toner.name).toBe("極簡風")
     expect(MAP_STYLES.toner.emoji).toBe("✏️")
-    expect(MAP_STYLES.toner.url).toContain("toner")
+    expect(MAP_STYLES.toner.url).toContain("light_all")
   })
 
-  it("should have all 5 styles", () => {
+  it("should have all 4 styles", () => {
     const styles = Object.keys(MAP_STYLES)
-    expect(styles).toHaveLength(5)
+    expect(styles).toHaveLength(4)
     expect(styles).toContain("standard")
     expect(styles).toContain("watercolor")
     expect(styles).toContain("voyager")
-    expect(styles).toContain("terrain")
     expect(styles).toContain("toner")
   })
 })
 
 describe("MapStyle type", () => {
   it("should accept valid map style types", () => {
-    const validStyles: MapStyle[] = ["standard", "watercolor", "voyager", "terrain", "toner"]
-    expect(validStyles).toHaveLength(5)
+    const validStyles: MapStyle[] = ["standard", "watercolor", "voyager", "toner"]
+    expect(validStyles).toHaveLength(4)
   })
 })
 

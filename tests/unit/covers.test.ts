@@ -8,8 +8,8 @@ import {
 
 describe("covers utilities", () => {
   describe("PRESET_COVERS", () => {
-    it("should have 6 preset covers", () => {
-      expect(PRESET_COVERS).toHaveLength(6)
+    it("should have 12 preset covers", () => {
+      expect(PRESET_COVERS).toHaveLength(12)
     })
 
     it("each preset should have required properties", () => {
@@ -88,7 +88,7 @@ describe("covers utilities", () => {
       const cover = getPresetCover("1")
       expect(cover).toBeDefined()
       expect(cover?.id).toBe("1")
-      expect(cover?.name).toBe("海灘度假")
+      expect(cover?.name).toBe("經典")
     })
 
     it("should return undefined for invalid id", () => {

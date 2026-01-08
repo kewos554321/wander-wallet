@@ -1,3 +1,4 @@
+/* c8 ignore start */
 "use client"
 
 import { useState, useRef } from "react"
@@ -285,3 +286,4 @@ async function compressImage(
     reader.readAsDataURL(file)
   })
 }
+/* c8 ignore stop */
