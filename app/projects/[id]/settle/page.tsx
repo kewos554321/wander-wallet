@@ -190,8 +190,9 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
   function handleShareLINE() {
     const text = generateShareText()
     const encodedText = encodeURIComponent(text)
-    // 使用 LINE URL scheme 分享文字
-    window.open(`https://social-plugins.line.me/lineit/share?text=${encodedText}`, "_blank")
+    // 使用官方 LINE URL scheme 分享文字
+    // https://developers.line.biz/en/docs/line-login/using-line-url-scheme/
+    window.open(`https://line.me/R/share?text=${encodedText}`, "_blank")
     setShareDialogOpen(false)
   }
 

@@ -146,7 +146,9 @@ export default function HomePage() {
   }
 
   const handleShareLine = () => {
-    const url = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(getShareUrl())}`
+    // 使用官方 LINE URL scheme 分享
+    // https://developers.line.biz/en/docs/line-login/using-line-url-scheme/
+    const url = `https://line.me/R/share?text=${encodeURIComponent(getShareUrl())}`
     window.open(url, "_blank", "width=600,height=500")
   }
 
