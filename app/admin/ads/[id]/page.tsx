@@ -97,8 +97,8 @@ export default function EditAdPage() {
         type: ad.type,
         status: ad.status,
         priority: ad.priority,
-        startDate: ad.startDate ? ad.startDate.split("T")[0] : "",
-        endDate: ad.endDate ? ad.endDate.split("T")[0] : "",
+        startDate: ad.startDate ? ad.startDate.slice(0, 16) : "",
+        endDate: ad.endDate ? ad.endDate.slice(0, 16) : "",
         placements: ad.placements.map((p) => p.placement),
       })
       setStats({
@@ -283,30 +283,30 @@ export default function EditAdPage() {
 
       {/* Stats Card */}
       <Card>
-        <CardHeader>
-          <CardTitle>成效數據</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base sm:text-lg">成效數據</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="text-center p-2 rounded-lg bg-slate-50 dark:bg-slate-800 overflow-hidden">
+          <div className="flex gap-2 sm:gap-3">
+            <div className="flex-1 text-center p-2 sm:p-3 rounded-lg bg-slate-50 dark:bg-slate-800 min-w-0">
               <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                <Eye className="h-3.5 w-3.5 flex-shrink-0" />
-                <span className="text-xs">曝光</span>
+                <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                <span className="text-[10px] sm:text-xs">曝光</span>
               </div>
-              <p className="text-lg font-bold truncate">{stats.totalImpressions.toLocaleString()}</p>
+              <p className="text-base sm:text-xl font-bold tabular-nums">{stats.totalImpressions.toLocaleString()}</p>
             </div>
-            <div className="text-center p-2 rounded-lg bg-slate-50 dark:bg-slate-800 overflow-hidden">
+            <div className="flex-1 text-center p-2 sm:p-3 rounded-lg bg-slate-50 dark:bg-slate-800 min-w-0">
               <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                <MousePointerClick className="h-3.5 w-3.5 flex-shrink-0" />
-                <span className="text-xs">點擊</span>
+                <MousePointerClick className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                <span className="text-[10px] sm:text-xs">點擊</span>
               </div>
-              <p className="text-lg font-bold truncate">{stats.totalClicks.toLocaleString()}</p>
+              <p className="text-base sm:text-xl font-bold tabular-nums">{stats.totalClicks.toLocaleString()}</p>
             </div>
-            <div className="text-center p-2 rounded-lg bg-slate-50 dark:bg-slate-800 overflow-hidden">
-              <div className="text-muted-foreground mb-1">
-                <span className="text-xs">CTR</span>
+            <div className="flex-1 text-center p-2 sm:p-3 rounded-lg bg-slate-50 dark:bg-slate-800 min-w-0">
+              <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                <span className="text-[10px] sm:text-xs">CTR</span>
               </div>
-              <p className="text-lg font-bold truncate">{ctr}%</p>
+              <p className="text-base sm:text-xl font-bold tabular-nums">{ctr}%</p>
             </div>
           </div>
         </CardContent>
@@ -499,43 +499,114 @@ export default function EditAdPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="startDate">開始時間</Label>
-              <div className="flex gap-2">
+              <div className="relative">
                 <Input
                   id="startDate"
                   type="datetime-local"
                   value={formData.startDate}
                   onChange={(e) => updateField("startDate", e.target.value)}
-                  className="flex-1"
+                  className={formData.startDate ? "pr-8" : ""}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const now = new Date()
-                    now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
-                    updateField("startDate", now.toISOString().slice(0, 16))
-                  }}
-                >
-                  現在
-                </Button>
+                {formData.startDate && (
+                  <button
+                    type="button"
+                    onClick={() => updateField("startDate", "")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { label: "現在", days: 0 },
+                  { label: "明天", days: 1 },
+                  { label: "+7天", days: 7 },
+                ].map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => {
+                      const date = new Date()
+                      date.setDate(date.getDate() + preset.days)
+                      date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+                      updateField("startDate", date.toISOString().slice(0, 16))
+                    }}
+                    className="px-2.5 py-1 text-xs rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+                {formData.startDate && (
+                  <button
+                    type="button"
+                    onClick={() => updateField("startDate", "")}
+                    className="px-2.5 py-1 text-xs rounded-full border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+                  >
+                    清除
+                  </button>
+                )}
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="endDate">結束時間</Label>
-              <Input
-                id="endDate"
-                type="datetime-local"
-                value={formData.endDate}
-                onChange={(e) => updateField("endDate", e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  id="endDate"
+                  type="datetime-local"
+                  value={formData.endDate}
+                  onChange={(e) => updateField("endDate", e.target.value)}
+                  className={formData.endDate ? "pr-8" : ""}
+                />
+                {formData.endDate && (
+                  <button
+                    type="button"
+                    onClick={() => updateField("endDate", "")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { label: "+7天", days: 7 },
+                  { label: "+30天", days: 30 },
+                  { label: "+90天", days: 90 },
+                ].map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => {
+                      const date = new Date()
+                      date.setDate(date.getDate() + preset.days)
+                      date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+                      updateField("endDate", date.toISOString().slice(0, 16))
+                    }}
+                    className="px-2.5 py-1 text-xs rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => updateField("endDate", "")}
+                  className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                    !formData.endDate
+                      ? "border-brand-500 bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400"
+                      : "border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  不限
+                </button>
+              </div>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            留空表示不限時間
+            留空或選擇「不限」表示不限時間
           </p>
         </CardContent>
       </Card>

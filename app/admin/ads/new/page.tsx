@@ -342,43 +342,114 @@ export default function NewAdPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="startDate">開始時間</Label>
-              <div className="flex gap-2">
+              <div className="relative">
                 <Input
                   id="startDate"
                   type="datetime-local"
                   value={formData.startDate}
                   onChange={(e) => updateField("startDate", e.target.value)}
-                  className="flex-1"
+                  className={formData.startDate ? "pr-8" : ""}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const now = new Date()
-                    now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
-                    updateField("startDate", now.toISOString().slice(0, 16))
-                  }}
-                >
-                  現在
-                </Button>
+                {formData.startDate && (
+                  <button
+                    type="button"
+                    onClick={() => updateField("startDate", "")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { label: "現在", days: 0 },
+                  { label: "明天", days: 1 },
+                  { label: "+7天", days: 7 },
+                ].map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => {
+                      const date = new Date()
+                      date.setDate(date.getDate() + preset.days)
+                      date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+                      updateField("startDate", date.toISOString().slice(0, 16))
+                    }}
+                    className="px-2.5 py-1 text-xs rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+                {formData.startDate && (
+                  <button
+                    type="button"
+                    onClick={() => updateField("startDate", "")}
+                    className="px-2.5 py-1 text-xs rounded-full border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+                  >
+                    清除
+                  </button>
+                )}
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="endDate">結束時間</Label>
-              <Input
-                id="endDate"
-                type="datetime-local"
-                value={formData.endDate}
-                onChange={(e) => updateField("endDate", e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  id="endDate"
+                  type="datetime-local"
+                  value={formData.endDate}
+                  onChange={(e) => updateField("endDate", e.target.value)}
+                  className={formData.endDate ? "pr-8" : ""}
+                />
+                {formData.endDate && (
+                  <button
+                    type="button"
+                    onClick={() => updateField("endDate", "")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { label: "+7天", days: 7 },
+                  { label: "+30天", days: 30 },
+                  { label: "+90天", days: 90 },
+                ].map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => {
+                      const date = new Date()
+                      date.setDate(date.getDate() + preset.days)
+                      date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+                      updateField("endDate", date.toISOString().slice(0, 16))
+                    }}
+                    className="px-2.5 py-1 text-xs rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => updateField("endDate", "")}
+                  className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                    !formData.endDate
+                      ? "border-brand-500 bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400"
+                      : "border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  不限
+                </button>
+              </div>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            留空表示不限時間
+            留空或選擇「不限」表示不限時間
           </p>
         </CardContent>
       </Card>

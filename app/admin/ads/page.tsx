@@ -143,7 +143,7 @@ export default function AdsListPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {ads.map((ad) => {
             const statusInfo = statusLabels[ad.status] || statusLabels.draft
             const ctr = ad.totalImpressions > 0
@@ -153,48 +153,38 @@ export default function AdsListPage() {
             return (
               <Card
                 key={ad.id}
-                className="overflow-hidden cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                className="overflow-hidden cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors py-0"
                 onClick={() => router.push(`/admin/ads/${ad.id}`)}
               >
-                <CardContent className="p-4">
-                  <div className="flex gap-4">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex gap-3">
                     {/* Preview Image */}
-                    <div className="w-32 h-20 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden flex-shrink-0">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden flex-shrink-0">
                       {ad.imageUrl ? (
                         <Image
                           src={ad.imageUrl}
                           alt={ad.title}
-                          width={128}
-                          height={80}
+                          width={56}
+                          height={56}
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-400">
-                          無圖片
+                        <div className="w-full h-full flex items-center justify-center text-slate-400 text-[10px]">
+                          無圖
                         </div>
                       )}
                     </div>
 
                     {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-semibold truncate">{ad.title}</h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant={statusInfo.variant}>
-                              {statusInfo.label}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {typeLabels[ad.type] || ad.type}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div onClick={(e) => e.stopPropagation()}>
+                    <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
+                      {/* Row 1: Title + Menu */}
+                      <div className="flex items-center justify-between gap-1.5">
+                        <h3 className="font-semibold truncate text-lg sm:text-xl leading-tight">{ad.title}</h3>
+                        <div onClick={(e) => e.stopPropagation()} className="flex-shrink-0 -mr-1.5">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreVertical className="h-4 w-4" />
+                              <Button variant="ghost" size="icon" className="h-6 w-6">
+                                <MoreVertical className="h-3.5 w-3.5" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -227,18 +217,26 @@ export default function AdsListPage() {
                         </div>
                       </div>
 
-                      {/* Stats */}
-                      <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Eye className="h-3.5 w-3.5" />
-                          <span>{ad.totalImpressions.toLocaleString()}</span>
+                      {/* Row 2: Badge + Type + Stats */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant={statusInfo.variant} className="text-[11px] px-1.5 py-0 h-[18px]">
+                            {statusInfo.label}
+                          </Badge>
+                          <span className="text-[11px] text-muted-foreground">
+                            {typeLabels[ad.type] || ad.type}
+                          </span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <MousePointerClick className="h-3.5 w-3.5" />
-                          <span>{ad.totalClicks.toLocaleString()}</span>
-                        </div>
-                        <div>
-                          CTR {ctr}%
+                        <div className="flex items-center gap-2 text-[11px] sm:text-xs text-muted-foreground">
+                          <div className="flex items-center gap-0.5">
+                            <Eye className="h-3 w-3" />
+                            <span>{ad.totalImpressions.toLocaleString()}</span>
+                          </div>
+                          <div className="flex items-center gap-0.5">
+                            <MousePointerClick className="h-3 w-3" />
+                            <span>{ad.totalClicks.toLocaleString()}</span>
+                          </div>
+                          <span>{ctr}%</span>
                         </div>
                       </div>
                     </div>

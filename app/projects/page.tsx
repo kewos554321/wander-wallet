@@ -84,7 +84,7 @@ export default function ProjectsPage() {
       <div className="space-y-3 pb-20">
         {/* 頂部橫幅廣告 */}
         <AdContainer
-          placement="home"
+          placement="project-list"
           variant="banner"
         />
 
