@@ -28,6 +28,7 @@ import {
   History
 } from "lucide-react"
 import Link from "next/link"
+import { ModeToggle } from "@/components/system/mode-toggle"
 
 // LINE icon component
 function LineIcon({ className }: { className?: string }) {
@@ -190,6 +191,7 @@ export default function HomePage() {
                 FAQ
               </Button>
             </a>
+            <ModeToggle />
           </div>
         </div>
       </nav>
