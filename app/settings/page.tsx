@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import type { CurrencyCode } from "@/lib/constants/currencies"
 import type { UserPreferences } from "@/types/user-preferences"
-import { DEFAULT_PREFERENCES, mergePreferences } from "@/types/user-preferences"
+import { mergePreferences } from "@/types/user-preferences"
 
 export default function SettingsPage() {
   const [themeExpanded, setThemeExpanded] = useState(false)
