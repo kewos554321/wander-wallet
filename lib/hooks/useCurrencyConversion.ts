@@ -24,6 +24,8 @@ interface UseCurrencyConversionReturn {
   loading: boolean
   /** 是否使用備用匯率 */
   usingFallback: boolean
+  /** 匯率更新時間戳記 */
+  ratesTimestamp: number | null
   /** 重新取得匯率 */
   refetch: () => Promise<void>
 }
@@ -46,6 +48,7 @@ export function useCurrencyConversion(
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates | null>(null)
   const [loading, setLoading] = useState(false)
   const [usingFallback, setUsingFallback] = useState(false)
+  const [ratesTimestamp, setRatesTimestamp] = useState<number | null>(null)
 
   // 取得匯率
   const fetchRates = useCallback(async () => {
@@ -56,6 +59,7 @@ export function useCurrencyConversion(
         const data = await res.json()
         setExchangeRates(data.rates)
         setUsingFallback(data.usingFallback || false)
+        setRatesTimestamp(data.timestamp || null)
       }
     } catch (error) {
       console.error("取得匯率失敗:", error)
@@ -109,6 +113,7 @@ export function useCurrencyConversion(
     exchangeRates,
     loading,
     usingFallback,
+    ratesTimestamp,
     refetch: fetchRates,
   }
 }

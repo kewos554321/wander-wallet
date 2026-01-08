@@ -30,8 +30,30 @@ interface RatesData {
   base: string
   rates: Record<string, number>
   date: string
+  timestamp?: number
   isHistorical?: boolean
   usingFallback?: boolean
+}
+
+// 格式化相對時間
+function formatRelativeTime(timestamp: number): string {
+  const now = Date.now()
+  const diff = now - timestamp
+  const minutes = Math.floor(diff / (1000 * 60))
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+  if (minutes < 1) return "剛剛"
+  if (minutes < 60) return `${minutes} 分鐘前`
+  if (hours < 24) return `${hours} 小時前`
+  return `${days} 天前`
+}
+
+// 檢查匯率是否過舊（超過 24 小時）
+function isRatesStale(timestamp: number): boolean {
+  const now = Date.now()
+  const diff = now - timestamp
+  return diff > 24 * 60 * 60 * 1000 // 24 hours
 }
 
 interface Project {
@@ -265,17 +287,13 @@ export default function CurrencyPage({ params }: { params: Promise<{ id: string 
               <div className="pt-2 border-t text-sm text-muted-foreground">
                 <div className="flex items-center justify-between">
                   <span>匯率：1 {fromCurrency} = {formatRate(getRate(fromCurrency, toCurrency, rates) || 0)} {toCurrency}</span>
-                  <span className="text-xs flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {rates.date}
-                  </span>
+                  {rates.timestamp && (
+                    <span className={`text-xs flex items-center gap-1 ${isRatesStale(rates.timestamp) ? "text-amber-600" : ""}`}>
+                      <Clock className="h-3 w-3" />
+                      更新於 {formatRelativeTime(rates.timestamp)}
+                    </span>
+                  )}
                 </div>
-                {rates.usingFallback && (
-                  <div className="flex items-center gap-1 text-amber-600 mt-1">
-                    <AlertCircle className="h-3 w-3" />
-                    <span className="text-xs">使用備用匯率</span>
-                  </div>
-                )}
               </div>
             )}
           </CardContent>
@@ -347,15 +365,15 @@ export default function CurrencyPage({ params }: { params: Promise<{ id: string 
               </div>
             </div>
             <CardDescription>
-              基準：{projectCurrency} | {rates?.date || "-"}
+              基準：{projectCurrency} | 更新於 {rates?.timestamp ? formatRelativeTime(rates.timestamp) : "-"}
             </CardDescription>
           </CardHeader>
           {showRates && (
             <CardContent className="pt-0">
-              {rates?.usingFallback && (
+              {rates?.timestamp && isRatesStale(rates.timestamp) && (
                 <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950 rounded-lg text-sm text-amber-700 dark:text-amber-300 flex items-center gap-2">
                   <AlertCircle className="h-4 w-4" />
-                  無法取得即時匯率，顯示備用資料
+                  匯率資料已超過 24 小時未更新
                 </div>
               )}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
