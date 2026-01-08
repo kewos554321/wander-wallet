@@ -5,7 +5,16 @@ import Image from "next/image"
 import { useLiff, useAuthFetch } from "@/components/auth/liff-provider"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent } from "@/components/ui/card"
-import { User, Mail, Calendar, Pencil } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { User, Mail, Calendar, Pencil, LogOut } from "lucide-react"
 import {
   AvatarPicker,
   AvatarDisplay,
@@ -14,10 +23,11 @@ import {
 } from "@/components/avatar-picker"
 
 export default function SettingsProfilePage() {
-  const { user, refreshSession } = useLiff()
+  const { user, refreshSession, logout } = useLiff()
   const authFetch = useAuthFetch()
   const [pickerOpen, setPickerOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
 
   const avatarData = parseAvatarString(user?.image)
 
@@ -52,6 +62,10 @@ export default function SettingsProfilePage() {
     user?.image &&
     !user.image.startsWith("avatar:") &&
     !user.image.startsWith("data:")
+
+  async function handleLogout() {
+    await logout()
+  }
 
   return (
     <AppLayout title="個人資料" showBack>
@@ -124,7 +138,45 @@ export default function SettingsProfilePage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* 登出 */}
+        <div className="pt-4">
+          <Button
+            variant="destructive"
+            onClick={() => setLogoutDialogOpen(true)}
+            className="w-full"
+          >
+            <LogOut className="size-4" />
+            登出
+          </Button>
+        </div>
       </div>
+
+      {/* 登出確認對話框 */}
+      <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>確認登出</DialogTitle>
+            <DialogDescription>
+              確定要登出嗎？登出後需要重新登入才能使用應用程式。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setLogoutDialogOpen(false)}
+            >
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleLogout}
+            >
+              確認登出
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 頭像選擇器 */}
       <AvatarPicker

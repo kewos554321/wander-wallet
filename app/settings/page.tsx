@@ -1,22 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { AppLayout } from "@/components/layout/app-layout"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { useLiff, useAuthFetch } from "@/components/auth/liff-provider"
 import { useTheme } from "@/components/system/theme-provider"
-import { LogOut, ChevronRight, ChevronDown, Sun, Moon, Monitor, User, Wallet, Bell, Loader2, MessageCircle, ExternalLink, BookOpen } from "lucide-react"
+import { ChevronRight, ChevronDown, Sun, Moon, Monitor, User, Wallet, Bell, Loader2, MessageCircle, ExternalLink, BookOpen } from "lucide-react"
 import { AvatarDisplay, parseAvatarString } from "@/components/avatar-picker"
 import { CurrencySelect } from "@/components/ui/currency-select"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -26,12 +17,11 @@ import type { UserPreferences } from "@/types/user-preferences"
 import { DEFAULT_PREFERENCES, mergePreferences } from "@/types/user-preferences"
 
 export default function SettingsPage() {
-  const [open, setOpen] = useState(false)
   const [themeExpanded, setThemeExpanded] = useState(false)
   const [expenseExpanded, setExpenseExpanded] = useState(false)
   const [notificationExpanded, setNotificationExpanded] = useState(false)
   const [saving, setSaving] = useState(false)
-  const { user, logout, updatePreferences } = useLiff()
+  const { user, updatePreferences } = useLiff()
   const authFetch = useAuthFetch()
   const isCustomAvatar = parseAvatarString(user?.image) !== null
   const { theme, setTheme } = useTheme()
@@ -78,10 +68,6 @@ export default function SettingsPage() {
       notifications: { ...preferences.notifications, [key]: value },
     }
     savePreferences(newPrefs)
-  }
-
-  async function handleLogout() {
-    await logout()
   }
 
   const themeOptions = [
@@ -298,17 +284,14 @@ export default function SettingsPage() {
           className="cursor-pointer hover:bg-accent/50 transition-colors"
           onClick={() => window.open("/", "_blank")}
         >
-          <CardContent className="flex items-center gap-4">
-            <div className="size-10 rounded-full bg-brand-100 dark:bg-brand-500/20 flex items-center justify-center">
-              <BookOpen className="size-5 text-brand-600 dark:text-brand-400" />
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BookOpen className="size-4 text-muted-foreground" />
+                <span className="font-medium">功能介紹</span>
+              </div>
+              <ExternalLink className="size-4 text-muted-foreground" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium">功能介紹</p>
-              <p className="text-sm text-muted-foreground">
-                了解 Wander Wallet 的功能與使用方式
-              </p>
-            </div>
-            <ExternalLink className="size-5 text-muted-foreground" />
           </CardContent>
         </Card>
 
@@ -317,57 +300,17 @@ export default function SettingsPage() {
           className="cursor-pointer hover:bg-accent/50 transition-colors"
           onClick={() => window.open("https://line.me/R/ti/p/@386mbqva", "_blank")}
         >
-          <CardContent className="flex items-center gap-4">
-            <div className="size-10 rounded-full bg-[#06C755] flex items-center justify-center">
-              <MessageCircle className="size-5 text-white" />
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="size-4 text-muted-foreground" />
+                <span className="font-medium">意見回饋</span>
+              </div>
+              <ExternalLink className="size-4 text-muted-foreground" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium">意見回饋</p>
-              <p className="text-sm text-muted-foreground">
-                Bug 回報、功能建議、問題諮詢
-              </p>
-            </div>
-            <ExternalLink className="size-5 text-muted-foreground" />
           </CardContent>
         </Card>
-
-        {/* 登出 */}
-        <div className="pt-4">
-          <Button
-            variant="destructive"
-            onClick={() => setOpen(true)}
-            className="w-full"
-          >
-            <LogOut className="size-4" />
-            登出
-          </Button>
-        </div>
       </div>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>確認登出</DialogTitle>
-            <DialogDescription>
-              確定要登出嗎？登出後需要重新登入才能使用應用程式。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setOpen(false)}
-            >
-              取消
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleLogout}
-            >
-              確認登出
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </AppLayout>
   )
 }
