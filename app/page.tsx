@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Users,
@@ -9,6 +9,7 @@ import {
   Camera,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   Wallet,
   Sparkles,
   HelpCircle,
@@ -18,7 +19,13 @@ import {
   Megaphone,
   Heart,
   Coffee,
-  ExternalLink
+  ExternalLink,
+  Mic,
+  BarChart3,
+  Share2,
+  FileDown,
+  MapPin,
+  History
 } from "lucide-react"
 import Link from "next/link"
 
@@ -110,6 +117,19 @@ const faqs = [
 
 export default function HomePage() {
   const [copied, setCopied] = useState(false)
+  const [showScrollTop, setShowScrollTop] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300)
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
 
   const getShareUrl = () => typeof window !== "undefined" ? window.location.origin : ""
   const shareTitle = "Wander Wallet - 旅行分帳神器"
@@ -233,6 +253,36 @@ export default function HomePage() {
               icon={<Camera className="w-6 h-6" />}
               title="AI 發票辨識"
               description="拍照上傳發票，自動填入金額與品項"
+            />
+            <FeatureCard
+              icon={<Mic className="w-6 h-6" />}
+              title="語音快速記帳"
+              description="說出消費內容，AI 自動解析並填入"
+            />
+            <FeatureCard
+              icon={<BarChart3 className="w-6 h-6" />}
+              title="消費統計"
+              description="圖表分析支出分佈，掌握花費狀況"
+            />
+            <FeatureCard
+              icon={<Share2 className="w-6 h-6" />}
+              title="一鍵分享"
+              description="產生專案邀請連結，快速邀請好友加入"
+            />
+            <FeatureCard
+              icon={<FileDown className="w-6 h-6" />}
+              title="匯出報表"
+              description="支援 CSV、PDF 格式匯出，方便存檔"
+            />
+            <FeatureCard
+              icon={<MapPin className="w-6 h-6" />}
+              title="消費地圖"
+              description="記錄消費地點，回顧旅程足跡"
+            />
+            <FeatureCard
+              icon={<History className="w-6 h-6" />}
+              title="歷史紀錄"
+              description="完整操作紀錄，隨時查閱變更歷史"
             />
           </div>
         </div>
@@ -476,6 +526,17 @@ export default function HomePage() {
           <p className="mt-1">專為 LINE 用戶打造的旅行分帳工具</p>
         </div>
       </footer>
+
+      {/* Scroll to Top Button */}
+      <button
+        onClick={scrollToTop}
+        className={`fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-brand-500 text-white shadow-lg shadow-brand-500/25 flex items-center justify-center transition-all duration-300 hover:bg-brand-600 active:scale-95 ${
+          showScrollTop ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+        }`}
+        aria-label="回到最上面"
+      >
+        <ChevronUp className="w-6 h-6" />
+      </button>
     </div>
   )
 }
