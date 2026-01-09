@@ -853,7 +853,7 @@ export default function SettlePage({ params }: { params: Promise<{ id: string }>
                 variant="outline"
                 size="sm"
                 className="border-[#FFDD00] text-[#946C00] dark:text-[#FFDD00] hover:bg-[#FFDD00]/10"
-                onClick={() => window.open("https://buymeacoffee.com/your-username", "_blank")}
+                onClick={() => window.open("https://buymeacoffee.com/kewos55432m", "_blank")}
               >
                 <Coffee className="w-4 h-4 mr-2" />
                 Buy Me a Coffee
