@@ -19,7 +19,6 @@ import {
   Megaphone,
   Heart,
   Coffee,
-  ExternalLink,
   Mic,
   BarChart3,
   Share2,
@@ -29,6 +28,12 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { ModeToggle } from "@/components/system/mode-toggle"
+import {
+  OrganizationJsonLd,
+  WebApplicationJsonLd,
+  FaqJsonLd,
+  HowToJsonLd
+} from "@/components/seo/json-ld"
 
 // LINE icon component
 function LineIcon({ className }: { className?: string }) {
@@ -170,34 +175,44 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
-        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center">
-              <Wallet className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-semibold text-foreground">Wander Wallet</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <a href="#features">
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
-                功能
-              </Button>
-            </a>
-            <a href="#faq">
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
-                FAQ
-              </Button>
-            </a>
-            <ModeToggle />
-          </div>
-        </div>
-      </nav>
+    <>
+      {/* SEO Structured Data */}
+      <OrganizationJsonLd />
+      <WebApplicationJsonLd />
+      <FaqJsonLd faqs={faqs} />
+      <HowToJsonLd />
 
+      <div className="min-h-screen bg-background">
+      {/* Navigation */}
+      <header>
+        <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b" aria-label="主要導覽">
+          <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center" aria-hidden="true">
+                <Wallet className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-semibold text-foreground">Wander Wallet</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <a href="#features" aria-label="查看功能介紹">
+                <Button variant="ghost" size="sm" className="text-muted-foreground">
+                  功能
+                </Button>
+              </a>
+              <a href="#faq" aria-label="查看常見問題">
+                <Button variant="ghost" size="sm" className="text-muted-foreground">
+                  FAQ
+                </Button>
+              </a>
+              <ModeToggle />
+            </div>
+          </div>
+        </nav>
+      </header>
+
+      <main>
       {/* Hero Section */}
-      <section className="relative overflow-hidden px-6 pt-8 pb-16 bg-gradient-to-b from-brand-50 to-background">
+      <section className="relative overflow-hidden px-6 pt-8 pb-16 bg-gradient-to-b from-brand-50 to-background" aria-labelledby="hero-title">
         {/* Background decoration */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-brand-200/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-brand-300/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
@@ -209,12 +224,12 @@ export default function HomePage() {
           </div>
 
           <div className="space-y-3">
-            <h1 className="text-3xl font-bold text-foreground">
-              Wander Wallet
+            <h1 id="hero-title" className="text-3xl font-bold text-foreground">
+              Wander Wallet - 旅遊分帳神器
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              旅行分帳神器<br />
-              <span className="text-brand-600 font-medium">在 LINE 群組中輕鬆管理共同支出</span>
+              免費、簡單、好用的分帳工具<br />
+              <span className="text-brand-600 font-medium">在 LINE 群組中輕鬆管理旅行共同支出</span>
             </p>
           </div>
 
@@ -231,10 +246,10 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="scroll-mt-14 px-6 py-12 bg-background">
+      <section id="features" className="scroll-mt-14 px-6 py-12 bg-background" aria-labelledby="features-title">
         <div className="max-w-lg mx-auto space-y-8">
-          <h2 className="text-xl font-bold text-center text-foreground">
-            主要功能
+          <h2 id="features-title" className="text-xl font-bold text-center text-foreground">
+            Wander Wallet 主要功能 - 10 大旅遊分帳必備功能
           </h2>
 
           <div className="grid gap-4">
@@ -325,16 +340,16 @@ export default function HomePage() {
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="scroll-mt-14 px-6 py-12 bg-background">
+      <section id="faq" className="scroll-mt-14 px-6 py-12 bg-background" aria-labelledby="faq-title">
         <div className="max-w-lg mx-auto space-y-8">
           <div className="text-center space-y-3">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-100">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-100" aria-hidden="true">
               <HelpCircle className="w-7 h-7 text-brand-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">常見問題</h2>
+              <h2 id="faq-title" className="text-xl font-bold text-foreground">Wander Wallet 常見問題 FAQ</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                這裡整理了最常被問到的問題
+                旅遊分帳、群組記帳的常見問題解答
               </p>
             </div>
           </div>
@@ -523,11 +538,18 @@ export default function HomePage() {
         </div>
       </section>
 
+      </main>
+
       {/* Footer */}
-      <footer className="px-6 py-8 border-t bg-background">
-        <div className="max-w-lg mx-auto text-center text-sm text-muted-foreground">
-          <p>Wander Wallet © 2025</p>
-          <p className="mt-1">專為 LINE 用戶打造的旅行分帳工具</p>
+      <footer className="px-6 py-8 border-t bg-background" role="contentinfo">
+        <div className="max-w-lg mx-auto text-center text-sm text-muted-foreground space-y-2">
+          <p>
+            <strong>Wander Wallet</strong> - 免費旅遊分帳 App
+          </p>
+          <p>專為 LINE 用戶打造的群組分帳工具</p>
+          <p className="text-xs">
+            © {new Date().getFullYear()} Wander Wallet. All rights reserved.
+          </p>
         </div>
       </footer>
 
@@ -542,6 +564,7 @@ export default function HomePage() {
         <ChevronUp className="w-6 h-6" />
       </button>
     </div>
+    </>
   )
 }
 
