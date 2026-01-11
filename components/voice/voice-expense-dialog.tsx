@@ -95,19 +95,6 @@ export function VoiceExpenseDialog({
 
   // 決定使用哪個語音引擎：Web Speech API 優先，iOS LIFF 用 MediaRecorder
   const useMediaRecorder = !webSpeech.isSupported && mediaRecorder.isSupported
-  
-  // 統一介面
-  const speech = useMediaRecorder ? {
-    isSupported: mediaRecorder.isSupported,
-    isRecording: mediaRecorder.isRecording,
-    transcript: "",
-    interimTranscript: "",
-    error: mediaRecorder.error,
-    platform: webSpeech.platform,
-    supportStatus: webSpeech.supportStatus,
-  } : {
-    ...webSpeech,
-  }
 
   // 獲取用戶偏好設定
   const userPreferences = mergePreferences(user?.preferences)
@@ -316,11 +303,11 @@ export function VoiceExpenseDialog({
   const [recordedTranscript, setRecordedTranscript] = useState("")
 
   // 取得完整輸入文字（文字輸入 + 語音）
-  const fullTranscript = textInput + recordedTranscript + speech.transcript + speech.interimTranscript
+  const fullTranscript = textInput + recordedTranscript + webSpeech.transcript + webSpeech.interimTranscript
 
   // 送出解析
   async function handleParse() {
-    const transcript = (textInput + speech.transcript).trim()
+    const transcript = (textInput + recordedTranscript + webSpeech.transcript).trim()
     if (!transcript) {
       setError("請輸入或說出消費內容")
       return
@@ -801,7 +788,7 @@ export function VoiceExpenseDialog({
 
   // 切換錄音
   function toggleRecording() {
-    if (speech.isRecording) {
+    if (webSpeech.isRecording || mediaRecorder.isRecording) {
       if (useMediaRecorder) {
         mediaRecorder.stopRecording()
       } else {
@@ -865,7 +852,8 @@ export function VoiceExpenseDialog({
                   type="button"
                   onClick={() => {
                     setTextInput(item.value)
-                    speech.resetTranscript()
+                    setRecordedTranscript("")
+                    webSpeech.resetTranscript()
                   }}
                   className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-primary-foreground rounded transition-colors"
                 >
@@ -882,7 +870,8 @@ export function VoiceExpenseDialog({
                 value={fullTranscript}
                 onChange={(e) => {
                   setTextInput(e.target.value)
-                  speech.resetTranscript()
+                  setRecordedTranscript("")
+                  webSpeech.resetTranscript()
                 }}
                 className="min-h-[100px] resize-none pr-8"
               />
@@ -891,7 +880,8 @@ export function VoiceExpenseDialog({
                   type="button"
                   onClick={() => {
                     setTextInput("")
-                    speech.resetTranscript()
+                    setRecordedTranscript("")
+                    webSpeech.resetTranscript()
                   }}
                   className="absolute top-2 right-2 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
@@ -910,18 +900,18 @@ export function VoiceExpenseDialog({
                 </div>
               )}
 
-              {speech.isSupported ? (
+              {webSpeech.isSupported || mediaRecorder.isSupported ? (
                 // 支援語音輸入 - 水平排列
                 <div className="flex items-center justify-center gap-3">
                   <Button
                     type="button"
-                    variant={speech.isRecording ? "destructive" : "outline"}
+                    variant={(webSpeech.isRecording || mediaRecorder.isRecording) ? "destructive" : "outline"}
                     size="lg"
                     className="gap-2"
                     onClick={toggleRecording}
                     disabled={isTranscribing}
                   >
-                    {speech.isRecording ? (
+                    {(webSpeech.isRecording || mediaRecorder.isRecording) ? (
                       <>
                         <MicOff className="h-5 w-5" />
                         停止錄音
@@ -943,7 +933,7 @@ export function VoiceExpenseDialog({
                     AI 解析
                   </Button>
                 </div>
-              ) : speech.platform.isIOS && (speech.platform.isLIFF || speech.platform.isWKWebView) ? (
+              ) : webSpeech.platform.isIOS && (webSpeech.platform.isLIFF || webSpeech.platform.isWKWebView) ? (
                 // iOS LIFF/WKWebView - 垂直排列，提供複製連結
                 <div className="flex flex-col items-center gap-2 w-full">
                   <p className="text-xs text-muted-foreground text-center">
@@ -983,7 +973,7 @@ export function VoiceExpenseDialog({
                 // 其他不支援的情況
                 <div className="flex flex-col items-center gap-2 w-full">
                   <p className="text-sm text-muted-foreground">
-                    {speech.platform.isIOS ? "請使用鍵盤上的 🎤 語音輸入" : "您的瀏覽器不支援語音輸入"}
+                    {webSpeech.platform.isIOS ? "請使用鍵盤上的 🎤 語音輸入" : "您的瀏覽器不支援語音輸入"}
                   </p>
                   <Button
                     type="button"
@@ -1060,7 +1050,7 @@ export function VoiceExpenseDialog({
             )}
 
             {/* 錄音中動畫 */}
-            {speech.isRecording && (
+            {(webSpeech.isRecording || mediaRecorder.isRecording) && (
               <div className="flex flex-col items-center gap-1">
                 <div className="flex items-center justify-center gap-2 text-destructive">
                   <span className="relative flex h-3 w-3">
@@ -1070,19 +1060,19 @@ export function VoiceExpenseDialog({
                   <span className="text-sm">錄音中...</span>
                 </div>
                 {/* iOS Safari 提示：說完會自動停止 */}
-                {!useMediaRecorder && speech.platform.isIOS && speech.supportStatus.reason === "ios-safari" && (
+                {!useMediaRecorder && webSpeech.platform.isIOS && webSpeech.supportStatus.reason === "ios-safari" && (
                   <span className="text-xs text-muted-foreground">說完後會自動停止</span>
                 )}
               </div>
             )}
 
             {/* 錯誤訊息與 Debug 區塊 */}
-            {(error || speech.error) && (
+            {(error || webSpeech.error || mediaRecorder.error) && (
               <div className="rounded-lg border border-destructive/50 bg-destructive/5 overflow-hidden">
                 {/* 錯誤摘要 */}
                 <div className="px-3 py-2 flex items-center justify-between gap-2">
                   <p className="text-sm text-destructive flex-1">
-                    {error || speech.error}
+                    {error || webSpeech.error || mediaRecorder.error}
                   </p>
                   {/* Debug 展開按鈕 - 僅開發環境顯示 */}
                   {process.env.NODE_ENV === "development" && debugInfo && (
