@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useSpeechRecognition } from "@/lib/speech"
+import { useMediaRecorderSpeech } from "@/lib/media-recorder-speech"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { sendExpenseNotificationToChat, sendBatchExpenseNotificationToChat } from "@/lib/liff"
 import { mergePreferences } from "@/types/user-preferences"
@@ -88,8 +89,25 @@ export function VoiceExpenseDialog({
   currency = DEFAULT_CURRENCY,
 }: VoiceExpenseDialogProps) {
   const authFetch = useAuthFetch()
-  const speech = useSpeechRecognition()
+  const webSpeech = useSpeechRecognition()
+  const mediaRecorder = useMediaRecorderSpeech()
   const { isDevMode, canSendMessages, user } = useLiff()
+
+  // 決定使用哪個語音引擎：Web Speech API 優先，iOS LIFF 用 MediaRecorder
+  const useMediaRecorder = !webSpeech.isSupported && mediaRecorder.isSupported
+  
+  // 統一介面
+  const speech = useMediaRecorder ? {
+    isSupported: mediaRecorder.isSupported,
+    isRecording: mediaRecorder.isRecording,
+    transcript: "",
+    interimTranscript: "",
+    error: mediaRecorder.error,
+    platform: webSpeech.platform,
+    supportStatus: webSpeech.supportStatus,
+  } : {
+    ...webSpeech,
+  }
 
   // 獲取用戶偏好設定
   const userPreferences = mergePreferences(user?.preferences)
@@ -141,6 +159,8 @@ export function VoiceExpenseDialog({
   function resetState() {
     setStep("input")
     setTextInput("")
+    setRecordedTranscript("")
+    setIsTranscribing(false)
     setError(null)
     setDebugInfo(null)
     setDebugExpanded(false)
@@ -150,7 +170,8 @@ export function VoiceExpenseDialog({
     setSaveProgress({ current: 0, total: 0 })
     setExpenseExtras({})
     setNotifyLine(true)
-    speech.resetTranscript()
+    if (webSpeech.resetTranscript) webSpeech.resetTranscript()
+    if (mediaRecorder.reset) mediaRecorder.reset()
     // 清除輸入圖片
     if (inputImage.preview) {
       URL.revokeObjectURL(inputImage.preview)
@@ -290,8 +311,12 @@ export function VoiceExpenseDialog({
     }))
   }
 
+  // MediaRecorder 轉文字中狀態
+  const [isTranscribing, setIsTranscribing] = useState(false)
+  const [recordedTranscript, setRecordedTranscript] = useState("")
+
   // 取得完整輸入文字（文字輸入 + 語音）
-  const fullTranscript = textInput + speech.transcript + speech.interimTranscript
+  const fullTranscript = textInput + recordedTranscript + speech.transcript + speech.interimTranscript
 
   // 送出解析
   async function handleParse() {
@@ -737,12 +762,57 @@ export function VoiceExpenseDialog({
     }
   }
 
+  // 當 MediaRecorder 錄音完成時，自動轉文字
+  useEffect(() => {
+    if (useMediaRecorder && mediaRecorder.audioBlob && !isTranscribing) {
+      handleTranscribe(mediaRecorder.audioBlob)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mediaRecorder.audioBlob, useMediaRecorder])
+
+  // 將錄音轉成文字
+  async function handleTranscribe(audioBlob: Blob) {
+    setIsTranscribing(true)
+    setError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append("file", audioBlob, "audio.webm")
+
+      const res = await authFetch("/api/voice/transcribe", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || "轉換失敗")
+      }
+
+      setRecordedTranscript(prev => prev + data.text)
+      mediaRecorder.reset()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "語音轉文字失敗")
+    } finally {
+      setIsTranscribing(false)
+    }
+  }
+
   // 切換錄音
   function toggleRecording() {
     if (speech.isRecording) {
-      speech.stopRecording()
+      if (useMediaRecorder) {
+        mediaRecorder.stopRecording()
+      } else {
+        webSpeech.stopRecording()
+      }
     } else {
-      speech.startRecording()
+      if (useMediaRecorder) {
+        mediaRecorder.startRecording()
+      } else {
+        webSpeech.startRecording()
+      }
     }
   }
 
@@ -831,42 +901,101 @@ export function VoiceExpenseDialog({
             </div>
 
             {/* 語音按鈕 */}
-            <div className="flex items-center justify-center gap-4">
-              {speech.isSupported ? (
-                <Button
-                  type="button"
-                  variant={speech.isRecording ? "destructive" : "outline"}
-                  size="lg"
-                  className="gap-2"
-                  onClick={toggleRecording}
-                >
-                  {speech.isRecording ? (
-                    <>
-                      <MicOff className="h-5 w-5" />
-                      停止錄音
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="h-5 w-5" />
-                      語音輸入
-                    </>
-                  )}
-                </Button>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  您的瀏覽器不支援語音輸入
-                </p>
+            <div className="flex flex-col items-center gap-3">
+              {/* 轉文字中提示 */}
+              {isTranscribing && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>AI 轉文字中...</span>
+                </div>
               )}
 
-              <Button
-                type="button"
-                onClick={handleParse}
-                disabled={!fullTranscript.trim()}
-                className="gap-2"
-              >
-                <Sparkles className="h-4 w-4" />
-                AI 解析
-              </Button>
+              {speech.isSupported ? (
+                // 支援語音輸入 - 水平排列
+                <div className="flex items-center justify-center gap-3">
+                  <Button
+                    type="button"
+                    variant={speech.isRecording ? "destructive" : "outline"}
+                    size="lg"
+                    className="gap-2"
+                    onClick={toggleRecording}
+                    disabled={isTranscribing}
+                  >
+                    {speech.isRecording ? (
+                      <>
+                        <MicOff className="h-5 w-5" />
+                        停止錄音
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="h-5 w-5" />
+                        語音輸入
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleParse}
+                    disabled={!fullTranscript.trim()}
+                    className="gap-2"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    AI 解析
+                  </Button>
+                </div>
+              ) : speech.platform.isIOS && (speech.platform.isLIFF || speech.platform.isWKWebView) ? (
+                // iOS LIFF/WKWebView - 垂直排列，提供複製連結
+                <div className="flex flex-col items-center gap-2 w-full">
+                  <p className="text-xs text-muted-foreground text-center">
+                    LINE 內無法使用語音，請在 Safari 開啟
+                  </p>
+                  <div className="flex items-center gap-2 w-full">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1 gap-2 text-xs"
+                      onClick={async () => {
+                        // 複製連結到剪貼簿
+                        try {
+                          await navigator.clipboard.writeText(window.location.href)
+                          alert("已複製連結，請在 Safari 中貼上開啟")
+                        } catch {
+                          // fallback: 顯示連結讓用戶手動複製
+                          prompt("請複製此連結並在 Safari 中開啟：", window.location.href)
+                        }
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                      複製連結
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleParse}
+                      disabled={!fullTranscript.trim()}
+                      className="flex-1 gap-2"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      AI 解析
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                // 其他不支援的情況
+                <div className="flex flex-col items-center gap-2 w-full">
+                  <p className="text-sm text-muted-foreground">
+                    {speech.platform.isIOS ? "請使用鍵盤上的 🎤 語音輸入" : "您的瀏覽器不支援語音輸入"}
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={handleParse}
+                    disabled={!fullTranscript.trim()}
+                    className="gap-2"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    AI 解析
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* 分隔線 */}
@@ -932,12 +1061,18 @@ export function VoiceExpenseDialog({
 
             {/* 錄音中動畫 */}
             {speech.isRecording && (
-              <div className="flex items-center justify-center gap-2 text-destructive">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive"></span>
-                </span>
-                <span className="text-sm">錄音中...</span>
+              <div className="flex flex-col items-center gap-1">
+                <div className="flex items-center justify-center gap-2 text-destructive">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive"></span>
+                  </span>
+                  <span className="text-sm">錄音中...</span>
+                </div>
+                {/* iOS Safari 提示：說完會自動停止 */}
+                {!useMediaRecorder && speech.platform.isIOS && speech.supportStatus.reason === "ios-safari" && (
+                  <span className="text-xs text-muted-foreground">說完後會自動停止</span>
+                )}
               </div>
             )}
 

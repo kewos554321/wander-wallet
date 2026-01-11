@@ -33,14 +33,73 @@ declare global {
   }
 }
 
+// 型別定義
+export type SupportReason = "ssr" | "wkwebview" | "no-api" | "ios-safari" | "full"
+
+export interface SpeechSupportStatus {
+  supported: boolean
+  reason: SupportReason
+}
+
+// 平台偵測
+export function detectPlatform() {
+  if (typeof window === "undefined") {
+    return { isIOS: false, isAndroid: false, isWKWebView: false, isLIFF: false }
+  }
+
+  const ua = navigator.userAgent
+
+  // iOS 偵測
+  const isIOS = /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+
+  // Android 偵測
+  const isAndroid = /Android/.test(ua)
+
+  // WKWebView 偵測 (LINE, Facebook 等 in-app browser)
+  const isWKWebView = isIOS && (
+    /FBAN|FBAV|Line|Instagram|Twitter/.test(ua) ||
+    // standalone PWA 也用 WKWebView
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true ||
+    // 檢查是否缺少 Safari 特徵但是 iOS
+    (!/Safari/.test(ua) && /AppleWebKit/.test(ua))
+  )
+
+  // LIFF 環境偵測
+  const isLIFF = /Line/.test(ua) || typeof window !== "undefined" && "liff" in window
+
+  return { isIOS, isAndroid, isWKWebView, isLIFF }
+}
+
 // 檢查瀏覽器是否支援語音辨識
-function checkSpeechRecognitionSupport() {
-  if (typeof window === "undefined") return false
-  return !!(window.SpeechRecognition || window.webkitSpeechRecognition)
+function checkSpeechRecognitionSupport(): SpeechSupportStatus {
+  if (typeof window === "undefined") return { supported: false, reason: "ssr" as const }
+
+  const { isIOS, isWKWebView, isLIFF } = detectPlatform()
+
+  // WKWebView (LINE, FB 等) 不支援 Web Speech API
+  if (isWKWebView || isLIFF) {
+    return { supported: false, reason: "wkwebview" as const }
+  }
+
+  // 檢查 API 是否存在
+  const hasAPI = !!(window.SpeechRecognition || window.webkitSpeechRecognition)
+
+  if (!hasAPI) {
+    return { supported: false, reason: "no-api" as const }
+  }
+
+  // iOS Safari 支援但有限制
+  if (isIOS) {
+    return { supported: true, reason: "ios-safari" as const }
+  }
+
+  return { supported: true, reason: "full" as const }
 }
 
 export function useSpeechRecognition() {
-  const [isSupported] = useState(checkSpeechRecognitionSupport)
+  const [supportStatus, setSupportStatus] = useState<SpeechSupportStatus>({ supported: false, reason: "ssr" })
+  const [platform, setPlatform] = useState({ isIOS: false, isAndroid: false, isWKWebView: false, isLIFF: false })
   const [isRecording, setIsRecording] = useState(false)
   const [transcript, setTranscript] = useState("")
   const [interimTranscript, setInterimTranscript] = useState("")
@@ -48,6 +107,16 @@ export function useSpeechRecognition() {
   const recognitionRef = useRef<SpeechRecognition | null>(null)
 
   useEffect(() => {
+    // 初始化平台偵測
+    const detectedPlatform = detectPlatform()
+    setPlatform(detectedPlatform)
+
+    // 檢查語音支援狀態
+    const status = checkSpeechRecognitionSupport()
+    setSupportStatus(status)
+
+    if (!status.supported) return
+
     // 檢查瀏覽器支援
     const SpeechRecognitionAPI =
       typeof window !== "undefined"
@@ -56,8 +125,16 @@ export function useSpeechRecognition() {
 
     if (SpeechRecognitionAPI) {
       const recognition = new SpeechRecognitionAPI()
-      recognition.continuous = true
-      recognition.interimResults = true
+
+      // iOS Safari 不支援 continuous mode
+      if (detectedPlatform.isIOS) {
+        recognition.continuous = false
+        recognition.interimResults = true
+      } else {
+        recognition.continuous = true
+        recognition.interimResults = true
+      }
+
       recognition.lang = "zh-TW"
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -89,6 +166,9 @@ export function useSpeechRecognition() {
             break
           case "network":
             setError("網路錯誤，請檢查連線")
+            break
+          case "aborted":
+            // iOS 常見的中斷，不顯示錯誤
             break
           default:
             setError(`語音辨識錯誤: ${event.error}`)
@@ -143,7 +223,9 @@ export function useSpeechRecognition() {
   }, [])
 
   return {
-    isSupported,
+    isSupported: supportStatus.supported,
+    supportStatus,
+    platform,
     isRecording,
     transcript,
     interimTranscript,

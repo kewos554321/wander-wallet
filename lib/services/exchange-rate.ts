@@ -48,9 +48,9 @@ export async function getExchangeRates(
   }
 
   try {
-    // Use exchangerate.host - free API, no key required
+    // Use ExchangeRate-API - free, no key required, 160+ currencies
     const response = await fetch(
-      `https://api.exchangerate.host/latest?base=${baseCurrency}`,
+      `https://open.er-api.com/v6/latest/${baseCurrency}`,
       { next: { revalidate: 3600 } } // Next.js cache for 1 hour
     )
 
@@ -60,12 +60,13 @@ export async function getExchangeRates(
 
     const data = await response.json()
 
-    if (!data.success) {
-      throw new Error("API returned unsuccessful response")
+    if (data.result !== "success") {
+      throw new Error("API returned error: " + data["error-type"])
     }
 
+    // ExchangeRate-API format: { result, base_code, rates }
     cachedRates = {
-      base: data.base || baseCurrency,
+      base: data.base_code || baseCurrency,
       rates: data.rates,
       timestamp: now,
     }
@@ -92,9 +93,10 @@ export async function getHistoricalRates(
   }
 
   try {
+    // Note: Free tier doesn't support historical data, use current rates
     const response = await fetch(
-      `https://api.exchangerate.host/${date}?base=${baseCurrency}`,
-      { next: { revalidate: 86400 } } // Cache for 24 hours (historical data won't change)
+      `https://open.er-api.com/v6/latest/${baseCurrency}`,
+      { next: { revalidate: 86400 } } // Cache for 24 hours
     )
 
     if (!response.ok) {
@@ -103,12 +105,14 @@ export async function getHistoricalRates(
 
     const data = await response.json()
 
-    if (!data.success) {
-      throw new Error("API returned unsuccessful response")
+    if (data.result !== "success") {
+      throw new Error("API returned error: " + data["error-type"])
     }
 
+    // ExchangeRate-API format: { result, base_code, rates }
+    // Note: Free tier uses current rates for historical requests
     const result: ExchangeRates = {
-      base: data.base || baseCurrency,
+      base: data.base_code || baseCurrency,
       rates: data.rates,
       timestamp: new Date(date).getTime(),
     }
