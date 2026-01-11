@@ -96,6 +96,20 @@ export function VoiceExpenseDialog({
   // 決定使用哪個語音引擎：Web Speech API 優先，iOS LIFF 用 MediaRecorder
   const useMediaRecorder = !webSpeech.isSupported && mediaRecorder.isSupported
 
+  // Debug: 顯示使用哪個引擎
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      console.log("🎤 語音引擎狀態:", {
+        platform: webSpeech.platform,
+        webSpeechSupported: webSpeech.isSupported,
+        webSpeechReason: webSpeech.supportStatus.reason,
+        mediaRecorderSupported: mediaRecorder.isSupported,
+        useMediaRecorder,
+        finalChoice: useMediaRecorder ? "MediaRecorder + Groq" : "Web Speech API"
+      })
+    }
+  }, [webSpeech.isSupported, webSpeech.platform, webSpeech.supportStatus, mediaRecorder.isSupported, useMediaRecorder])
+
   // 獲取用戶偏好設定
   const userPreferences = mergePreferences(user?.preferences)
 
@@ -897,6 +911,13 @@ export function VoiceExpenseDialog({
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span>AI 轉文字中...</span>
+                </div>
+              )}
+
+              {/* Debug 模式顯示使用的引擎 */}
+              {process.env.NODE_ENV === "development" && (
+                <div className="text-xs text-muted-foreground">
+                  {useMediaRecorder ? "📱 MediaRecorder + Groq" : "🎤 Web Speech API"}
                 </div>
               )}
 

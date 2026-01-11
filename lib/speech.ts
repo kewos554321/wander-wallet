@@ -75,10 +75,11 @@ export function detectPlatform() {
 function checkSpeechRecognitionSupport(): SpeechSupportStatus {
   if (typeof window === "undefined") return { supported: false, reason: "ssr" as const }
 
-  const { isIOS, isWKWebView, isLIFF } = detectPlatform()
+  const { isIOS, isAndroid, isWKWebView, isLIFF } = detectPlatform()
 
-  // WKWebView (LINE, FB 等) 不支援 Web Speech API
-  if (isWKWebView || isLIFF) {
+  // 只有 iOS 的 WKWebView/LIFF 不支援 Web Speech API
+  // Android LIFF 使用 Chrome WebView，支援 Web Speech API
+  if (isIOS && (isWKWebView || isLIFF)) {
     return { supported: false, reason: "wkwebview" as const }
   }
 
