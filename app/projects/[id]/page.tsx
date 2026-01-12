@@ -53,7 +53,8 @@ import { getProjectShareUrl } from "@/lib/utils"
 import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
-import { useCurrencyConversion } from "@/lib/hooks"
+import { useCurrencyConversion, useOnboarding } from "@/lib/hooks"
+import { AppTour } from "@/components/onboarding/app-tour"
 
 interface ProjectMember {
   id: string
@@ -173,6 +174,10 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
   // AI 語音記帳相關狀態
   const [showVoiceDialog, setShowVoiceDialog] = useState(false)
 
+  // 導覽相關
+  const { isOnboardingCompleted, isLoading: onboardingLoading, completeOnboarding } = useOnboarding()
+  const [showTour, setShowTour] = useState(false)
+
   // 使用共用 hook 處理匯率轉換
   const { convert: convertToProjectCurrency } = useCurrencyConversion({
     projectCurrency: project?.currency || DEFAULT_CURRENCY,
@@ -204,6 +209,13 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
+
+  // Trigger tour after project loaded and onboarding not completed
+  useEffect(() => {
+    if (project && !loading && !onboardingLoading && !isOnboardingCompleted) {
+      setShowTour(true)
+    }
+  }, [project, loading, onboardingLoading, isOnboardingCompleted])
 
   async function fetchProject() {
     try {
@@ -602,24 +614,28 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
                   icon={<Calculator className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />}
                   iconBgClass="bg-cyan-50 dark:bg-cyan-950"
                   label="結算"
+                  data-tour="feature-settle"
                 />
                 <FeatureCard
                   href={`/projects/${id}/members`}
                   icon={<Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
                   iconBgClass="bg-blue-50 dark:bg-blue-950"
                   label="成員"
+                  data-tour="feature-members"
                 />
                 <FeatureCard
                   href={`/projects/${id}/stats`}
                   icon={<BarChart3 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />}
                   iconBgClass="bg-indigo-50 dark:bg-indigo-950"
                   label="統計"
+                  data-tour="feature-stats"
                 />
                 <FeatureCard
                   onClick={() => setShowInvite(true)}
                   icon={<Share2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />}
                   iconBgClass="bg-orange-50 dark:bg-orange-950"
                   label="邀請"
+                  data-tour="feature-invite"
                 />
                 <FeatureCard
                   href={`/projects/${id}/export`}
@@ -680,7 +696,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
           </div>
 
           {/* 頁面指示器 (小圓點) */}
-          <div className="flex justify-center gap-1.5 mt-3">
+          <div className="flex justify-center gap-1.5 mt-3" data-tour="more-features">
             {Array.from({ length: totalPages }).map((_, index) => (
               <button
                 key={index}
@@ -888,7 +904,7 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
       </div>
 
       {/* 浮動按鈕群組 - 垂直排列 */}
-      <div className="fixed bottom-6 right-4 z-50 flex flex-col items-center gap-3">
+      <div className="fixed bottom-6 right-4 z-50 flex flex-col items-center gap-3" data-tour="add-expense-area">
         {/* AI 語音記帳按鈕 - 珊瑚暖色漸層（與品牌色互補） */}
         <Button
           size="icon"
@@ -923,6 +939,20 @@ export default function ProjectOverview({ params }: { params: Promise<{ id: stri
           currency={project.currency || DEFAULT_CURRENCY}
           onSuccess={() => {
             fetchProject()
+          }}
+        />
+      )}
+
+      {/* 導覽 */}
+      {showTour && (
+        <AppTour
+          onComplete={() => {
+            setShowTour(false)
+            completeOnboarding()
+          }}
+          onSkip={() => {
+            setShowTour(false)
+            completeOnboarding()
           }}
         />
       )}

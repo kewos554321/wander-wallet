@@ -1,5 +1,6 @@
 // 共用 Hooks
 export { useCurrencyConversion } from "./useCurrencyConversion"
+export { useOnboarding } from "./useOnboarding"
 export {
   useProjectData,
   clearProjectCache,

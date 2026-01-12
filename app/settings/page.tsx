@@ -7,7 +7,7 @@ import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { useLiff, useAuthFetch } from "@/components/auth/liff-provider"
 import { useTheme } from "@/components/system/theme-provider"
-import { ChevronRight, ChevronDown, Sun, Moon, Monitor, User, Wallet, Bell, Loader2, MessageCircle, ExternalLink, BookOpen } from "lucide-react"
+import { ChevronRight, ChevronDown, Sun, Moon, Monitor, User, Wallet, Bell, Loader2, MessageCircle, ExternalLink, BookOpen, HelpCircle } from "lucide-react"
 import { AvatarDisplay, parseAvatarString } from "@/components/avatar-picker"
 import { CurrencySelect } from "@/components/ui/currency-select"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label"
 import type { CurrencyCode } from "@/lib/constants/currencies"
 import type { UserPreferences } from "@/types/user-preferences"
 import { mergePreferences } from "@/types/user-preferences"
+import { useOnboarding } from "@/lib/hooks"
 
 export default function SettingsPage() {
   const [themeExpanded, setThemeExpanded] = useState(false)
@@ -26,6 +27,8 @@ export default function SettingsPage() {
   const isCustomAvatar = parseAvatarString(user?.image) !== null
   const { theme, setTheme } = useTheme()
   const router = useRouter()
+  const { resetOnboarding } = useOnboarding()
+  const [resettingTour, setResettingTour] = useState(false)
 
   // 合併用戶偏好與預設值
   const preferences = mergePreferences(user?.preferences)
@@ -276,6 +279,34 @@ export default function SettingsPage() {
                 </label>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* 重看導覽 */}
+        <Card
+          className="cursor-pointer hover:bg-accent/50 transition-colors"
+          onClick={async () => {
+            setResettingTour(true)
+            await resetOnboarding()
+            setResettingTour(false)
+            router.push("/projects")
+          }}
+        >
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="size-4 text-muted-foreground" />
+                <span className="font-medium">重看導覽</span>
+              </div>
+              {resettingTour ? (
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              ) : (
+                <ChevronRight className="size-4 text-muted-foreground" />
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              進入任一專案時會重新顯示導覽
+            </p>
           </CardContent>
         </Card>
 
