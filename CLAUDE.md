@@ -1,166 +1,40 @@
-# CLAUDE.md
+# Wander Wallet - Claude Code Instructions
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## 自動載入規則
 
-## Project Overview
+開始工作前，依據任務內容自動讀取對應文件，無需向用戶確認：
 
-Wander Wallet is a Next.js-based web application for managing shared expenses during group travel. It supports collaborative expense tracking with settlement calculations, member management, and project sharing functionality.
+### 必讀 (每次對話)
+`.claude/00_Manifesto.md` - 核心憲法、溝通規則、底線原則
 
-## Tech Stack
+### 關鍵字觸發
 
-- **Frontend**: Next.js 16, React 19, TypeScript 5, Tailwind CSS v4, Radix UI
-- **Backend**: Next.js API Routes, Prisma 6.18 ORM, PostgreSQL (Neon)
-- **Auth**: NextAuth v5 beta with Google OAuth and credentials provider, JWT strategy
+| 觸發條件 | 載入文件 |
+|----------|----------|
+| 寫程式、修改、新增、重構、測試、lint、build、目錄結構 | `01_Coding_Standards.md` |
+| API、資料庫、Prisma、認證、LINE、AI、功能設計、資料模型 | `02_Business_Logic.md` |
+| 元件用法、範例、Dialog、Interface、參考寫法 | `99_Reference_Styles.md` |
 
-## Commands
+### 複合任務
+當任務涉及多個領域時，同時載入所有相關文件。例如：
+- 「新增 API 功能」→ 載入 `01` + `02`
+- 「修改 Dialog 元件」→ 載入 `01` + `99`
 
+## 運作原則
+
+1. **靜默載入**: 讀取文件後直接執行，不重複引用原文
+2. **先讀再改**: 修改檔案前必須先讀取了解現有程式碼
+3. **不猜測**: 不確定的事情要詢問
+
+## 快速參考
+
+**Tech Stack**: Next.js 16 + React 19 + TypeScript 5 + Tailwind CSS v4 + Prisma 6.18 + PostgreSQL + LINE LIFF
+
+**常用指令**:
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run lint         # Run ESLint
-npm run db:generate  # Generate Prisma client
-npm run db:migrate   # Run database migrations
-npm run db:reset     # Reset database
-npm run db:studio    # Open Prisma Studio GUI
+npm run dev       # 開發伺服器
+npm run build     # 建置
+npm run lint      # 檢查
+npm run test:run  # 測試
+npm run db:studio # Prisma GUI
 ```
-
-## Architecture
-
-### Directory Structure
-
-- `/app` - Next.js App Router pages and API routes
-- `/components` - React components (ui/, auth/, layout/, system/)
-- `/lib` - Utilities (db.ts for Prisma client, utils.ts for Tailwind helpers)
-- `/prisma` - Database schema
-- `/types` - TypeScript type definitions
-- `auth.ts` - NextAuth configuration (root level)
-
-### Data Model Relationships
-
-```
-User → createdProjects (Project[])
-     → projectMemberships (ProjectMember[])
-
-Project → creator (User)
-        → members (ProjectMember[])
-        → expenses (Expense[])
-
-ProjectMember → project, user (optional for placeholders), role (owner/member)
-
-Expense → project, payer (User), participants (ExpenseParticipant[])
-        → category (food/transport/accommodation/entertainment/shopping/other)
-```
-
-### API Route Patterns
-
-- All routes verify session: `const session = await auth()`
-- Member access check: Verify user is project member before allowing access
-- Creator-only actions: DELETE project, remove members
-- Return JSON with appropriate HTTP status codes
-
-### Key Implementation Details
-
-- **Path alias**: `@/*` maps to project root
-- **Session**: JWT-based with 5-minute refresh, auto-logout on 401
-- **Share codes**: 12-character Base64URL encoded random bytes
-- **Member placeholders**: Members can be added by name before claiming their account
-- **Settlement algorithm**: Greedy approach matching highest debtor with highest creditor
-- **Currency display**: Uses zh-TW locale formatting
-
-### Authentication Flow
-
-1. Google OAuth or credentials-based login
-2. Auto-creates user on first credential login
-3. Session provider wraps app with automatic refresh
-4. API routes validate session and return 401 for invalid tokens
-
-## Shared Components
-
-### ConfirmDeleteDialog
-
-Reusable delete confirmation dialog component located at `components/ui/confirm-delete-dialog.tsx`.
-
-```tsx
-interface ConfirmDeleteDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  title?: string           // Default: "確認刪除"
-  description: string
-  onConfirm: () => void
-  loading?: boolean        // Default: false
-  confirmText?: string     // Default: "刪除"
-  children?: React.ReactNode
-}
-```
-
-**Usage:**
-```tsx
-<ConfirmDeleteDialog
-  open={showDeleteDialog}
-  onOpenChange={setShowDeleteDialog}
-  description="確定要刪除這筆支出嗎？此操作無法復原。"
-  onConfirm={handleDelete}
-  loading={deleting}
->
-  {/* Optional children for extra content like LINE notification checkbox */}
-</ConfirmDeleteDialog>
-```
-
-**Used in:**
-- `app/projects/[id]/expenses/page.tsx` - Single and batch expense delete
-- `app/projects/[id]/settings/page.tsx` - Project delete
-- `components/expense/expense-form.tsx` - Edit page expense delete
-
-## AI Features
-
-### Voice Expense Parsing
-Uses DeepSeek V3 to parse spoken/typed expense descriptions into structured data.
-
-**Files:**
-- `lib/ai/expense-parser.ts` - Parsing logic and schema
-- `app/api/voice/parse/route.ts` - API endpoint
-- `components/voice/voice-expense-dialog.tsx` - UI component
-
-### Receipt Image Parsing
-Uses Gemini 2.0 Flash Vision to extract expense data from receipt/invoice images.
-
-**Files:**
-- `lib/ai/receipt-parser.ts` - Vision parsing logic
-- `app/api/receipt/parse/route.ts` - API endpoint
-
-**Usage in expense-form.tsx:**
-1. User uploads receipt image
-2. Click "AI 辨識發票" button
-3. Image uploaded to R2, then sent to Gemini Vision
-4. Auto-fills: amount, description, category, date
-
-**Parsed fields:**
-```typescript
-interface ParsedReceipt {
-  amount: number        // Total amount
-  description: string   // Merchant name or item description
-  category: ExpenseCategory
-  date: string | null   // YYYY-MM-DD format
-  confidence: number    // 0-1
-}
-```
-
-## Development Notes
-
-- Test credentials: `test@example.com` / `test1234`
-- Mobile-first responsive design with bottom navigation
-- PWA support with service worker and install prompt
-- Dark mode with system detection and manual toggle
-
-## Testing
-
-```bash
-npm run test:run              # Run all tests
-npm run test:coverage         # Run tests with coverage report
-```
-
-Test files are located in `/tests` directory:
-- `/tests/components/` - Component tests
-- `/tests/api/` - API route tests
-- `/tests/lib/` - Utility function tests
-- `/tests/unit/` - Unit tests
