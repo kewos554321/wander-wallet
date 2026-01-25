@@ -126,6 +126,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set())
   const [splitMode, setSplitMode] = useState<"equal" | "custom">("equal")
   const [customShares, setCustomShares] = useState<Record<string, string>>({})
+  const [fixedMembers, setFixedMembers] = useState<Set<string>>(new Set())
 
   // 圖片上傳相關狀態
   const [imageValue, setImageValue] = useState<ImagePickerValue>({
@@ -363,12 +364,43 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
             setCustomShares(customSharesMap)
           }
         } else {
+          // 金額不相等，可能是混合模式
           setSplitMode("custom")
           const customSharesMap: Record<string, string> = {}
           expense.participants.forEach(p => {
             customSharesMap[p.member.id] = String(p.shareAmount)
           })
           setCustomShares(customSharesMap)
+
+          // 嘗試識別均分成員
+          const shareCounts = new Map<number, number>()
+          shares.forEach(s => {
+            const rounded = Math.round(s * 100) / 100
+            shareCounts.set(rounded, (shareCounts.get(rounded) || 0) + 1)
+          })
+
+          // 找出最多的重複金額（可能是均分金額）
+          let maxCount = 0
+          let equalShareAmount = 0
+          shareCounts.forEach((count, amount) => {
+            if (count > maxCount) {
+              maxCount = count
+              equalShareAmount = amount
+            }
+          })
+
+          // 如果有至少 2 人金額相同，標記為均分成員
+          if (maxCount >= 2) {
+            const newFixed = new Set<string>()
+            expense.participants.forEach(p => {
+              const amount = Math.round(p.shareAmount * 100) / 100
+              if (Math.abs(amount - equalShareAmount) > 0.01) {
+                // 金額不等於均分金額，標記為固定
+                newFixed.add(p.member.id)
+              }
+            })
+            setFixedMembers(newFixed)
+          }
         }
 
         // 儲存原始資料用於計算變更（確保 amount 是數字類型）
@@ -404,6 +436,10 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     const newSelected = new Set(selectedParticipants)
     if (newSelected.has(memberId)) {
       newSelected.delete(memberId)
+      // 取消勾選時，同時移除固定標記
+      const newFixed = new Set(fixedMembers)
+      newFixed.delete(memberId)
+      setFixedMembers(newFixed)
     } else {
       newSelected.add(memberId)
     }
@@ -434,10 +470,51 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       }
       return shares
     } else {
-      return Array.from(selectedParticipants).map((memberId) => ({
-        memberId,
-        shareAmount: Number(customShares[memberId]) || 0,
-      }))
+      // 自訂模式
+      if (fixedMembers.size === 0) {
+        // 全自訂模式（現有邏輯）
+        return Array.from(selectedParticipants).map((memberId) => ({
+          memberId,
+          shareAmount: Number(customShares[memberId]) || 0,
+        }))
+      } else {
+        // 混合模式（新邏輯）
+        const shares: ParticipantShare[] = []
+        let totalFixed = 0
+
+        // 步驟 1：收集固定金額
+        Array.from(selectedParticipants).forEach(memberId => {
+          if (fixedMembers.has(memberId)) {
+            const fixedAmount = Number(customShares[memberId]) || 0
+            shares.push({ memberId, shareAmount: fixedAmount })
+            totalFixed += fixedAmount
+          }
+        })
+
+        // 步驟 2：計算剩餘金額和均分人數
+        const remainingAmount = amountNum - totalFixed
+        const equalSplitMembers = Array.from(selectedParticipants)
+          .filter(id => !fixedMembers.has(id))
+        const equalSplitCount = equalSplitMembers.length
+
+        // 步驟 3：剩餘金額均分（處理舍入誤差）
+        if (equalSplitCount > 0) {
+          const sharePerPerson = Math.round((remainingAmount / equalSplitCount) * 100) / 100
+
+          equalSplitMembers.forEach((memberId, index) => {
+            if (index === 0) {
+              // 第一個成員承擔舍入誤差
+              const others = sharePerPerson * (equalSplitCount - 1)
+              const firstShare = Math.round((remainingAmount - others) * 100) / 100
+              shares.push({ memberId, shareAmount: firstShare })
+            } else {
+              shares.push({ memberId, shareAmount: sharePerPerson })
+            }
+          })
+        }
+
+        return shares
+      }
     }
   }
 
@@ -446,6 +523,40 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       (sum, memberId) => sum + (Number(customShares[memberId]) || 0),
       0
     )
+  }
+
+  // 獲取固定金額總和
+  function getFixedSharesTotal(): number {
+    return Array.from(fixedMembers).reduce(
+      (sum, memberId) => sum + (Number(customShares[memberId]) || 0),
+      0
+    )
+  }
+
+  // 獲取均分成員數量
+  function getEqualSplitCount(): number {
+    return Array.from(selectedParticipants)
+      .filter(id => !fixedMembers.has(id)).length
+  }
+
+  // 計算單個均分成員應付金額
+  function calculateEqualSplitAmount(): number {
+    const amountNum = Number(amount) || 0
+    const fixedTotal = getFixedSharesTotal()
+    const remaining = amountNum - fixedTotal
+    const count = getEqualSplitCount()
+    return count > 0 ? Math.round((remaining / count) * 100) / 100 : 0
+  }
+
+  // 切換固定成員標記
+  function toggleFixedMember(memberId: string): void {
+    const newFixed = new Set(fixedMembers)
+    if (newFixed.has(memberId)) {
+      newFixed.delete(memberId)
+    } else {
+      newFixed.add(memberId)
+    }
+    setFixedMembers(newFixed)
   }
 
   // 計算編輯時的變更內容
@@ -629,6 +740,24 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     if (selectedParticipants.size === 0) {
       alert("請選擇至少一位分擔者")
       return
+    }
+
+    // 混合模式驗證
+    if (splitMode === "custom" && fixedMembers.size > 0) {
+      const fixedTotal = getFixedSharesTotal()
+      const equalSplitCount = getEqualSplitCount()
+
+      // 驗證 1：固定金額不能超過總金額
+      if (fixedTotal > amountNum) {
+        alert(`固定金額總和 ($${fixedTotal.toFixed(2)}) 不能超過支出金額 ($${amountNum.toFixed(2)})`)
+        return
+      }
+
+      // 驗證 2：如果固定金額 < 總金額，至少要有一個均分成員
+      if (equalSplitCount === 0 && Math.abs(fixedTotal - amountNum) > 0.01) {
+        alert("請至少選擇一位成員進行均分，或確保固定金額總和等於支出金額")
+        return
+      }
     }
 
     const participants = calculateShares()
@@ -1045,24 +1174,51 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                       </span>
                     )}
                     {isSelected && splitMode === "custom" && (
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm text-muted-foreground">$</span>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0"
-                          value={customShares[member.id] || ""}
-                          onChange={(e) => {
+                      <div className="flex items-center gap-2">
+                        {/* 固定按鈕 */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
                             e.stopPropagation()
-                            setCustomShares({
-                              ...customShares,
-                              [member.id]: e.target.value,
-                            })
+                            toggleFixedMember(member.id)
                           }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="w-20 h-8 text-right"
-                        />
+                          className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                            fixedMembers.has(member.id)
+                              ? "bg-amber-500 text-white"
+                              : "bg-slate-200 dark:bg-slate-700 text-muted-foreground"
+                          }`}
+                        >
+                          固定
+                        </button>
+
+                        {/* 金額輸入框或只讀顯示 */}
+                        {fixedMembers.has(member.id) ? (
+                          // 固定金額：輸入框
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm text-muted-foreground">$</span>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="0"
+                              value={customShares[member.id] || ""}
+                              onChange={(e) => {
+                                e.stopPropagation()
+                                setCustomShares({
+                                  ...customShares,
+                                  [member.id]: e.target.value,
+                                })
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-20 h-8 text-right"
+                            />
+                          </div>
+                        ) : (
+                          // 均分金額：只讀顯示
+                          <span className="text-sm font-medium text-primary tabular-nums">
+                            ${calculateEqualSplitAmount().toFixed(2)}
+                          </span>
+                        )}
                       </div>
                     )}
                   </label>
@@ -1076,11 +1232,25 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
             <span>已選 {selectedParticipants.size} 人</span>
             {splitMode === "custom" && amountNum > 0 && (
               <span className={getCustomSharesTotal() === amountNum ? "text-emerald-600" : "text-red-500"}>
-                ${getCustomSharesTotal().toFixed(2)} / ${amountNum.toFixed(2)}
-                {getCustomSharesTotal() !== amountNum && (
-                  <span className="ml-1">
-                    ({getCustomSharesTotal() > amountNum ? "超出" : "還差"} ${Math.abs(getCustomSharesTotal() - amountNum).toFixed(2)})
-                  </span>
+                {fixedMembers.size > 0 ? (
+                  // 混合模式：顯示固定 + 均分
+                  <>
+                    固定 ${getFixedSharesTotal().toFixed(2)} +
+                    均分 ${(calculateEqualSplitAmount() * getEqualSplitCount()).toFixed(2)}
+                    ({getEqualSplitCount()}人) =
+                    ${(getFixedSharesTotal() + calculateEqualSplitAmount() * getEqualSplitCount()).toFixed(2)} /
+                    ${amountNum.toFixed(2)}
+                  </>
+                ) : (
+                  // 全自訂模式：顯示原有資訊
+                  <>
+                    ${getCustomSharesTotal().toFixed(2)} / ${amountNum.toFixed(2)}
+                    {getCustomSharesTotal() !== amountNum && (
+                      <span className="ml-1">
+                        ({getCustomSharesTotal() > amountNum ? "超出" : "還差"} ${Math.abs(getCustomSharesTotal() - amountNum).toFixed(2)})
+                      </span>
+                    )}
+                  </>
                 )}
               </span>
             )}
