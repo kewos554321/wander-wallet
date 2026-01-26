@@ -1339,7 +1339,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                完全自訂
+                指定金額
               </button>
               <button
                 type="button"
@@ -1350,7 +1350,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                個人項目 + 均攤
+                先扣再分
               </button>
             </div>
           )}
