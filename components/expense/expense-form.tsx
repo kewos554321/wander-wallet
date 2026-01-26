@@ -17,7 +17,7 @@ import { MemberAvatar } from "@/components/member-avatar"
 import { sendExpenseNotificationToChat, sendDeleteNotificationToChat, ExpenseChange } from "@/lib/liff"
 import { uploadImageToR2 } from "@/lib/image-utils"
 import { LocationPicker } from "@/components/location-picker"
-import { Calculator as CalculatorIcon, CalendarIcon, Trash2, Plus, X } from "lucide-react"
+import { Calculator as CalculatorIcon, CalendarIcon, Trash2, Plus, X, Pin, PinOff } from "lucide-react"
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
 import { ImagePicker, type ImagePickerValue } from "@/components/ui/image-picker"
 import { Calculator } from "@/components/ui/calculator"
@@ -96,6 +96,7 @@ interface OriginalExpenseData {
   location: string | null
   image: string | null
   participantIds: Set<string>
+  participantShares: Map<string, number> // memberId -> shareAmount
 }
 
 
@@ -367,12 +368,16 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           if (Math.abs(shares[0] - expectedShare) < 0.01) {
             setSplitMode("equal")
           } else {
+            // 所有人金額相同，但不等於均分金額
             setSplitMode("custom")
             const customSharesMap: Record<string, string> = {}
             expense.participants.forEach(p => {
               customSharesMap[p.member.id] = String(p.shareAmount)
             })
             setCustomShares(customSharesMap)
+            // 將所有人標記為固定，這樣 UI 才會顯示 customShares 中的值
+            const allFixed = new Set<string>(expense.participants.map(p => p.member.id))
+            setFixedMembers(allFixed)
           }
         } else {
           // 金額不相等，可能是混合模式
@@ -411,10 +416,20 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
               }
             })
             setFixedMembers(newFixed)
+          } else {
+            // 沒有識別到混合模式，將所有人標記為固定
+            // 這樣 UI 才會顯示 customShares 中的值
+            const allFixed = new Set<string>(expense.participants.map(p => p.member.id))
+            setFixedMembers(allFixed)
           }
         }
 
         // 儲存原始資料用於計算變更（確保 amount 是數字類型）
+        const participantShares = new Map<string, number>()
+        expense.participants.forEach(p => {
+          participantShares.set(p.member.id, Number(p.shareAmount))
+        })
+
         setOriginalData({
           amount: Number(expense.amount),
           currency: expCurrency,
@@ -426,6 +441,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           location: expense.location,
           image: expense.image,
           participantIds: new Set(expense.participants.map(p => p.member.id)),
+          participantShares: participantShares,
         })
       } else {
         const errorData = await expenseRes.json().catch(() => ({}))
@@ -838,6 +854,15 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     const newIds = Array.from(selectedParticipants).sort()
     if (originalIds.length !== newIds.length) return true
     if (originalIds.some((id, i) => id !== newIds[i])) return true
+
+    // 分攤金額變更 - 比較每個參與者的分攤金額
+    const currentShares = calculateShares()
+    for (const share of currentShares) {
+      const originalShare = originalData.participantShares.get(share.memberId)
+      if (originalShare === undefined) return true // 新增的參與者
+      // 使用 0.01 的容差來處理浮點數比較
+      if (Math.abs(originalShare - share.shareAmount) > 0.01) return true
+    }
 
     return false
   }
@@ -1369,49 +1394,58 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                       )}
                       {isSelected && splitMode === "custom" && customMode === "full" && (
                         <div className="flex items-center gap-2">
-                          {/* 固定按鈕 */}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              toggleFixedMember(member.id)
-                            }}
-                            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                              fixedMembers.has(member.id)
-                                ? "bg-amber-500 text-white"
-                                : "bg-slate-200 dark:bg-slate-700 text-muted-foreground"
-                            }`}
-                          >
-                            固定
-                          </button>
-
-                          {/* 金額輸入框或只讀顯示 */}
                           {fixedMembers.has(member.id) ? (
-                            // 固定金額：輸入框
-                            <div className="flex items-center gap-1">
-                              <span className="text-sm text-muted-foreground">$</span>
-                              <Input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                placeholder="0"
-                                value={customShares[member.id] || ""}
-                                onChange={(e) => {
+                            // 固定金額模式：顯示輸入框
+                            <>
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-muted-foreground">$</span>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  placeholder="0"
+                                  value={customShares[member.id] || ""}
+                                  onChange={(e) => {
+                                    e.stopPropagation()
+                                    setCustomShares({
+                                      ...customShares,
+                                      [member.id]: e.target.value,
+                                    })
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="w-20 h-8 text-right text-sm"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => {
                                   e.stopPropagation()
-                                  setCustomShares({
-                                    ...customShares,
-                                    [member.id]: e.target.value,
-                                  })
+                                  toggleFixedMember(member.id)
                                 }}
-                                onClick={(e) => e.stopPropagation()}
-                                className="w-20 h-8 text-right"
-                              />
-                            </div>
+                                className="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                                title="取消固定"
+                              >
+                                <Pin className="h-3.5 w-3.5" />
+                              </button>
+                            </>
                           ) : (
-                            // 均分金額：只讀顯示
-                            <span className="text-sm font-medium text-primary tabular-nums">
-                              ${calculateEqualSplitAmount().toFixed(2)}
-                            </span>
+                            // 均分模式：顯示金額和固定按鈕
+                            <>
+                              <span className="text-sm font-medium text-primary tabular-nums">
+                                ${calculateEqualSplitAmount().toFixed(2)}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  toggleFixedMember(member.id)
+                                }}
+                                className="p-1.5 rounded-md border border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                title="固定金額"
+                              >
+                                <PinOff className="h-3.5 w-3.5" />
+                              </button>
+                            </>
                           )}
                         </div>
                       )}
@@ -1525,8 +1559,12 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           {/* 底部資訊 */}
           <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
             <span>已選 {selectedParticipants.size} 人</span>
-            {splitMode === "custom" && amountNum > 0 && (
-              <span className={getCustomSharesTotal() === amountNum ? "text-emerald-600" : "text-red-500"}>
+            {splitMode === "custom" && customMode === "full" && amountNum > 0 && (
+              <span className={
+                fixedMembers.size > 0
+                  ? (getFixedSharesTotal() + calculateEqualSplitAmount() * getEqualSplitCount() === amountNum ? "text-emerald-600" : "text-red-500")
+                  : (getEqualSplitCount() > 0 ? "text-emerald-600" : (getCustomSharesTotal() === amountNum ? "text-emerald-600" : "text-red-500"))
+              }>
                 {fixedMembers.size > 0 ? (
                   // 混合模式：顯示固定 + 均分
                   <>
@@ -1536,8 +1574,15 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                     ${(getFixedSharesTotal() + calculateEqualSplitAmount() * getEqualSplitCount()).toFixed(2)} /
                     ${amountNum.toFixed(2)}
                   </>
+                ) : getEqualSplitCount() > 0 ? (
+                  // 全均分模式（沒有固定成員）
+                  <>
+                    均分 ${(calculateEqualSplitAmount() * getEqualSplitCount()).toFixed(2)}
+                    ({getEqualSplitCount()}人) =
+                    ${amountNum.toFixed(2)} / ${amountNum.toFixed(2)}
+                  </>
                 ) : (
-                  // 全自訂模式：顯示原有資訊
+                  // 全自訂模式（所有成員都已輸入固定金額）
                   <>
                     ${getCustomSharesTotal().toFixed(2)} / ${amountNum.toFixed(2)}
                     {getCustomSharesTotal() !== amountNum && (

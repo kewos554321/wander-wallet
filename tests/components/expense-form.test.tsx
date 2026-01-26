@@ -799,8 +799,8 @@ describe("ExpenseForm Component", () => {
       const customButton = screen.getByText("自訂金額")
       await fireEvent.click(customButton)
 
-      // Should be in full custom mode by default and show "固定" buttons
-      const fixedButtons = screen.queryAllByText("固定")
+      // Should be in full custom mode by default and show pin buttons (with title "固定金額")
+      const fixedButtons = screen.queryAllByTitle("固定金額")
       expect(fixedButtons.length).toBeGreaterThan(0)
     })
   })
