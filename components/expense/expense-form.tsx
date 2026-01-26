@@ -17,7 +17,7 @@ import { MemberAvatar } from "@/components/member-avatar"
 import { sendExpenseNotificationToChat, sendDeleteNotificationToChat, ExpenseChange } from "@/lib/liff"
 import { uploadImageToR2 } from "@/lib/image-utils"
 import { LocationPicker } from "@/components/location-picker"
-import { Calculator as CalculatorIcon, CalendarIcon, Trash2 } from "lucide-react"
+import { Calculator as CalculatorIcon, CalendarIcon, Trash2, Plus, X } from "lucide-react"
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
 import { ImagePicker, type ImagePickerValue } from "@/components/ui/image-picker"
 import { Calculator } from "@/components/ui/calculator"
@@ -127,6 +127,17 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const [splitMode, setSplitMode] = useState<"equal" | "custom">("equal")
   const [customShares, setCustomShares] = useState<Record<string, string>>({})
   const [fixedMembers, setFixedMembers] = useState<Set<string>>(new Set())
+
+  // 個人項目 + 均攤模式相關狀態
+  const [customMode, setCustomMode] = useState<"full" | "personal">("full")
+
+  // 個人項目資料結構：{ memberId: [{ id, name, amount }, ...] }
+  interface PersonalItem {
+    id: string
+    name: string
+    amount: string
+  }
+  const [personalItems, setPersonalItems] = useState<Record<string, PersonalItem[]>>({})
 
   // 圖片上傳相關狀態
   const [imageValue, setImageValue] = useState<ImagePickerValue>({
@@ -440,8 +451,18 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       const newFixed = new Set(fixedMembers)
       newFixed.delete(memberId)
       setFixedMembers(newFixed)
+      // 清除個人項目
+      if (customMode === "personal") {
+        const newItems = { ...personalItems }
+        delete newItems[memberId]
+        setPersonalItems(newItems)
+      }
     } else {
       newSelected.add(memberId)
+      // 初始化個人項目為空陣列
+      if (customMode === "personal") {
+        setPersonalItems({...personalItems, [memberId]: []})
+      }
     }
     setSelectedParticipants(newSelected)
   }
@@ -449,6 +470,72 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   function selectAllParticipants() {
     const allMemberIds = new Set(members.map((m) => m.id))
     setSelectedParticipants(allMemberIds)
+  }
+
+  // 個人項目模式：獲取單個成員的個人項目總額
+  function getMemberPersonalTotal(memberId: string): number {
+    const items = personalItems[memberId] || []
+    return items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
+  }
+
+  // 個人項目模式：獲取所有成員的個人項目總額
+  function getPersonalTotal(): number {
+    return Array.from(selectedParticipants).reduce(
+      (sum, id) => sum + getMemberPersonalTotal(id),
+      0
+    )
+  }
+
+  // 個人項目模式：獲取剩餘金額
+  function getRemainingAmount(): number {
+    return (Number(amount) || 0) - getPersonalTotal()
+  }
+
+  // 個人項目模式：獲取均攤額
+  function getEqualShareAmount(): number {
+    const remaining = getRemainingAmount()
+    const count = selectedParticipants.size
+    return count > 0 ? Math.round((remaining / count) * 100) / 100 : 0
+  }
+
+  // 個人項目模式：獲取單個成員最終金額
+  function getFinalShareAmount(memberId: string): number {
+    const personal = getMemberPersonalTotal(memberId)
+    return Math.round((personal + getEqualShareAmount()) * 100) / 100
+  }
+
+  // 新增個人項目
+  function addPersonalItem(memberId: string) {
+    const items = personalItems[memberId] || []
+    const newItem: PersonalItem = {
+      id: `item-${Date.now()}-${Math.random()}`,
+      name: "",
+      amount: "0"
+    }
+    setPersonalItems({
+      ...personalItems,
+      [memberId]: [...items, newItem]
+    })
+  }
+
+  // 刪除個人項目
+  function removePersonalItem(memberId: string, itemId: string) {
+    const items = personalItems[memberId] || []
+    setPersonalItems({
+      ...personalItems,
+      [memberId]: items.filter(item => item.id !== itemId)
+    })
+  }
+
+  // 更新個人項目
+  function updatePersonalItem(memberId: string, itemId: string, field: "name" | "amount", value: string) {
+    const items = personalItems[memberId] || []
+    setPersonalItems({
+      ...personalItems,
+      [memberId]: items.map(item =>
+        item.id === itemId ? { ...item, [field]: value } : item
+      )
+    })
   }
 
   function calculateShares(): ParticipantShare[] {
@@ -471,7 +558,39 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       return shares
     } else {
       // 自訂模式
-      if (fixedMembers.size === 0) {
+      if (customMode === "personal") {
+        // 個人項目 + 均攤模式
+        const shares: ParticipantShare[] = []
+        let personalTotal = 0
+
+        // 計算所有成員的個人項目總額
+        Array.from(selectedParticipants).forEach(id => {
+          personalTotal += getMemberPersonalTotal(id)
+        })
+
+        const remaining = amountNum - personalTotal
+        const equalShare = remaining / participantCount
+
+        // 第一人承擔舍入誤差
+        Array.from(selectedParticipants).forEach((id, index) => {
+          const personal = getMemberPersonalTotal(id)
+          if (index === 0) {
+            const othersTotal = (participantCount - 1) * equalShare +
+                               (personalTotal - personal)
+            shares.push({
+              memberId: id,
+              shareAmount: Math.round((amountNum - othersTotal) * 100) / 100
+            })
+          } else {
+            shares.push({
+              memberId: id,
+              shareAmount: Math.round((personal + equalShare) * 100) / 100
+            })
+          }
+        })
+
+        return shares
+      } else if (fixedMembers.size === 0) {
         // 全自訂模式（現有邏輯）
         return Array.from(selectedParticipants).map((memberId) => ({
           memberId,
@@ -740,6 +859,48 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     if (selectedParticipants.size === 0) {
       alert("請選擇至少一位分擔者")
       return
+    }
+
+    // 個人項目 + 均攤模式驗證
+    if (splitMode === "custom" && customMode === "personal") {
+      const personalTotal = getPersonalTotal()
+
+      // 驗證每位成員的個人項目
+      for (const memberId of selectedParticipants) {
+        const member = members.find(m => m.id === memberId)
+        const items = personalItems[memberId] || []
+
+        // 檢查每個項目
+        for (const item of items) {
+          // 驗證項目名稱不可為空
+          if (!item.name.trim()) {
+            alert(`${member?.displayName} 有個人項目未填寫名稱`)
+            return
+          }
+
+          // 驗證金額格式
+          const itemAmount = Number(item.amount)
+          if (isNaN(itemAmount)) {
+            alert(`${member?.displayName} 的「${item.name}」金額格式不正確`)
+            return
+          }
+
+          // 驗證金額不可為負數
+          if (itemAmount < 0) {
+            alert(`${member?.displayName} 的「${item.name}」金額不可為負數`)
+            return
+          }
+        }
+      }
+
+      // 驗證個人項目總額不可超過總金額
+      if (personalTotal > amountNum) {
+        alert(
+          `個人項目總額 ($${personalTotal.toFixed(2)}) ` +
+          `不可超過支出總額 ($${amountNum.toFixed(2)})`
+        )
+        return
+      }
     }
 
     // 混合模式驗證
@@ -1141,6 +1302,34 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
             </button>
           </div>
 
+          {/* 自訂模式 Tab 切換 */}
+          {splitMode === "custom" && (
+            <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg mb-2">
+              <button
+                type="button"
+                onClick={() => setCustomMode("full")}
+                className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-colors ${
+                  customMode === "full"
+                    ? "bg-white dark:bg-slate-900 text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                完全自訂
+              </button>
+              <button
+                type="button"
+                onClick={() => setCustomMode("personal")}
+                className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-colors ${
+                  customMode === "personal"
+                    ? "bg-white dark:bg-slate-900 text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                個人項目 + 均攤
+              </button>
+            </div>
+          )}
+
           {members.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">
               沒有成員，請先新增成員
@@ -1149,81 +1338,187 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
               {members.map((member) => {
                 const isSelected = selectedParticipants.has(member.id)
+                const memberItems = personalItems[member.id] || []
+                const memberPersonalTotal = getMemberPersonalTotal(member.id)
+
                 return (
-                  <label
+                  <div
                     key={member.id}
-                    className={`flex items-center justify-between p-3 cursor-pointer transition-colors ${
-                      isSelected ? "bg-primary/5" : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                    className={`transition-colors ${
+                      isSelected ? "bg-primary/5" : ""
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => toggleParticipant(member.id)}
-                      />
-                      <MemberAvatar
-                        image={member.user?.image}
-                        name={member.displayName}
-                        size="md"
-                      />
-                      <span className="text-sm font-medium">{member.displayName}</span>
-                    </div>
-                    {isSelected && splitMode === "equal" && amountNum > 0 && (
-                      <span className="text-sm font-medium text-primary tabular-nums">
-                        ${sharePerPerson.toFixed(2)}
-                      </span>
-                    )}
-                    {isSelected && splitMode === "custom" && (
-                      <div className="flex items-center gap-2">
-                        {/* 固定按鈕 */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            toggleFixedMember(member.id)
-                          }}
-                          className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                            fixedMembers.has(member.id)
-                              ? "bg-amber-500 text-white"
-                              : "bg-slate-200 dark:bg-slate-700 text-muted-foreground"
-                          }`}
-                        >
-                          固定
-                        </button>
+                    {/* 成員基本資訊列 */}
+                    <div className="flex items-center justify-between p-3">
+                      <div className="flex items-center gap-3">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleParticipant(member.id)}
+                        />
+                        <MemberAvatar
+                          image={member.user?.image}
+                          name={member.displayName}
+                          size="md"
+                        />
+                        <span className="text-sm font-medium">{member.displayName}</span>
+                      </div>
+                      {isSelected && splitMode === "equal" && amountNum > 0 && (
+                        <span className="text-sm font-medium text-primary tabular-nums">
+                          ${sharePerPerson.toFixed(2)}
+                        </span>
+                      )}
+                      {isSelected && splitMode === "custom" && customMode === "full" && (
+                        <div className="flex items-center gap-2">
+                          {/* 固定按鈕 */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleFixedMember(member.id)
+                            }}
+                            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                              fixedMembers.has(member.id)
+                                ? "bg-amber-500 text-white"
+                                : "bg-slate-200 dark:bg-slate-700 text-muted-foreground"
+                            }`}
+                          >
+                            固定
+                          </button>
 
-                        {/* 金額輸入框或只讀顯示 */}
-                        {fixedMembers.has(member.id) ? (
-                          // 固定金額：輸入框
-                          <div className="flex items-center gap-1">
-                            <span className="text-sm text-muted-foreground">$</span>
+                          {/* 金額輸入框或只讀顯示 */}
+                          {fixedMembers.has(member.id) ? (
+                            // 固定金額：輸入框
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm text-muted-foreground">$</span>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                placeholder="0"
+                                value={customShares[member.id] || ""}
+                                onChange={(e) => {
+                                  e.stopPropagation()
+                                  setCustomShares({
+                                    ...customShares,
+                                    [member.id]: e.target.value,
+                                  })
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-20 h-8 text-right"
+                              />
+                            </div>
+                          ) : (
+                            // 均分金額：只讀顯示
+                            <span className="text-sm font-medium text-primary tabular-nums">
+                              ${calculateEqualSplitAmount().toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {isSelected && splitMode === "custom" && customMode === "personal" && (
+                        <div className="text-xs text-muted-foreground">
+                          ${getFinalShareAmount(member.id).toFixed(2)}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 個人項目模式：展開的項目列表 */}
+                    {isSelected && splitMode === "custom" && customMode === "personal" && (
+                      <div className="px-3 pb-3 space-y-2">
+                        {/* 個人項目列表 */}
+                        {memberItems.map((item) => (
+                          <div key={item.id} className="flex items-center gap-2 ml-12">
+                            <Input
+                              type="text"
+                              placeholder="項目名稱"
+                              value={item.name}
+                              onChange={(e) => updatePersonalItem(member.id, item.id, "name", e.target.value)}
+                              className="flex-1 h-8 text-xs"
+                            />
                             <Input
                               type="number"
                               step="0.01"
                               min="0"
                               placeholder="0"
-                              value={customShares[member.id] || ""}
-                              onChange={(e) => {
-                                e.stopPropagation()
-                                setCustomShares({
-                                  ...customShares,
-                                  [member.id]: e.target.value,
-                                })
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                              className="w-20 h-8 text-right"
+                              value={item.amount}
+                              onChange={(e) => updatePersonalItem(member.id, item.id, "amount", e.target.value)}
+                              className="w-20 h-8 text-right text-xs"
                             />
+                            <button
+                              type="button"
+                              onClick={() => removePersonalItem(member.id, item.id)}
+                              className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
                           </div>
-                        ) : (
-                          // 均分金額：只讀顯示
-                          <span className="text-sm font-medium text-primary tabular-nums">
-                            ${calculateEqualSplitAmount().toFixed(2)}
-                          </span>
+                        ))}
+
+                        {/* 新增項目按鈕 */}
+                        <button
+                          type="button"
+                          onClick={() => addPersonalItem(member.id)}
+                          className="flex items-center gap-1 ml-12 text-xs text-primary hover:text-primary/80"
+                        >
+                          <Plus className="h-3 w-3" />
+                          新增項目
+                        </button>
+
+                        {/* 小計與最終金額 */}
+                        {memberItems.length > 0 && (
+                          <div className="ml-12 pt-2 border-t border-slate-200 dark:border-slate-700 space-y-1 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">個人小計</span>
+                              <span className="font-medium">${memberPersonalTotal.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">均攤額</span>
+                              <span className="text-primary">${getEqualShareAmount().toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between font-semibold">
+                              <span>最終金額</span>
+                              <span>${getFinalShareAmount(member.id).toFixed(2)}</span>
+                            </div>
+                          </div>
                         )}
                       </div>
                     )}
-                  </label>
+                  </div>
                 )
               })}
+            </div>
+          )}
+
+          {/* 個人項目 + 均攤模式：警告訊息 */}
+          {splitMode === "custom" && customMode === "personal" && (
+            <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <p className="text-xs text-amber-800 dark:text-amber-200">
+                ⚠️ 注意：個人項目明細（項目名稱）僅供本次輸入參考，儲存後只會保留最終金額，編輯時無法還原項目明細。
+              </p>
+            </div>
+          )}
+
+          {/* 個人項目 + 均攤模式即時反饋 */}
+          {splitMode === "custom" && customMode === "personal" && amountNum > 0 && (
+            <div className="mt-3 p-3 bg-primary/5 dark:bg-primary/10 rounded-lg space-y-1.5 text-xs">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">個人項目總額</span>
+                <span className="font-medium">${getPersonalTotal().toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">剩餘金額</span>
+                <span className="font-medium text-primary">
+                  ${getRemainingAmount().toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between border-t border-primary/20 pt-1.5">
+                <span className="text-muted-foreground">
+                  均攤 ({selectedParticipants.size}人)
+                </span>
+                <span className="font-semibold">
+                  每人 ${getEqualShareAmount().toFixed(2)}
+                </span>
+              </div>
             </div>
           )}
 

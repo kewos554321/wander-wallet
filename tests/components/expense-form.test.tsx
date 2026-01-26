@@ -687,4 +687,121 @@ describe("ExpenseForm Component", () => {
       expect(customButton).toHaveClass("bg-white")
     })
   })
+
+  describe("Personal Items + Equal Split Mode", () => {
+    it("should show custom mode tabs when custom split is selected", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+
+      await waitFor(() => {
+        expect(screen.queryByText("載入中...")).not.toBeInTheDocument()
+      })
+
+      // Click custom split button
+      const customButton = screen.getByText("自訂金額")
+      await fireEvent.click(customButton)
+
+      // Should show mode tabs
+      expect(screen.getByText("完全自訂")).toBeInTheDocument()
+      expect(screen.getByText("個人項目 + 均攤")).toBeInTheDocument()
+    })
+
+    it("should switch to personal mode when tab is clicked", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+
+      await waitFor(() => {
+        expect(screen.queryByText("載入中...")).not.toBeInTheDocument()
+      })
+
+      // Switch to custom split
+      const customButton = screen.getByText("自訂金額")
+      await fireEvent.click(customButton)
+
+      // Click personal mode tab
+      const personalTab = screen.getByText("個人項目 + 均攤")
+      await fireEvent.click(personalTab)
+
+      // Tab should be active
+      expect(personalTab.closest("button")).toHaveClass("bg-white")
+    })
+
+    it("should show add personal item buttons in personal mode", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+
+      await waitFor(() => {
+        expect(screen.queryByText("載入中...")).not.toBeInTheDocument()
+      })
+
+      // Switch to custom split
+      const customButton = screen.getByText("自訂金額")
+      await fireEvent.click(customButton)
+
+      // Switch to personal mode
+      const personalTab = screen.getByText("個人項目 + 均攤")
+      await fireEvent.click(personalTab)
+
+      // Should show "新增項目" buttons for each selected member (3 members)
+      const addButtons = screen.getAllByText("新增項目")
+      expect(addButtons.length).toBe(3)
+    })
+
+    it("should display feedback panel with personal total and remaining amount", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+
+      await waitFor(() => {
+        expect(screen.queryByText("載入中...")).not.toBeInTheDocument()
+      })
+
+      // Enter amount
+      const amountInput = screen.getByPlaceholderText("0")
+      await fireEvent.change(amountInput, { target: { value: "2000" } })
+
+      // Switch to custom split
+      const customButton = screen.getByText("自訂金額")
+      await fireEvent.click(customButton)
+
+      // Switch to personal mode
+      const personalTab = screen.getByText("個人項目 + 均攤")
+      await fireEvent.click(personalTab)
+
+      // Should show feedback panel
+      expect(screen.getByText("個人項目總額")).toBeInTheDocument()
+      expect(screen.getByText("剩餘金額")).toBeInTheDocument()
+    })
+
+    it("should not show fixed member button in personal mode", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+
+      await waitFor(() => {
+        expect(screen.queryByText("載入中...")).not.toBeInTheDocument()
+      })
+
+      // Switch to custom split
+      const customButton = screen.getByText("自訂金額")
+      await fireEvent.click(customButton)
+
+      // Switch to personal mode
+      const personalTab = screen.getByText("個人項目 + 均攤")
+      await fireEvent.click(personalTab)
+
+      // Should not show "固定" buttons
+      const fixedButtons = screen.queryAllByText("固定")
+      expect(fixedButtons.length).toBe(0)
+    })
+
+    it("should show fixed member button in full custom mode", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+
+      await waitFor(() => {
+        expect(screen.queryByText("載入中...")).not.toBeInTheDocument()
+      })
+
+      // Switch to custom split
+      const customButton = screen.getByText("自訂金額")
+      await fireEvent.click(customButton)
+
+      // Should be in full custom mode by default and show "固定" buttons
+      const fixedButtons = screen.queryAllByText("固定")
+      expect(fixedButtons.length).toBeGreaterThan(0)
+    })
+  })
 })
