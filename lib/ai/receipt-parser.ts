@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { HumanMessage } from "@langchain/core/messages"
-import { createGeminiModel } from "./gemini"
+import { createQwenModel } from "./qwen"
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/lib/constants/expenses"
 
 /**
@@ -84,7 +84,7 @@ export async function parseReceipt(imageData: string): Promise<ParsedReceipt> {
     throw new Error("請提供圖片資料")
   }
 
-  const model = createGeminiModel({ temperature: 0.1, maxOutputTokens: 512 })
+  const model = createQwenModel({ temperature: 0.1, maxOutputTokens: 512 })
 
   // 建立包含圖片的訊息
   const message = new HumanMessage({

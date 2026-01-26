@@ -15,14 +15,17 @@ Parse spoken/typed expense descriptions into structured data.
 
 Extract expense data from receipt images.
 
-**Stack**: LangChain + Gemini 2.0 Flash Vision
+**Stack**: LangChain + Qwen3-VL-Flash Vision
+
+**Pricing**: $0.075/1M input tokens, $0.42/1M output tokens (~20% cheaper than Gemini)
 
 **Files**:
+- `lib/ai/qwen.ts` - Qwen model factory
 - `lib/ai/receipt-parser.ts` - Vision parsing logic
 - `app/api/receipt/parse/route.ts` - API endpoint
 
 **Flow**:
 1. User uploads receipt image
 2. Click "AI 辨識發票" button
-3. Image uploaded to R2, sent to Gemini Vision
+3. Image uploaded to R2, sent to Qwen Vision
 4. Auto-fills: amount, description, category, date

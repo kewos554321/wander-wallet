@@ -1,6 +1,10 @@
 import "@testing-library/jest-dom/vitest"
 import { cleanup } from "@testing-library/react"
 import { afterEach, vi } from "vitest"
+import { config } from "dotenv"
+
+// Load environment variables from .env file for integration tests
+config()
 
 // 每個測試後自動清理
 afterEach(() => {

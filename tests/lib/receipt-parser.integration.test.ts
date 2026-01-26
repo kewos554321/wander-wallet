@@ -1,8 +1,8 @@
 /**
- * Integration Test - 實際呼叫 Gemini Vision API 測試發票解析
+ * Integration Test - 實際呼叫 Qwen Vision API 測試發票解析
  *
  * 執行方式：
- *   GEMINI_API_KEY=your_key npm run test:run -- tests/lib/receipt-parser.integration.test.ts
+ *   QWEN_API_KEY=your_key npm run test:run -- tests/lib/receipt-parser.integration.test.ts
  *
  * 注意：這會消耗 API 額度
  */
@@ -10,18 +10,18 @@ import { describe, it, expect } from "vitest"
 import { parseReceipt } from "@/lib/ai/receipt-parser"
 
 // 如果沒有 API key，跳過測試
-const SKIP_INTEGRATION = !process.env.GEMINI_API_KEY
+const SKIP_INTEGRATION = !process.env.QWEN_API_KEY
 
-// 簡單的測試圖片 - 1x1 紅色像素的 PNG (base64)
-// 用於測試 API 連接是否正常
-const SIMPLE_TEST_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+// 簡單的測試圖片 - 50x50 紅色方塊的 PNG (base64)
+// 用於測試 API 連接是否正常（Qwen 要求至少 10x10）
+const SIMPLE_TEST_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAQklEQVR42u3PMQ0AAAgDINc/9K3hTSCQbRcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgJbCxAAABTUlEQVRogWNgGAWjYBSMglEwCkbBKBgFpAEACNgAAW/G4fQAAAAASUVORK5CYII="
 
 // 模擬收據圖片 - 包含文字的簡單圖片
 // 這是一個帶有 "Total: $50" 文字的測試圖片（實際測試時可以替換為真實收據）
 const MOCK_RECEIPT_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAAAyCAYAAACqNX6+AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGLSURBVHhe7doxDoMwDEDR7tz/zmzpgBgYGtIk/pZS9S2Vovg5TkIYIYQQQgghhBBCCCGE+IOcc3rv13X9dKJDaq2xN7bWWu/93vuJjqi1xg/Re+/2c8YXhxCyjPJDWmuv1/2E+nkLIbXWH5JzjnnOeM5I1wkP6b0vP8P7xYfUWl95Xq/1Y6YrxYfknJefsfzMdKX4kBDC8p7xhfiQWuvye8bzTFeKDym17r6Y6TrxIb33bj9nujJdKz6ktrpbz/GZ6TrxIb33bj9nvlK6Tnr/eFtdnLv+4uvER6T/yd9l0jniI/p/Ge6y85zxhfiI/l+GU858pfSu9Ij+X4a77DxnvFJ6V3pE/y/D5R5y3E16RHxE/1+mK+R8ofSIlB4R/st0pXSl9IiUHhH+y3Sl9K70iJQeEf7LdKX0rvSIlB4R/st0pfSu9IiUHhH+y3Sl9K70iJQeEf7LdKX0rvSIlB4R/st0pfSu9IiUHhH+y3Sl9K70iJQeEf7LdKX0rvSIlB4R/st0pYkx3gHYUJELWi9aQwAAAABJRU5ErkJggg=="
 
 describe.skipIf(SKIP_INTEGRATION)("Receipt Parser Integration", () => {
-  it("should connect to Gemini API successfully", async () => {
+  it("should connect to Qwen API successfully", async () => {
     // 測試 API 連接 - 即使圖片不是真正的收據，API 也應該能回應
     try {
       const result = await parseReceipt(SIMPLE_TEST_IMAGE)
@@ -41,6 +41,8 @@ describe.skipIf(SKIP_INTEGRATION)("Receipt Parser Integration", () => {
         "invalid_type",       // Zod validation error
         "expected number",    // AI returned null for non-receipt
         "expected string",    // AI returned null for non-receipt
+        "image format is illegal",  // Qwen image format error
+        "image length and width",   // Qwen image size restriction
       ]
       const isAcceptableError = acceptableErrors.some(e => message.includes(e))
 
@@ -83,7 +85,7 @@ describe.skipIf(SKIP_INTEGRATION)("Receipt Parser Integration", () => {
       console.log("解析錯誤:", message)
 
       // 只有 API 連接錯誤才應該失敗
-      if (message.includes("GEMINI_API_KEY") || message.includes("API")) {
+      if (message.includes("QWEN_API_KEY") || message.includes("API")) {
         throw error
       }
     }

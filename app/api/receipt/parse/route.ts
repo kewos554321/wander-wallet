@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 使用 Gemini Vision 解析圖片
+    // 使用 Qwen Vision 解析圖片
     const result = await parseReceipt(imageData)
 
     return NextResponse.json({

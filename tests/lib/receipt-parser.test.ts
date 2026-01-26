@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-// Mock the Gemini module
-vi.mock("@/lib/ai/gemini", () => ({
-  createGeminiModel: vi.fn(() => ({
+// Mock the Qwen module
+vi.mock("@/lib/ai/qwen", () => ({
+  createQwenModel: vi.fn(() => ({
     invoke: vi.fn(),
   })),
 }))
