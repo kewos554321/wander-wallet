@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/system/theme-provider";
+import { DesignVariantProvider } from "@/components/system/design-variant-provider";
+import { DesignVariantToggle } from "@/components/system/design-variant-toggle";
 import { LiffProvider } from "@/components/auth/liff-provider";
 import { AuthGate } from "@/components/auth/auth-gate";
 import ServiceWorkerRegister from "@/components/system/sw-register";
@@ -133,9 +135,12 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <LiffProvider>
           <ThemeProvider defaultTheme="system" enableSystem>
-            <AuthGate>
-              {children}
-            </AuthGate>
+            <DesignVariantProvider>
+              <AuthGate>
+                {children}
+              </AuthGate>
+              <DesignVariantToggle />
+            </DesignVariantProvider>
           </ThemeProvider>
         </LiffProvider>
         <ServiceWorkerRegister />
