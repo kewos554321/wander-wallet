@@ -701,8 +701,8 @@ describe("ExpenseForm Component", () => {
       await fireEvent.click(customButton)
 
       // Should show mode tabs
-      expect(screen.getByText("完全自訂")).toBeInTheDocument()
-      expect(screen.getByText("個人項目 + 均攤")).toBeInTheDocument()
+      expect(screen.getByText("指定金額")).toBeInTheDocument()
+      expect(screen.getByText("先扣再分")).toBeInTheDocument()
     })
 
     it("should switch to personal mode when tab is clicked", async () => {
@@ -717,7 +717,7 @@ describe("ExpenseForm Component", () => {
       await fireEvent.click(customButton)
 
       // Click personal mode tab
-      const personalTab = screen.getByText("個人項目 + 均攤")
+      const personalTab = screen.getByText("先扣再分")
       await fireEvent.click(personalTab)
 
       // Tab should be active
@@ -736,7 +736,7 @@ describe("ExpenseForm Component", () => {
       await fireEvent.click(customButton)
 
       // Switch to personal mode
-      const personalTab = screen.getByText("個人項目 + 均攤")
+      const personalTab = screen.getByText("先扣再分")
       await fireEvent.click(personalTab)
 
       // Should show "新增項目" buttons for each selected member (3 members)
@@ -760,7 +760,7 @@ describe("ExpenseForm Component", () => {
       await fireEvent.click(customButton)
 
       // Switch to personal mode
-      const personalTab = screen.getByText("個人項目 + 均攤")
+      const personalTab = screen.getByText("先扣再分")
       await fireEvent.click(personalTab)
 
       // Should show feedback panel
@@ -780,7 +780,7 @@ describe("ExpenseForm Component", () => {
       await fireEvent.click(customButton)
 
       // Switch to personal mode
-      const personalTab = screen.getByText("個人項目 + 均攤")
+      const personalTab = screen.getByText("先扣再分")
       await fireEvent.click(personalTab)
 
       // Should not show "固定" buttons
