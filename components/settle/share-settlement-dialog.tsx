@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Copy, Check } from "lucide-react"
 
@@ -14,9 +15,10 @@ interface ShareSettlementDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   shareText: string
+  trigger?: ReactNode
 }
 
-export function ShareSettlementDialog({ open, onOpenChange, shareText }: ShareSettlementDialogProps) {
+export function ShareSettlementDialog({ open, onOpenChange, shareText, trigger }: ShareSettlementDialogProps) {
   const [copied, setCopied] = useState(false)
 
   // Copy share text to clipboard
@@ -39,6 +41,7 @@ export function ShareSettlementDialog({ open, onOpenChange, shareText }: ShareSe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+            {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>分享結算結果</DialogTitle>

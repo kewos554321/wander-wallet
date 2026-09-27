@@ -148,25 +148,30 @@ export function SettleV1({ projectId: id }: { projectId: string }) {
           {/* 按鈕組 */}
           <div className="flex gap-2 sm:ml-auto">
             {/* 計算流程按鈕 */}
-            <Button variant="outline" size="sm" className="gap-2" onClick={() => setCalcDialogOpen(true)}>
-              <HelpCircle className="h-4 w-4" />
-              計算說明
-            </Button>
             <SettlementCalcDialog
               open={calcDialogOpen}
               onOpenChange={setCalcDialogOpen}
               data={data}
-              summary={summary}
-              balances={balances}
-              settlements={settlements}
+              trigger={
+                <Button variant="outline" size="sm" className="gap-2">
+                  <HelpCircle className="h-4 w-4" />
+                  計算說明
+                </Button>
+              }
             />
 
             {/* 分享按鈕 */}
-            <Button variant="outline" size="sm" className="gap-2" onClick={() => setShareDialogOpen(true)}>
-              <Share2 className="h-4 w-4" />
-              分享
-            </Button>
-            <ShareSettlementDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} shareText={shareText} />
+            <ShareSettlementDialog
+              open={shareDialogOpen}
+              onOpenChange={setShareDialogOpen}
+              shareText={shareText}
+              trigger={
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Share2 className="h-4 w-4" />
+                  分享
+                </Button>
+              }
+            />
           </div>
         </div>
 

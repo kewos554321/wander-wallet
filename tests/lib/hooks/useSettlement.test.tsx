@@ -70,4 +70,15 @@ describe("useSettlement", () => {
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(result.current.shareText.endsWith("✅ 所有人都已結清！")).toBe(true)
   })
+
+  it("clears the error after a successful refetch", async () => {
+    mockAuthFetch.mockResolvedValueOnce({ ok: false, json: async () => ({ error: "無權限" }) })
+    const { result } = renderHook(() => useSettlement("p1"))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.error).toBe("無權限")
+
+    mockAuthFetch.mockResolvedValueOnce({ ok: true, json: async () => data })
+    await act(() => result.current.refetch())
+    expect(result.current.error).toBeNull()
+  })
 })

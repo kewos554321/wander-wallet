@@ -55,6 +55,7 @@ export function useSettlement(projectId: string) {
   const [displayCurrency, setDisplayCurrency] = useState<string | null>(null) // null = project currency
 
   const refetch = useCallback(async () => {
+    setError(null)
     try {
       const res = await authFetch(`/api/projects/${projectId}/settle`)
       if (res.ok) {

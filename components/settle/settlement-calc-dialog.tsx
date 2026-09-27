@@ -1,30 +1,31 @@
 "use client"
 
+import type { ReactNode } from "react"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog"
 import { ArrowRight, CheckCircle2, Calculator } from "lucide-react"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
-import type { SettleBalance, SettleData, SettleSettlement } from "@/lib/hooks/useSettlement"
+import type { SettleData } from "@/lib/hooks/useSettlement"
 
 interface SettlementCalcDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   data: SettleData
-  // Passed separately (not derived here) so the moved JSX reads the same identifiers as before
-  summary: SettleData["summary"]
-  balances: SettleBalance[]
-  settlements: SettleSettlement[]
+  trigger?: ReactNode
 }
 
 // "計算說明" dialog: expense details, per-member totals and the settlement plan,
 // always shown in the project currency.
-export function SettlementCalcDialog({ open, onOpenChange, data, summary, balances, settlements }: SettlementCalcDialogProps) {
+export function SettlementCalcDialog({ open, onOpenChange, data, trigger }: SettlementCalcDialogProps) {
+  const { summary, balances, settlements } = data
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+              {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
               <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
