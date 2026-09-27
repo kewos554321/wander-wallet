@@ -10,13 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import type { JoinInfo } from "@/lib/project-overview"
 
-export interface JoinInfo {
-  name: string
-  description: string | null
-  joinMode: string
-  unclaimedMembers: { id: string; displayName: string }[]
-}
+// Re-exported so existing imports of JoinInfo from this file keep working.
+export type { JoinInfo }
 
 interface JoinProjectDialogProps {
   info: JoinInfo

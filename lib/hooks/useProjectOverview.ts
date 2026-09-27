@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { useCurrencyConversion } from "@/lib/hooks/useCurrencyConversion"
-import { computeProjectSummary, type OverviewProject } from "@/lib/project-overview"
-import type { JoinInfo } from "@/components/project/join-project-dialog"
+import { computeProjectSummary, type JoinInfo, type OverviewProject } from "@/lib/project-overview"
 
 export function useProjectOverview(projectId: string) {
   const router = useRouter()

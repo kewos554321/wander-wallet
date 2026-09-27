@@ -113,6 +113,13 @@ export function computeProjectSummary(
   }
 }
 
+export interface JoinInfo {
+  name: string
+  description: string | null
+  joinMode: string
+  unclaimedMembers: { id: string; displayName: string }[]
+}
+
 export function getRecentExpenses(expenses: OverviewExpense[], limit = 5): OverviewExpense[] {
   return [...expenses]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
