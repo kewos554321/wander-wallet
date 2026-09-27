@@ -311,3 +311,56 @@
 .driver-popover.wander-wallet-tour .driver-popover-arrow-side-bottom {
   border-color: var(--driver-popover-bg);
 }
+
+/* ============================================
+   UI v2 tokens — only active under [data-ui="v2"]
+   Values from design/project/*.dc.html
+   ============================================ */
+@theme inline {
+  --color-v2-paper: var(--v2-paper);
+  --color-v2-surface: var(--v2-surface);
+  --color-v2-ink: var(--v2-ink);
+  --color-v2-ink-muted: var(--v2-ink-muted);
+  --color-v2-ink-subtle: var(--v2-ink-subtle);
+  --color-v2-line: var(--v2-line);
+  --color-v2-sand: var(--v2-sand);
+  --color-v2-check: var(--v2-check);
+  --color-v2-lake: var(--v2-lake);
+  --color-v2-lake-soft: var(--v2-lake-soft);
+  --color-v2-link: var(--v2-link);
+  --color-v2-coral: var(--v2-coral);
+  --color-v2-coral-soft: var(--v2-coral-soft);
+  --color-v2-plum: var(--v2-plum);
+  --color-v2-plum-soft: var(--v2-plum-soft);
+  --color-v2-gold: var(--v2-gold);
+  --color-v2-gold-soft: var(--v2-gold-soft);
+  --color-v2-rose: var(--v2-rose);
+  --color-v2-rose-soft: var(--v2-rose-soft);
+  --color-v2-danger: var(--v2-danger);
+  --font-v2-serif: var(--font-noto-serif-tc), serif;
+  --font-v2-sans: var(--font-noto-sans-tc), sans-serif;
+}
+
+[data-ui="v2"] {
+  color-scheme: light;
+  --v2-paper: #FAF7F2;
+  --v2-surface: #FFFFFF;
+  --v2-ink: #1B1815;
+  --v2-ink-muted: #6E6860;
+  --v2-ink-subtle: #B7AE9D;
+  --v2-line: #E7DFD2;
+  --v2-sand: #F1EBE0;
+  --v2-check: #C9BFAC;
+  --v2-lake: #1B5847;
+  --v2-lake-soft: #EAF5F1;
+  --v2-link: #24735D;
+  --v2-coral: #E8825A;
+  --v2-coral-soft: #FBEAE0;
+  --v2-plum: #6B5B95;
+  --v2-plum-soft: #EFEAF7;
+  --v2-gold: #9C7A28;
+  --v2-gold-soft: #F7EFDD;
+  --v2-rose: #A14A68;
+  --v2-rose-soft: #F6E9EE;
+  --v2-danger: #C4472F;
+}
