@@ -1,0 +1,62 @@
+import { describe, it, expect } from "vitest"
+import { render, screen, within } from "@testing-library/react"
+import { StatsV2View } from "@/components/v2/stats/stats-v2-view"
+
+const stats = {
+  total: 48600,
+  categories: [
+    { category: "food", amount: 19440, percent: 40 },
+    { category: "accommodation", amount: 14000, percent: 28.8 },
+    { category: "transport", amount: 6400, percent: 13.2 },
+    { category: "other", amount: 8760, percent: 18 },
+  ],
+  members: [
+    { id: "chi", name: "志明", paid: 9800, share: 9800, balance: 0 },
+    { id: "me", name: "Emma", paid: 18200, share: 18200, balance: 0 },
+  ],
+  daily: [
+    { date: "11/12", amount: 12000 },
+    { date: "11/13", amount: 20000 },
+  ],
+}
+
+describe("StatsV2View", () => {
+  it("renders the category legend with rounded percentages", () => {
+    render(<StatsV2View projectId="p1" currency="TWD" stats={stats} currentMemberId="me" />)
+    const legend = screen.getByRole("list", { name: "類別佔比" })
+    expect(within(legend).getByText("餐飲")).toBeInTheDocument()
+    expect(within(legend).getByText("40%")).toBeInTheDocument()
+    expect(within(legend).getByText("29%")).toBeInTheDocument()
+    expect(within(legend).getByText("TWD 19,440")).toBeInTheDocument()
+  })
+
+  it("ranks members by share with 我 for the current member", () => {
+    render(<StatsV2View projectId="p1" currency="TWD" stats={stats} currentMemberId="me" />)
+    const rows = within(screen.getByRole("list", { name: "成員排行" })).getAllByRole("listitem")
+    expect(rows[0]).toHaveTextContent("我")
+    expect(rows[0]).toHaveTextContent("TWD 18,200")
+    expect(rows[1]).toHaveTextContent("志")
+    expect(within(rows[0]).getByRole("meter")).toHaveAttribute("aria-valuenow", "100")
+    expect(within(rows[1]).getByRole("meter")).toHaveAttribute("aria-valuenow", "54")
+  })
+
+  it("labels the daily trend", () => {
+    render(<StatsV2View projectId="p1" currency="TWD" stats={stats} currentMemberId="me" />)
+    const trend = screen.getByRole("figure", { name: "每日趨勢" })
+    expect(within(trend).getByText("11/12")).toBeInTheDocument()
+    expect(within(trend).getByText("11/13")).toBeInTheDocument()
+  })
+
+  it("shows empty states without NaN", () => {
+    const { container } = render(
+      <StatsV2View
+        projectId="p1"
+        currency="TWD"
+        stats={{ total: 0, categories: [], members: [{ id: "me", name: "Emma", paid: 0, share: 0, balance: 0 }], daily: [] }}
+        currentMemberId="me"
+      />
+    )
+    expect(screen.getAllByText("尚無支出")).toHaveLength(3)
+    expect(container.textContent).not.toContain("NaN")
+  })
+})
