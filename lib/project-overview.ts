@@ -27,6 +27,7 @@ export interface OverviewExpense {
   description: string | null
   category: string | null
   createdAt: string
+  expenseDate?: string
   payer: {
     id: string
     displayName: string

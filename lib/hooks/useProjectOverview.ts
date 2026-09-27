@@ -94,5 +94,5 @@ export function useProjectOverview(projectId: string) {
     [project, convert, user?.id]
   )
 
-  return { project, loading, joinInfo, joining, joinProject, claimMember, refetch, summary }
+  return { project, loading, joinInfo, joining, joinProject, claimMember, refetch, summary, convert }
 }
