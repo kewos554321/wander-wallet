@@ -47,6 +47,17 @@ describe("StatsV2View", () => {
     expect(within(trend).getByText("11/13")).toBeInTheDocument()
   })
 
+  it("uses a DOM-safe gradient id for the daily trend fill", () => {
+    render(<StatsV2View projectId="p1" currency="TWD" stats={stats} currentMemberId="me" />)
+    const trend = screen.getByRole("figure", { name: "每日趨勢" })
+    const gradient = trend.querySelector("linearGradient")
+    expect(gradient).not.toBeNull()
+    const gradientId = gradient!.getAttribute("id")!
+    expect(gradientId).toMatch(/^[a-zA-Z0-9_-]+$/)
+    const areaPath = trend.querySelector(`path[fill="url(#${gradientId})"]`)
+    expect(areaPath).not.toBeNull()
+  })
+
   it("shows empty states without NaN", () => {
     const { container } = render(
       <StatsV2View

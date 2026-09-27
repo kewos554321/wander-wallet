@@ -8,8 +8,10 @@ const BOTTOM = 85
 
 export function DailyTrend({ daily }: { daily: DailyStat[] }) {
   // useId() keeps the gradient id unique per instance, avoiding collisions
-  // when multiple DailyTrend instances render on the same page.
-  const gradientId = `v2TrendFill-${useId()}`
+  // when multiple DailyTrend instances render on the same page. React's
+  // useId() can include characters like ":" that break SVG url(#id)
+  // fragment references in some browsers, so strip anything unsafe.
+  const gradientId = `v2TrendFill-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`
 
   if (daily.length === 0) {
     return <p className="py-6 text-center text-xs text-v2-ink-muted">尚無支出</p>
