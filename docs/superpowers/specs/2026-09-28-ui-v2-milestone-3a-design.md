@@ -18,7 +18,7 @@
 | 程式組織 | 分帳計算、splitDetail 轉換與驗證抽成純函式；送出流程抽成 hook；v1 保留自己的畫面狀態 |
 | 付款人 | 單一付款人（多人付款另行遷移） |
 | v2 內的輸入元件 | 計算機、幣別、日期、地點、圖片沿用 v1 元件，v2 樣式延到里程碑 5 |
-| 資料庫變更 | 只新增選填欄位；migration 以 `prisma migrate diff` 產生 SQL 並 commit，不在開發過程中連線任何資料庫 |
+| 資料庫變更 | 只新增選填欄位。專案沒有 migration 歷史、以 `prisma db push` 同步，因此只修改 `schema.prisma`，部署前由維護者執行 `npx prisma db push`（或等效 SQL `ALTER TABLE "expenses" ADD COLUMN "split_detail" JSONB;`）；不建立 `prisma/migrations` 檔案；開發過程中不連線任何資料庫 |
 
 ## 2. 資料、API 與相容性
 
@@ -79,7 +79,8 @@ interface SplitDetail {
 
 ### 2.5 上線順序
 
-migration、API、v1 讀寫必須同一次部署；v2 表單在同一部署中以 `?ui=` 開放。
+1. 先對資料庫執行 `npx prisma db push`（新增可為空欄位，不影響線上舊程式：Prisma 只查詢已知欄位）。
+2. 再部署程式：API、v1 讀寫、v2 表單同一次上線。
 
 ## 3. 共用邏輯
 
@@ -148,7 +149,7 @@ interface SplitInput {
 
 ## 7. 任務切分
 
-1. `splitDetail` 欄位、migration SQL、`lib/expense-split.ts`
+1. `splitDetail` 欄位（schema.prisma）、`lib/expense-split.ts`
 2. API 支援 `splitDetail`（含驗證與舊版相容）
 3. `lib/expense-changes.ts` 與 `useSaveExpense`
 4. v1 表單改用共用邏輯、讀寫 `splitDetail`、唯讀保護
