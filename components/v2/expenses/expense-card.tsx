@@ -89,7 +89,7 @@ export function ExpenseCard({
             onClick={() => onViewImage(expense.image!)}
             className="absolute bottom-0 right-0 h-10 w-10 overflow-hidden rounded-[10px] bg-gradient-to-br from-v2-line to-v2-check"
           >
-            <Image src={expense.image} alt="" fill className="object-cover" />
+            <Image src={expense.image} alt="" fill sizes="40px" className="object-cover" />
           </button>
         )}
       </div>

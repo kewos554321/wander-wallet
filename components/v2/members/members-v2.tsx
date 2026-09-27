@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react"
 import { AddMemberDialog } from "@/components/members/add-member-dialog"
 import { InviteDialog } from "@/components/project/invite-dialog"
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
+import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { useProjectMembers } from "@/lib/hooks/useProjectMembers"
 import { MembersV2View } from "./members-v2-view"
@@ -40,12 +41,20 @@ export function MembersV2({ projectId }: { projectId: string }) {
   let content: ReactNode
   if (m.loading) {
     content = (
-      <div data-testid="v2-members-skeleton" className="space-y-3 p-4">
-        <div className="h-64 animate-pulse rounded-2xl bg-v2-sand" />
-      </div>
+      <>
+        <V2TopBar title="成員" backHref={`/projects/${projectId}`} />
+        <div data-testid="v2-members-skeleton" className="space-y-3 p-4">
+          <div className="h-64 animate-pulse rounded-2xl bg-v2-sand" />
+        </div>
+      </>
     )
   } else if (!m.project) {
-    content = <p className="py-8 text-center text-v2-ink-muted">專案不存在</p>
+    content = (
+      <>
+        <V2TopBar title="成員" backHref={`/projects/${projectId}`} />
+        <p className="py-8 text-center text-v2-ink-muted">專案不存在</p>
+      </>
+    )
   } else {
     content = (
       <>

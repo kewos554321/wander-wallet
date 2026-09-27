@@ -1,7 +1,27 @@
-import { describe, it, expect, vi } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent, within } from "@testing-library/react"
 import { SettleV2View } from "@/components/v2/settle/settle-v2-view"
 import type { SettleData } from "@/lib/hooks/useSettlement"
+
+vi.mock("next/font/google", () => ({
+  Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
+  Noto_Sans_TC: () => ({ variable: "font-var-sans" }),
+}))
+vi.mock("@/components/auth/liff-provider", () => ({
+  useLiff: () => ({ user: { id: "u1" } }),
+  useAuthFetch: () => vi.fn(),
+}))
+vi.mock("@/components/ads/ad-container", () => ({ AdContainer: () => null }))
+vi.mock("@/components/settle/share-settlement-dialog", () => ({ ShareSettlementDialog: () => null }))
+vi.mock("@/components/settle/settlement-calc-dialog", () => ({ SettlementCalcDialog: () => null }))
+
+const mockProjectData = vi.fn()
+vi.mock("@/lib/hooks", () => ({ useProjectData: () => mockProjectData() }))
+
+const mockSettlement = vi.fn()
+vi.mock("@/lib/hooks/useSettlement", () => ({ useSettlement: () => mockSettlement() }))
+
+import { SettleV2 } from "@/components/v2/settle/settle-v2"
 
 const data: SettleData = {
   balances: [
@@ -58,6 +78,12 @@ describe("SettleV2View", () => {
     expect(screen.getByText("所有人都已結清")).toBeInTheDocument()
   })
 
+  it("shows the no-expenses state when there are no expenses at all", () => {
+    renderView({ data: { ...data, settlements: [], summary: { ...data.summary, totalExpenses: 0 } } })
+    expect(screen.getByText("尚無支出記錄")).toBeInTheDocument()
+    expect(screen.queryByText("所有人都已結清")).not.toBeInTheDocument()
+  })
+
   it("shows per-member balances", () => {
     renderView()
     const section = screen.getByRole("region", { name: "各人收支" })
@@ -90,5 +116,43 @@ describe("SettleV2View", () => {
   it("shows 0 per person without balances", () => {
     renderView({ data: { ...data, balances: [], settlements: [] } })
     expect(within(screen.getByTestId("settle-summary")).getAllByText("0").length).toBeGreaterThan(0)
+  })
+})
+
+describe("SettleV2 container", () => {
+  beforeEach(() => {
+    mockProjectData.mockReset().mockReturnValue({ project: null, members: [] })
+    mockSettlement.mockReset()
+  })
+
+  it("shows a back link in the error state", () => {
+    mockSettlement.mockReturnValue({
+      data: null,
+      loading: false,
+      error: "獲取結算數據失敗",
+      displayCurrencyCode: "TWD",
+      setDisplayCurrency: vi.fn(),
+      toDisplay: (n: number) => n,
+      shareText: "",
+    })
+    render(<SettleV2 projectId="p1" />)
+    expect(screen.getByText("結算")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
+    expect(screen.getByText("獲取結算數據失敗")).toBeInTheDocument()
+  })
+
+  it("shows a back link while loading", () => {
+    mockSettlement.mockReturnValue({
+      data: null,
+      loading: true,
+      error: null,
+      displayCurrencyCode: "TWD",
+      setDisplayCurrency: vi.fn(),
+      toDisplay: (n: number) => n,
+      shareText: "",
+    })
+    render(<SettleV2 projectId="p1" />)
+    expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
+    expect(screen.getByTestId("v2-settle-skeleton")).toBeInTheDocument()
   })
 })

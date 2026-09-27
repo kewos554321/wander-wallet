@@ -129,6 +129,24 @@ describe("useProjectExpenses", () => {
     expect(mockSendBatchDelete).toHaveBeenCalledTimes(1)
   })
 
+  it.each([
+    ["the checkbox is off", {}, false],
+    ["in dev mode", { isDevMode: true }, true],
+    ["messages cannot be sent", { canSendMessages: false }, true],
+    ["the user disabled delete notifications", { user: { id: "u1", preferences: { notifications: { expenseDeleted: false } } } }, true],
+  ])("does not notify LINE on batch delete when %s", async (_label, liffOverrides, notifyLine) => {
+    mockUseLiff.mockReturnValue(liff(liffOverrides))
+    mockAuthFetch
+      .mockResolvedValueOnce(ok([expense("a"), expense("b")]))
+      .mockResolvedValueOnce(ok({}))
+    const { result } = renderHook(() => useProjectExpenses("p1", { projectName: "東京" }))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    await act(async () => {
+      await result.current.batchDeleteExpenses(["a", "b"], { notifyLine })
+    })
+    expect(mockSendBatchDelete).not.toHaveBeenCalled()
+  })
+
   it("exposes canNotifyLine", async () => {
     mockUseLiff.mockReturnValue(liff({ isDevMode: true }))
     mockAuthFetch.mockResolvedValueOnce(ok([]))

@@ -1,7 +1,25 @@
-import { describe, it, expect, vi } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent, within } from "@testing-library/react"
 import { MembersV2View } from "@/components/v2/members/members-v2-view"
 import type { MembersProject } from "@/lib/hooks/useProjectMembers"
+
+vi.mock("next/font/google", () => ({
+  Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
+  Noto_Sans_TC: () => ({ variable: "font-var-sans" }),
+}))
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }))
+vi.mock("@/components/auth/liff-provider", () => ({
+  useLiff: () => ({ user: { id: "u1" } }),
+  useAuthFetch: () => vi.fn(),
+}))
+vi.mock("@/components/members/add-member-dialog", () => ({ AddMemberDialog: () => null }))
+vi.mock("@/components/project/invite-dialog", () => ({ InviteDialog: () => null }))
+vi.mock("@/components/ui/confirm-delete-dialog", () => ({ ConfirmDeleteDialog: () => null }))
+
+const mockProjectMembers = vi.fn()
+vi.mock("@/lib/hooks/useProjectMembers", () => ({ useProjectMembers: () => mockProjectMembers() }))
+
+import { MembersV2 } from "@/components/v2/members/members-v2"
 
 const project: MembersProject = {
   id: "p1",
@@ -77,5 +95,44 @@ describe("MembersV2View", () => {
     expect(props.onToggleSelect).toHaveBeenCalledWith("m3")
     fireEvent.click(screen.getByRole("button", { name: "移除 1 位" }))
     expect(props.onRequestBatchRemove).toHaveBeenCalled()
+  })
+})
+
+describe("MembersV2 container", () => {
+  beforeEach(() => mockProjectMembers.mockReset())
+
+  it("shows a back link when the project is not found", () => {
+    mockProjectMembers.mockReturnValue({
+      project: null,
+      loading: false,
+      isOwner: false,
+      currentUserId: "u1",
+      removing: null,
+      refetch: vi.fn(),
+      addMember: vi.fn(),
+      removeMember: vi.fn(),
+      batchRemove: vi.fn(),
+    })
+    render(<MembersV2 projectId="p1" />)
+    expect(screen.getByText("成員")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
+    expect(screen.getByText("專案不存在")).toBeInTheDocument()
+  })
+
+  it("shows a back link while loading", () => {
+    mockProjectMembers.mockReturnValue({
+      project: null,
+      loading: true,
+      isOwner: false,
+      currentUserId: "u1",
+      removing: null,
+      refetch: vi.fn(),
+      addMember: vi.fn(),
+      removeMember: vi.fn(),
+      batchRemove: vi.fn(),
+    })
+    render(<MembersV2 projectId="p1" />)
+    expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
+    expect(screen.getByTestId("v2-members-skeleton")).toBeInTheDocument()
   })
 })

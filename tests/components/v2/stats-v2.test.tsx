@@ -1,6 +1,18 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, within } from "@testing-library/react"
 import { StatsV2View } from "@/components/v2/stats/stats-v2-view"
+
+vi.mock("next/font/google", () => ({
+  Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
+  Noto_Sans_TC: () => ({ variable: "font-var-sans" }),
+}))
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }))
+vi.mock("@/components/project/join-project-dialog", () => ({ JoinProjectDialog: () => null }))
+
+const mockProjectOverview = vi.fn()
+vi.mock("@/lib/hooks/useProjectOverview", () => ({ useProjectOverview: () => mockProjectOverview() }))
+
+import { StatsV2 } from "@/components/v2/stats/stats-v2"
 
 const stats = {
   total: 48600,
@@ -69,5 +81,42 @@ describe("StatsV2View", () => {
     )
     expect(screen.getAllByText("尚無支出")).toHaveLength(3)
     expect(container.textContent).not.toContain("NaN")
+  })
+})
+
+describe("StatsV2 container", () => {
+  beforeEach(() => mockProjectOverview.mockReset())
+
+  it("shows a back link when the project is not found", () => {
+    mockProjectOverview.mockReturnValue({
+      project: null,
+      loading: false,
+      joinInfo: null,
+      joining: false,
+      joinProject: vi.fn(),
+      claimMember: vi.fn(),
+      summary: null,
+      convert: (n: number) => n,
+    })
+    render(<StatsV2 projectId="p1" />)
+    expect(screen.getByText("統計")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
+    expect(screen.getByText("專案不存在")).toBeInTheDocument()
+  })
+
+  it("shows a back link while loading", () => {
+    mockProjectOverview.mockReturnValue({
+      project: null,
+      loading: true,
+      joinInfo: null,
+      joining: false,
+      joinProject: vi.fn(),
+      claimMember: vi.fn(),
+      summary: null,
+      convert: (n: number) => n,
+    })
+    render(<StatsV2 projectId="p1" />)
+    expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
+    expect(screen.getByTestId("v2-stats-skeleton")).toBeInTheDocument()
   })
 })

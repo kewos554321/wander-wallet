@@ -5,6 +5,7 @@ import { useLiff } from "@/components/auth/liff-provider"
 import { AdContainer } from "@/components/ads/ad-container"
 import { ShareSettlementDialog } from "@/components/settle/share-settlement-dialog"
 import { SettlementCalcDialog } from "@/components/settle/settlement-calc-dialog"
+import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { useProjectData } from "@/lib/hooks"
@@ -25,13 +26,21 @@ export function SettleV2({ projectId }: { projectId: string }) {
   let content: ReactNode
   if (s.loading) {
     content = (
-      <div data-testid="v2-settle-skeleton" className="space-y-3 p-4">
-        <div className="h-48 animate-pulse rounded-2xl bg-v2-sand" />
-        <div className="h-32 animate-pulse rounded-2xl bg-v2-sand" />
-      </div>
+      <>
+        <V2TopBar title="結算" backHref={`/projects/${projectId}`} />
+        <div data-testid="v2-settle-skeleton" className="space-y-3 p-4">
+          <div className="h-48 animate-pulse rounded-2xl bg-v2-sand" />
+          <div className="h-32 animate-pulse rounded-2xl bg-v2-sand" />
+        </div>
+      </>
     )
   } else if (s.error || !s.data) {
-    content = <p className="py-8 text-center text-v2-ink-muted">{s.error || "獲取結算數據失敗"}</p>
+    content = (
+      <>
+        <V2TopBar title="結算" backHref={`/projects/${projectId}`} />
+        <p className="py-8 text-center text-v2-ink-muted">{s.error || "獲取結算數據失敗"}</p>
+      </>
+    )
   } else {
     const dailyAverage = computeDailyAverage(
       s.data.summary.totalAmount,

@@ -42,8 +42,9 @@ export function DailyTrend({ daily }: { daily: DailyStat[] }) {
         ))}
       </svg>
       <div className="mt-1.5 flex justify-between">
-        {daily.map((d) => (
-          <span key={d.date} className="text-xs text-v2-ink-muted">
+        {daily.map((d, i) => (
+          // Index key: M/D labels can collide across years.
+          <span key={i} className="text-xs text-v2-ink-muted">
             {d.date}
           </span>
         ))}

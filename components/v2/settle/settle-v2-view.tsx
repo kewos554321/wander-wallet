@@ -81,6 +81,7 @@ export function SettleV2View(props: SettleV2ViewProps) {
         toDisplay={toDisplay}
         onShowCalc={props.onShowCalc}
         onShare={props.onShare}
+        expenseCount={data.summary.totalExpenses}
       />
       <MemberBalances
         balances={data.balances}

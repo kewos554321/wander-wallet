@@ -18,12 +18,23 @@ interface SettlementListProps {
   toDisplay: (amount: number) => number
   onShowCalc: () => void
   onShare: () => void
+  /** Total expense count, used to distinguish "no expenses yet" from "all settled". */
+  expenseCount: number
 }
 
 const actionButton =
   "inline-flex items-center gap-1.5 rounded-lg border border-[#B7D9CB] bg-v2-lake-soft px-3 py-1.5 text-xs font-semibold text-v2-lake"
 
-export function SettlementList({ settlements, memberIds, currentMemberId, currencyCode, toDisplay, onShowCalc, onShare }: SettlementListProps) {
+export function SettlementList({
+  settlements,
+  memberIds,
+  currentMemberId,
+  currencyCode,
+  toDisplay,
+  onShowCalc,
+  onShare,
+  expenseCount,
+}: SettlementListProps) {
   const tone = (memberId: string) => AVATAR_TONES[Math.max(0, memberIds.indexOf(memberId)) % AVATAR_TONES.length]
   const name = (memberId: string, displayName: string) => (memberId === currentMemberId ? "我" : displayName)
 
@@ -56,7 +67,9 @@ export function SettlementList({ settlements, memberIds, currentMemberId, curren
       </div>
       <div className="overflow-hidden rounded-2xl border border-v2-line bg-v2-surface">
         {settlements.length === 0 ? (
-          <p className="px-4 py-6 text-center text-[13px] text-v2-ink-muted">所有人都已結清</p>
+          <p className="px-4 py-6 text-center text-[13px] text-v2-ink-muted">
+            {expenseCount === 0 ? "尚無支出記錄" : "所有人都已結清"}
+          </p>
         ) : (
           settlements.map((s, i) => (
             <div
