@@ -1,22 +1,8 @@
 import Link from "next/link"
-import { CATEGORY_ICONS, getCategoryLabel, type ExpenseCategory } from "@/lib/constants/expenses"
+import { CATEGORY_ICONS, getCategoryLabel } from "@/lib/constants/expenses"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { getRecentExpenses, type OverviewExpense } from "@/lib/project-overview"
-
-const CATEGORY_TONES: Record<ExpenseCategory, string> = {
-  food: "bg-v2-coral-soft text-v2-coral",
-  transport: "bg-v2-lake-soft text-v2-lake",
-  accommodation: "bg-v2-plum-soft text-v2-plum",
-  ticket: "bg-v2-gold-soft text-v2-gold",
-  shopping: "bg-v2-rose-soft text-v2-rose",
-  entertainment: "bg-v2-plum-soft text-v2-plum",
-  gift: "bg-v2-rose-soft text-v2-rose",
-  other: "bg-v2-sand text-v2-ink-muted",
-}
-
-function categoryKey(category: string | null): ExpenseCategory {
-  return category && category in CATEGORY_ICONS ? (category as ExpenseCategory) : "other"
-}
+import { CATEGORY_TONES, categoryKey } from "@/components/v2/category-style"
 
 interface RecentExpensesProps {
   projectId: string
