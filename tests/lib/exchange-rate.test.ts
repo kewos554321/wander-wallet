@@ -21,8 +21,8 @@ describe("exchange-rate service", () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            success: true,
-            base: "USD",
+            result: "success",
+            base_code: "USD",
             rates: { USD: 1, TWD: 31.5, JPY: 150 },
           }),
       })
@@ -42,8 +42,8 @@ describe("exchange-rate service", () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            success: true,
-            base: "USD",
+            result: "success",
+            base_code: "USD",
             rates: { USD: 1, TWD: 31.5 },
           }),
       })
@@ -91,7 +91,7 @@ describe("exchange-rate service", () => {
     it("should return fallback rates when API returns unsuccessful", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ success: false }),
+        json: () => Promise.resolve({ result: "error", "error-type": "unsupported-code" }),
       })
 
       const { getExchangeRates } = await import(
@@ -110,8 +110,8 @@ describe("exchange-rate service", () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            success: true,
-            base: "USD",
+            result: "success",
+            base_code: "USD",
             rates: { USD: 1, TWD: 30.5 },
           }),
       })
@@ -130,8 +130,8 @@ describe("exchange-rate service", () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            success: true,
-            base: "USD",
+            result: "success",
+            base_code: "USD",
             rates: { USD: 1, TWD: 30.5 },
           }),
       })
@@ -175,8 +175,8 @@ describe("exchange-rate service", () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            success: true,
-            base: "USD",
+            result: "success",
+            base_code: "USD",
             rates: { USD: 1, TWD: 32, JPY: 150 },
           }),
       })
@@ -195,8 +195,8 @@ describe("exchange-rate service", () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            success: true,
-            base: "USD",
+            result: "success",
+            base_code: "USD",
             rates: { USD: 1, TWD: 32, JPY: 150 },
           }),
       })
@@ -217,8 +217,8 @@ describe("exchange-rate service", () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            success: true,
-            base: "USD",
+            result: "success",
+            base_code: "USD",
             rates: { USD: 1, TWD: 32 },
           }),
       })
@@ -238,8 +238,8 @@ describe("exchange-rate service", () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            success: true,
-            base: "USD",
+            result: "success",
+            base_code: "USD",
             rates: { USD: 1 },
           }),
       })
