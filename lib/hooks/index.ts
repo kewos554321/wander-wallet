@@ -13,3 +13,4 @@ export {
   type Expense,
   type ExpenseFilters,
 } from "./useExpenseFilters"
+export { useUiVersion } from "./useUiVersion"
