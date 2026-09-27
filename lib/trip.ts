@@ -13,7 +13,8 @@ function monthDay(date: Date): string {
 // A trip without an end date is treated as active.
 export function getTripStatus(endDate: string | null, now: Date): TripStatus {
   if (!endDate) return "active"
-  const endOfLastDay = startOfLocalDay(new Date(endDate)) + DAY_MS - 1
+  const end = new Date(endDate)
+  const endOfLastDay = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999).getTime()
   return now.getTime() > endOfLastDay ? "completed" : "active"
 }
 
