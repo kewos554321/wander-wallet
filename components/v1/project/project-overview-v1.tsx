@@ -1,0 +1,598 @@
+"use client"
+
+import { useEffect, useState, useRef, useCallback } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { AppLayout } from "@/components/layout/app-layout"
+import { Button } from "@/components/ui/button"
+import { StatCard } from "@/components/dashboard/stat-card"
+import { FeatureCard } from "@/components/dashboard/feature-card"
+import { useLiff } from "@/components/auth/liff-provider"
+import {
+  Plus,
+  Share2,
+  Users,
+  Calculator,
+  Receipt,
+  Utensils,
+  Car,
+  Home,
+  Gamepad2,
+  ShoppingBag,
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Info,
+  Download,
+  ArrowRightLeft,
+  Settings,
+  StickyNote,
+  Wallet,
+  Sparkles,
+  History,
+  DollarSign,
+  UserCheck,
+  MapPin,
+  Images,
+} from "lucide-react"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
+import { Skeleton } from "@/components/ui/skeleton"
+import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { useOnboarding } from "@/lib/hooks"
+import { useProjectOverview } from "@/lib/hooks/useProjectOverview"
+import { JoinProjectDialog } from "@/components/project/join-project-dialog"
+import { InviteDialog } from "@/components/project/invite-dialog"
+import { AppTour } from "@/components/onboarding/app-tour"
+
+// 類別圖標
+function getCategoryIcon(category: string | null) {
+  switch (category) {
+    case "food":
+      return <Utensils className="h-4 w-4" />
+    case "transport":
+      return <Car className="h-4 w-4" />
+    case "accommodation":
+      return <Home className="h-4 w-4" />
+    case "entertainment":
+      return <Gamepad2 className="h-4 w-4" />
+    case "shopping":
+      return <ShoppingBag className="h-4 w-4" />
+    default:
+      return <Wallet className="h-4 w-4" />
+  }
+}
+
+// 類別顏色
+function getCategoryColor(category: string | null) {
+  switch (category) {
+    case "food":
+      return "bg-orange-50 text-orange-500 dark:bg-orange-950 dark:text-orange-400"
+    case "transport":
+      return "bg-blue-50 text-blue-500 dark:bg-blue-950 dark:text-blue-400"
+    case "accommodation":
+      return "bg-violet-50 text-violet-500 dark:bg-violet-950 dark:text-violet-400"
+    case "entertainment":
+      return "bg-pink-50 text-pink-500 dark:bg-pink-950 dark:text-pink-400"
+    case "shopping":
+      return "bg-amber-50 text-amber-500 dark:bg-amber-950 dark:text-amber-400"
+    default:
+      return "bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+  }
+}
+
+export function ProjectOverviewV1({ projectId: id }: { projectId: string }) {
+  const router = useRouter()
+  const { project, loading, joinInfo, joining, joinProject, claimMember, refetch, summary } = useProjectOverview(id)
+  const { user } = useLiff()
+
+  // 邀請分享相關狀態
+  const [showInvite, setShowInvite] = useState(false)
+
+  // AI 語音記帳相關狀態
+  const [showVoiceDialog, setShowVoiceDialog] = useState(false)
+
+  // 導覽相關
+  const { isOnboardingCompleted, isLoading: onboardingLoading, completeOnboarding } = useOnboarding()
+  const [showTour, setShowTour] = useState(false)
+
+  // 功能 carousel 相關
+  const [currentPage, setCurrentPage] = useState(0)
+  const carouselRef = useRef<HTMLDivElement>(null)
+  const totalPages = 2
+
+  const handleScroll = useCallback(() => {
+    if (carouselRef.current) {
+      const scrollLeft = carouselRef.current.scrollLeft
+      const width = carouselRef.current.offsetWidth
+      const newPage = Math.round(scrollLeft / width)
+      setCurrentPage(newPage)
+    }
+  }, [])
+
+  // Trigger tour after project loaded and onboarding not completed
+  useEffect(() => {
+    if (project && !loading && !onboardingLoading && !isOnboardingCompleted) {
+      // Unchanged from the original page; the rule only surfaced after the move.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setShowTour(true)
+    }
+  }, [project, loading, onboardingLoading, isOnboardingCompleted])
+
+  if (loading) {
+    return (
+      <AppLayout title="專案" showBack>
+        <div className="pb-24 space-y-6">
+          {/* 標題骨架 */}
+          <div>
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+
+          {/* 功能區塊骨架 */}
+          <div>
+            <Skeleton className="h-5 w-16 mb-3" />
+            <div className="grid grid-cols-4 gap-2">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2">
+                  <Skeleton className="h-10 w-10 rounded-xl" />
+                  <Skeleton className="h-4 w-10" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 總覽骨架 */}
+          <div>
+            <Skeleton className="h-5 w-16 mb-3" />
+            <div className="grid grid-cols-2 gap-3">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+                  <Skeleton className="h-3 w-16 mb-2" />
+                  <Skeleton className="h-7 w-24" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 餘額骨架 */}
+          <div>
+            <Skeleton className="h-5 w-20 mb-3" />
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Skeleton className="h-8 w-28 mb-2" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <Skeleton className="h-12 w-12 rounded-xl" />
+              </div>
+            </div>
+          </div>
+
+          {/* 最近支出骨架 */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <Skeleton className="h-5 w-20" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-4">
+                  <Skeleton className="h-10 w-10 rounded-xl" />
+                  <div className="flex-1">
+                    <Skeleton className="h-4 w-24 mb-1" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                  <Skeleton className="h-5 w-16" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    )
+  }
+
+  // 顯示加入 Dialog（非成員）
+  if (joinInfo) {
+    return (
+      <AppLayout title="專案" showBack>
+        <JoinProjectDialog
+          info={joinInfo}
+          joining={joining}
+          onJoin={joinProject}
+          onClaim={claimMember}
+          onCancel={() => router.push("/projects")}
+        />
+      </AppLayout>
+    )
+  }
+
+  if (!project) {
+    return (
+      <AppLayout title="專案" showBack>
+        <div className="text-center py-8 text-muted-foreground">專案不存在</div>
+      </AppLayout>
+    )
+  }
+
+  const { totalAmount, perPerson, budget, budgetProgress, budgetRemaining } = summary!
+  const displayBalance = summary!.userBalance
+
+  return (
+    <AppLayout title="專案" showBack>
+      <div className="pb-24 space-y-6">
+        {/* 專案標題 */}
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{project.name}</h1>
+          {project.description && (
+            <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
+          )}
+        </div>
+
+        {/* 功能 */}
+        <div>
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">功能</h2>
+          <div
+            ref={carouselRef}
+            onScroll={handleScroll}
+            className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-3 px-3"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {/* 第一頁 - 8 個功能 */}
+            <div className="flex-shrink-0 w-full snap-center">
+              <div className="grid grid-cols-4 gap-2">
+                <FeatureCard
+                  href={`/projects/${id}/settle`}
+                  icon={<Calculator className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />}
+                  iconBgClass="bg-cyan-50 dark:bg-cyan-950"
+                  label="結算"
+                  data-tour="feature-settle"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/members`}
+                  icon={<Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
+                  iconBgClass="bg-blue-50 dark:bg-blue-950"
+                  label="成員"
+                  data-tour="feature-members"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/stats`}
+                  icon={<BarChart3 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />}
+                  iconBgClass="bg-indigo-50 dark:bg-indigo-950"
+                  label="統計"
+                  data-tour="feature-stats"
+                />
+                <FeatureCard
+                  onClick={() => setShowInvite(true)}
+                  icon={<Share2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />}
+                  iconBgClass="bg-orange-50 dark:bg-orange-950"
+                  label="邀請"
+                  data-tour="feature-invite"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/export`}
+                  icon={<Download className="h-5 w-5 text-sky-600 dark:text-sky-400" />}
+                  iconBgClass="bg-sky-50 dark:bg-sky-950"
+                  label="匯出"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/settings`}
+                  icon={<Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />}
+                  iconBgClass="bg-slate-100 dark:bg-slate-800"
+                  label="設定"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/activity-logs`}
+                  icon={<History className="h-5 w-5 text-violet-600 dark:text-violet-400" />}
+                  iconBgClass="bg-violet-50 dark:bg-violet-950"
+                  label="歷史"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/mileage`}
+                  icon={<Car className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+                  iconBgClass="bg-emerald-50 dark:bg-emerald-950"
+                  label="里程"
+                />
+              </div>
+            </div>
+
+            {/* 第二頁 */}
+            <div className="flex-shrink-0 w-full snap-center">
+              <div className="grid grid-cols-4 gap-2">
+                <FeatureCard
+                  href={`/projects/${id}/currency`}
+                  icon={<ArrowRightLeft className="h-5 w-5 text-amber-600 dark:text-amber-400" />}
+                  iconBgClass="bg-amber-50 dark:bg-amber-950"
+                  label="匯率"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/notes`}
+                  icon={<StickyNote className="h-5 w-5 text-lime-600 dark:text-lime-400" />}
+                  iconBgClass="bg-lime-50 dark:bg-lime-950"
+                  label="筆記"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/map`}
+                  icon={<MapPin className="h-5 w-5 text-rose-600 dark:text-rose-400" />}
+                  iconBgClass="bg-rose-50 dark:bg-rose-950"
+                  label="地圖"
+                />
+                <FeatureCard
+                  href={`/projects/${id}/photos`}
+                  icon={<Images className="h-5 w-5 text-fuchsia-600 dark:text-fuchsia-400" />}
+                  iconBgClass="bg-fuchsia-50 dark:bg-fuchsia-950"
+                  label="照片"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 頁面指示器 (小圓點) */}
+          <div className="flex justify-center gap-1.5 mt-3" data-tour="more-features">
+            {Array.from({ length: totalPages }).map((_, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  carouselRef.current?.scrollTo({
+                    left: index * (carouselRef.current?.offsetWidth || 0),
+                    behavior: "smooth",
+                  })
+                }}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  currentPage === index
+                    ? "w-4 bg-slate-800 dark:bg-slate-200"
+                    : "w-1.5 bg-slate-300 dark:bg-slate-600"
+                }`}
+                aria-label={`跳到第 ${index + 1} 頁`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* 總覽 */}
+        <div>
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">總覽</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard
+              title="總支出"
+              value={formatCurrency(totalAmount, project.currency || DEFAULT_CURRENCY)}
+              icon={<DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
+              iconBgClass="bg-emerald-50 dark:bg-emerald-950"
+              subtitle={`${project.expenses.length} 筆支出`}
+            />
+            <StatCard
+              title="平均每人"
+              value={formatCurrency(Math.round(perPerson), project.currency || DEFAULT_CURRENCY)}
+              icon={<UserCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />}
+              iconBgClass="bg-blue-50 dark:bg-blue-950"
+              subtitle={`${project.members.length} 位成員`}
+            />
+          </div>
+        </div>
+
+        {/* 預算進度 - 只在設定預算時顯示 */}
+        {budget !== null && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold text-slate-900 dark:text-slate-100">預算進度</h2>
+              <Link
+                href={`/projects/${id}/settings`}
+                className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+              >
+                編輯預算
+              </Link>
+            </div>
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">
+                  已花費 {formatCurrency(totalAmount, project.currency || DEFAULT_CURRENCY)} / {formatCurrency(budget, project.currency || DEFAULT_CURRENCY)}
+                </span>
+                <span className={`text-sm font-medium ${budgetProgress >= 100 ? "text-red-500" : budgetProgress >= 80 ? "text-amber-500" : "text-emerald-500"}`}>
+                  {budgetProgress.toFixed(0)}%
+                </span>
+              </div>
+              <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    budgetProgress >= 100
+                      ? "bg-red-500"
+                      : budgetProgress >= 80
+                      ? "bg-amber-500"
+                      : "bg-emerald-500"
+                  }`}
+                  style={{ width: `${budgetProgress}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-xs text-muted-foreground">
+                  {budgetRemaining !== null && budgetRemaining >= 0
+                    ? `剩餘 ${formatCurrency(budgetRemaining, project.currency || DEFAULT_CURRENCY)}`
+                    : `超支 ${formatCurrency(Math.abs(budgetRemaining || 0), project.currency || DEFAULT_CURRENCY)}`}
+                </span>
+                {budgetProgress >= 100 && (
+                  <span className="text-xs text-red-500 font-medium">已超出預算</span>
+                )}
+                {budgetProgress >= 80 && budgetProgress < 100 && (
+                  <span className="text-xs text-amber-500 font-medium">接近預算上限</span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 我的餘額 */}
+        <div>
+          <div className="flex items-center gap-1.5 mb-3">
+            <h2 className="font-semibold text-slate-900 dark:text-slate-100">我的餘額</h2>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                  <Info className="h-4 w-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="bottom" align="start" className="w-auto max-w-64 p-3 text-xs">
+                <p className="font-medium">餘額 = 你付的錢 − 你應付的錢</p>
+                <p className="text-muted-foreground mt-1.5">正數 = 有人欠你錢</p>
+                <p className="text-muted-foreground">負數 = 你欠別人錢</p>
+                <p className="text-muted-foreground mt-1.5 text-[10px]">若顯示 $0，可能是你不在支出的分攤名單中，或帳號尚未綁定佔位成員</p>
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <p
+                  className={`text-2xl font-bold ${
+                    displayBalance >= 0 ? "text-emerald-500" : "text-red-500"
+                  }`}
+                >
+                  {displayBalance >= 0 ? "+" : "-"}{formatCurrency(Math.abs(displayBalance), project.currency || DEFAULT_CURRENCY)}
+                </p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                  {displayBalance > 0
+                    ? "有人需要付你錢"
+                    : displayBalance < 0
+                    ? "你需要付給別人"
+                    : "已結清"}
+                </p>
+              </div>
+              <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${
+                displayBalance > 0
+                  ? "bg-emerald-50 dark:bg-emerald-950"
+                  : displayBalance < 0
+                  ? "bg-red-50 dark:bg-red-950"
+                  : "bg-slate-100 dark:bg-slate-800"
+              }`}>
+                {displayBalance > 0 ? (
+                  <TrendingUp className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                ) : displayBalance < 0 ? (
+                  <TrendingDown className="h-6 w-6 text-red-600 dark:text-red-400" />
+                ) : (
+                  <Minus className="h-6 w-6 text-slate-400" />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 最近支出 */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold text-slate-900 dark:text-slate-100">最近支出</h2>
+            <Link
+              href={`/projects/${id}/expenses`}
+              className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+            >
+              查看全部
+            </Link>
+          </div>
+
+          {project.expenses.length === 0 ? (
+            <div className="bg-card rounded-xl border border-border py-12 text-center">
+              <div className="h-12 w-12 rounded-full bg-brand-50 dark:bg-brand-100 flex items-center justify-center mx-auto mb-3">
+                <Receipt className="h-6 w-6 text-brand-500" />
+              </div>
+              <p className="text-muted-foreground mb-4">還沒有支出記錄</p>
+              <Link href={`/projects/${id}/expenses/new`}>
+                <Button variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-1" />
+                  新增第一筆
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+              {[...project.expenses]
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .slice(0, 5)
+                .map((expense) => (
+                <Link
+                  key={expense.id}
+                  href={`/projects/${id}/expenses/${expense.id}/edit`}
+                  className="flex items-center gap-3 p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div
+                    className={`h-10 w-10 rounded-xl flex items-center justify-center ${getCategoryColor(expense.category)}`}
+                  >
+                    {getCategoryIcon(expense.category)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate">
+                      {expense.description || "支出"}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {expense.payer?.user?.name || expense.payer?.displayName || "未知"} 付款 ·{" "}
+                      {expense.participants?.length || 0} 人分攤
+                    </p>
+                  </div>
+                  <p className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+                    {formatCurrency(Number(expense.amount), expense.currency || DEFAULT_CURRENCY)}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 浮動按鈕群組 - 垂直排列 */}
+      <div className="fixed bottom-6 right-4 z-50 flex flex-col items-center gap-3" data-tour="add-expense-area">
+        {/* AI 語音記帳按鈕 - 珊瑚暖色漸層（與品牌色互補） */}
+        <Button
+          size="icon"
+          className="h-12 w-12 rounded-full shadow-lg shadow-orange-400/30 bg-gradient-to-br from-orange-300 to-rose-400 hover:from-orange-400 hover:to-rose-500 hover:scale-105 active:scale-95 transition-all duration-200 text-white ring-2 ring-white/20"
+          onClick={() => setShowVoiceDialog(true)}
+        >
+          <Sparkles className="h-5 w-5" />
+        </Button>
+
+        {/* 新增支出按鈕 - 品牌色漸層 */}
+        <Link href={`/projects/${id}/expenses/new`}>
+          <Button size="icon" className="h-12 w-12 rounded-full shadow-lg shadow-brand-500/30 bg-gradient-to-br from-brand-400 to-brand-600 hover:from-brand-500 hover:to-brand-700 hover:scale-105 active:scale-95 transition-all duration-200 text-white ring-2 ring-white/20">
+            <Plus className="h-5 w-5" />
+          </Button>
+        </Link>
+      </div>
+
+      {/* AI 語音記帳對話框 */}
+      {project && (
+        <VoiceExpenseDialog
+          open={showVoiceDialog}
+          onOpenChange={setShowVoiceDialog}
+          projectId={id}
+          projectName={project.name}
+          members={project.members.map((m) => ({
+            id: m.id,
+            displayName: m.displayName,
+            userId: m.user?.id || null,
+            user: m.user,
+          }))}
+          currentUserMemberId={project.members.find((m) => m.user?.id === user?.id)?.id || ""}
+          currency={project.currency || DEFAULT_CURRENCY}
+          onSuccess={() => {
+            refetch()
+          }}
+        />
+      )}
+
+      {/* 導覽 */}
+      {showTour && (
+        <AppTour
+          onComplete={() => {
+            setShowTour(false)
+            completeOnboarding()
+          }}
+          onSkip={() => {
+            setShowTour(false)
+            completeOnboarding()
+          }}
+        />
+      )}
+
+      {/* 邀請對話框 */}
+      <InviteDialog open={showInvite} onOpenChange={setShowInvite} projectId={id} projectName={project.name} />
+    </AppLayout>
+  )
+}
