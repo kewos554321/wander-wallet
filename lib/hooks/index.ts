@@ -14,3 +14,4 @@ export {
   type ExpenseFilters,
 } from "./useExpenseFilters"
 export { useUiVersion } from "./useUiVersion"
+export { useProjects, type ProjectListItem, type ProjectListMember } from "./useProjects"
