@@ -16,3 +16,4 @@ export {
 export { useUiVersion } from "./useUiVersion"
 export { useProjects, type ProjectListItem, type ProjectListMember } from "./useProjects"
 export { useProjectOverview } from "./useProjectOverview"
+export { useProjectExpenses, type ProjectExpense, type ExpenseMember } from "./useProjectExpenses"
