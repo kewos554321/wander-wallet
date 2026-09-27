@@ -12,7 +12,7 @@ import { Plus, Wallet } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { AdContainer } from "@/components/ads/ad-container"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
-import { parseCover, getPresetCover } from "@/lib/covers"
+import { parseCover, getPresetCover, toLegacyCover } from "@/lib/covers"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 
 interface ProjectMember {
@@ -161,7 +161,7 @@ export default function ProjectsPage() {
                 const dateRange = formatDateRange()
 
                 // 解析封面
-                const coverData = parseCover(project.cover)
+                const coverData = toLegacyCover(parseCover(project.cover))
                 const presetCover = coverData.type === "preset" ? getPresetCover(coverData.presetId!) : null
 
                 return (

@@ -81,12 +81,18 @@ export const PRESET_COVERS: PresetCover[] = [
   },
 ]
 
-// 解析 cover 字串，判斷是預設還是自訂
-export function parseCover(cover: string | null | undefined): {
-  type: "preset" | "custom" | "none"
+export type ParsedCover = {
+  type: "preset" | "custom" | "icon" | "none"
   presetId?: string
   customUrl?: string
-} {
+  iconId?: string
+  colorId?: string
+}
+
+const ICON_COVER_PATTERN = /^icon:([a-z0-9-]+);color:([a-z0-9-]+)$/
+
+// 解析 cover 字串，判斷是預設、圖示、還是自訂
+export function parseCover(cover: string | null | undefined): ParsedCover {
   if (!cover) {
     return { type: "none" }
   }
@@ -98,11 +104,26 @@ export function parseCover(cover: string | null | undefined): {
     }
   }
 
+  // v2 icon cover: icon:<iconId>;color:<colorId>
+  if (cover.startsWith("icon:")) {
+    const match = ICON_COVER_PATTERN.exec(cover)
+    if (!match) return { type: "none" }
+    return { type: "icon", iconId: match[1], colorId: match[2] }
+  }
+
   // 自訂圖片（base64 或 URL）
   return {
     type: "custom",
     customUrl: cover,
   }
+}
+
+// v1 screens do not know icon covers; show the first preset instead of a broken image.
+export function toLegacyCover(parsed: ParsedCover): ParsedCover {
+  if (parsed.type === "icon") {
+    return { type: "preset", presetId: PRESET_COVERS[0].id }
+  }
+  return parsed
 }
 
 // 取得預設封面資料

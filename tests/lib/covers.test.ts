@@ -4,6 +4,7 @@ import {
   parseCover,
   getPresetCover,
   createCoverString,
+  toLegacyCover,
 } from "@/lib/covers"
 
 describe("Covers Utilities (lib/covers.ts)", () => {
@@ -111,5 +112,37 @@ describe("Covers Utilities (lib/covers.ts)", () => {
       const base64 = "data:image/jpeg;base64,/9j/4AAQ..."
       expect(createCoverString("custom", base64)).toBe(base64)
     })
+  })
+})
+
+describe("icon covers", () => {
+  it("parses icon:<id>;color:<id>", () => {
+    expect(parseCover("icon:leaf;color:teal")).toEqual({
+      type: "icon",
+      iconId: "leaf",
+      colorId: "teal",
+    })
+  })
+
+  it("treats malformed icon strings as none", () => {
+    expect(parseCover("icon:")).toEqual({ type: "none" })
+    expect(parseCover("icon:leaf")).toEqual({ type: "none" })
+    expect(parseCover("icon:Leaf!;color:teal")).toEqual({ type: "none" })
+  })
+
+  it("keeps existing formats unchanged", () => {
+    expect(parseCover("preset:1")).toEqual({ type: "preset", presetId: "1" })
+    expect(parseCover("data:image/png;base64,AAA")).toEqual({
+      type: "custom",
+      customUrl: "data:image/png;base64,AAA",
+    })
+  })
+
+  it("toLegacyCover maps icon covers to the first preset for v1", () => {
+    expect(toLegacyCover(parseCover("icon:leaf;color:teal"))).toEqual({
+      type: "preset",
+      presetId: PRESET_COVERS[0].id,
+    })
+    expect(toLegacyCover({ type: "none" })).toEqual({ type: "none" })
   })
 })
