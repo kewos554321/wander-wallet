@@ -88,6 +88,7 @@ model Expense {
   description String?
   category    String?
   image       String?  @db.Text // 收據/消費圖片：base64 data URL
+  splitDetail Json?    @map("split_detail") // 分攤明細：個人項目與指定金額（v2）
   location    String?  // 消費地點地址
   latitude    Decimal? @db.Decimal(10, 7) // 緯度
   longitude   Decimal? @db.Decimal(10, 7) // 經度
