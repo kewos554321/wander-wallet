@@ -3,6 +3,8 @@ import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { createActivityLog } from "@/lib/activity-log"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { Prisma } from "@prisma/client"
+import { validateSplitDetail } from "@/lib/expense-split"
 
 interface Participant {
   memberId: string
@@ -114,7 +116,7 @@ export async function POST(
     }
 
     const body = await req.json()
-    const { paidByMemberId, amount, currency, description, category, image, location, latitude, longitude, participants, expenseDate } = body
+    const { paidByMemberId, amount, currency, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail } = body
 
     // 獲取專案幣別
     const project = await prisma.project.findUnique({
@@ -190,6 +192,19 @@ export async function POST(
       )
     }
 
+    // Optional v2 split detail; must match the submitted shares
+    let validatedSplitDetail = null
+    if (splitDetail !== undefined && splitDetail !== null) {
+      const result = validateSplitDetail(
+        splitDetail,
+        participants.map((p: Participant) => ({ memberId: p.memberId, shareAmount: Number(p.shareAmount) }))
+      )
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error }, { status: 400 })
+      }
+      validatedSplitDetail = result.detail
+    }
+
     // 創建費用記錄（匯率轉換在結算時執行）
     const expense = await prisma.expense.create({
       data: {
@@ -204,6 +219,9 @@ export async function POST(
         latitude: latitude ? Number(latitude) : null,
         longitude: longitude ? Number(longitude) : null,
         expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
+        ...(validatedSplitDetail
+          ? { splitDetail: validatedSplitDetail as unknown as Prisma.InputJsonValue }
+          : {}),
         participants: {
           create: participants.map((p: Participant) => ({
             memberId: p.memberId,

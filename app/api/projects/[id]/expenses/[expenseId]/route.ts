@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db"
 import { Prisma } from "@prisma/client"
 import { createActivityLog, createActivityLogInTransaction, diffChanges } from "@/lib/activity-log"
 import { deleteFile, extractKeyFromUrl } from "@/lib/r2"
+import { validateSplitDetail } from "@/lib/expense-split"
 
 interface Participant {
   memberId: string
@@ -115,7 +116,8 @@ export async function PUT(
     }
 
     const body = await req.json()
-    const { paidByMemberId, amount, currency, description, category, image, location, latitude, longitude, participants, expenseDate } = body
+    const { paidByMemberId, amount, currency, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail } = body
+    const hasSplitDetailField = Object.prototype.hasOwnProperty.call(body, "splitDetail")
 
     // 獲取現有費用（包含付款人和參與者資訊）
     const existingExpense = await prisma.expense.findFirst({
@@ -199,6 +201,25 @@ export async function PUT(
       }
     }
 
+    // splitDetail: explicit value wins; changed shares without it (old clients) clear it
+    let splitDetailUpdate: Prisma.InputJsonValue | typeof Prisma.DbNull | undefined
+    if (hasSplitDetailField) {
+      if (splitDetail === null) {
+        splitDetailUpdate = Prisma.DbNull
+      } else {
+        const shares = participants && Array.isArray(participants)
+          ? participants.map((p: Participant) => ({ memberId: p.memberId, shareAmount: Number(p.shareAmount) }))
+          : existingExpense.participants.map((p) => ({ memberId: p.member.id, shareAmount: Number(p.shareAmount) }))
+        const result = validateSplitDetail(splitDetail, shares)
+        if (!result.ok) {
+          return NextResponse.json({ error: result.error }, { status: 400 })
+        }
+        splitDetailUpdate = result.detail as unknown as Prisma.InputJsonValue
+      }
+    } else if (participants && Array.isArray(participants)) {
+      splitDetailUpdate = Prisma.DbNull
+    }
+
     // 更新費用（匯率轉換在結算時執行）
     const updateData: {
       paidByMemberId?: string
@@ -211,6 +232,7 @@ export async function PUT(
       latitude?: number | null
       longitude?: number | null
       expenseDate?: Date
+      splitDetail?: Prisma.InputJsonValue | typeof Prisma.DbNull
     } = {}
     if (paidByMemberId !== undefined) updateData.paidByMemberId = paidByMemberId
     if (amount !== undefined) updateData.amount = Number(amount)
@@ -229,6 +251,11 @@ export async function PUT(
       updateData as unknown as Record<string, unknown>,
       ["paidByMemberId", "amount", "currency", "description", "category", "location", "expenseDate"]
     )
+
+    // Add splitDetail after diffChanges so it never pollutes the activity log
+    if (splitDetailUpdate !== undefined) {
+      updateData.splitDetail = splitDetailUpdate
+    }
 
     // 如果付款人有變更，獲取成員名稱映射
     let memberNameMap: Record<string, string> = {}
