@@ -36,6 +36,7 @@ export interface Project {
     email: string
   }
   members?: ProjectMember[]
+  expenses?: { expenseDate: string }[]
 }
 
 interface UseProjectDataOptions {
