@@ -158,6 +158,11 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
           )
         })}
       </div>
+      {state.pool.length === 0 && (
+        <p className="mt-2.5 rounded-[14px] border border-dashed border-v2-line bg-v2-surface py-3.5 text-center text-xs text-v2-ink-subtle">
+          目前沒有人參與共同分攤，點上面的名字挑選分攤的人。
+        </p>
+      )}
       {state.pool.length > 0 && (
         <div className="mt-2.5 overflow-hidden rounded-[14px] border border-v2-line bg-v2-surface">
           {state.pool.map((id) => {

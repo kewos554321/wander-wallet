@@ -96,6 +96,14 @@ describe("ExpenseFormV2View", () => {
     expect(hook.result.current.derived.shares.map((s) => s.shareAmount)).toEqual([50, 50])
   })
 
+  it("shows a dashed hint when nobody is in the shared pool", () => {
+    const { hook, rerender } = renderForm()
+    expect(screen.queryByText(/目前沒有人參與共同分攤/)).not.toBeInTheDocument()
+    act(() => hook.result.current.actions.setPoolAll(false))
+    rerender()
+    expect(screen.getByText(/目前沒有人參與共同分攤/)).toBeInTheDocument()
+  })
+
   it("pins the current auto share when the pin button is pressed", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))
