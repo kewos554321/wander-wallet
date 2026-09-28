@@ -49,22 +49,26 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
         <div className="mb-3">
           <p className="mb-2 text-xs font-semibold text-v2-ink-muted">個人項目</p>
           <div className="mb-2.5 flex flex-wrap gap-2">
-            {members
-              .filter((m) => !state.personalMembers.includes(m.id))
-              .map((m) => (
+            {members.map((m) => {
+              const on = state.personalMembers.includes(m.id)
+              return (
                 <button
                   key={m.id}
                   type="button"
-                  aria-label={`${m.displayName}加入個人項目`}
+                  aria-label={`${m.displayName}的個人項目`}
+                  aria-pressed={on}
                   onClick={() => actions.togglePersonalMember(m.id)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[#DDEDE6] bg-v2-lake-soft px-3.5 py-[5px]"
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-[5px] ${
+                    on ? "border border-v2-lake bg-v2-lake text-white" : "border border-[#DDEDE6] bg-v2-lake-soft text-v2-ink"
+                  }`}
                 >
                   <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold ${tone(m.id)}`} aria-hidden="true">
                     {m.displayName.charAt(0)}
                   </span>
                   <span className="text-xs font-semibold">{m.displayName}</span>
                 </button>
-              ))}
+              )
+            })}
           </div>
           {state.personalMembers.length === 0 ? (
             <p className="rounded-[14px] border border-dashed border-v2-line bg-v2-surface py-3.5 text-center text-xs text-v2-ink-subtle">

@@ -72,8 +72,10 @@ describe("ExpenseFormV2View", () => {
     rerender()
     fireEvent.click(screen.getByRole("switch", { name: "先扣個人項目" }))
     rerender()
-    fireEvent.click(screen.getByRole("button", { name: "志明加入個人項目" }))
+    fireEvent.click(screen.getByRole("button", { name: "志明的個人項目" }))
     rerender()
+    // The pill stays visible, now in its selected state.
+    expect(screen.getByRole("button", { name: "志明的個人項目" })).toHaveAttribute("aria-pressed", "true")
     fireEvent.change(screen.getByLabelText("志明的品項名稱 1"), { target: { value: "咖啡" } })
     rerender()
     fireEvent.change(screen.getByLabelText("志明的品項金額 1"), { target: { value: "20" } })
