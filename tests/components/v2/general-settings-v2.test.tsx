@@ -35,6 +35,20 @@ vi.mock("@/lib/hooks", () => ({
   useOnboarding: () => ({ resetOnboarding: mockResetOnboarding }),
 }))
 
+const mockToggle = vi.fn()
+let betaEnabled = true
+let betaSaving = false
+let betaError: string | null = null
+vi.mock("@/lib/hooks/use-beta-toggle", () => ({
+  useBetaToggle: () => ({ enabled: betaEnabled, toggle: mockToggle, saving: betaSaving, error: betaError }),
+}))
+
+const mockSetTheme = vi.fn()
+let currentTheme: "light" | "dark" | "system" = "light"
+vi.mock("@/components/system/theme-provider", () => ({
+  useTheme: () => ({ theme: currentTheme, setTheme: mockSetTheme }),
+}))
+
 import { GeneralSettingsV2 } from "@/components/v2/settings/general-settings-v2"
 
 describe("GeneralSettingsV2", () => {
@@ -48,13 +62,40 @@ describe("GeneralSettingsV2", () => {
       notifications: { expenseCreated: true, expenseUpdated: true, expenseDeleted: true },
     }
     currentError = null
+    mockToggle.mockReset()
+    betaEnabled = true
+    betaSaving = false
+    betaError = null
+    mockSetTheme.mockReset()
+    currentTheme = "light"
   })
 
-  it("shows the user's name and no appearance section", () => {
+  it("shows the user's name", () => {
     render(<GeneralSettingsV2 />)
     expect(screen.getByText("Emma")).toBeInTheDocument()
-    expect(screen.queryByText("外觀")).not.toBeInTheDocument()
-    expect(screen.queryByText("深色")).not.toBeInTheDocument()
+  })
+
+  it("shows the beta switch checked and toggles it off on click", () => {
+    render(<GeneralSettingsV2 />)
+    const sw = screen.getByRole("switch", { name: "試用新版介面（Beta）" })
+    expect(sw).toHaveAttribute("aria-checked", "true")
+    fireEvent.click(sw)
+    expect(mockToggle).toHaveBeenCalledWith(false)
+  })
+
+  it("shows the beta toggle error in an alert", () => {
+    betaError = "儲存失敗，請重試"
+    render(<GeneralSettingsV2 />)
+    expect(screen.getByRole("alert")).toHaveTextContent("儲存失敗，請重試")
+  })
+
+  it("switches appearance to dark and marks the active option", () => {
+    currentTheme = "dark"
+    render(<GeneralSettingsV2 />)
+    expect(screen.getByRole("button", { name: "深色" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "淺色" })).toHaveAttribute("aria-pressed", "false")
+    fireEvent.click(screen.getByRole("button", { name: "淺色" }))
+    expect(mockSetTheme).toHaveBeenCalledWith("light")
   })
 
   it("toggles the delete-expense notification off", () => {

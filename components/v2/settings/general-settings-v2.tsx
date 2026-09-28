@@ -4,11 +4,13 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { BookOpen, ChevronRight, ExternalLink, HelpCircle, Loader2, MessageCircle } from "lucide-react"
 import { useLiff } from "@/components/auth/liff-provider"
+import { useTheme } from "@/components/system/theme-provider"
 import { CurrencySelect } from "@/components/ui/currency-select"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import type { CurrencyCode } from "@/lib/constants/currencies"
 import { useOnboarding } from "@/lib/hooks"
+import { useBetaToggle } from "@/lib/hooks/use-beta-toggle"
 import { usePreferences } from "@/lib/hooks/use-preferences"
 import type { NotificationPreferences } from "@/types/user-preferences"
 
@@ -20,6 +22,12 @@ const NOTIFICATION_ITEMS: { key: keyof NotificationPreferences; label: string }[
   { key: "expenseDeleted", label: "刪除支出時通知" },
 ]
 
+const APPEARANCE_OPTIONS = [
+  { value: "light", label: "淺色" },
+  { value: "dark", label: "深色" },
+  { value: "system", label: "系統" },
+] as const
+
 const cardClass = "rounded-2xl border border-v2-line bg-v2-surface p-4"
 const cardTitleClass = "m-0 text-[13px] font-bold text-v2-lake"
 
@@ -27,6 +35,8 @@ export function GeneralSettingsV2() {
   const router = useRouter()
   const { user } = useLiff()
   const { preferences, save, error } = usePreferences()
+  const { theme, setTheme } = useTheme()
+  const { enabled: betaEnabled, toggle: betaToggle, saving: betaSaving, error: betaError } = useBetaToggle()
   const { resetOnboarding } = useOnboarding()
   const [resettingTour, setResettingTour] = useState(false)
 
@@ -65,6 +75,57 @@ export function GeneralSettingsV2() {
             </span>
             <ChevronRight className="h-4 w-4 shrink-0 opacity-85" aria-hidden="true" />
           </button>
+
+          <div className={`${cardClass} flex flex-col gap-3`}>
+            <p className={cardTitleClass}>新版介面</p>
+            <div className="flex items-center justify-between gap-3">
+              <span>
+                <span className="block text-[13px] font-bold">試用新版介面（Beta）</span>
+                <span className="mt-0.5 block text-xs text-v2-ink-subtle">關閉後回到舊版介面</span>
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={betaEnabled}
+                aria-label="試用新版介面（Beta）"
+                disabled={betaSaving}
+                onClick={() => betaToggle(!betaEnabled)}
+                className={`relative inline-block h-[19px] w-8 shrink-0 rounded-full disabled:opacity-60 ${
+                  betaEnabled ? "bg-v2-lake" : "bg-v2-check"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-[15px] w-[15px] rounded-full bg-v2-knob transition-[left] ${
+                    betaEnabled ? "left-[15px]" : "left-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+            {betaError && (
+              <p role="alert" className="text-xs font-semibold text-v2-danger">
+                {betaError}
+              </p>
+            )}
+          </div>
+
+          <div className={`${cardClass} flex flex-col gap-3`}>
+            <p className={cardTitleClass}>外觀</p>
+            <div className="flex gap-1.5 rounded-[10px] bg-v2-sand p-1">
+              {APPEARANCE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={theme === option.value}
+                  onClick={() => setTheme(option.value)}
+                  className={`flex-1 rounded-lg py-2.5 text-xs font-bold ${
+                    theme === option.value ? "bg-v2-surface shadow-sm" : "text-v2-ink-muted"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div className={`${cardClass} flex flex-col gap-3.5`}>
             <p className={cardTitleClass}>記帳偏好</p>

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent } from "@/components/ui/card"
-import { useLiff, useAuthFetch } from "@/components/auth/liff-provider"
+import { useLiff } from "@/components/auth/liff-provider"
 import { useTheme } from "@/components/system/theme-provider"
 import { ChevronRight, ChevronDown, Sun, Moon, Monitor, User, Wallet, Bell, Loader2, MessageCircle, ExternalLink, BookOpen, HelpCircle } from "lucide-react"
 import { AvatarDisplay, parseAvatarString } from "@/components/avatar-picker"
@@ -14,63 +14,36 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import type { CurrencyCode } from "@/lib/constants/currencies"
 import type { UserPreferences } from "@/types/user-preferences"
-import { mergePreferences } from "@/types/user-preferences"
 import { useOnboarding } from "@/lib/hooks"
+import { useBetaToggle } from "@/lib/hooks/use-beta-toggle"
+import { usePreferences } from "@/lib/hooks/use-preferences"
 
 export function GeneralSettingsV1() {
   const [themeExpanded, setThemeExpanded] = useState(false)
   const [expenseExpanded, setExpenseExpanded] = useState(false)
   const [notificationExpanded, setNotificationExpanded] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const { user, updatePreferences } = useLiff()
-  const authFetch = useAuthFetch()
+  const { user } = useLiff()
   const isCustomAvatar = parseAvatarString(user?.image) !== null
   const { theme, setTheme } = useTheme()
   const router = useRouter()
   const { resetOnboarding } = useOnboarding()
   const [resettingTour, setResettingTour] = useState(false)
-
-  // 合併用戶偏好與預設值
-  const preferences = mergePreferences(user?.preferences)
-
-  // 保存偏好設定
-  async function savePreferences(newPrefs: UserPreferences) {
-    setSaving(true)
-    try {
-      const res = await authFetch("/api/users/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ preferences: newPrefs }),
-      })
-      if (res.ok) {
-        updatePreferences(newPrefs)
-      }
-    } catch (error) {
-      console.error("保存偏好設定失敗:", error)
-    } finally {
-      setSaving(false)
-    }
-  }
+  const { preferences, save, saving } = usePreferences()
+  const { enabled: betaEnabled, toggle: betaToggle } = useBetaToggle()
 
   // 更新預設幣別
   function handleCurrencyChange(currency: CurrencyCode) {
-    const newPrefs = { ...preferences, defaultCurrency: currency }
-    savePreferences(newPrefs)
+    save({ defaultCurrency: currency })
   }
 
   // 更新預設分帳方式
   function handleSplitModeChange(mode: "equal" | "custom") {
-    const newPrefs = { ...preferences, defaultSplitMode: mode }
-    savePreferences(newPrefs)
+    save({ defaultSplitMode: mode })
   }
 
   // 更新通知設定
   function handleNotificationChange(key: keyof UserPreferences["notifications"], value: boolean) {
-    const newPrefs = {
-      ...preferences,
-      notifications: { ...preferences.notifications, [key]: value },
-    }
-    savePreferences(newPrefs)
+    save({ notifications: { [key]: value } })
   }
 
   const themeOptions = [
@@ -112,6 +85,24 @@ export function GeneralSettingsV1() {
               </p>
             </div>
             <ChevronRight className="size-5 text-muted-foreground" />
+          </CardContent>
+        </Card>
+
+        {/* Beta 新版介面 */}
+        <Card>
+          <CardContent>
+            <label className="flex items-center justify-between cursor-pointer">
+              <div>
+                <p className="font-medium">試用新版介面（Beta）</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  搶先體驗全新設計，可隨時關閉
+                </p>
+              </div>
+              <Checkbox
+                checked={betaEnabled}
+                onCheckedChange={(checked) => betaToggle(checked === true)}
+              />
+            </label>
           </CardContent>
         </Card>
 
