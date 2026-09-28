@@ -2,6 +2,7 @@
 
 import { CheckCircle2, CornerRightDown, Pin, PinOff, Plus, UserMinus, X } from "lucide-react"
 import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
+import { toMoneyInput } from "@/lib/money-input"
 import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
 import { memberPillClass, memberTone } from "./payer-picker"
 import { SplitSummary } from "./split-summary"
@@ -10,14 +11,6 @@ type Draft = ReturnType<typeof useExpenseDraft>
 
 // Must match the server-enforced splitDetail limit (lib/expense-split.ts).
 const MAX_PERSONAL_ITEM_NAME = 30
-
-// Money inputs accept digits with at most one decimal point and two decimals.
-// Full-width digits/period from CJK keyboards are normalized first.
-const MONEY_PATTERN = /^\d*(\.\d{0,2})?$/
-function toMoneyInput(raw: string): string | null {
-  const v = raw.replace(/[０-９．]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
-  return MONEY_PATTERN.test(v) ? v : null
-}
 
 const smallButton = "flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
 const itemInput = "min-w-0 rounded-lg border border-[#DDEDE6] bg-v2-surface px-2.5 py-1.5 text-xs outline-none"
