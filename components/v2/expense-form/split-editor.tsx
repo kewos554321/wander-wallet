@@ -1,6 +1,6 @@
 "use client"
 
-import { CheckCircle2, CornerRightDown, Pin, PinOff, Plus, Trash2, UserMinus } from "lucide-react"
+import { CheckCircle2, CornerRightDown, Pin, PinOff, Plus, UserMinus, X } from "lucide-react"
 import { formatCurrency } from "@/lib/constants/currencies"
 import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
 import { memberPillClass, memberTone } from "./payer-picker"
@@ -127,7 +127,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                             className={`${itemInput} flex-1`}
                           />
                           <button type="button" aria-label="刪除項目" onClick={() => actions.removeItem(id, item.id)} className="flex h-5 w-5 shrink-0 items-center justify-center text-[#C4432A]">
-                            <Trash2 className="h-3 w-3" />
+                            <X className="h-3 w-3" />
                           </button>
                         </div>
                       ))}
