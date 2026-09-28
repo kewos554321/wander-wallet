@@ -183,21 +183,24 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                   {name(id).charAt(0)}
                 </span>
                 <span className="flex-1 text-[13px] font-semibold">{name(id)}</span>
-                <input
-                  aria-label={`${name(id)}的分攤金額`}
-                  inputMode="decimal"
-                  value={isCustom ? custom : ""}
-                  placeholder={String(poolShareOf(id))}
-                  onChange={(e) => {
-                    const v = toMoneyInput(e.target.value)
-                    if (v === null) return
-                    if (v === "") actions.clearCustomShare(id)
-                    else actions.setCustomShare(id, v)
-                  }}
-                  className={`w-24 rounded-lg border px-2.5 py-1.5 text-right text-[13px] font-bold outline-none ${
-                    isCustom ? "border-v2-lake bg-v2-surface" : "border-[#DDEDE6] bg-v2-surface placeholder:text-v2-ink"
-                  }`}
-                />
+                {isCustom ? (
+                  // An emptied input keeps the pinned state; the draft treats "" as auto.
+                  <input
+                    aria-label={`${name(id)}的分攤金額`}
+                    inputMode="decimal"
+                    value={custom}
+                    placeholder={String(poolShareOf(id))}
+                    onChange={(e) => {
+                      const v = toMoneyInput(e.target.value)
+                      if (v !== null) actions.setCustomShare(id, v)
+                    }}
+                    className="w-24 rounded-lg border border-v2-lake bg-v2-surface px-2.5 py-1.5 text-right text-[13px] font-bold outline-none"
+                  />
+                ) : (
+                  <span aria-label={`${name(id)}的分攤金額`} className="text-right text-[13px] font-bold">
+                    {fmt(poolShareOf(id))}
+                  </span>
+                )}
                 <button
                   type="button"
                   aria-label={isCustom ? `${name(id)}取消固定金額` : `${name(id)}固定金額`}

@@ -87,6 +87,10 @@ describe("ExpenseFormV2View", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
+    // Not pinned: the share is plain text, not an input.
+    expect(screen.getByLabelText("小雨的分攤金額")).toHaveTextContent("TWD 50")
+    fireEvent.click(screen.getByRole("button", { name: "小雨固定金額" }))
+    rerender()
     fireEvent.change(screen.getByLabelText("小雨的分攤金額"), { target: { value: "30" } })
     rerender()
     expect(hook.result.current.derived.shares.map((s) => s.shareAmount)).toEqual([30, 70])
@@ -117,9 +121,12 @@ describe("ExpenseFormV2View", () => {
     rerender()
     expect(item()).toHaveValue("30")
 
+    fireEvent.click(screen.getByRole("button", { name: "小雨固定金額" }))
+    rerender()
+    const pinned = hook.result.current.state.customShares.a
     fireEvent.change(screen.getByLabelText("小雨的分攤金額"), { target: { value: "abc" } })
     rerender()
-    expect(hook.result.current.state.customShares).toEqual({})
+    expect(hook.result.current.state.customShares.a).toBe(pinned)
   })
 
   it("shows a dashed hint when nobody is in the shared pool", () => {
@@ -155,8 +162,8 @@ describe("ExpenseFormV2View", () => {
     rerender()
     // Pool of 2 splits the remaining 900; 小雨's row shows 450, not 450 + 100.
     expect(screen.getByText(/應分攤金額/)).toHaveTextContent("900")
-    expect(screen.getByLabelText("小雨的分攤金額")).toHaveAttribute("placeholder", "450")
-    expect(screen.getByLabelText("志明的分攤金額")).toHaveAttribute("placeholder", "450")
+    expect(screen.getByLabelText("小雨的分攤金額")).toHaveTextContent("TWD 450")
+    expect(screen.getByLabelText("志明的分攤金額")).toHaveTextContent("TWD 450")
     expect(hook.result.current.derived.shares.map((s) => s.shareAmount)).toEqual([550, 450])
   })
 
