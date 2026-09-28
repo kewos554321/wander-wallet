@@ -16,7 +16,7 @@ export function memberTone(index: number) {
 export function PayerPicker({ members, value, onChange }: { members: DraftMember[]; value: string; onChange: (id: string) => void }) {
   return (
     <fieldset className="mx-4 mb-4">
-      <legend className="mb-2.5 text-sm font-medium leading-5 tracking-[.1px]">付款人</legend>
+      <legend className="mb-2.5 text-sm font-medium leading-5 tracking-[.1px]">付款成員</legend>
       <div className="flex flex-wrap gap-2">
         {members.map((m, i) => {
           const checked = value === m.id

@@ -252,7 +252,7 @@ export function useExpenseDraft(init: DraftInit) {
       (state.personalMode ? state.personalItems[id] ?? [] : []).some((i) => !i.name.trim())
     )
     if (state.amount.trim() === "" || !Number.isFinite(amountNum) || amountNum < 0) error = "請輸入有效金額"
-    else if (!state.paidBy) error = "請選擇付款人"
+    else if (!state.paidBy) error = "請選擇付款成員"
     else if (participantIds.length === 0) error = "請選擇至少一位分擔者"
     else if (unnamed) error = `${init.members.find((m) => m.id === unnamed)?.displayName} 有個人項目未填寫名稱`
     else if (personalTotal > splitInput.amount) error = "個人項目總額不可超過支出總額"
