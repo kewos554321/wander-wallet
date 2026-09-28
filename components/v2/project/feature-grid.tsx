@@ -1,3 +1,6 @@
+"use client"
+
+import { useRef, useState } from "react"
 import Link from "next/link"
 import {
   ArrowRightLeft,
@@ -40,12 +43,30 @@ const PAGE_SIZE = 8
 
 export function FeatureGrid({ projectId }: { projectId: string }) {
   const pages = [FEATURES.slice(0, PAGE_SIZE), FEATURES.slice(PAGE_SIZE)]
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const [currentPage, setCurrentPage] = useState(0)
+
+  function handleScroll() {
+    const el = scrollerRef.current
+    if (!el || !el.offsetWidth) return
+    setCurrentPage(Math.round(el.scrollLeft / el.offsetWidth))
+  }
+
+  function goToPage(index: number) {
+    const el = scrollerRef.current
+    el?.scrollTo({ left: index * el.offsetWidth, behavior: "smooth" })
+  }
 
   return (
     <nav aria-label="功能" className="px-4 pt-5">
       <p className="mb-3 text-sm font-medium leading-5 tracking-[.1px]">功能</p>
       <div className="rounded-[18px] border border-v2-line bg-v2-surface px-3 pb-3 pt-4">
-        <div className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div
+          ref={scrollerRef}
+          onScroll={handleScroll}
+          data-testid="v2-feature-scroller"
+          className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           {pages.map((page, i) => (
             <div key={i} className="grid w-full shrink-0 snap-start grid-cols-4 gap-x-1 gap-y-3">
               {page.map(({ label, path, icon: Icon, tone }) => (
@@ -61,6 +82,20 @@ export function FeatureGrid({ projectId }: { projectId: string }) {
                 </Link>
               ))}
             </div>
+          ))}
+        </div>
+        <div className="mt-3 flex justify-center gap-1.5">
+          {pages.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => goToPage(i)}
+              aria-label={`跳到第 ${i + 1} 頁`}
+              aria-current={currentPage === i ? "true" : undefined}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                currentPage === i ? "w-4 bg-v2-ink" : "w-1.5 bg-v2-check"
+              }`}
+            />
           ))}
         </div>
       </div>
