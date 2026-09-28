@@ -10,6 +10,7 @@ import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { useProjectData } from "@/lib/hooks"
 import { useSaveExpense } from "@/lib/hooks/useSaveExpense"
 import { buildExpenseChanges, type ExpenseSnapshot } from "@/lib/expense-changes"
+import { getCurrentLocation } from "@/lib/geolocation"
 import type { SplitDetail } from "@/lib/expense-split"
 import { ExpenseFormV2View } from "./expense-form-v2-view"
 import { useExpenseDraft, type DraftInit } from "./use-expense-draft"
@@ -37,6 +38,7 @@ interface Props {
 }
 
 export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
+  const router = useRouter()
   const authFetch = useAuthFetch()
   const { user } = useLiff()
   const { project, members, loading: projectLoading, projectCurrency } = useProjectData(projectId)
@@ -45,10 +47,35 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
 
   useEffect(() => {
     if (mode !== "edit" || !expenseId) return
-    authFetch(`/api/projects/${projectId}/expenses/${expenseId}`)
-      .then(async (res) => (res.ok ? setExpense(await res.json()) : null))
-      .catch((error) => console.error("載入支出失敗:", error))
-      .finally(() => setExpenseLoading(false))
+    let cancelled = false
+    async function load() {
+      try {
+        const res = await authFetch(`/api/projects/${projectId}/expenses/${expenseId}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (!cancelled) setExpense(data)
+        } else {
+          // Match v1's fetchExpenseData error handling exactly
+          // (components/expense/expense-form.tsx): surface the failure with an
+          // alert and bounce back to the expenses list.
+          const errorData = await res.json().catch(() => ({}))
+          const errorMsg = errorData.error || `載入失敗 (${res.status})`
+          console.error("載入支出失敗:", res.status, errorData)
+          alert(`無法載入支出資料：${errorMsg}`)
+          router.push(`/projects/${projectId}/expenses`)
+        }
+      } catch (error) {
+        console.error("獲取資料錯誤:", error)
+        alert(`載入失敗：${error instanceof Error ? error.message : "未知錯誤"}`)
+        router.push(`/projects/${projectId}/expenses`)
+      } finally {
+        if (!cancelled) setExpenseLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, expenseId, mode])
 
@@ -131,6 +158,20 @@ function LoadedForm({
   const { save, remove, saving, uploadingImage, deleting, canNotifyLine } = useSaveExpense(projectId)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [showDelete, setShowDelete] = useState(false)
+
+  useEffect(() => {
+    // Match v1 (components/expense/expense-form.tsx): auto-fill the current
+    // location on mount, create mode only, via the shared silent-failure helper.
+    if (mode !== "create") return
+    let cancelled = false
+    getCurrentLocation().then((loc) => {
+      if (loc && !cancelled) draft.actions.setLocation(loc)
+    })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode])
   const nameOf = (id: string) => init.members.find((m) => m.id === id)?.displayName ?? "未知"
 
   async function handleSubmit() {

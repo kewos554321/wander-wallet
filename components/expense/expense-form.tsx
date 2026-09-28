@@ -1,7 +1,7 @@
 /* c8 ignore start */
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { AppLayout } from "@/components/layout/app-layout"
@@ -35,6 +35,7 @@ import {
 } from "@/lib/expense-split"
 import { buildExpenseChanges, type ExpenseSnapshot } from "@/lib/expense-changes"
 import { useSaveExpense } from "@/lib/hooks/useSaveExpense"
+import { getCurrentLocation } from "@/lib/geolocation"
 
 interface Member {
   id: string
@@ -193,48 +194,13 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const [isCustomRate, setIsCustomRate] = useState(false)
   const [precision, setPrecision] = useState(2)
 
-  // 自動獲取當下地點
-  const getCurrentLocation = useCallback(async () => {
-    if (!navigator.geolocation) return
-
-    try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000,
-        })
-      })
-
-      const { latitude, longitude } = position.coords
-
-      // 反向地理編碼取得地址
-      const response = await fetch(`/api/geocode?lat=${latitude}&lon=${longitude}`)
-      const data = await response.json()
-
-      if (response.ok) {
-        setLocationData({
-          location: data.displayName,
-          latitude: data.lat,
-          longitude: data.lon,
-        })
-      } else {
-        setLocationData({
-          location: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
-          latitude,
-          longitude,
-        })
-      }
-    } catch {
-      // 靜默失敗，不影響使用
-    }
-  }, [])
-
   useEffect(() => {
     if (mode === "create") {
       fetchProjectAndMembers()
       // 新增模式時自動獲取當下地點
-      getCurrentLocation()
+      getCurrentLocation().then((loc) => {
+        if (loc) setLocationData(loc)
+      })
     } else {
       fetchExpenseData()
     }

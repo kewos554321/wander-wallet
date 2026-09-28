@@ -29,9 +29,18 @@ const mockRemove = vi.fn()
 vi.mock("@/lib/hooks/useSaveExpense", () => ({
   useSaveExpense: () => ({ save: mockSave, remove: mockRemove, saving: false, uploadingImage: false, deleting: false, canNotifyLine: false }),
 }))
-vi.mock("@/components/location-picker", () => ({ LocationPicker: () => null }))
+// Renders the current location so tests can observe the shared geolocation
+// helper's result being applied to the draft (the real picker is a full UI
+// widget we don't need here).
+vi.mock("@/components/location-picker", () => ({
+  LocationPicker: ({ value }: { value: { location: string | null } }) => (
+    <span data-testid="location">{value?.location ?? ""}</span>
+  ),
+}))
 vi.mock("@/components/ui/image-picker", () => ({ ImagePicker: () => null }))
 vi.mock("@/components/ui/calculator", () => ({ Calculator: () => null }))
+const mockGetCurrentLocation = vi.fn()
+vi.mock("@/lib/geolocation", () => ({ getCurrentLocation: () => mockGetCurrentLocation() }))
 
 import { ExpenseFormV2 } from "@/components/v2/expense-form/expense-form-v2"
 
@@ -41,6 +50,7 @@ describe("ExpenseFormV2", () => {
     mockRemove.mockReset().mockResolvedValue({ ok: true })
     mockPush.mockReset()
     mockAuthFetch.mockReset()
+    mockGetCurrentLocation.mockReset().mockResolvedValue(null)
   })
 
   it("creates with the current user as payer and an equal split", async () => {
@@ -126,5 +136,60 @@ describe("ExpenseFormV2", () => {
     fireEvent.click(await screen.findByRole("button", { name: "刪除" }))
     await waitFor(() => expect(mockRemove).toHaveBeenCalledWith(expect.objectContaining({ expenseId: "e1" })))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/projects/p1/expenses"))
+  })
+
+  it("prefills the current location in create mode via the shared geolocation helper", async () => {
+    mockGetCurrentLocation.mockResolvedValueOnce({ location: "台北市", latitude: 25.03, longitude: 121.56 })
+    render(<ExpenseFormV2 projectId="p1" mode="create" />)
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("台北市"))
+  })
+
+  it("does not fetch the current location in edit mode", async () => {
+    mockAuthFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        id: "e1",
+        amount: 100,
+        currency: "TWD",
+        description: "晚餐",
+        category: "food",
+        image: null,
+        location: null,
+        latitude: null,
+        longitude: null,
+        expenseDate: new Date().toISOString(),
+        paidByMemberId: "a",
+        payer: { id: "a", displayName: "小雨" },
+        participants: [{ memberId: "a", shareAmount: 100, member: { id: "a", displayName: "小雨" } }],
+        splitDetail: null,
+      }),
+    })
+    render(<ExpenseFormV2 projectId="p1" expenseId="e1" mode="edit" />)
+    await screen.findByDisplayValue("晚餐")
+    expect(mockGetCurrentLocation).not.toHaveBeenCalled()
+  })
+
+  it("alerts and redirects to the expenses list when the edit-mode load response is not ok", async () => {
+    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {})
+    mockAuthFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      json: async () => ({ error: "找不到支出" }),
+    })
+    render(<ExpenseFormV2 projectId="p1" expenseId="e1" mode="edit" />)
+    await waitFor(() => expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining("無法載入支出資料")))
+    expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining("找不到支出"))
+    expect(mockPush).toHaveBeenCalledWith("/projects/p1/expenses")
+    alertSpy.mockRestore()
+  })
+
+  it("alerts and redirects to the expenses list when the edit-mode load throws", async () => {
+    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {})
+    mockAuthFetch.mockRejectedValueOnce(new Error("網路錯誤"))
+    render(<ExpenseFormV2 projectId="p1" expenseId="e1" mode="edit" />)
+    await waitFor(() => expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining("載入失敗")))
+    expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining("網路錯誤"))
+    expect(mockPush).toHaveBeenCalledWith("/projects/p1/expenses")
+    alertSpy.mockRestore()
   })
 })
