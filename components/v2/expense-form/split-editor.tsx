@@ -67,7 +67,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                   aria-pressed={on}
                   onClick={() => actions.togglePersonalMember(m.id)}
                   className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-[5px] ${
-                    on ? "border border-v2-lake bg-v2-lake text-white" : "border border-[#DDEDE6] bg-v2-lake-soft text-v2-ink"
+                    on ? "border border-v2-lake bg-v2-lake text-white" : "border border-[#DDEDE6] bg-v2-lake-soft text-v2-ink opacity-50"
                   }`}
                 >
                   <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold ${tone(m.id)}`} aria-hidden="true">
