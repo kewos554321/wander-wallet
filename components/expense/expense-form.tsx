@@ -14,8 +14,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
 import { MemberAvatar } from "@/components/member-avatar"
-import { sendExpenseNotificationToChat, sendDeleteNotificationToChat, ExpenseChange } from "@/lib/liff"
-import { uploadImageToR2 } from "@/lib/image-utils"
 import { LocationPicker } from "@/components/location-picker"
 import { Calculator as CalculatorIcon, CalendarIcon, Trash2, Plus, X, Pin, PinOff } from "lucide-react"
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
@@ -25,6 +23,18 @@ import { CurrencySelect } from "@/components/ui/currency-select"
 import { CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
 import { type CurrencyCode, DEFAULT_CURRENCY, formatCurrency, getCurrencyInfo } from "@/lib/constants/currencies"
 import { mergePreferences } from "@/types/user-preferences"
+import {
+  buildSplitDetail,
+  computeShares,
+  getV1SplitMode,
+  isSameSplitDetail,
+  splitDetailToInput,
+  type ParticipantShare,
+  type SplitDetail,
+  type SplitInput,
+} from "@/lib/expense-split"
+import { buildExpenseChanges, type ExpenseSnapshot } from "@/lib/expense-changes"
+import { useSaveExpense } from "@/lib/hooks/useSaveExpense"
 
 interface Member {
   id: string
@@ -78,11 +88,7 @@ interface Expense {
     } | null
   }
   participants: ExpenseParticipant[]
-}
-
-interface ParticipantShare {
-  memberId: string
-  shareAmount: number
+  splitDetail?: SplitDetail | null
 }
 
 interface OriginalExpenseData {
@@ -116,7 +122,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
 
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
+  const { save, remove, saving: submitting, uploadingImage, deleting: removing } = useSaveExpense(projectId)
 
   const [description, setDescription] = useState("")
   const [amount, setAmount] = useState("")
@@ -146,7 +152,6 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     pendingFile: null,
     preview: null,
   })
-  const [uploadingImage, setUploadingImage] = useState(false)
 
   // 位置相關狀態
   const [locationData, setLocationData] = useState<{
@@ -164,7 +169,11 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
 
   // 刪除相關狀態
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [deleting, setDeleting] = useState(false)
+
+  // Split detail baseline used for change detection, and read-only guard
+  // for expenses whose split cannot be represented by the v1 form.
+  const [originalSplitDetail, setOriginalSplitDetail] = useState<SplitDetail | null>(null)
+  const [readOnlyReason, setReadOnlyReason] = useState<string | null>(null)
 
   // 待刪除的圖片 URL（儲存成功後才實際刪除）
   const [pendingImageDelete, setPendingImageDelete] = useState<string | null>(null)
@@ -362,6 +371,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
 
         const shares = expense.participants.map(p => p.shareAmount)
         const allEqual = shares.every(s => Math.abs(s - shares[0]) < 0.01)
+        // Fixed members chosen by the legacy detection below (null = equal split)
+        let legacyFixed: Set<string> | null = null
 
         if (allEqual && shares.length > 0) {
           const expectedShare = Number(expense.amount) / shares.length
@@ -378,6 +389,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
             // 將所有人標記為固定，這樣 UI 才會顯示 customShares 中的值
             const allFixed = new Set<string>(expense.participants.map(p => p.member.id))
             setFixedMembers(allFixed)
+            legacyFixed = allFixed
           }
         } else {
           // 金額不相等，可能是混合模式
@@ -416,12 +428,57 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
               }
             })
             setFixedMembers(newFixed)
+            legacyFixed = newFixed
           } else {
             // 沒有識別到混合模式，將所有人標記為固定
             // 這樣 UI 才會顯示 customShares 中的值
             const allFixed = new Set<string>(expense.participants.map(p => p.member.id))
             setFixedMembers(allFixed)
+            legacyFixed = allFixed
           }
+        }
+
+        const detail = expense.splitDetail ?? null
+        const v1Mode = getV1SplitMode(detail)
+        if (v1Mode === "personal" && detail) {
+          const { personalItems: items } = splitDetailToInput(detail)
+          setSplitMode("custom")
+          setCustomMode("personal")
+          setFixedMembers(new Set())
+          setPersonalItems(
+            Object.fromEntries(
+              Object.entries(items).map(([id, list]) => [
+                id,
+                list.map((i, idx) => ({ id: `item-${id}-${idx}`, name: i.name, amount: String(i.amount) })),
+              ])
+            )
+          )
+        } else if (v1Mode === "custom" && detail) {
+          const { customShares: custom } = splitDetailToInput(detail)
+          setSplitMode("custom")
+          setCustomMode("full")
+          setCustomShares(Object.fromEntries(Object.entries(custom).map(([id, v]) => [id, String(v)])))
+          setFixedMembers(new Set(Object.keys(custom)))
+        } else if (v1Mode === "unsupported") {
+          setReadOnlyReason("此支出使用新版功能建立，請切換到新版編輯")
+        }
+
+        // Baseline for split change detection. Without a stored splitDetail,
+        // use the detail the legacy detection above implies, so an untouched
+        // legacy expense still reports "no changes".
+        if (v1Mode === "none") {
+          const ids = expense.participants.map(p => p.member.id)
+          const fixed = legacyFixed
+          const fixedIds = fixed === null ? [] : fixed.size > 0 ? ids.filter(id => fixed.has(id)) : ids
+          const legacyCustom: SplitInput["customShares"] = {}
+          expense.participants.forEach(p => {
+            if (fixedIds.includes(p.member.id)) legacyCustom[p.member.id] = Number(String(p.shareAmount)) || 0
+          })
+          setOriginalSplitDetail(
+            buildSplitDetail({ amount: Number(expense.amount) || 0, participantIds: ids, personalItems: {}, customShares: legacyCustom })
+          )
+        } else {
+          setOriginalSplitDetail(detail)
         }
 
         // 儲存原始資料用於計算變更（確保 amount 是數字類型）
@@ -554,103 +611,29 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     })
   }
 
-  function calculateShares(): ParticipantShare[] {
-    const amountNum = Number(amount) || 0
-    const participantCount = selectedParticipants.size
-
-    if (participantCount === 0) return []
-
-    if (splitMode === "equal") {
-      const sharePerPerson = Math.round((amountNum / participantCount) * 100) / 100
-      const shares = Array.from(selectedParticipants).map((memberId) => ({
-        memberId,
-        shareAmount: sharePerPerson,
-      }))
-      const totalShare = shares.reduce((sum, s) => sum + s.shareAmount, 0)
-      const diff = Math.round((amountNum - totalShare) * 100) / 100
-      if (diff !== 0 && shares.length > 0) {
-        shares[0].shareAmount = Math.round((shares[0].shareAmount + diff) * 100) / 100
-      }
-      return shares
-    } else {
-      // 自訂模式
-      if (customMode === "personal") {
-        // 個人項目 + 均攤模式
-        const shares: ParticipantShare[] = []
-        let personalTotal = 0
-
-        // 計算所有成員的個人項目總額
-        Array.from(selectedParticipants).forEach(id => {
-          personalTotal += getMemberPersonalTotal(id)
-        })
-
-        const remaining = amountNum - personalTotal
-        const equalShare = remaining / participantCount
-
-        // 第一人承擔舍入誤差
-        Array.from(selectedParticipants).forEach((id, index) => {
-          const personal = getMemberPersonalTotal(id)
-          if (index === 0) {
-            const othersTotal = (participantCount - 1) * equalShare +
-                               (personalTotal - personal)
-            shares.push({
-              memberId: id,
-              shareAmount: Math.round((amountNum - othersTotal) * 100) / 100
-            })
-          } else {
-            shares.push({
-              memberId: id,
-              shareAmount: Math.round((personal + equalShare) * 100) / 100
-            })
-          }
-        })
-
-        return shares
-      } else if (fixedMembers.size === 0) {
-        // 全自訂模式（現有邏輯）
-        return Array.from(selectedParticipants).map((memberId) => ({
-          memberId,
-          shareAmount: Number(customShares[memberId]) || 0,
-        }))
-      } else {
-        // 混合模式（新邏輯）
-        const shares: ParticipantShare[] = []
-        let totalFixed = 0
-
-        // 步驟 1：收集固定金額
-        Array.from(selectedParticipants).forEach(memberId => {
-          if (fixedMembers.has(memberId)) {
-            const fixedAmount = Number(customShares[memberId]) || 0
-            shares.push({ memberId, shareAmount: fixedAmount })
-            totalFixed += fixedAmount
-          }
-        })
-
-        // 步驟 2：計算剩餘金額和均分人數
-        const remainingAmount = amountNum - totalFixed
-        const equalSplitMembers = Array.from(selectedParticipants)
-          .filter(id => !fixedMembers.has(id))
-        const equalSplitCount = equalSplitMembers.length
-
-        // 步驟 3：剩餘金額均分（處理舍入誤差）
-        if (equalSplitCount > 0) {
-          const sharePerPerson = Math.round((remainingAmount / equalSplitCount) * 100) / 100
-
-          equalSplitMembers.forEach((memberId, index) => {
-            if (index === 0) {
-              // 第一個成員承擔舍入誤差
-              const others = sharePerPerson * (equalSplitCount - 1)
-              const firstShare = Math.round((remainingAmount - others) * 100) / 100
-              shares.push({ memberId, shareAmount: firstShare })
-            } else {
-              shares.push({ memberId, shareAmount: sharePerPerson })
-            }
-          })
-        }
-
-        return shares
-      }
+  // Maps the v1 split modes onto the shared split input.
+  function currentSplitInput(): SplitInput {
+    const participantIds = Array.from(selectedParticipants)
+    const base = { amount: Number(amount) || 0, participantIds, personalItems: {}, customShares: {} }
+    if (splitMode === "equal") return base
+    if (customMode === "personal") {
+      const items: SplitInput["personalItems"] = {}
+      participantIds.forEach((id) => {
+        const list = (personalItems[id] || []).map((i) => ({ name: i.name.trim(), amount: Number(i.amount) || 0 }))
+        if (list.length > 0) items[id] = list
+      })
+      return { ...base, personalItems: items }
     }
+    const fixedIds = fixedMembers.size > 0 ? participantIds.filter((id) => fixedMembers.has(id)) : participantIds
+    const custom: SplitInput["customShares"] = {}
+    fixedIds.forEach((id) => {
+      custom[id] = Number(customShares[id]) || 0
+    })
+    return { ...base, customShares: custom }
+  }
+
+  function calculateShares(): ParticipantShare[] {
+    return computeShares(currentSplitInput())
   }
 
   function getCustomSharesTotal(): number {
@@ -692,122 +675,6 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       newFixed.add(memberId)
     }
     setFixedMembers(newFixed)
-  }
-
-  // 計算編輯時的變更內容
-  function calculateChanges(
-    finalCategory: string,
-    finalImageUrl: string | null,
-    amountNum: number,
-    hasNewImageUpload: boolean = false
-  ): ExpenseChange[] {
-    if (!originalData || mode !== "edit") return []
-
-    const changes: ExpenseChange[] = []
-
-    // 金額或幣別變更（合併為一行顯示，如：JPY 120 → TWD 224）
-    const amountChanged = originalData.amount !== amountNum
-    const currencyChanged = originalData.currency !== currency
-    if (amountChanged || currencyChanged) {
-      changes.push({
-        field: "amount",
-        label: "金額",
-        oldValue: `${originalData.currency} ${originalData.amount.toLocaleString()}`,
-        newValue: `${currency} ${amountNum.toLocaleString()}`,
-      })
-    }
-
-    // 描述變更
-    const newDescription = description.trim() || null
-    if (originalData.description !== newDescription) {
-      changes.push({
-        field: "description",
-        label: "描述",
-        oldValue: originalData.description || "無",
-        newValue: newDescription || "無",
-      })
-    }
-
-    // 類別變更
-    if (originalData.category !== finalCategory) {
-      const getCategoryLabel = (cat: string | null) => {
-        if (!cat) return "其他"
-        const found = CATEGORIES.find(c => c.value === cat)
-        return found ? found.label : cat
-      }
-      changes.push({
-        field: "category",
-        label: "類別",
-        oldValue: getCategoryLabel(originalData.category),
-        newValue: getCategoryLabel(finalCategory),
-      })
-    }
-
-    // 付款人變更
-    if (originalData.paidByMemberId !== paidBy) {
-      const newPayerMember = members.find(m => m.id === paidBy)
-      changes.push({
-        field: "payer",
-        label: "付款人",
-        oldValue: originalData.payerName,
-        newValue: newPayerMember?.displayName || "未知",
-      })
-    }
-
-    // 日期變更
-    const originalDateStr = format(originalData.expenseDate, "yyyy/MM/dd")
-    const newDateStr = format(expenseDate, "yyyy/MM/dd")
-    if (originalDateStr !== newDateStr) {
-      changes.push({
-        field: "date",
-        label: "日期",
-        oldValue: originalDateStr,
-        newValue: newDateStr,
-      })
-    }
-
-    // 地點變更
-    if (originalData.location !== locationData.location) {
-      changes.push({
-        field: "location",
-        label: "地點",
-        oldValue: originalData.location || "無",
-        newValue: locationData.location || "無",
-      })
-    }
-
-    // 圖片變更 - 偵測圖片存在狀態的改變或新圖片上傳
-    const originalHasImage = !!originalData.image
-    const newHasImage = !!finalImageUrl
-    // 1. 圖片存在狀態改變（有→無 或 無→有）
-    // 2. 或有新上傳的檔案替換原本的圖片
-    const imagePresenceChanged = originalHasImage !== newHasImage
-    const imageReplaced = originalHasImage && newHasImage && hasNewImageUpload
-    if (imagePresenceChanged || imageReplaced) {
-      changes.push({
-        field: "image",
-        label: "圖片",
-        oldValue: originalHasImage ? "有圖片" : "無",
-        newValue: imageReplaced ? "已更換" : (newHasImage ? "有圖片" : "無"),
-      })
-    }
-
-    // 分攤者變更
-    const originalIds = Array.from(originalData.participantIds).sort()
-    const newIds = Array.from(selectedParticipants).sort()
-    const participantsChanged = originalIds.length !== newIds.length ||
-      originalIds.some((id, i) => id !== newIds[i])
-
-    if (participantsChanged) {
-      changes.push({
-        field: "participants",
-        label: "分攤者",
-        oldValue: `${originalData.participantIds.size}人`,
-        newValue: `${selectedParticipants.size}人`,
-      })
-    }
-
-    return changes
   }
 
   // 檢查是否有任何變更（用於編輯模式下的儲存按鈕）
@@ -864,11 +731,15 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       if (Math.abs(originalShare - share.shareAmount) > 0.01) return true
     }
 
+    // 分攤明細變更（個人項目 / 指定金額）
+    if (!isSameSplitDetail(originalSplitDetail, buildSplitDetail(currentSplitInput()))) return true
+
     return false
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (readOnlyReason) return
 
     const amountNum = Number(amount)
     if (isNaN(amountNum) || amountNum < 0) {
@@ -954,143 +825,83 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       return
     }
 
-    setSubmitting(true)
-    try {
-      // 如果有待上傳的圖片，先上傳到 R2
-      let finalImageUrl = imageValue.image
-      if (imageValue.pendingFile) {
-        setUploadingImage(true)
-        try {
-          const result = await uploadImageToR2(imageValue.pendingFile, projectId, authFetch)
-          finalImageUrl = result.url
-        } catch (error) {
-          console.error("圖片上傳失敗:", error)
-          alert("圖片上傳失敗，請重試")
-          setUploadingImage(false)
-          setSubmitting(false)
-          return
-        }
-        setUploadingImage(false)
-      }
-
-      const url = mode === "create"
-        ? `/api/projects/${projectId}/expenses`
-        : `/api/projects/${projectId}/expenses/${expenseId}`
-
-      // 如果選擇「其他」且有自訂類別，使用自訂類別；未選擇類別預設為 other
-      const finalCategory = category === "other" && customCategory.trim()
-        ? customCategory.trim()
-        : category || "other"
-
-      const res = await authFetch(url, {
-        method: mode === "create" ? "POST" : "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          paidByMemberId: paidBy,
-          amount: amountNum,
-          currency,
-          description: description.trim() || null,
-          category: finalCategory,
-          image: finalImageUrl || null,
-          location: locationData.location,
-          latitude: locationData.latitude,
-          longitude: locationData.longitude,
-          expenseDate: expenseDate.toISOString(),
-          participants,
-        }),
-      })
-
-      if (res.ok) {
-        // 儲存成功後，刪除標記為待刪除的舊圖片
-        if (pendingImageDelete && pendingImageDelete !== finalImageUrl) {
-          authFetch(`/api/upload?url=${encodeURIComponent(pendingImageDelete)}`, {
-            method: "DELETE",
-          }).catch((error) => {
-            console.error("刪除舊圖片失敗:", error)
-          })
-        }
-
-        // 如果勾選了通知且可以發送訊息，則發送通知
-        // 檢查用戶偏好：新增時檢查 expenseCreated，更新時檢查 expenseUpdated
-        const notificationEnabled = mode === "create"
-          ? userPreferences.notifications.expenseCreated
-          : userPreferences.notifications.expenseUpdated
-        if (notifyLine && canSendMessages && !isDevMode && notificationEnabled) {
-          const payerMember = members.find((m) => m.id === paidBy)
-          const payerName = payerMember?.displayName || "未知"
-          const operationType: "create" | "update" = mode === "create" ? "create" : "update"
-
-          // 計算變更內容（編輯模式）- 傳入是否有新上傳圖片的資訊
-          const hasNewImageUpload = imageValue.pendingFile !== null
-          const changes = calculateChanges(finalCategory, finalImageUrl, amountNum, hasNewImageUpload)
-
-          sendExpenseNotificationToChat({
-            operationType,
-            projectName,
-            projectId,
-            payerName,
-            amount: amountNum,
-            description: description.trim() || undefined,
-            category: finalCategory || undefined,
-            participantCount: participants.length,
-            changes: changes.length > 0 ? changes : undefined,
-          }).catch(() => {
-            // 發送失敗時靜默處理，不影響使用者體驗
-          })
-        }
-
-        router.push(`/projects/${projectId}/expenses`)
-      } else {
-        const data = await res.json()
-        alert(data.error || (mode === "create" ? "新增失敗" : "更新失敗"))
-      }
-    } catch (error) {
-      console.error(mode === "create" ? "新增支出錯誤:" : "更新支出錯誤:", error)
-      alert(mode === "create" ? "新增失敗" : "更新失敗")
-    } finally {
-      setSubmitting(false)
+    // 如果選擇「其他」且有自訂類別，使用自訂類別；未選擇類別預設為 other
+    const finalCategory = category === "other" && customCategory.trim()
+      ? customCategory.trim()
+      : category || "other"
+    const payerName = members.find((m) => m.id === paidBy)?.displayName || "未知"
+    const nextSnapshot: ExpenseSnapshot = {
+      amount: amountNum,
+      currency,
+      description: description.trim() || null,
+      category: finalCategory,
+      paidByMemberId: paidBy,
+      payerName,
+      expenseDate,
+      location: locationData.location,
+      // A pending upload always yields an image URL once saved
+      image: imageValue.pendingFile ? "pending" : imageValue.image,
+      participantIds: participants.map((p) => p.memberId),
     }
+    const changes =
+      mode === "edit" && originalData
+        ? buildExpenseChanges(
+            { ...originalData, participantIds: Array.from(originalData.participantIds) },
+            nextSnapshot,
+            { imageReplaced: imageValue.pendingFile !== null }
+          )
+        : []
+
+    const result = await save({
+      mode,
+      expenseId,
+      payload: {
+        paidByMemberId: paidBy,
+        amount: amountNum,
+        currency,
+        description: description.trim() || null,
+        category: finalCategory,
+        location: locationData.location,
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+        expenseDate: expenseDate.toISOString(),
+        participants,
+        splitDetail: buildSplitDetail(currentSplitInput()),
+      },
+      image: { url: imageValue.image, pendingFile: imageValue.pendingFile, pendingDeleteUrl: pendingImageDelete },
+      notification: { requested: notifyLine, projectName, payerName, changes },
+    })
+    if (!result.ok) {
+      alert(result.error)
+      return
+    }
+    router.push(`/projects/${projectId}/expenses`)
   }
 
   // 刪除支出
   async function handleDelete() {
     if (!expenseId || mode !== "edit") return
 
-    setDeleting(true)
-    try {
-      const res = await authFetch(`/api/projects/${projectId}/expenses/${expenseId}`, {
-        method: "DELETE",
-      })
-
-      if (res.ok) {
-        // 發送 LINE 通知（檢查用戶偏好）
-        if (notifyLine && canSendMessages && !isDevMode && originalData && userPreferences.notifications.expenseDeleted) {
-          const payerMember = members.find((m) => m.id === originalData.paidByMemberId)
-          sendDeleteNotificationToChat({
-            projectName,
-            projectId,
-            payerName: payerMember?.displayName || originalData.payerName,
-            amount: originalData.amount,
-            description: originalData.description || undefined,
-            category: originalData.category || undefined,
-            participantCount: originalData.participantIds.size,
-          }).catch(() => {
-            // 發送失敗時靜默處理
-          })
-        }
-
-        router.push(`/projects/${projectId}/expenses`)
-      } else {
-        const data = await res.json()
-        alert(data.error || "刪除失敗")
-      }
-    } catch (error) {
-      console.error("刪除支出錯誤:", error)
-      alert("刪除失敗")
-    } finally {
-      setDeleting(false)
-      setShowDeleteDialog(false)
+    const result = await remove({
+      expenseId,
+      notification: {
+        // v1 only notified when the original data was loaded
+        requested: notifyLine && !!originalData,
+        projectName,
+        payerName:
+          members.find((m) => m.id === originalData?.paidByMemberId)?.displayName || originalData?.payerName || "",
+        amount: originalData?.amount ?? 0,
+        description: originalData?.description ?? null,
+        category: originalData?.category ?? null,
+        participantCount: originalData?.participantIds.size ?? 0,
+      },
+    })
+    setShowDeleteDialog(false)
+    if (!result.ok) {
+      alert(result.error)
+      return
     }
+    router.push(`/projects/${projectId}/expenses`)
   }
 
   // 移除圖片時的處理（只標記待刪除，儲存成功後才實際刪除）
@@ -1119,6 +930,11 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   return (
     <AppLayout title={title} showBack backHref={backHref}>
       <form onSubmit={handleSubmit} className="space-y-5 pb-40">
+        {readOnlyReason && (
+          <div role="alert" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+            {readOnlyReason}
+          </div>
+        )}
         {/* 編輯模式顯示刪除按鈕 */}
         {mode === "edit" && (
           <div className="flex justify-end">
@@ -1671,7 +1487,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
               <Button
                 type="submit"
                 className="flex-1 h-12"
-                disabled={submitting || uploadingImage || !hasChanges()}
+                disabled={submitting || uploadingImage || !hasChanges() || !!readOnlyReason}
               >
                 {uploadingImage ? "上傳圖片中..." : submitting ? "儲存中..." : !hasChanges() ? "無變更" : submitText}
               </Button>
@@ -1686,7 +1502,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         onOpenChange={setShowDeleteDialog}
         description="確定要刪除這筆支出嗎？此操作無法復原。"
         onConfirm={handleDelete}
-        loading={deleting}
+        loading={removing}
       >
         {canSendMessages && !isDevMode && (
           <label className="flex items-center gap-3 cursor-pointer py-2">

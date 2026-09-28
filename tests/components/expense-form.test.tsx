@@ -804,4 +804,155 @@ describe("ExpenseForm Component", () => {
       expect(fixedButtons.length).toBeGreaterThan(0)
     })
   })
+
+  describe("splitDetail", () => {
+    const personalDetail = {
+      version: 1,
+      personalItems: { "member-2": [{ name: "咖啡", amount: 50 }] },
+      customShares: {},
+    }
+    const personalExpense = {
+      ...mockExpense,
+      splitDetail: personalDetail,
+      participants: [
+        { ...mockExpense.participants[0], shareAmount: 83.34 },
+        { ...mockExpense.participants[1], shareAmount: 133.33 },
+        { ...mockExpense.participants[2], shareAmount: 83.33 },
+      ],
+    }
+
+    function findBody(method: string) {
+      const call = mockAuthFetch.mock.calls.find(
+        ([url, options]) => String(url).includes("/expenses") && (options as RequestInit | undefined)?.method === method
+      )
+      return call ? JSON.parse((call[1] as RequestInit).body as string) : undefined
+    }
+
+    async function waitLoaded() {
+      await waitFor(() => {
+        expect(screen.queryByText("載入中...")).not.toBeInTheDocument()
+      })
+    }
+
+    it("create personal mode sends splitDetail", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+      await waitLoaded()
+
+      fireEvent.change(screen.getAllByPlaceholderText("0")[0], { target: { value: "300" } })
+      fireEvent.click(screen.getByText("自訂金額"))
+      fireEvent.click(screen.getByText("先扣再分"))
+      // Add an item for Bob (second member)
+      fireEvent.click(screen.getAllByText("新增項目")[1])
+      const nameInput = screen.getByPlaceholderText("項目名稱")
+      fireEvent.change(nameInput, { target: { value: "咖啡" } })
+      const itemAmountInput = nameInput.parentElement!.querySelectorAll("input")[1]
+      fireEvent.change(itemAmountInput, { target: { value: "50" } })
+
+      fireEvent.click(screen.getByText("儲存支出"))
+
+      await waitFor(() => {
+        expect(findBody("POST")).toBeDefined()
+      })
+      const body = findBody("POST")
+      expect(body.splitDetail).toEqual({ version: 1, personalItems: { "member-2": [{ name: "咖啡", amount: 50 }] }, customShares: {} })
+      expect(body.participants.reduce((s: number, p: { shareAmount: number }) => s + p.shareAmount, 0)).toBeCloseTo(300)
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith("/projects/project-1/expenses")
+      })
+    })
+
+    it("create equal split sends splitDetail null", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+      await waitLoaded()
+
+      fireEvent.change(screen.getAllByPlaceholderText("0")[0], { target: { value: "300" } })
+      fireEvent.click(screen.getByText("儲存支出"))
+
+      await waitFor(() => {
+        expect(findBody("POST")).toBeDefined()
+      })
+      const body = findBody("POST")
+      expect(body.splitDetail).toBeNull()
+      expect(body.participants).toEqual([
+        { memberId: "member-1", shareAmount: 100 },
+        { memberId: "member-2", shareAmount: 100 },
+        { memberId: "member-3", shareAmount: 100 },
+      ])
+    })
+
+    it("edit restores personal items", async () => {
+      setupMockFetch({ expense: personalExpense })
+      renderWithProviders(<ExpenseForm projectId="project-1" expenseId="expense-1" mode="edit" />)
+      await waitLoaded()
+
+      expect(screen.getByDisplayValue("咖啡")).toBeInTheDocument()
+      expect(screen.getByText("先扣再分").closest("button")).toHaveClass("bg-white")
+    })
+
+    it("edit with unsupported splitDetail is read-only", async () => {
+      setupMockFetch({
+        expense: {
+          ...personalExpense,
+          splitDetail: { ...personalDetail, customShares: { "member-3": 83.33 } },
+        },
+      })
+      renderWithProviders(<ExpenseForm projectId="project-1" expenseId="expense-1" mode="edit" />)
+      await waitLoaded()
+
+      expect(screen.getByText("此支出使用新版功能建立，請切換到新版編輯")).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /儲存變更|無變更/ })).toBeDisabled()
+      // Delete stays available
+      expect(screen.getByTitle("刪除此筆")).not.toBeDisabled()
+    })
+
+    it("edit changing only description keeps splitDetail and is not 'no changes'", async () => {
+      setupMockFetch({ expense: personalExpense })
+      renderWithProviders(<ExpenseForm projectId="project-1" expenseId="expense-1" mode="edit" />)
+      await waitLoaded()
+
+      expect(screen.getByText("無變更")).toBeInTheDocument()
+      fireEvent.change(screen.getByDisplayValue("Lunch"), { target: { value: "Dinner" } })
+      const submit = screen.getByText("儲存變更").closest("button")!
+      expect(submit).not.toBeDisabled()
+      fireEvent.click(submit)
+
+      await waitFor(() => {
+        expect(findBody("PUT")).toBeDefined()
+      })
+      const body = findBody("PUT")
+      expect(body.splitDetail).toEqual(personalDetail)
+      expect(body.description).toBe("Dinner")
+    })
+
+    it("edit of a legacy custom split without splitDetail still shows no changes", async () => {
+      setupMockFetch({
+        expense: {
+          ...mockExpense,
+          participants: [
+            { ...mockExpense.participants[0], shareAmount: 150 },
+            { ...mockExpense.participants[1], shareAmount: 100 },
+            { ...mockExpense.participants[2], shareAmount: 50 },
+          ],
+        },
+      })
+      renderWithProviders(<ExpenseForm projectId="project-1" expenseId="expense-1" mode="edit" />)
+      await waitLoaded()
+
+      expect(screen.getByText("無變更")).toBeInTheDocument()
+    })
+
+    it("delete goes through the API and navigates back", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" expenseId="expense-1" mode="edit" />)
+      await waitLoaded()
+
+      fireEvent.click(screen.getByTitle("刪除此筆"))
+      const confirm = await screen.findByRole("button", { name: /刪除/ })
+      fireEvent.click(confirm)
+
+      await waitFor(() => {
+        expect(mockAuthFetch).toHaveBeenCalledWith("/api/projects/project-1/expenses/expense-1", { method: "DELETE" })
+        expect(mockPush).toHaveBeenCalledWith("/projects/project-1/expenses")
+      })
+    })
+  })
 })
