@@ -11,14 +11,14 @@ export function useCamera() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const [mode, setMode] = useState<"starting" | "live" | "fallback">(() => {
-    if (isIOSDevice() || !navigator.mediaDevices?.getUserMedia) {
+    if (typeof navigator === "undefined" || isIOSDevice() || !navigator.mediaDevices?.getUserMedia) {
       return "fallback"
     }
     return "starting"
   })
 
   useEffect(() => {
-    if (mode === "fallback") return
+    if (typeof navigator === "undefined" || isIOSDevice() || !navigator.mediaDevices?.getUserMedia) return
     let cancelled = false
     navigator.mediaDevices
       .getUserMedia({ video: { facingMode: "environment" }, audio: false })
@@ -43,7 +43,7 @@ export function useCamera() {
       streamRef.current?.getTracks().forEach((t) => t.stop())
       streamRef.current = null
     }
-  }, [mode])
+  }, [])
 
   const capture = useCallback(async (): Promise<File | null> => {
     const video = videoRef.current

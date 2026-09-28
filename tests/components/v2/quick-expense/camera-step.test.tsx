@@ -50,4 +50,16 @@ describe("CameraStep", () => {
     fireEvent.click(screen.getByRole("button", { name: "改用手動輸入" }))
     expect(p.onManual).toHaveBeenCalled()
   })
+
+  it("starts camera stream only once and does not restart", async () => {
+    const stop = vi.fn()
+    const getUserMedia = vi.fn().mockResolvedValue({ getTracks: () => [{ stop }] })
+    setMedia(getUserMedia)
+    const { unmount } = render(<CameraStep {...props()} />)
+    await waitFor(() => expect(screen.getByRole("button", { name: "拍照" })).toBeInTheDocument())
+    expect(getUserMedia).toHaveBeenCalledTimes(1)
+    expect(stop).not.toHaveBeenCalled()
+    unmount()
+    expect(stop).toHaveBeenCalledTimes(1)
+  })
 })
