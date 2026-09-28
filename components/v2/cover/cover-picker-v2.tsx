@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { Upload, X } from "lucide-react"
+import { X } from "lucide-react"
 import { compressImage } from "@/lib/image-utils"
 import { COVER_COLORS, COVER_ICONS, DEFAULT_ICON_COVER, buildIconCover, parseCover } from "@/lib/covers"
 import { CoverArt } from "./cover-art"
@@ -33,7 +33,7 @@ export function CoverPickerV2({ value, onChange, disabled }: { value: string | n
     try {
       const base64 = await compressImage(file, 1200, 800, 0.8)
       onChange(base64)
-    } catch (err) {
+    } catch {
       setUploadError(true)
     } finally {
       setUploading(false)

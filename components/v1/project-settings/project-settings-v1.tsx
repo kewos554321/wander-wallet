@@ -25,8 +25,6 @@ import { CurrencySelect } from "@/components/ui/currency-select"
 import {
   type CurrencyCode,
   DEFAULT_CURRENCY,
-  SUPPORTED_CURRENCIES,
-  getCurrencyInfo,
 } from "@/lib/constants/currencies"
 import { Info } from "lucide-react"
 
@@ -452,7 +450,6 @@ export function ProjectSettingsV1({ projectId: id }: { projectId: string }) {
             </div>
             <div className="space-y-2">
               {expenseCurrencies.map((curr) => {
-                const info = getCurrencyInfo(curr)
                 const defaultRate = getConversionRate(curr, currency)
                 const currentRate = customRates[curr] ? Number(customRates[curr]) : defaultRate
                 const isCustom = customRates[curr] && customRates[curr].trim() !== ""
