@@ -88,9 +88,40 @@ describe("ExpenseFormV2View", () => {
     fireEvent.change(screen.getByLabelText("小雨的分攤金額"), { target: { value: "30" } })
     rerender()
     expect(hook.result.current.derived.shares.map((s) => s.shareAmount)).toEqual([30, 70])
-    fireEvent.click(screen.getByRole("button", { name: "小雨恢復自動分攤" }))
+    expect(screen.getByRole("button", { name: "小雨取消固定金額" })).toHaveAttribute("aria-pressed", "true")
+    fireEvent.click(screen.getByRole("button", { name: "小雨取消固定金額" }))
     rerender()
     expect(hook.result.current.derived.shares.map((s) => s.shareAmount)).toEqual([50, 50])
+  })
+
+  it("pins the current auto share when the pin button is pressed", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    fireEvent.click(screen.getByRole("button", { name: "志明固定金額" }))
+    rerender()
+    expect(hook.result.current.state.customShares).toEqual({ b: "50" })
+    expect(screen.getByLabelText("志明的分攤金額")).toHaveValue("50")
+  })
+
+  it("shows only the shared-pool portion, separate from personal items", () => {
+    const { hook, rerender } = renderForm()
+    act(() => {
+      hook.result.current.actions.setAmount("1000")
+      hook.result.current.actions.setPersonalMode(true)
+      hook.result.current.actions.togglePersonalMember("a")
+    })
+    const itemId = hook.result.current.state.personalItems.a[0].id
+    act(() => {
+      hook.result.current.actions.updateItem("a", itemId, "name", "咖啡")
+      hook.result.current.actions.updateItem("a", itemId, "amount", "100")
+    })
+    rerender()
+    // Pool of 2 splits the remaining 900; 小雨's row shows 450, not 450 + 100.
+    expect(screen.getByText(/應分攤金額/)).toHaveTextContent("900")
+    expect(screen.getByLabelText("小雨的分攤金額")).toHaveAttribute("placeholder", "450")
+    expect(screen.getByLabelText("志明的分攤金額")).toHaveAttribute("placeholder", "450")
+    expect(hook.result.current.derived.shares.map((s) => s.shareAmount)).toEqual([550, 450])
   })
 
   it("disables submit and shows the draft error", () => {

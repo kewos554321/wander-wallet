@@ -1,6 +1,6 @@
 "use client"
 
-import { CheckCircle2, Plus, RotateCcw, Trash2, X } from "lucide-react"
+import { CheckCircle2, Pin, PinOff, Plus, Trash2, X } from "lucide-react"
 import { formatCurrency } from "@/lib/constants/currencies"
 import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
 import { memberTone } from "./payer-picker"
@@ -18,7 +18,11 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
   const fmt = (n: number) => formatCurrency(Math.round(n * 100) / 100, currency)
   const tone = (id: string) => memberTone(members.findIndex((m) => m.id === id))
   const name = (id: string) => members.find((m) => m.id === id)?.displayName ?? ""
-  const shareOf = (id: string) => derived.shares.find((s) => s.memberId === id)?.shareAmount ?? 0
+  // Shared-pool portion only: personal items are shown in their own section.
+  const personalOf = (id: string) => derived.splitInput.personalItems[id]?.reduce((s, i) => s + i.amount, 0) ?? 0
+  const poolShareOf = (id: string) =>
+    Math.round(((derived.shares.find((s) => s.memberId === id)?.shareAmount ?? 0) - personalOf(id)) * 100) / 100
+  const sharedTotal = Math.round((derived.splitInput.amount - derived.personalTotal) * 100) / 100
   const allInPool = members.every((m) => state.pool.includes(m.id))
   const poolCount = state.pool.length
 
@@ -123,7 +127,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
 
       <div className="mb-2.5 mt-3 flex items-center justify-between gap-2">
         <p className="m-0 text-xs font-semibold text-v2-ink-muted">
-          共同分攤 <span className="font-bold text-v2-lake">（剩餘應攤分金額 {fmt(Math.max(0, derived.autoRemaining))}）</span>
+          共同分攤 <span className="font-bold text-v2-lake">（應分攤金額 {fmt(Math.max(0, sharedTotal))}）</span>
         </p>
         <button type="button" onClick={() => actions.setPoolAll(!allInPool)} className="shrink-0 text-xs font-bold text-v2-lake">
           {allInPool ? "取消全選" : "全選"}
@@ -165,17 +169,21 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                   aria-label={`${name(id)}的分攤金額`}
                   inputMode="decimal"
                   value={isCustom ? custom : ""}
-                  placeholder={String(shareOf(id))}
+                  placeholder={String(poolShareOf(id))}
                   onChange={(e) => (e.target.value === "" ? actions.clearCustomShare(id) : actions.setCustomShare(id, e.target.value))}
                   className={`w-24 rounded-lg border px-2.5 py-1.5 text-right text-[13px] font-bold outline-none ${
                     isCustom ? "border-v2-lake bg-v2-surface" : "border-[#DDEDE6] bg-v2-surface placeholder:text-v2-ink"
                   }`}
                 />
-                {isCustom && (
-                  <button type="button" aria-label={`${name(id)}恢復自動分攤`} onClick={() => actions.clearCustomShare(id)} className={`${smallButton} bg-[#D2EAE1] text-v2-lake`}>
-                    <RotateCcw className="h-3 w-3" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  aria-label={isCustom ? `${name(id)}取消固定金額` : `${name(id)}固定金額`}
+                  aria-pressed={isCustom}
+                  onClick={() => (isCustom ? actions.clearCustomShare(id) : actions.setCustomShare(id, String(poolShareOf(id))))}
+                  className={`${smallButton} ${isCustom ? "bg-v2-lake text-white" : "bg-[#D2EAE1] text-v2-lake"}`}
+                >
+                  {isCustom ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
+                </button>
                 <button type="button" aria-label={`${name(id)}不參與共同分攤`} onClick={() => actions.togglePool(id)} className={`${smallButton} bg-[#F6DCD3] text-[#C4432A]`}>
                   <X className="h-3 w-3" />
                 </button>
@@ -198,7 +206,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
           )}
         </div>
         <p className="mt-[3px] break-words text-xs leading-normal text-v2-ink-muted">
-          個人項目 {fmt(derived.personalTotal)}（{derived.itemCount} 項）＋ 共同分攤 {fmt(derived.splitInput.amount - derived.personalTotal)}（{poolCount} 人）＝{" "}
+          個人項目 {fmt(derived.personalTotal)}（{derived.itemCount} 項）＋ 共同分攤 {fmt(sharedTotal)}（{poolCount} 人）＝{" "}
           {fmt(derived.shares.reduce((s, x) => s + x.shareAmount, 0))} / {fmt(derived.splitInput.amount)}
         </p>
       </div>
