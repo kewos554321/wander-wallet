@@ -63,7 +63,7 @@ describe("ExpenseFormV2View", () => {
     const split = screen.getByRole("region", { name: "分攤成員" })
     expect(within(split).getByText("已選 2 人")).toBeInTheDocument()
     expect(within(split).getByText("金額相符")).toBeInTheDocument()
-    expect(within(split).getByText("個人項目 TWD 0（0 項）＋ 共同分攤 TWD 100（2 人）＝ TWD 100 / TWD 100")).toBeInTheDocument()
+    expect(within(split).getByText("個人項目 0（0 項）＋ 共同分攤 100（2 人）＝ 100 / TWD 100")).toBeInTheDocument()
   })
 
   it("edits personal items", () => {
@@ -88,7 +88,7 @@ describe("ExpenseFormV2View", () => {
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
     // Not pinned: the share is plain text, not an input.
-    expect(screen.getByLabelText("小雨的分攤金額")).toHaveTextContent("TWD 50")
+    expect(screen.getByLabelText("小雨的分攤金額")).toHaveTextContent(/^50$/)
     fireEvent.click(screen.getByRole("button", { name: "小雨固定金額" }))
     rerender()
     fireEvent.change(screen.getByLabelText("小雨的分攤金額"), { target: { value: "30" } })
@@ -162,8 +162,8 @@ describe("ExpenseFormV2View", () => {
     rerender()
     // Pool of 2 splits the remaining 900; 小雨's row shows 450, not 450 + 100.
     expect(screen.getByText(/應分攤金額/)).toHaveTextContent("900")
-    expect(screen.getByLabelText("小雨的分攤金額")).toHaveTextContent("TWD 450")
-    expect(screen.getByLabelText("志明的分攤金額")).toHaveTextContent("TWD 450")
+    expect(screen.getByLabelText("小雨的分攤金額")).toHaveTextContent(/^450$/)
+    expect(screen.getByLabelText("志明的分攤金額")).toHaveTextContent(/^450$/)
     expect(hook.result.current.derived.shares.map((s) => s.shareAmount)).toEqual([550, 450])
   })
 
@@ -184,10 +184,11 @@ describe("ExpenseFormV2View", () => {
     })
     rerender()
     const table = screen.getByRole("region", { name: "分攤明細" })
+    expect(within(table).getByText("分攤明細（TWD）")).toBeInTheDocument()
     const row = (name: string) => within(table).getByRole("row", { name: new RegExp(`^${name}`) })
-    expect(row("小雨")).toHaveTextContent("小雨TWD 100TWD 0TWD 100")
-    expect(row("志明")).toHaveTextContent("志明TWD 0TWD 900TWD 900")
-    expect(row("合計")).toHaveTextContent("合計TWD 100TWD 900TWD 1,000")
+    expect(row("小雨")).toHaveTextContent("小雨1000100")
+    expect(row("志明")).toHaveTextContent("志明0900900")
+    expect(row("合計")).toHaveTextContent("合計1009001,000")
   })
 
   it("disables submit and shows the draft error", () => {

@@ -1,6 +1,6 @@
 "use client"
 
-import { formatCurrency } from "@/lib/constants/currencies"
+import { formatAmount } from "@/lib/constants/currencies"
 import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
 
 type Draft = ReturnType<typeof useExpenseDraft>
@@ -12,7 +12,7 @@ export function SplitSummary({ members, draft, currency }: { members: DraftMembe
   const { derived } = draft
   if (derived.itemCount === 0 || derived.shares.length === 0) return null
 
-  const fmt = (n: number) => formatCurrency(Math.round(n * 100) / 100, currency)
+  const fmt = (n: number) => formatAmount(Math.round(n * 100) / 100, currency)
   const rows = derived.shares.map((s) => {
     const personal = derived.splitInput.personalItems[s.memberId]?.reduce((sum, i) => sum + i.amount, 0) ?? 0
     return {
@@ -28,7 +28,7 @@ export function SplitSummary({ members, draft, currency }: { members: DraftMembe
 
   return (
     <section aria-label="分攤明細" className="mt-3">
-      <p className="mb-2 text-xs font-semibold text-v2-ink-muted">分攤明細</p>
+      <p className="mb-2 text-xs font-semibold text-v2-ink-muted">分攤明細（{currency}）</p>
       <div className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-surface">
         <table className="w-full text-xs">
           <thead className="bg-v2-lake-soft text-v2-ink-muted">

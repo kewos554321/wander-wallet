@@ -1,7 +1,7 @@
 "use client"
 
 import { CheckCircle2, CornerRightDown, Pin, PinOff, Plus, UserMinus, X } from "lucide-react"
-import { formatCurrency } from "@/lib/constants/currencies"
+import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
 import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
 import { memberPillClass, memberTone } from "./payer-picker"
 import { SplitSummary } from "./split-summary"
@@ -24,7 +24,9 @@ const itemInput = "min-w-0 rounded-lg border border-[#DDEDE6] bg-v2-surface px-2
 
 export function SplitEditor({ members, draft, currency }: { members: DraftMember[]; draft: Draft; currency: string }) {
   const { state, actions, derived } = draft
+  // Currency code only on totals; per-member amounts show the number alone.
   const fmt = (n: number) => formatCurrency(Math.round(n * 100) / 100, currency)
+  const num = (n: number) => formatAmount(Math.round(n * 100) / 100, currency)
   const tone = (id: string) => memberTone(members.findIndex((m) => m.id === id))
   const name = (id: string) => members.find((m) => m.id === id)?.displayName ?? ""
   // Shared-pool portion only: personal items are shown in their own section.
@@ -94,7 +96,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                       </span>
                       <span className="flex flex-1 items-center justify-between gap-2 text-[13px]">
                         <span className="font-semibold">{name(id)}</span>
-                        <span className="font-bold">{fmt(sum)}</span>
+                        <span className="font-bold">{num(sum)}</span>
                       </span>
                       <button type="button" aria-label={`為${name(id)}新增品項`} onClick={() => actions.addItem(id)} className="flex h-[22px] shrink-0 items-center justify-center gap-px rounded-md bg-[#D2EAE1] px-1 text-v2-lake">
                         <CornerRightDown className="h-3 w-3" aria-hidden="true" />
@@ -198,7 +200,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                   />
                 ) : (
                   <span aria-label={`${name(id)}的分攤金額`} className="text-right text-[13px] font-bold">
-                    {fmt(poolShareOf(id))}
+                    {num(poolShareOf(id))}
                   </span>
                 )}
                 <button
@@ -232,8 +234,8 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
           )}
         </div>
         <p className="mt-[3px] break-words text-xs leading-normal text-v2-ink-muted">
-          個人項目 {fmt(derived.personalTotal)}（{derived.itemCount} 項）＋ 共同分攤 {fmt(sharedTotal)}（{poolCount} 人）＝{" "}
-          {fmt(derived.shares.reduce((s, x) => s + x.shareAmount, 0))} / {fmt(derived.splitInput.amount)}
+          個人項目 {num(derived.personalTotal)}（{derived.itemCount} 項）＋ 共同分攤 {num(sharedTotal)}（{poolCount} 人）＝{" "}
+          {num(derived.shares.reduce((s, x) => s + x.shareAmount, 0))} / {fmt(derived.splitInput.amount)}
         </p>
       </div>
 
