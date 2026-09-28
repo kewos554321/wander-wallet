@@ -106,6 +106,10 @@ interface OriginalExpenseData {
 }
 
 
+// Must match the splitDetail limits enforced by the API (lib/expense-split.ts)
+const MAX_PERSONAL_ITEMS = 20
+const MAX_PERSONAL_ITEM_NAME = 30
+
 interface ExpenseFormProps {
   projectId: string
   expenseId?: string
@@ -580,6 +584,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   // 新增個人項目
   function addPersonalItem(memberId: string) {
     const items = personalItems[memberId] || []
+    if (items.length >= MAX_PERSONAL_ITEMS) return
     const newItem: PersonalItem = {
       id: `item-${Date.now()}-${Math.random()}`,
       name: "",
@@ -1281,6 +1286,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                             <Input
                               type="text"
                               placeholder="項目名稱"
+                              maxLength={MAX_PERSONAL_ITEM_NAME}
                               value={item.name}
                               onChange={(e) => updatePersonalItem(member.id, item.id, "name", e.target.value)}
                               className="flex-1 h-8 text-xs"
@@ -1308,7 +1314,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
                         <button
                           type="button"
                           onClick={() => addPersonalItem(member.id)}
-                          className="flex items-center gap-1 ml-12 text-xs text-primary hover:text-primary/80"
+                          disabled={memberItems.length >= MAX_PERSONAL_ITEMS}
+                          className="flex items-center gap-1 ml-12 text-xs text-primary hover:text-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Plus className="h-3 w-3" />
                           新增項目
@@ -1343,7 +1350,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           {splitMode === "custom" && customMode === "personal" && (
             <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
               <p className="text-xs text-amber-800 dark:text-amber-200">
-                ⚠️ 注意：個人項目明細（項目名稱）僅供本次輸入參考，儲存後只會保留最終金額，編輯時無法還原項目明細。
+                個人項目明細（項目名稱）會隨支出一起儲存，編輯時可還原。
               </p>
             </div>
           )}

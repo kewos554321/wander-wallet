@@ -941,6 +941,66 @@ describe("ExpenseForm Component", () => {
       expect(screen.getByText("無變更")).toBeInTheDocument()
     })
 
+    it("personal item name input is limited to 30 characters", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+      await waitLoaded()
+
+      fireEvent.click(screen.getByText("自訂金額"))
+      fireEvent.click(screen.getByText("先扣再分"))
+      fireEvent.click(screen.getAllByText("新增項目")[0])
+
+      expect(screen.getByPlaceholderText("項目名稱")).toHaveAttribute("maxLength", "30")
+    })
+
+    it("stops adding personal items at 20 per member", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+      await waitLoaded()
+
+      fireEvent.click(screen.getByText("自訂金額"))
+      fireEvent.click(screen.getByText("先扣再分"))
+      const addButton = () => screen.getAllByText("新增項目")[0].closest("button")!
+      for (let i = 0; i < 25; i++) fireEvent.click(addButton())
+
+      expect(screen.getAllByPlaceholderText("項目名稱")).toHaveLength(20)
+      expect(addButton()).toBeDisabled()
+      // Other members are unaffected
+      expect(screen.getAllByText("新增項目")[1].closest("button")).not.toBeDisabled()
+    })
+
+    it("shows the personal items note saying details are saved", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+      await waitLoaded()
+
+      fireEvent.click(screen.getByText("自訂金額"))
+      fireEvent.click(screen.getByText("先扣再分"))
+
+      expect(screen.getByText("個人項目明細（項目名稱）會隨支出一起儲存，編輯時可還原。")).toBeInTheDocument()
+      expect(screen.queryByText(/僅供本次輸入參考/)).not.toBeInTheDocument()
+    })
+
+    it("edit restores custom shares from splitDetail and reports no changes", async () => {
+      setupMockFetch({
+        expense: {
+          ...mockExpense,
+          splitDetail: { version: 1, personalItems: {}, customShares: { "member-2": 120 } },
+          participants: [
+            { ...mockExpense.participants[0], shareAmount: 90 },
+            { ...mockExpense.participants[1], shareAmount: 120 },
+            { ...mockExpense.participants[2], shareAmount: 90 },
+          ],
+        },
+      })
+      renderWithProviders(<ExpenseForm projectId="project-1" expenseId="expense-1" mode="edit" />)
+      await waitLoaded()
+
+      expect(screen.getByText("指定金額").closest("button")).toHaveClass("bg-white")
+      expect(screen.getByDisplayValue("120")).toBeInTheDocument()
+      // Only Bob is pinned; the other two are auto-split
+      expect(screen.getAllByTitle("取消固定")).toHaveLength(1)
+      expect(screen.getAllByTitle("固定金額")).toHaveLength(2)
+      expect(screen.getByText("無變更")).toBeInTheDocument()
+    })
+
     it("delete goes through the API and navigates back", async () => {
       renderWithProviders(<ExpenseForm projectId="project-1" expenseId="expense-1" mode="edit" />)
       await waitLoaded()
