@@ -11,7 +11,7 @@ vi.mock("@/components/auth/liff-provider", () => ({
   useLiff: () => ({ user: { id: "u1" } }),
   useAuthFetch: () => vi.fn(),
 }))
-vi.mock("@/components/voice/voice-expense-dialog", () => ({ VoiceExpenseDialog: () => null }))
+vi.mock("@/components/v2/quick-expense/quick-expense-v2", () => ({ QuickExpenseV2: () => null }))
 
 const mockOverview = vi.fn()
 vi.mock("@/lib/hooks/useProjectOverview", () => ({ useProjectOverview: () => mockOverview() }))

@@ -5,7 +5,7 @@ import Image from "next/image"
 import { useLiff } from "@/components/auth/liff-provider"
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
+import { QuickExpenseV2 } from "@/components/v2/quick-expense/quick-expense-v2"
 import { NotifyLineCheckbox } from "@/components/expense/notify-line-checkbox"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { useCurrencyConversion, useExpenseFilters, useProjectData } from "@/lib/hooks"
@@ -143,7 +143,7 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
         </DialogContent>
       </Dialog>
 
-      <VoiceExpenseDialog
+      <QuickExpenseV2
         open={showVoice}
         onOpenChange={setShowVoice}
         projectId={projectId}

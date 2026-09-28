@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
-import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
+import { QuickExpenseV2 } from "@/components/v2/quick-expense/quick-expense-v2"
 import { JoinProjectDialog } from "@/components/project/join-project-dialog"
 import { InviteDialog } from "@/components/project/invite-dialog"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
@@ -49,7 +49,7 @@ export function ProjectOverviewV2({ projectId }: { projectId: string }) {
           onVoice={() => setShowVoice(true)}
         />
         <InviteDialog open={showInvite} onOpenChange={setShowInvite} projectId={project.id} projectName={project.name} />
-        <VoiceExpenseDialog
+        <QuickExpenseV2
           open={showVoice}
           onOpenChange={setShowVoice}
           projectId={project.id}
