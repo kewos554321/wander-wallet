@@ -118,6 +118,18 @@ describe("ProjectSettingsV2", () => {
     expect(screen.queryByRole("button", { name: "刪除專案" })).not.toBeInTheDocument()
   })
 
+  it("clears the delete confirmation text when the sheet is reopened", async () => {
+    mockRoutes()
+    render(<ProjectSettingsV2 projectId="p1" />)
+    fireEvent.click(await screen.findByRole("button", { name: "刪除專案" }))
+    fireEvent.change(screen.getByLabelText("輸入 delete 確認"), { target: { value: "delete" } })
+    // The sheet renders after the page footer, so its 取消 is the last one.
+    fireEvent.click(screen.getAllByRole("button", { name: "取消" }).at(-1)!)
+    fireEvent.click(screen.getByRole("button", { name: "刪除專案" }))
+    expect(screen.getByLabelText("輸入 delete 確認")).toHaveValue("")
+    expect(screen.getByRole("button", { name: "永久刪除" })).toBeDisabled()
+  })
+
   it("lets the creator delete after confirming with delete", async () => {
     mockRoutes()
     render(<ProjectSettingsV2 projectId="p1" />)

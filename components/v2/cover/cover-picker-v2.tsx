@@ -65,7 +65,7 @@ export function CoverPickerV2({ value, onChange, disabled }: { value: string | n
               aria-pressed={parsed.type === "icon" && parsed.iconId === icon.id}
               className={`rounded-xl transition-all disabled:opacity-50 ${parsed.type === "icon" && parsed.iconId === icon.id ? "ring-2 ring-v2-lake" : ""}`}
             >
-              <CoverArt cover={buildIconCover(icon.id, currentColor)} className="h-11 w-11" />
+              <CoverArt cover={buildIconCover(icon.id, currentColor)} className="h-11 w-11 rounded-xl" />
             </button>
           ))}
         </div>

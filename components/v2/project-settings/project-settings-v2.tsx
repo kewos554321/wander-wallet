@@ -209,13 +209,15 @@ export function ProjectSettingsV2({ projectId }: { projectId: string }) {
           onSave={handleSave}
           onRequestDelete={() => setShowDelete(true)}
         />
-        <DeleteProjectSheet
-          open={showDelete}
-          deleting={deleting}
-          error={deleteError}
-          onCancel={() => setShowDelete(false)}
-          onConfirm={handleDelete}
-        />
+        {showDelete && (
+          <DeleteProjectSheet
+            open
+            deleting={deleting}
+            error={deleteError}
+            onCancel={() => setShowDelete(false)}
+            onConfirm={handleDelete}
+          />
+        )}
       </>
     )
   }
