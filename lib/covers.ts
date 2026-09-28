@@ -89,7 +89,55 @@ export type ParsedCover = {
   colorId?: string
 }
 
+export const COVER_ICONS = [
+  { id: "compass", label: "指南針" },
+  { id: "leaf", label: "葉子" },
+  { id: "utensils", label: "餐具" },
+  { id: "globe", label: "地球" },
+  { id: "car", label: "汽車" },
+  { id: "bed", label: "住宿" },
+  { id: "star", label: "星星" },
+] as const
+
+export const COVER_COLORS = [
+  { id: "lake", fg: "#1B5847", bg: "#EAF5F1" },
+  { id: "coral", fg: "#C4602F", bg: "#FBE3D2" },
+  { id: "red", fg: "#C4472F", bg: "#F6DCD3" },
+  { id: "rose", fg: "#A14A68", bg: "#F5DDE6" },
+  { id: "gold", fg: "#9C7A28", bg: "#F6ECCF" },
+  { id: "plum", fg: "#6B5B95", bg: "#E7E2F2" },
+] as const
+
+export const DEFAULT_ICON_COVER = "icon:leaf;color:lake"
+
+const isIconId = (id: string) => COVER_ICONS.some((i) => i.id === id)
+const isColorId = (id: string) => COVER_COLORS.some((c) => c.id === id)
+
+export function buildIconCover(iconId: string, colorId: string): string {
+  return `icon:${iconId};color:${colorId}`
+}
+
 const ICON_COVER_PATTERN = /^icon:([a-z0-9-]+);color:([a-z0-9-]+)$/
+
+// Accepts every cover format the app writes: presets, v2 icon covers,
+// https image URLs, and v1's compressed base64 data URLs.
+const DATA_IMAGE_PREFIX = /^data:image\/[a-z0-9.+-]+;base64,/i
+
+export function isValidCover(cover: unknown): boolean {
+  if (cover === null || cover === undefined || cover === "") return true
+  if (typeof cover !== "string") return false
+  if (cover.startsWith("preset:")) return PRESET_COVERS.some((p) => `preset:${p.id}` === cover)
+  if (cover.startsWith("icon:")) return parseCover(cover).type === "icon"
+  if (cover.startsWith("https://")) {
+    try {
+      new URL(cover)
+      return true
+    } catch {
+      return false
+    }
+  }
+  return DATA_IMAGE_PREFIX.test(cover)
+}
 
 // 解析 cover 字串，判斷是預設、圖示、還是自訂
 export function parseCover(cover: string | null | undefined): ParsedCover {
@@ -107,7 +155,7 @@ export function parseCover(cover: string | null | undefined): ParsedCover {
   // v2 icon cover: icon:<iconId>;color:<colorId>
   if (cover.startsWith("icon:")) {
     const match = ICON_COVER_PATTERN.exec(cover)
-    if (!match) return { type: "none" }
+    if (!match || !isIconId(match[1]) || !isColorId(match[2])) return { type: "none" }
     return { type: "icon", iconId: match[1], colorId: match[2] }
   }
 

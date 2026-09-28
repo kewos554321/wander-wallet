@@ -117,10 +117,10 @@ describe("Covers Utilities (lib/covers.ts)", () => {
 
 describe("icon covers", () => {
   it("parses icon:<id>;color:<id>", () => {
-    expect(parseCover("icon:leaf;color:teal")).toEqual({
+    expect(parseCover("icon:leaf;color:lake")).toEqual({
       type: "icon",
       iconId: "leaf",
-      colorId: "teal",
+      colorId: "lake",
     })
   })
 
@@ -139,7 +139,7 @@ describe("icon covers", () => {
   })
 
   it("toLegacyCover maps icon covers to the first preset for v1", () => {
-    expect(toLegacyCover(parseCover("icon:leaf;color:teal"))).toEqual({
+    expect(toLegacyCover(parseCover("icon:leaf;color:lake"))).toEqual({
       type: "preset",
       presetId: PRESET_COVERS[0].id,
     })
