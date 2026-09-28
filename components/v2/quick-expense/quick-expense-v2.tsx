@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Loader2 } from "lucide-react"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
@@ -15,7 +15,7 @@ import { QuickInputStep } from "./quick-input-step"
 type Step = "input" | "camera" | "parsing" | "confirm" | "saving"
 type Member = { id: string; displayName: string }
 
-export function QuickExpenseV2({ open, onOpenChange, projectId, projectName, members, currentUserMemberId, onSuccess, currency = DEFAULT_CURRENCY }: {
+type QuickExpenseV2Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
   projectId: string
@@ -24,7 +24,16 @@ export function QuickExpenseV2({ open, onOpenChange, projectId, projectName, mem
   currentUserMemberId: string
   onSuccess: () => void
   currency?: string
-}) {
+}
+
+// Thin shell: unmounting the flow when closed resets all its state for
+// free, and any async parse/save that resolves after close becomes a
+// no-op instead of writing stale state into a later reopen.
+export function QuickExpenseV2(props: QuickExpenseV2Props) {
+  return props.open ? <QuickExpenseFlow {...props} /> : null
+}
+
+function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, currentUserMemberId, onSuccess, currency = DEFAULT_CURRENCY }: QuickExpenseV2Props) {
   const authFetch = useAuthFetch()
   const plainMembers = members.map((m) => ({ id: m.id, displayName: m.displayName }))
   const { save, progress, canNotifyLine } = useQuickSave({ projectId, projectName, members: plainMembers })
@@ -33,18 +42,8 @@ export function QuickExpenseV2({ open, onOpenChange, projectId, projectName, mem
   const [items, setItems] = useState<QuickItem[]>([])
   const [index, setIndex] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [notifyLine, setNotifyLine] = useState(true)
 
-  // Reset everything when the overlay closes.
-  useEffect(() => {
-    if (open) return
-    setStep("input")
-    setText("")
-    setItems([])
-    setIndex(0)
-    setError(null)
-  }, [open])
-
-  if (!open) return null
   const close = () => onOpenChange(false)
 
   const showItems = (next: QuickItem[]) => {
@@ -91,7 +90,7 @@ export function QuickExpenseV2({ open, onOpenChange, projectId, projectName, mem
     setItems(next)
   }
 
-  const handleSubmit = async (notifyLine: boolean) => {
+  const handleSubmit = async (shouldNotifyLine: boolean) => {
     const invalid = validateItems(items)
     if (invalid) {
       setIndex(invalid.index)
@@ -100,7 +99,7 @@ export function QuickExpenseV2({ open, onOpenChange, projectId, projectName, mem
     }
     setStep("saving")
     setError(null)
-    const { savedIds, failed } = await save(items, { notifyLine })
+    const { savedIds, failed } = await save(items, { notifyLine: shouldNotifyLine })
     if (savedIds.length > 0) onSuccess()
     if (!failed) {
       close()
@@ -138,6 +137,8 @@ export function QuickExpenseV2({ open, onOpenChange, projectId, projectName, mem
             onSubmit={handleSubmit}
             onClose={close}
             canNotifyLine={canNotifyLine}
+            notifyLine={notifyLine}
+            onNotifyLineChange={setNotifyLine}
             error={error}
           />
         )}

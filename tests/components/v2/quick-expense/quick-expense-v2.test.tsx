@@ -11,7 +11,8 @@ const parseText = vi.fn()
 const parseReceipt = vi.fn()
 vi.mock("@/lib/quick-expense/parse", async (orig) => ({ ...(await orig<object>()), parseText: (...a: unknown[]) => parseText(...a), parseReceipt: (...a: unknown[]) => parseReceipt(...a) }))
 const save = vi.fn()
-vi.mock("@/lib/quick-expense/use-quick-save", () => ({ useQuickSave: () => ({ save, progress: null, canNotifyLine: false }) }))
+let canNotifyLine = false
+vi.mock("@/lib/quick-expense/use-quick-save", () => ({ useQuickSave: () => ({ save, progress: null, canNotifyLine }) }))
 vi.mock("@/components/v2/quick-expense/camera-step", () => ({
   CameraStep: ({ onImage, onManual }: { onImage: (f: File) => void; onManual: () => void }) => (
     <div>
@@ -31,8 +32,8 @@ const parsed = (id: string, amount = 100) => ({ id, amount, description: `d${id}
 
 const setup = () => {
   const p = { open: true, onOpenChange: vi.fn(), projectId: "p1", projectName: "東京", members, currentUserMemberId: "a", onSuccess: vi.fn(), currency: "TWD" }
-  render(<QuickExpenseV2 {...p} />)
-  return p
+  const { rerender } = render(<QuickExpenseV2 {...p} />)
+  return { ...p, rerender }
 }
 const typeAndParse = (text = "早餐 100") => {
   fireEvent.change(screen.getByLabelText("消費內容"), { target: { value: text } })
@@ -41,6 +42,7 @@ const typeAndParse = (text = "早餐 100") => {
 
 beforeEach(() => {
   parseText.mockReset(); parseReceipt.mockReset(); save.mockReset()
+  canNotifyLine = false
   globalThis.URL.createObjectURL = vi.fn(() => "blob:1")
 })
 
@@ -126,5 +128,32 @@ describe("QuickExpenseV2", () => {
     await screen.findByText("1 / 1")
     fireEvent.click(screen.getByRole("button", { name: "重新輸入" }))
     expect(screen.getByLabelText("消費內容")).toHaveValue("早餐 100")
+  })
+
+  it("clears stale confirm state after closing while a parse was mid-flight and reopening", async () => {
+    parseText.mockResolvedValue([parsed("1"), parsed("2")])
+    const p = setup()
+    typeAndParse()
+    await screen.findByText("1 / 2")
+    p.rerender(<QuickExpenseV2 {...p} open={false} />)
+    p.rerender(<QuickExpenseV2 {...p} open={true} />)
+    expect(screen.getByLabelText("消費內容")).toHaveValue("")
+  })
+
+  it("keeps the LINE toggle off through a partial-failure retry", async () => {
+    canNotifyLine = true
+    parseText.mockResolvedValue([parsed("1"), parsed("2")])
+    save.mockResolvedValueOnce({ savedIds: ["1"], failed: { index: 1, message: "伺服器錯誤" } })
+    setup()
+    typeAndParse()
+    await screen.findByText("1 / 2")
+    fireEvent.click(screen.getByRole("checkbox", { name: /通知 LINE 群組/ }))
+    fireEvent.click(screen.getByRole("button", { name: "新增 2 筆" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("伺服器錯誤")
+    save.mockResolvedValueOnce({ savedIds: ["2"], failed: null })
+    fireEvent.click(screen.getByRole("button", { name: "新增 1 筆" }))
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(2))
+    expect(save.mock.calls[0][1]).toEqual({ notifyLine: false })
+    expect(save.mock.calls[1][1]).toEqual({ notifyLine: false })
   })
 })

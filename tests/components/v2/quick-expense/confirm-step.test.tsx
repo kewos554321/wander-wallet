@@ -15,7 +15,7 @@ const items: QuickItem[] = fromParsed([
 ])
 
 const setup = (o: Partial<Parameters<typeof ConfirmStep>[0]> = {}) => {
-  const p = { items, members, index: 0, onIndexChange: vi.fn(), onItemsChange: vi.fn(), onReinput: vi.fn(), onSubmit: vi.fn(), onClose: vi.fn(), canNotifyLine: true, error: null, ...o }
+  const p = { items, members, index: 0, onIndexChange: vi.fn(), onItemsChange: vi.fn(), onReinput: vi.fn(), onSubmit: vi.fn(), onClose: vi.fn(), canNotifyLine: true, notifyLine: true, onNotifyLineChange: vi.fn(), error: null, ...o }
   render(<ConfirmStep {...p} />)
   return p
 }
@@ -41,7 +41,7 @@ describe("ConfirmStep", () => {
     const p = setup()
     fireEvent.change(screen.getByLabelText("金額"), { target: { value: "12." } })
     expect(p.onItemsChange).toHaveBeenLastCalledWith([{ ...items[0], amount: "12." }, items[1]])
-    ;(p.onItemsChange as any).mockClear()
+    vi.mocked(p.onItemsChange).mockClear()
     fireEvent.change(screen.getByLabelText("金額"), { target: { value: "12a" } })
     expect(p.onItemsChange).not.toHaveBeenCalled()
   })
@@ -63,10 +63,12 @@ describe("ConfirmStep", () => {
     expect(p.onIndexChange).toHaveBeenLastCalledWith(0)
   })
 
-  it("submits with the LINE toggle value, reinputs, and shows errors", () => {
-    const p = setup({ error: "第 1 筆請選擇付款成員" })
+  it("submits with the LINE toggle prop value, reports toggle changes, reinputs, and shows errors", () => {
+    const p = setup({ error: "第 1 筆請選擇付款成員", notifyLine: false })
     expect(screen.getByRole("alert")).toHaveTextContent("第 1 筆請選擇付款成員")
+    expect(screen.getByRole("checkbox", { name: /通知 LINE 群組/ })).not.toBeChecked()
     fireEvent.click(screen.getByRole("checkbox", { name: /通知 LINE 群組/ }))
+    expect(p.onNotifyLineChange).toHaveBeenCalledWith(true)
     fireEvent.click(screen.getByRole("button", { name: "新增 2 筆" }))
     expect(p.onSubmit).toHaveBeenCalledWith(false)
     fireEvent.click(screen.getByRole("button", { name: "重新輸入" }))

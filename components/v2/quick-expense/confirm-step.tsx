@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef } from "react"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { formatCurrency } from "@/lib/constants/currencies"
 import { itemTotals, type QuickItem } from "@/lib/quick-expense/draft"
@@ -9,7 +9,7 @@ import { QuickItemCard } from "./quick-item-card"
 type Member = { id: string; displayName: string }
 const SWIPE_THRESHOLD = 50
 
-export function ConfirmStep({ items, members, index, onIndexChange, onItemsChange, onReinput, onSubmit, onClose, canNotifyLine, error }: {
+export function ConfirmStep({ items, members, index, onIndexChange, onItemsChange, onReinput, onSubmit, onClose, canNotifyLine, notifyLine, onNotifyLineChange, error }: {
   items: QuickItem[]
   members: Member[]
   index: number
@@ -19,9 +19,10 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
   onSubmit: (notifyLine: boolean) => void
   onClose: () => void
   canNotifyLine: boolean
+  notifyLine: boolean
+  onNotifyLineChange: (notifyLine: boolean) => void
   error: string | null
 }) {
-  const [notifyLine, setNotifyLine] = useState(true)
   const touchX = useRef<number | null>(null)
   const current = items[index]
   const go = (i: number) => i >= 0 && i < items.length && onIndexChange(i)
@@ -77,7 +78,7 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
           </div>
           {canNotifyLine && (
             <label className="mb-2 flex items-center gap-2.5">
-              <input type="checkbox" checked={notifyLine} onChange={(e) => setNotifyLine(e.target.checked)} className="h-5 w-5 accent-[#1B5847]" />
+              <input type="checkbox" checked={notifyLine} onChange={(e) => onNotifyLineChange(e.target.checked)} className="h-5 w-5 accent-[#1B5847]" />
               <span>
                 <span className="block text-xs font-bold">通知 LINE 群組</span>
                 <span className="block text-xs text-v2-ink-muted">新增後自動發送通知到群組</span>
