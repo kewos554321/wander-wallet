@@ -66,7 +66,7 @@ export function ProjectsV2View({ projects, loading, userName, now, adSlot }: Pro
         <Link
           href="/projects/new"
           aria-label="建立新旅程"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-v2-lake text-white shadow-[0_4px_10px_rgba(27,88,71,.25)]"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-v2-lake text-v2-on-lake shadow-[0_4px_10px_rgba(27,88,71,.25)]"
         >
           <Plus className="h-[19px] w-[19px]" strokeWidth={2.2} />
         </Link>
@@ -81,7 +81,7 @@ export function ProjectsV2View({ projects, loading, userName, now, adSlot }: Pro
             onClick={() => setFilter(value)}
             className={
               filter === value
-                ? "rounded-full bg-v2-lake px-[18px] py-2 text-sm font-medium leading-5 tracking-[.1px] text-white"
+                ? "rounded-full bg-v2-lake px-[18px] py-2 text-sm font-medium leading-5 tracking-[.1px] text-v2-on-lake"
                 : "rounded-full px-3.5 py-2 text-sm font-medium leading-5 tracking-[.1px] text-v2-ink-muted"
             }
           >
@@ -107,7 +107,7 @@ export function ProjectsV2View({ projects, loading, userName, now, adSlot }: Pro
             <p className="mt-1 text-xs text-v2-ink-muted">建立旅程來記錄旅行中的共同開銷</p>
             <Link
               href="/projects/new"
-              className="mt-5 inline-flex rounded-full bg-v2-lake px-6 py-3 text-[15px] font-bold text-white"
+              className="mt-5 inline-flex rounded-full bg-v2-lake px-6 py-3 text-[15px] font-bold text-v2-on-lake"
             >
               建立旅程
             </Link>
@@ -139,7 +139,7 @@ function ProjectCard({ project }: { project: ProjectListItem }) {
         <div className="flex items-center justify-between gap-2">
           <h3 className="m-0 truncate font-v2-serif text-base font-medium leading-6 tracking-[.15px]">{project.name}</h3>
           {days !== null && (
-            <span className="shrink-0 rounded-full bg-v2-lake px-2.5 py-[3px] text-xs font-bold leading-4 tracking-[.5px] text-white">
+            <span className="shrink-0 rounded-full bg-v2-lake px-2.5 py-[3px] text-xs font-bold leading-4 tracking-[.5px] text-v2-on-lake">
               {days} 天
             </span>
           )}

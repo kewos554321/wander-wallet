@@ -13,7 +13,7 @@ type Draft = ReturnType<typeof useExpenseDraft>
 const MAX_PERSONAL_ITEM_NAME = 30
 
 const smallButton = "flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
-const itemInput = "min-w-0 rounded-lg border border-[#DDEDE6] bg-v2-surface px-2.5 py-1.5 text-xs outline-none"
+const itemInput = "min-w-0 rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-xs outline-none"
 
 export function SplitEditor({ members, draft, currency }: { members: DraftMember[]; draft: Draft; currency: string }) {
   const { state, actions, derived } = draft
@@ -43,9 +43,9 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
             aria-checked={state.personalMode}
             aria-label="先扣個人項目"
             onClick={() => actions.setPersonalMode(!state.personalMode)}
-            className={`relative inline-block h-[19px] w-8 shrink-0 rounded-full ${state.personalMode ? "bg-v2-link" : "bg-[#DCD3C2]"}`}
+            className={`relative inline-block h-[19px] w-8 shrink-0 rounded-full ${state.personalMode ? "bg-v2-link" : "bg-v2-check"}`}
           >
-            <span className={`absolute top-0.5 h-[15px] w-[15px] rounded-full bg-white transition-[left] ${state.personalMode ? "left-[15px]" : "left-0.5"}`} />
+            <span className={`absolute top-0.5 h-[15px] w-[15px] rounded-full bg-v2-knob transition-[left] ${state.personalMode ? "left-[15px]" : "left-0.5"}`} />
           </button>
         </label>
       </div>
@@ -93,7 +93,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                 const items = state.personalItems[id] ?? []
                 const sum = items.reduce((s, i) => s + (Number(i.amount) || 0), 0)
                 return (
-                  <div key={id} className="border-b border-[#F0EAE0] bg-v2-lake-soft px-3.5 py-2 last:border-b-0">
+                  <div key={id} className="border-b border-v2-line-soft bg-v2-lake-soft px-3.5 py-2 last:border-b-0">
                     <div className="flex items-center gap-2.5">
                       <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${tone(id)}`} aria-hidden="true">
                         {name(id).charAt(0)}
@@ -102,15 +102,15 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                         <span className="font-semibold">{name(id)}</span>
                         <span className="font-bold">{num(sum)}</span>
                       </span>
-                      <button type="button" aria-label={`為${name(id)}新增品項`} onClick={() => actions.addItem(id)} className="flex h-[22px] shrink-0 items-center justify-center gap-px rounded-md bg-[#D2EAE1] px-1 text-v2-lake">
+                      <button type="button" aria-label={`為${name(id)}新增品項`} onClick={() => actions.addItem(id)} className="flex h-[22px] shrink-0 items-center justify-center gap-px rounded-md bg-v2-lake-tint px-1 text-v2-lake">
                         <CornerRightDown className="h-3 w-3" aria-hidden="true" />
                         <Plus className="h-3 w-3" aria-hidden="true" />
                       </button>
-                      <button type="button" aria-label={`移除${name(id)}的個人項目`} onClick={() => actions.togglePersonalMember(id)} className={`${smallButton} bg-[#F6DCD3] text-[#C4432A]`}>
+                      <button type="button" aria-label={`移除${name(id)}的個人項目`} onClick={() => actions.togglePersonalMember(id)} className={`${smallButton} bg-v2-danger-soft text-v2-danger-strong`}>
                         <UserMinus className="h-3 w-3" />
                       </button>
                     </div>
-                    <div className="ml-[34px] mt-1 border-l border-[#DCD3C2] pl-2.5">
+                    <div className="ml-[34px] mt-1 border-l border-v2-check pl-2.5">
                       {items.map((item, idx) => (
                         <div key={item.id} className="mt-1.5 flex items-center gap-1.5">
                           <input
@@ -132,7 +132,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                             }}
                             className={`${itemInput} flex-1`}
                           />
-                          <button type="button" aria-label="刪除項目" onClick={() => actions.removeItem(id, item.id)} className="flex h-5 w-5 shrink-0 items-center justify-center text-[#C4432A]">
+                          <button type="button" aria-label="刪除項目" onClick={() => actions.removeItem(id, item.id)} className="flex h-5 w-5 shrink-0 items-center justify-center text-v2-danger-strong">
                             <X className="h-3 w-3" />
                           </button>
                         </div>
@@ -184,7 +184,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
             const custom = state.customShares[id]
             const isCustom = custom !== undefined
             return (
-              <div key={id} className="flex items-center gap-2.5 border-b border-[#F0EAE0] bg-v2-lake-soft px-3.5 py-3 last:border-b-0">
+              <div key={id} className="flex items-center gap-2.5 border-b border-v2-line-soft bg-v2-lake-soft px-3.5 py-3 last:border-b-0">
                 <span className={`flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold ${tone(id)}`} aria-hidden="true">
                   {name(id).charAt(0)}
                 </span>
@@ -212,11 +212,11 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                   aria-label={isCustom ? `${name(id)}取消固定金額` : `${name(id)}固定金額`}
                   aria-pressed={isCustom}
                   onClick={() => (isCustom ? actions.clearCustomShare(id) : actions.setCustomShare(id, String(poolShareOf(id))))}
-                  className={`${smallButton} ${isCustom ? "bg-v2-lake text-white" : "bg-[#D2EAE1] text-v2-lake"}`}
+                  className={`${smallButton} ${isCustom ? "bg-v2-lake text-v2-on-lake" : "bg-v2-lake-tint text-v2-lake"}`}
                 >
                   {isCustom ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
                 </button>
-                <button type="button" aria-label={`${name(id)}不參與共同分攤`} onClick={() => actions.togglePool(id)} className={`${smallButton} bg-[#F6DCD3] text-[#C4432A]`}>
+                <button type="button" aria-label={`${name(id)}不參與共同分攤`} onClick={() => actions.togglePool(id)} className={`${smallButton} bg-v2-danger-soft text-v2-danger-strong`}>
                   <UserMinus className="h-3 w-3" />
                 </button>
               </div>

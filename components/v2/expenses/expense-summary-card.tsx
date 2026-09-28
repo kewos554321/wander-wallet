@@ -9,11 +9,11 @@ interface ExpenseSummaryCardProps {
 
 export function ExpenseSummaryCard({ currency, dateRangeLabel, summary }: ExpenseSummaryCardProps) {
   return (
-    <div className="mx-4 mt-3.5 rounded-[18px] border border-[#DCEAE3] bg-gradient-to-br from-v2-lake-soft to-v2-paper px-[18px] py-4 shadow-[0_2px_8px_rgba(27,88,71,.06)]">
+    <div className="mx-4 mt-3.5 rounded-[18px] border border-v2-lake-border bg-gradient-to-br from-v2-lake-soft to-v2-paper px-[18px] py-4 shadow-[0_2px_8px_rgba(27,88,71,.06)]">
       <div className="flex items-center justify-between">
         <p className="m-0 text-xs font-semibold text-v2-ink-muted">總支出</p>
         {dateRangeLabel && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-[#DCEAE3] bg-v2-surface px-[9px] py-[3px] text-xs font-semibold text-v2-lake">
+          <span className="inline-flex items-center gap-1 rounded-full border border-v2-lake-border bg-v2-surface px-[9px] py-[3px] text-xs font-semibold text-v2-lake">
             <CalendarDays className="h-3 w-3" strokeWidth={1.8} aria-hidden="true" />
             {dateRangeLabel}
           </span>

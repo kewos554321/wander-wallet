@@ -2,8 +2,8 @@ import { formatCurrency } from "@/lib/constants/currencies"
 import type { MemberStat } from "@/lib/project-stats"
 
 const AVATAR_TONES = [
-  "bg-[#D2EAE1] text-v2-lake",
-  "bg-[#FBE3D2] text-[#C4602F]",
+  "bg-v2-lake-tint text-v2-lake",
+  "bg-v2-coral-soft text-v2-coral-strong",
   "bg-v2-plum-soft text-v2-plum",
   "bg-v2-gold-soft text-v2-gold",
   "bg-v2-rose-soft text-v2-rose",
@@ -33,9 +33,9 @@ export function MemberRanking({ members, currency, currentMemberId }: { members:
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={pct}
-              className="h-2 flex-1 overflow-hidden rounded-full bg-[#F0EAE0]"
+              className="h-2 flex-1 overflow-hidden rounded-full bg-v2-line-soft"
             >
-              <span className={`block h-full rounded-full ${i === 0 ? "bg-v2-lake" : "bg-[#2F8F74]"}`} style={{ width: `${pct}%` }} />
+              <span className={`block h-full rounded-full ${i === 0 ? "bg-v2-lake" : "bg-v2-lake-mid"}`} style={{ width: `${pct}%` }} />
             </span>
             <span className="w-[68px] shrink-0 text-right text-xs text-v2-ink-muted">{formatCurrency(Math.round(m.share), currency)}</span>
           </li>

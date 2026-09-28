@@ -64,7 +64,7 @@ export function ExpenseCard({
   )
 
   return (
-    <div className="mb-3 rounded-2xl border border-[#F0EAE0] bg-v2-surface p-3.5 shadow-[0_4px_12px_rgba(27,24,21,.05)]">
+    <div className="mb-3 rounded-2xl border border-v2-line-soft bg-v2-surface p-3.5 shadow-[0_4px_12px_rgba(27,24,21,.05)]">
       <div className="relative">
         {selectMode ? (
           <label className="flex items-start gap-3">
@@ -73,7 +73,7 @@ export function ExpenseCard({
               checked={selected}
               onChange={() => onToggleSelect(expense.id)}
               aria-label={`選取 ${title}`}
-              className="mt-4 h-4 w-4 accent-[#1B5847]"
+              className="mt-4 h-4 w-4 accent-v2-lake"
             />
             <div className="min-w-0 flex-1">{body}</div>
           </label>
@@ -95,11 +95,11 @@ export function ExpenseCard({
       </div>
       <div
         data-testid={`expense-footer-${expense.id}`}
-        className="mt-2.5 flex items-center justify-between border-t border-[#F0EAE0] pt-2.5"
+        className="mt-2.5 flex items-center justify-between border-t border-v2-line-soft pt-2.5"
       >
         <div className="flex items-center gap-1.5 text-xs">
           <span
-            className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white ${isMe ? "bg-v2-lake" : "bg-v2-coral"}`}
+            className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-v2-on-lake ${isMe ? "bg-v2-lake" : "bg-v2-coral"}`}
             aria-hidden="true"
           >
             {payerName.charAt(0)}

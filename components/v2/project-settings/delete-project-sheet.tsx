@@ -23,7 +23,7 @@ export function DeleteProjectSheet({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-v2-overlay sm:items-center">
       <div className="w-full max-w-md rounded-t-2xl bg-v2-surface p-5 sm:rounded-2xl">
         <h2 className="m-0 mb-2 font-v2-serif text-base font-semibold">確認刪除專案</h2>
         <p className="mb-3 text-xs text-v2-ink-muted">刪除專案後，所有成員、支出紀錄都會永久移除，此操作無法復原。請輸入 delete 以確認。</p>
@@ -53,7 +53,7 @@ export function DeleteProjectSheet({
             type="button"
             onClick={onConfirm}
             disabled={deleting || text !== "delete"}
-            className="flex-1 rounded-xl bg-v2-danger py-3 text-sm font-bold text-white disabled:opacity-40"
+            className="flex-1 rounded-xl bg-v2-danger py-3 text-sm font-bold text-v2-on-lake disabled:opacity-40"
           >
             {deleting ? "刪除中…" : "永久刪除"}
           </button>

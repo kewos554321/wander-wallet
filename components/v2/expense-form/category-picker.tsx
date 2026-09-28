@@ -17,7 +17,7 @@ export function CategoryPicker({ value, onChange }: { value: string; onChange: (
               onClick={() => onChange(active ? "" : key)}
               className={`flex items-center justify-center gap-[5px] rounded-[14px] px-1 py-2 text-xs ${
                 active
-                  ? "border-[1.5px] border-[#2F8F74] bg-v2-lake-soft font-bold text-v2-lake"
+                  ? "border-[1.5px] border-v2-lake-mid bg-v2-lake-soft font-bold text-v2-lake"
                   : `border-[1.5px] border-v2-line font-semibold ${CATEGORY_TONES[key]}`
               }`}
             >

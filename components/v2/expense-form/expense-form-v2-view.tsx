@@ -112,7 +112,7 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
             type="checkbox"
             checked={state.notifyLine}
             onChange={(e) => actions.setNotifyLine(e.target.checked)}
-            className="h-5 w-5 accent-[#1B5847]"
+            className="h-5 w-5 accent-v2-lake"
           />
           <span>
             <span className="block text-xs font-bold">通知 LINE 群組</span>
@@ -145,7 +145,7 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
           <button
             type="submit"
             disabled={!!derived.error || props.submitting}
-            className="w-full rounded-[14px] bg-v2-lake py-[15px] text-[15px] font-bold text-white disabled:opacity-40"
+            className="w-full rounded-[14px] bg-v2-lake py-[15px] text-[15px] font-bold text-v2-on-lake disabled:opacity-40"
           >
             {props.submitting ? "儲存中..." : submitLabel}
           </button>

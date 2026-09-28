@@ -7,9 +7,9 @@ interface Tile {
   tone: { bg: string; iconBg: string; text: string }
 }
 
-const LAKE = { bg: "bg-v2-lake-soft", iconBg: "bg-[#D2EAE1]", text: "text-v2-lake" }
-const CORAL = { bg: "bg-v2-coral-soft", iconBg: "bg-[#F6DCCB]", text: "text-[#C4602F]" }
-const PLUM = { bg: "bg-v2-plum-soft", iconBg: "bg-[#E4DCF2]", text: "text-v2-plum" }
+const LAKE = { bg: "bg-v2-lake-soft", iconBg: "bg-v2-lake-tint", text: "text-v2-lake" }
+const CORAL = { bg: "bg-v2-coral-soft", iconBg: "bg-v2-coral-soft", text: "text-v2-coral-strong" }
+const PLUM = { bg: "bg-v2-plum-soft", iconBg: "bg-v2-plum-soft", text: "text-v2-plum" }
 
 interface SettleSummaryGridProps {
   count: number

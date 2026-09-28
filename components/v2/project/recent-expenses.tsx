@@ -33,7 +33,7 @@ export function RecentExpenses({ projectId, expenses, currentMemberId }: RecentE
               <Link
                 key={expense.id}
                 href={`/projects/${projectId}/expenses/${expense.id}/edit`}
-                className={`flex items-center gap-3 px-3.5 py-3 ${i < recent.length - 1 ? "border-b border-[#F0EAE0]" : ""}`}
+                className={`flex items-center gap-3 px-3.5 py-3 ${i < recent.length - 1 ? "border-b border-v2-line-soft" : ""}`}
               >
                 <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${CATEGORY_TONES[key]}`} aria-hidden="true">
                   <Icon className="h-[18px] w-[18px]" strokeWidth={1.6} />

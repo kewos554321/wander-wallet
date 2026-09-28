@@ -3,8 +3,8 @@ import type { MembersProject } from "@/lib/hooks/useProjectMembers"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 
 const AVATAR_TONES = [
-  "bg-[#D2EAE1] text-v2-lake",
-  "bg-[#FBE3D2] text-[#C4602F]",
+  "bg-v2-lake-tint text-v2-lake",
+  "bg-v2-coral-soft text-v2-coral-strong",
   "bg-v2-plum-soft text-v2-plum",
   "bg-v2-rose-soft text-v2-rose",
   "bg-v2-gold-soft text-v2-gold",
@@ -65,7 +65,7 @@ export function MembersV2View(props: MembersV2ViewProps) {
               <div
                 key={member.id}
                 data-testid={`member-${member.id}`}
-                className={`flex items-center gap-3 p-3.5 ${i < project.members.length - 1 ? "border-b border-[#F0EAE0]" : ""}`}
+                className={`flex items-center gap-3 p-3.5 ${i < project.members.length - 1 ? "border-b border-v2-line-soft" : ""}`}
               >
                 {props.batchMode && canManage && (
                   <input
@@ -73,7 +73,7 @@ export function MembersV2View(props: MembersV2ViewProps) {
                     checked={props.selected.has(member.id)}
                     onChange={() => props.onToggleSelect(member.id)}
                     aria-label={`選取${member.displayName}`}
-                    className="h-4 w-4 shrink-0 accent-[#1B5847]"
+                    className="h-4 w-4 shrink-0 accent-v2-lake"
                   />
                 )}
                 <span
@@ -88,7 +88,7 @@ export function MembersV2View(props: MembersV2ViewProps) {
                   <span className="flex flex-wrap items-center gap-1.5">
                     <span className="text-[13px] font-bold">{member.displayName}</span>
                     {isCreator && <span className={`${badge} bg-v2-lake-soft text-v2-lake`}>建立者</span>}
-                    {isMe && <span className={`${badge} border border-[#DCEAE3] bg-v2-paper py-px text-v2-lake`}>你</span>}
+                    {isMe && <span className={`${badge} border border-v2-lake-border bg-v2-paper py-px text-v2-lake`}>你</span>}
                     {isPlaceholder && <span className={`${badge} bg-v2-sand text-v2-ink-muted`}>佔位成員</span>}
                   </span>
                   <span className={`mt-0.5 block text-xs ${isPlaceholder ? "text-v2-ink-subtle" : "text-v2-ink-muted"}`}>
@@ -118,7 +118,7 @@ export function MembersV2View(props: MembersV2ViewProps) {
             type="button"
             disabled={props.selected.size === 0 || props.removing === "batch"}
             onClick={props.onRequestBatchRemove}
-            className="mx-auto block w-full max-w-md rounded-full bg-v2-danger py-3 text-[15px] font-bold text-white disabled:opacity-40"
+            className="mx-auto block w-full max-w-md rounded-full bg-v2-danger py-3 text-[15px] font-bold text-v2-on-lake disabled:opacity-40"
           >
             移除 {props.selected.size} 位
           </button>

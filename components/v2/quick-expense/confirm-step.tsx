@@ -78,7 +78,7 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
           </div>
           {canNotifyLine && (
             <label className="mb-2 flex items-center gap-2.5">
-              <input type="checkbox" checked={notifyLine} onChange={(e) => onNotifyLineChange(e.target.checked)} className="h-5 w-5 accent-[#1B5847]" />
+              <input type="checkbox" checked={notifyLine} onChange={(e) => onNotifyLineChange(e.target.checked)} className="h-5 w-5 accent-v2-lake" />
               <span>
                 <span className="block text-xs font-bold">通知 LINE 群組</span>
                 <span className="block text-xs text-v2-ink-muted">新增後自動發送通知到群組</span>
@@ -94,7 +94,7 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
             <button type="button" onClick={onReinput} className="flex-1 rounded-[14px] border border-v2-line py-3.5 text-sm font-bold">
               重新輸入
             </button>
-            <button type="button" onClick={() => onSubmit(canNotifyLine && notifyLine)} className="flex-[2] rounded-[14px] bg-v2-lake py-3.5 text-sm font-bold text-white">
+            <button type="button" onClick={() => onSubmit(canNotifyLine && notifyLine)} className="flex-[2] rounded-[14px] bg-v2-lake py-3.5 text-sm font-bold text-v2-on-lake">
               {`新增 ${items.length} 筆`}
             </button>
           </div>

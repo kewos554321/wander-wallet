@@ -136,7 +136,7 @@ export function NewProjectV2() {
               type="button"
               onClick={handleCreate}
               disabled={submitting}
-              className="w-full rounded-2xl bg-v2-lake py-[15px] text-[15px] font-bold text-white disabled:opacity-40"
+              className="w-full rounded-2xl bg-v2-lake py-[15px] text-[15px] font-bold text-v2-on-lake disabled:opacity-40"
             >
               {submitting ? "建立中…" : "建立旅程"}
             </button>

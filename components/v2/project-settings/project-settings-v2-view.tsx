@@ -156,14 +156,14 @@ export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
       </div>
 
       {props.isCreator && (
-        <div className="rounded-2xl border border-[#F3D3C4] bg-[#FDF1EC] p-4">
+        <div className="rounded-2xl border border-v2-danger-soft bg-v2-danger-soft p-4">
           <p className="m-0 mb-1 text-[13px] font-bold text-v2-danger">危險區域</p>
           <p className="m-0 mb-3 text-xs text-v2-danger">刪除專案後，所有成員、支出紀錄都會永久移除，此操作無法復原。</p>
           <button
             type="button"
             onClick={props.onRequestDelete}
             disabled={props.saving}
-            className="inline-flex items-center gap-1.5 rounded-full bg-v2-danger px-4 py-2 text-xs font-bold text-white disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-full bg-v2-danger px-4 py-2 text-xs font-bold text-v2-on-lake disabled:opacity-40"
           >
             <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
             刪除專案
@@ -191,7 +191,7 @@ export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
               type="button"
               onClick={props.onSave}
               disabled={props.saving}
-              className="flex-1 rounded-2xl bg-v2-lake py-3.5 text-sm font-bold text-white disabled:opacity-40"
+              className="flex-1 rounded-2xl bg-v2-lake py-3.5 text-sm font-bold text-v2-on-lake disabled:opacity-40"
             >
               {props.saving ? "儲存中…" : "儲存變更"}
             </button>

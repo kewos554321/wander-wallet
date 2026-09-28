@@ -1,11 +1,11 @@
 import type { DraftMember } from "./use-expense-draft"
 
-const AVATAR_TONES = ["bg-[#D2EAE1] text-v2-lake", "bg-[#FBE3D2] text-[#C4602F]", "bg-v2-plum-soft text-v2-plum", "bg-v2-rose-soft text-v2-rose"]
+const AVATAR_TONES = ["bg-v2-lake-tint text-v2-lake", "bg-v2-coral-soft text-v2-coral-strong", "bg-v2-plum-soft text-v2-plum", "bg-v2-rose-soft text-v2-rose"]
 
 // Shared member pill look for the payer, personal-item and shared-pool pickers.
 export function memberPillClass(selected: boolean) {
   return `inline-flex items-center gap-1.5 rounded-full px-3.5 py-[5px] ${
-    selected ? "border border-v2-lake bg-v2-lake text-white" : "border border-[#DDEDE6] bg-v2-lake-soft text-v2-ink"
+    selected ? "border border-v2-lake bg-v2-lake text-v2-on-lake" : "border border-v2-lake-border bg-v2-lake-soft text-v2-ink"
   }`
 }
 

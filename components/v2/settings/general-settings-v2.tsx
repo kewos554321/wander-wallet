@@ -66,7 +66,7 @@ export function GeneralSettingsV2() {
             onClick={() => router.push("/settings/profile")}
             className="flex items-center gap-3.5 rounded-2xl bg-v2-lake p-4 text-left text-v2-paper"
           >
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/15 text-base font-bold">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-v2-surface/15 text-base font-bold">
               {displayName.charAt(0)}
             </span>
             <span className="min-w-0 flex-1">
@@ -187,7 +187,7 @@ export function GeneralSettingsV2() {
                     }`}
                   >
                     {checked && (
-                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="white" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" className="text-v2-on-lake" aria-hidden="true">
                         <path d="M4 12l5 5L20 6" />
                       </svg>
                     )}

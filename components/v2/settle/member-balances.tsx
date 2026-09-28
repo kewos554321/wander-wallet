@@ -20,7 +20,7 @@ export function MemberBalances({ balances, currentMemberId, currencyCode, toDisp
           const rounded = Math.round(toDisplay(b.balance))
           const sign = rounded > 0 ? "+" : rounded < 0 ? "−" : ""
           return (
-            <div key={b.memberId} className={`flex items-center justify-between gap-3 px-4 py-3 ${i < balances.length - 1 ? "border-b border-[#F0EAE0]" : ""}`}>
+            <div key={b.memberId} className={`flex items-center justify-between gap-3 px-4 py-3 ${i < balances.length - 1 ? "border-b border-v2-line-soft" : ""}`}>
               <div className="min-w-0">
                 <p className="m-0 truncate text-sm font-medium">{b.memberId === currentMemberId ? "我" : b.displayName}</p>
                 <p className="mt-0.5 text-xs text-v2-ink-muted">

@@ -41,7 +41,7 @@ export function SplitSummary({ members, draft, currency }: { members: DraftMembe
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id} className="border-t border-[#F0EAE0]">
+              <tr key={r.id} className="border-t border-v2-line-soft">
                 <th scope="row" className="px-3 py-2 text-left font-semibold">{r.name}</th>
                 <td className={`${cell} ${r.personal ? "" : "text-v2-ink-subtle"}`}>{fmt(r.personal)}</td>
                 <td className={`${cell} ${r.pool ? "" : "text-v2-ink-subtle"}`}>{fmt(r.pool)}</td>

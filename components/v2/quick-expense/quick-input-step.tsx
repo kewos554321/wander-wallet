@@ -51,7 +51,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onClose,
               aria-pressed={speech.recording}
               disabled={speech.transcribing}
               onClick={speech.toggle}
-              className={`absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full ${speech.recording ? "bg-v2-danger text-white" : "bg-v2-lake text-white"}`}
+              className={`absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full ${speech.recording ? "bg-v2-danger text-v2-on-lake" : "bg-v2-lake text-v2-on-lake"}`}
             >
               {speech.transcribing ? <Loader2 className="h-4 w-4 animate-spin" /> : speech.recording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
             </button>
@@ -60,7 +60,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onClose,
         <p className="mt-2 text-xs text-v2-ink-muted">支援一次多筆、不同付款人 · 點麥克風可語音輸入</p>
         <div className="mt-2.5 flex flex-wrap gap-2">
           {EXAMPLES.map((ex) => (
-            <button key={ex} type="button" onClick={() => append(ex)} className="rounded-full border border-[#DDEDE6] bg-v2-lake-soft px-3 py-[5px] text-xs font-semibold">
+            <button key={ex} type="button" onClick={() => append(ex)} className="rounded-full border border-v2-lake-border bg-v2-lake-soft px-3 py-[5px] text-xs font-semibold">
               {ex}
             </button>
           ))}
@@ -68,7 +68,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onClose,
       </div>
 
       <button type="button" onClick={onCamera} className="mx-4 mb-4 flex items-center gap-3 rounded-2xl border border-v2-line bg-v2-surface px-3.5 py-3 text-left">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D2EAE1] text-v2-lake" aria-hidden="true">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-v2-lake-tint text-v2-lake" aria-hidden="true">
           <Camera className="h-5 w-5" />
         </span>
         <span>
@@ -87,7 +87,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onClose,
           type="button"
           disabled={!text.trim() || busy}
           onClick={onParse}
-          className="w-full rounded-[14px] bg-v2-lake py-3.5 text-sm font-bold text-white disabled:opacity-40"
+          className="w-full rounded-[14px] bg-v2-lake py-3.5 text-sm font-bold text-v2-on-lake disabled:opacity-40"
         >
           AI 解析
         </button>

@@ -38,14 +38,14 @@ function Chip({ icon, label, count }: { icon: ReactNode; label: string; count: n
     <span
       className={
         active
-          ? "flex w-full items-center gap-[5px] rounded-[10px] border-[1.5px] border-[#2F8F74] bg-v2-lake-soft px-2.5 py-[9px] text-xs font-bold text-v2-lake"
+          ? "flex w-full items-center gap-[5px] rounded-[10px] border-[1.5px] border-v2-lake-mid bg-v2-lake-soft px-2.5 py-[9px] text-xs font-bold text-v2-lake"
           : "flex w-full items-center gap-[5px] rounded-[10px] border border-v2-line bg-v2-surface px-2.5 py-[9px] text-xs font-semibold text-v2-ink"
       }
     >
       {icon}
       <span className="flex-1 truncate text-left">{label}</span>
       {active ? (
-        <span className="flex h-[15px] min-w-[15px] shrink-0 items-center justify-center rounded-full bg-v2-lake px-[3px] text-[9px] text-white">
+        <span className="flex h-[15px] min-w-[15px] shrink-0 items-center justify-center rounded-full bg-v2-lake px-[3px] text-[9px] text-v2-on-lake">
           {count}
         </span>
       ) : (

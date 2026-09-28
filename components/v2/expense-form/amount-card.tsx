@@ -14,7 +14,7 @@ interface AmountCardProps {
 
 export function AmountCard({ amount, currency, onAmount, onCurrency, onOpenCalculator }: AmountCardProps) {
   return (
-    <div className="mx-4 mt-4 rounded-[20px] border border-[#DCEAE3] bg-gradient-to-br from-v2-lake-soft to-v2-paper px-5 py-[18px] shadow-[0_2px_8px_rgba(27,88,71,.07)]">
+    <div className="mx-4 mt-4 rounded-[20px] border border-v2-lake-border bg-gradient-to-br from-v2-lake-soft to-v2-paper px-5 py-[18px] shadow-[0_2px_8px_rgba(27,88,71,.07)]">
       <div className="mb-3 flex items-center justify-between">
         <label htmlFor="v2-amount" className="text-sm font-medium leading-5 tracking-[.1px]">
           輸入金額

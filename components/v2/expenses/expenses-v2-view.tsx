@@ -90,7 +90,7 @@ export function ExpensesV2View(props: ExpensesV2ViewProps) {
             type="button"
             disabled={props.selectedIds.size === 0}
             onClick={props.onRequestBatchDelete}
-            className="mx-auto block w-full max-w-md rounded-full bg-v2-danger py-3 text-[15px] font-bold text-white disabled:opacity-40"
+            className="mx-auto block w-full max-w-md rounded-full bg-v2-danger py-3 text-[15px] font-bold text-v2-on-lake disabled:opacity-40"
           >
             刪除 {props.selectedIds.size} 筆
           </button>
@@ -104,7 +104,7 @@ export function ExpensesV2View(props: ExpensesV2ViewProps) {
           <span className="rounded-full border border-v2-line bg-v2-surface px-2.5 py-1.5 text-xs font-medium shadow-[0_2px_6px_rgba(27,24,21,.08)]">
             AI 快速記帳
           </span>
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-v2-coral text-white shadow-[0_4px_10px_rgba(232,130,90,.35)]">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-v2-coral text-v2-on-lake shadow-[0_4px_10px_rgba(232,130,90,.35)]">
             <Sparkles className="h-[17px] w-[17px]" strokeWidth={1.7} />
           </span>
         </button>

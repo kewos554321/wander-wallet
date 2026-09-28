@@ -3,10 +3,10 @@ import { formatCurrency } from "@/lib/constants/currencies"
 import type { SettleSettlement } from "@/lib/hooks/useSettlement"
 
 const AVATAR_TONES = [
-  "bg-[#D2EAE1] text-v2-lake",
+  "bg-v2-lake-tint text-v2-lake",
   "bg-v2-gold-soft text-v2-gold",
   "bg-v2-rose-soft text-v2-rose",
-  "bg-[#FBE3D2] text-[#C4602F]",
+  "bg-v2-coral-soft text-v2-coral-strong",
   "bg-v2-plum-soft text-v2-plum",
 ]
 
@@ -23,7 +23,7 @@ interface SettlementListProps {
 }
 
 const actionButton =
-  "inline-flex items-center gap-1.5 rounded-lg border border-[#B7D9CB] bg-v2-lake-soft px-3 py-1.5 text-xs font-semibold text-v2-lake"
+  "inline-flex items-center gap-1.5 rounded-lg border border-v2-lake-border bg-v2-lake-soft px-3 py-1.5 text-xs font-semibold text-v2-lake"
 
 export function SettlementList({
   settlements,
@@ -75,7 +75,7 @@ export function SettlementList({
             <div
               key={`${s.from.memberId}-${s.to.memberId}`}
               data-testid={`settlement-${i}`}
-              className={`flex items-center justify-between gap-2.5 px-4 py-3 ${i < settlements.length - 1 ? "border-b border-[#F0EAE0]" : ""}`}
+              className={`flex items-center justify-between gap-2.5 px-4 py-3 ${i < settlements.length - 1 ? "border-b border-v2-line-soft" : ""}`}
             >
               <div className="flex min-w-0 items-center gap-1.5">
                 {person(s.from.memberId, s.from.displayName)}
