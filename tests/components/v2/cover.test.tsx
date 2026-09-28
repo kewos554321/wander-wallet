@@ -10,7 +10,10 @@ describe("CoverArt", () => {
     render(<CoverArt cover="icon:car;color:gold" />)
     const box = screen.getByTestId("cover-art")
     expect(box).toHaveAttribute("data-cover", "icon:car")
-    expect(box).toHaveStyle({ backgroundColor: "#F6ECCF", color: "#9C7A28" })
+    expect(box.style.getPropertyValue("--cover-bg")).toBe("#F6ECCF")
+    expect(box.style.getPropertyValue("--cover-fg")).toBe("#9C7A28")
+    expect(box.style.getPropertyValue("--cover-bg-dark")).toBe("#332A16")
+    expect(box.style.getPropertyValue("--cover-fg-dark")).toBe("#D4AE55")
   })
   it("falls back to the default leaf", () => {
     render(<CoverArt cover="icon:rocket;color:lake" />)

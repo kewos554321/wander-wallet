@@ -23,4 +23,12 @@ describe("icon covers", () => {
       expect(isValidCover(bad)).toBe(false)
     }
   })
+  it("has dark colors for all cover colors", () => {
+    for (const color of COVER_COLORS) {
+      expect(color).toHaveProperty("darkFg")
+      expect(color).toHaveProperty("darkBg")
+      expect(typeof color.darkFg).toBe("string")
+      expect(typeof color.darkBg).toBe("string")
+    }
+  })
 })

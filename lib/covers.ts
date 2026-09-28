@@ -100,12 +100,12 @@ export const COVER_ICONS = [
 ] as const
 
 export const COVER_COLORS = [
-  { id: "lake", fg: "#1B5847", bg: "#EAF5F1" },
-  { id: "coral", fg: "#C4602F", bg: "#FBE3D2" },
-  { id: "red", fg: "#C4472F", bg: "#F6DCD3" },
-  { id: "rose", fg: "#A14A68", bg: "#F5DDE6" },
-  { id: "gold", fg: "#9C7A28", bg: "#F6ECCF" },
-  { id: "plum", fg: "#6B5B95", bg: "#E7E2F2" },
+  { id: "lake", fg: "#1B5847", bg: "#EAF5F1", darkFg: "#4FB394", darkBg: "#17302A" },
+  { id: "coral", fg: "#C4602F", bg: "#FBE3D2", darkFg: "#F09A76", darkBg: "#3A2519" },
+  { id: "red", fg: "#C4472F", bg: "#F6DCD3", darkFg: "#E8735A", darkBg: "#3A1E18" },
+  { id: "rose", fg: "#A14A68", bg: "#F5DDE6", darkFg: "#D77E9C", darkBg: "#37212A" },
+  { id: "gold", fg: "#9C7A28", bg: "#F6ECCF", darkFg: "#D4AE55", darkBg: "#332A16" },
+  { id: "plum", fg: "#6B5B95", bg: "#E7E2F2", darkFg: "#A897D6", darkBg: "#2A2438" },
 ] as const
 
 export const DEFAULT_ICON_COVER = "icon:leaf;color:lake"

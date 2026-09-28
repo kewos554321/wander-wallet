@@ -29,7 +29,7 @@ export function CoverArt({ cover, className = "h-16 w-16 rounded-xl", iconClassN
   const color = COVER_COLORS.find((c) => c.id === (parsed.type === "icon" ? parsed.colorId : "lake")) ?? COVER_COLORS[0]
   const Icon = ICONS[iconId] ?? Leaf
   return (
-    <div data-testid="cover-art" data-cover={`icon:${iconId}`} className={box} style={{ backgroundColor: color.bg, color: color.fg }}>
+    <div data-testid="cover-art" data-cover={`icon:${iconId}`} data-cover-art="" className={box} style={{ "--cover-fg": color.fg, "--cover-bg": color.bg, "--cover-fg-dark": color.darkFg, "--cover-bg-dark": color.darkBg } as React.CSSProperties}>
       <Icon className={iconClassName} strokeWidth={1.5} aria-hidden="true" />
     </div>
   )
