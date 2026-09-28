@@ -4,6 +4,7 @@ import { CheckCircle2, CornerRightDown, Pin, PinOff, Plus, Trash2, UserMinus } f
 import { formatCurrency } from "@/lib/constants/currencies"
 import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
 import { memberPillClass, memberTone } from "./payer-picker"
+import { SplitSummary } from "./split-summary"
 
 type Draft = ReturnType<typeof useExpenseDraft>
 
@@ -232,6 +233,8 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
           {fmt(derived.shares.reduce((s, x) => s + x.shareAmount, 0))} / {fmt(derived.splitInput.amount)}
         </p>
       </div>
+
+      <SplitSummary members={members} draft={draft} currency={currency} />
     </section>
   )
 }

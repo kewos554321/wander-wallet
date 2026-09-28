@@ -27,8 +27,8 @@ export function SplitSummary({ members, draft, currency }: { members: DraftMembe
   const cell = "px-2 py-2 text-right tabular-nums"
 
   return (
-    <section aria-label="分攤明細" className="mx-4 mb-4">
-      <p className="mb-2.5 text-sm font-medium leading-5 tracking-[.1px]">分攤明細</p>
+    <section aria-label="分攤明細" className="mt-3">
+      <p className="mb-2 text-xs font-semibold text-v2-ink-muted">分攤明細</p>
       <div className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-surface">
         <table className="w-full text-xs">
           <thead className="bg-v2-lake-soft text-v2-ink-muted">
