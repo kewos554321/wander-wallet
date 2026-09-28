@@ -1,6 +1,5 @@
 "use client"
 
-import { useRef } from "react"
 import { Camera, Loader2, Mic, Sparkles, Square, X } from "lucide-react"
 import { useSpeechInput } from "@/lib/quick-expense/speech-input"
 
@@ -14,10 +13,8 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onClose,
   onClose: () => void
   error: string | null
 }) {
-  const textRef = useRef(text)
-  textRef.current = text
   const append = (extra: string) => {
-    const current = textRef.current.trim()
+    const current = text.trim()
     onTextChange(current ? `${current} ${extra}` : extra)
   }
   const speech = useSpeechInput({ onText: append })

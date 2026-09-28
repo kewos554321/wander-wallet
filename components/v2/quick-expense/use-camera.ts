@@ -10,13 +10,15 @@ export function isIOSDevice(ua: string = typeof navigator === "undefined" ? "" :
 export function useCamera() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
-  const [mode, setMode] = useState<"starting" | "live" | "fallback">("starting")
+  const [mode, setMode] = useState<"starting" | "live" | "fallback">(() => {
+    if (isIOSDevice() || !navigator.mediaDevices?.getUserMedia) {
+      return "fallback"
+    }
+    return "starting"
+  })
 
   useEffect(() => {
-    if (isIOSDevice() || !navigator.mediaDevices?.getUserMedia) {
-      setMode("fallback")
-      return
-    }
+    if (mode === "fallback") return
     let cancelled = false
     navigator.mediaDevices
       .getUserMedia({ video: { facingMode: "environment" }, audio: false })
@@ -41,7 +43,7 @@ export function useCamera() {
       streamRef.current?.getTracks().forEach((t) => t.stop())
       streamRef.current = null
     }
-  }, [])
+  }, [mode])
 
   const capture = useCallback(async (): Promise<File | null> => {
     const video = videoRef.current

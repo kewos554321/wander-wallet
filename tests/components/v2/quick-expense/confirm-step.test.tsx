@@ -41,7 +41,7 @@ describe("ConfirmStep", () => {
     const p = setup()
     fireEvent.change(screen.getByLabelText("金額"), { target: { value: "12." } })
     expect(p.onItemsChange).toHaveBeenLastCalledWith([{ ...items[0], amount: "12." }, items[1]])
-    p.onItemsChange.mockClear()
+    ;(p.onItemsChange as any).mockClear()
     fireEvent.change(screen.getByLabelText("金額"), { target: { value: "12a" } })
     expect(p.onItemsChange).not.toHaveBeenCalled()
   })
