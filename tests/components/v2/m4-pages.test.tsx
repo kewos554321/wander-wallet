@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest"
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, act } from "@testing-library/react"
 import { Suspense } from "react"
 
 vi.mock("@/components/ui-version/ui-version-switch", () => ({
@@ -47,11 +47,14 @@ describe("Pages with UI version switch", () => {
   })
 
   it("renders ProjectSettingsPage with both v1 and v2", async () => {
-    render(
-      <Suspense>
-        <ProjectSettingsPage params={Promise.resolve({ id: "p1" })} />
-      </Suspense>
-    )
+    const params = Object.assign(Promise.resolve({ id: "p1" }), { status: "fulfilled", value: { id: "p1" } }) as unknown as Promise<{ id: string }>
+    await act(async () => {
+      render(
+        <Suspense fallback={null}>
+          <ProjectSettingsPage params={params} />
+        </Suspense>
+      )
+    })
     expect(await screen.findByText("ProjectSettingsV1:p1")).toBeInTheDocument()
     expect(screen.getByTestId("v2")).toHaveTextContent("ProjectSettingsV2:p1")
   })
