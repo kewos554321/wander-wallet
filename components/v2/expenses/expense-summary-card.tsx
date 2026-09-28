@@ -22,7 +22,7 @@ export function ExpenseSummaryCard({ currency, dateRangeLabel, summary }: Expens
       <p className="mt-1 font-v2-serif text-2xl font-bold leading-8 tabular-nums text-v2-lake">
         {formatCurrency(Math.round(summary.total), currency)}
       </p>
-      <div className="mt-3 flex items-center gap-3 border-t border-[rgba(27,88,71,.12)] pt-3">
+      <div className="mt-3 flex items-center gap-3 border-t border-v2-lake-border pt-3">
         <div className="flex min-w-0 flex-1 items-center gap-[9px]">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] bg-v2-surface text-v2-lake" aria-hidden="true">
             <Receipt className="h-3.5 w-3.5" strokeWidth={1.8} />
@@ -32,7 +32,7 @@ export function ExpenseSummaryCard({ currency, dateRangeLabel, summary }: Expens
             <span className="block text-xs text-v2-ink-subtle">支出紀錄</span>
           </span>
         </div>
-        <div className="h-[30px] w-px shrink-0 bg-[rgba(27,88,71,.14)]" />
+        <div className="h-[30px] w-px shrink-0 bg-v2-lake-border" />
         <div className="flex min-w-0 flex-1 items-center gap-[9px]">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] bg-v2-surface text-v2-coral" aria-hidden="true">
             <TrendingUp className="h-3.5 w-3.5" strokeWidth={1.8} />

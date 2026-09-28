@@ -110,7 +110,7 @@ export function ExpenseCard({
             {expense.participants.slice(0, 4).map((p, i) => (
               <span
                 key={p.id}
-                className={`h-4 w-4 rounded-full border-2 border-white ${DOT_TONES[i % DOT_TONES.length]} ${i > 0 ? "-ml-[5px]" : ""}`}
+                className={`h-4 w-4 rounded-full border-2 border-v2-surface ${DOT_TONES[i % DOT_TONES.length]} ${i > 0 ? "-ml-[5px]" : ""}`}
               />
             ))}
           </span>

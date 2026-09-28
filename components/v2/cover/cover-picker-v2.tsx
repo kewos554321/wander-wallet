@@ -125,7 +125,7 @@ export function CoverPickerV2({ value, onChange, disabled }: { value: string | n
             >
               {uploading ? "上傳中…" : "或上傳自訂圖片"}
             </button>
-            {uploadError && <div className="text-sm text-red-600">圖片上傳失敗</div>}
+            {uploadError && <div className="text-sm text-v2-danger">圖片上傳失敗</div>}
           </>
         )}
       </div>

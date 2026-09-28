@@ -159,7 +159,7 @@ function ProjectCard({ project }: { project: ProjectListItem }) {
 function AvatarStack({ members, total }: { members: ProjectListMember[]; total: number }) {
   const shown = members.slice(0, 3)
   const extra = total - shown.length
-  const bubble = "flex h-5 w-5 items-center justify-center rounded-full border-2 border-white text-[8px] font-bold"
+  const bubble = "flex h-5 w-5 items-center justify-center rounded-full border-2 border-v2-surface text-[8px] font-bold"
 
   return (
     <div className="flex">

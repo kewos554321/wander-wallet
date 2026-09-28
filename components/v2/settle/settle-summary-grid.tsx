@@ -8,8 +8,8 @@ interface Tile {
 }
 
 const LAKE = { bg: "bg-v2-lake-soft", iconBg: "bg-v2-lake-tint", text: "text-v2-lake" }
-const CORAL = { bg: "bg-v2-coral-soft", iconBg: "bg-v2-coral-soft", text: "text-v2-coral-strong" }
-const PLUM = { bg: "bg-v2-plum-soft", iconBg: "bg-v2-plum-soft", text: "text-v2-plum" }
+const CORAL = { bg: "bg-v2-coral-soft", iconBg: "bg-v2-coral-tint", text: "text-v2-coral-strong" }
+const PLUM = { bg: "bg-v2-plum-soft", iconBg: "bg-v2-plum-tint", text: "text-v2-plum" }
 
 interface SettleSummaryGridProps {
   count: number

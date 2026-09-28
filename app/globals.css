@@ -330,8 +330,10 @@
   --color-v2-link: var(--v2-link);
   --color-v2-coral: var(--v2-coral);
   --color-v2-coral-soft: var(--v2-coral-soft);
+  --color-v2-coral-tint: var(--v2-coral-tint);
   --color-v2-plum: var(--v2-plum);
   --color-v2-plum-soft: var(--v2-plum-soft);
+  --color-v2-plum-tint: var(--v2-plum-tint);
   --color-v2-gold: var(--v2-gold);
   --color-v2-gold-soft: var(--v2-gold-soft);
   --color-v2-rose: var(--v2-rose);
@@ -366,8 +368,10 @@
   --v2-link: #24735D;
   --v2-coral: #E8825A;
   --v2-coral-soft: #FBEAE0;
+  --v2-coral-tint: #F6DCCB;
   --v2-plum: #6B5B95;
   --v2-plum-soft: #EFEAF7;
+  --v2-plum-tint: #E4DCF2;
   --v2-gold: #9C7A28;
   --v2-gold-soft: #F7EFDD;
   --v2-rose: #A14A68;
@@ -402,8 +406,10 @@
   --v2-link: #6CC7AA;
   --v2-coral: #F09A76;
   --v2-coral-soft: #3A2519;
+  --v2-coral-tint: #4A2F20;
   --v2-plum: #A897D6;
   --v2-plum-soft: #2A2438;
+  --v2-plum-tint: #362E48;
   --v2-gold: #D4AE55;
   --v2-gold-soft: #332A16;
   --v2-rose: #D77E9C;

@@ -29,7 +29,7 @@ export function GeneralSettingsV1() {
   const { resetOnboarding } = useOnboarding()
   const [resettingTour, setResettingTour] = useState(false)
   const { preferences, save, saving } = usePreferences()
-  const { enabled: betaEnabled, toggle: betaToggle } = useBetaToggle()
+  const { enabled: betaEnabled, toggle: betaToggle, saving: betaSaving, error: betaError } = useBetaToggle()
 
   // 更新預設幣別
   function handleCurrencyChange(currency: CurrencyCode) {
@@ -100,9 +100,13 @@ export function GeneralSettingsV1() {
               </div>
               <Checkbox
                 checked={betaEnabled}
+                disabled={betaSaving}
                 onCheckedChange={(checked) => betaToggle(checked === true)}
               />
             </label>
+            {betaError && (
+              <p role="alert" className="text-xs text-destructive mt-2">{betaError}</p>
+            )}
           </CardContent>
         </Card>
 

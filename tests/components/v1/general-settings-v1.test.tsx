@@ -30,8 +30,10 @@ vi.mock("@/lib/hooks", () => ({
 
 const mockToggle = vi.fn()
 let betaEnabled = false
+let betaSaving = false
+let betaError: string | null = null
 vi.mock("@/lib/hooks/use-beta-toggle", () => ({
-  useBetaToggle: () => ({ enabled: betaEnabled, toggle: mockToggle, saving: false, error: null }),
+  useBetaToggle: () => ({ enabled: betaEnabled, toggle: mockToggle, saving: betaSaving, error: betaError }),
 }))
 
 const mockAuthFetch = vi.fn()
@@ -54,6 +56,8 @@ describe("GeneralSettingsV1", () => {
     mockResetOnboarding.mockReset().mockResolvedValue(undefined)
     mockToggle.mockReset()
     betaEnabled = false
+    betaSaving = false
+    betaError = null
     mockAuthFetch.mockReset().mockResolvedValue({ ok: true })
     mockUpdatePreferences.mockReset()
     mockUser = { name: "Emma", preferences: { uiVersion: "v2", defaultCurrency: "TWD" } }
@@ -82,5 +86,18 @@ describe("GeneralSettingsV1", () => {
     expect(checkbox).not.toBeChecked()
     fireEvent.click(checkbox)
     expect(mockToggle).toHaveBeenCalledWith(true)
+  })
+
+  it("disables the beta checkbox while saving", () => {
+    betaSaving = true
+    render(<GeneralSettingsV1 />)
+    const checkbox = screen.getByRole("checkbox", { name: /試用新版介面/ })
+    expect(checkbox).toBeDisabled()
+  })
+
+  it("shows an alert with the error message when the beta toggle fails", () => {
+    betaError = "更新失敗，請稍後再試"
+    render(<GeneralSettingsV1 />)
+    expect(screen.getByRole("alert")).toHaveTextContent("更新失敗，請稍後再試")
   })
 })
