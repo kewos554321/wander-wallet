@@ -96,6 +96,32 @@ describe("ExpenseFormV2View", () => {
     expect(hook.result.current.derived.shares.map((s) => s.shareAmount)).toEqual([50, 50])
   })
 
+  it("accepts only numeric money input in personal item and custom share fields", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    fireEvent.click(screen.getByRole("switch", { name: "先扣個人項目" }))
+    rerender()
+    fireEvent.click(screen.getByRole("button", { name: "志明的個人項目" }))
+    rerender()
+    const item = () => screen.getByLabelText("志明的品項金額 1")
+    fireEvent.change(item(), { target: { value: "12.5" } })
+    rerender()
+    expect(item()).toHaveValue("12.5")
+    for (const bad of ["12a", "1.234", "-3", "1.2.3"]) {
+      fireEvent.change(item(), { target: { value: bad } })
+      rerender()
+      expect(item()).toHaveValue("12.5")
+    }
+    fireEvent.change(item(), { target: { value: "３０" } })
+    rerender()
+    expect(item()).toHaveValue("30")
+
+    fireEvent.change(screen.getByLabelText("小雨的分攤金額"), { target: { value: "abc" } })
+    rerender()
+    expect(hook.result.current.state.customShares).toEqual({})
+  })
+
   it("shows a dashed hint when nobody is in the shared pool", () => {
     const { hook, rerender } = renderForm()
     expect(screen.queryByText(/目前沒有人參與共同分攤/)).not.toBeInTheDocument()

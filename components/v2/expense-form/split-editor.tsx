@@ -10,6 +10,14 @@ type Draft = ReturnType<typeof useExpenseDraft>
 // Must match the server-enforced splitDetail limit (lib/expense-split.ts).
 const MAX_PERSONAL_ITEM_NAME = 30
 
+// Money inputs accept digits with at most one decimal point and two decimals.
+// Full-width digits/period from CJK keyboards are normalized first.
+const MONEY_PATTERN = /^\d*(\.\d{0,2})?$/
+function toMoneyInput(raw: string): string | null {
+  const v = raw.replace(/[０-９．]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+  return MONEY_PATTERN.test(v) ? v : null
+}
+
 const smallButton = "flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
 const itemInput = "min-w-0 rounded-lg border border-[#DDEDE6] bg-v2-surface px-2.5 py-1.5 text-xs outline-none"
 
@@ -112,7 +120,10 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                             placeholder="金額"
                             inputMode="decimal"
                             value={item.amount}
-                            onChange={(e) => actions.updateItem(id, item.id, "amount", e.target.value)}
+                            onChange={(e) => {
+                              const v = toMoneyInput(e.target.value)
+                              if (v !== null) actions.updateItem(id, item.id, "amount", v)
+                            }}
                             className={`${itemInput} flex-1`}
                           />
                           <button type="button" aria-label="刪除項目" onClick={() => actions.removeItem(id, item.id)} className="flex h-5 w-5 shrink-0 items-center justify-center text-[#C4432A]">
@@ -179,7 +190,12 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                   inputMode="decimal"
                   value={isCustom ? custom : ""}
                   placeholder={String(poolShareOf(id))}
-                  onChange={(e) => (e.target.value === "" ? actions.clearCustomShare(id) : actions.setCustomShare(id, e.target.value))}
+                  onChange={(e) => {
+                    const v = toMoneyInput(e.target.value)
+                    if (v === null) return
+                    if (v === "") actions.clearCustomShare(id)
+                    else actions.setCustomShare(id, v)
+                  }}
                   className={`w-24 rounded-lg border px-2.5 py-1.5 text-right text-[13px] font-bold outline-none ${
                     isCustom ? "border-v2-lake bg-v2-surface" : "border-[#DDEDE6] bg-v2-surface placeholder:text-v2-ink"
                   }`}
