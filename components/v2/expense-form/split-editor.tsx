@@ -1,6 +1,6 @@
 "use client"
 
-import { CheckCircle2, Pin, PinOff, Plus, Trash2, X } from "lucide-react"
+import { CheckCircle2, CornerRightDown, Pin, PinOff, Plus, Trash2, X } from "lucide-react"
 import { formatCurrency } from "@/lib/constants/currencies"
 import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
 import { memberPillClass, memberTone } from "./payer-picker"
@@ -95,8 +95,9 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                         <span className="font-semibold">{name(id)}</span>
                         <span className="font-bold">{fmt(sum)}</span>
                       </span>
-                      <button type="button" aria-label={`為${name(id)}新增品項`} onClick={() => actions.addItem(id)} className={`${smallButton} bg-[#D2EAE1] text-v2-lake`}>
-                        <Plus className="h-3 w-3" />
+                      <button type="button" aria-label={`為${name(id)}新增品項`} onClick={() => actions.addItem(id)} className="flex h-[22px] shrink-0 items-center justify-center gap-px rounded-md bg-[#D2EAE1] px-1 text-v2-lake">
+                        <CornerRightDown className="h-3 w-3" aria-hidden="true" />
+                        <Plus className="h-3 w-3" aria-hidden="true" />
                       </button>
                       <button type="button" aria-label={`移除${name(id)}的個人項目`} onClick={() => actions.togglePersonalMember(id)} className={`${smallButton} bg-[#F6DCD3] text-[#C4432A]`}>
                         <X className="h-3 w-3" />
