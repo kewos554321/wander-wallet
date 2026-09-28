@@ -24,11 +24,13 @@ describe("icon covers", () => {
     }
   })
   it("has dark colors for all cover colors", () => {
-    for (const color of COVER_COLORS) {
-      expect(color).toHaveProperty("darkFg")
-      expect(color).toHaveProperty("darkBg")
-      expect(typeof color.darkFg).toBe("string")
-      expect(typeof color.darkBg).toBe("string")
-    }
+    expect(COVER_COLORS.map(({ id, darkFg, darkBg }) => ({ id, darkFg, darkBg }))).toEqual([
+      { id: "lake", darkFg: "#4FB394", darkBg: "#17302A" },
+      { id: "coral", darkFg: "#F09A76", darkBg: "#3A2519" },
+      { id: "red", darkFg: "#E8735A", darkBg: "#3A1E18" },
+      { id: "rose", darkFg: "#D77E9C", darkBg: "#37212A" },
+      { id: "gold", darkFg: "#D4AE55", darkBg: "#332A16" },
+      { id: "plum", darkFg: "#A897D6", darkBg: "#2A2438" },
+    ])
   })
 })
