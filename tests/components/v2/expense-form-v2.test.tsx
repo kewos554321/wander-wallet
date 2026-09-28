@@ -192,4 +192,40 @@ describe("ExpenseFormV2", () => {
     expect(mockPush).toHaveBeenCalledWith("/projects/p1/expenses")
     alertSpy.mockRestore()
   })
+
+  it("keeps a legacy 60/40 split when only the description changes", async () => {
+    mockAuthFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        id: "e1",
+        amount: 100,
+        currency: "TWD",
+        description: "晚餐",
+        category: "food",
+        image: null,
+        location: null,
+        latitude: null,
+        longitude: null,
+        expenseDate: new Date(2026, 10, 16, 19).toISOString(),
+        paidByMemberId: "a",
+        payer: { id: "a", displayName: "小雨" },
+        participants: [
+          { memberId: "a", shareAmount: 60, member: { id: "a", displayName: "小雨" } },
+          { memberId: "b", shareAmount: 40, member: { id: "b", displayName: "志明" } },
+        ],
+        // Legacy expense: no stored splitDetail even though the split isn't equal.
+        splitDetail: null,
+      }),
+    })
+    render(<ExpenseFormV2 projectId="p1" expenseId="e1" mode="edit" />)
+    const descriptionInput = await screen.findByDisplayValue("晚餐")
+    fireEvent.change(descriptionInput, { target: { value: "晚餐（補發票）" } })
+    fireEvent.click(screen.getByRole("button", { name: "儲存變更" }))
+    await waitFor(() => expect(mockSave).toHaveBeenCalled())
+    const req = mockSave.mock.calls[0][0]
+    expect(req.payload.participants).toEqual([
+      { memberId: "a", shareAmount: 60 },
+      { memberId: "b", shareAmount: 40 },
+    ])
+  })
 })

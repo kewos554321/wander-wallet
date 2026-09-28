@@ -597,6 +597,31 @@ describe("POST /api/projects/[id]/expenses", () => {
     expect(vi.mocked(prisma.expense.create).mock.calls[0][0].data).toMatchObject({ splitDetail })
   })
 
+  it("normalizes an empty splitDetail (no personal items, no custom shares) to no splitDetail field", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([{ id: "member-123" }, { id: "member-456" }] as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
+    vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123/expenses", {
+      method: "POST",
+      body: JSON.stringify({
+        paidByMemberId: "member-123",
+        amount: 1000,
+        participants: [
+          { memberId: "member-123", shareAmount: 500 },
+          { memberId: "member-456", shareAmount: 500 },
+        ],
+        splitDetail: { version: 1, personalItems: {}, customShares: {} },
+      }),
+    })
+    const response = await POST(req, { params: createParams("project-123") })
+
+    expect(response.status).toBe(201)
+    expect(vi.mocked(prisma.expense.create).mock.calls[0][0].data).not.toHaveProperty("splitDetail")
+  })
+
   it("rejects an inconsistent splitDetail with 400", async () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
@@ -1083,6 +1108,23 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     const response = await PUT_EXPENSE(putRequest({ splitDetail: null }), {
       params: createExpenseParams("project-123", "expense-123"),
     })
+    expect(response.status).toBe(200)
+    expect(update.mock.calls[0][0].data.splitDetail).toBe(Prisma.DbNull)
+  })
+
+  it("normalizes an empty splitDetail (no personal items, no custom shares) to clearing the column", async () => {
+    mockExisting(oldDetail)
+    const update = mockUpdateTransaction()
+    const response = await PUT_EXPENSE(
+      putRequest({
+        participants: [
+          { memberId: "member-123", shareAmount: 500 },
+          { memberId: "member-456", shareAmount: 500 },
+        ],
+        splitDetail: { version: 1, personalItems: {}, customShares: {} },
+      }),
+      { params: createExpenseParams("project-123", "expense-123") }
+    )
     expect(response.status).toBe(200)
     expect(update.mock.calls[0][0].data.splitDetail).toBe(Prisma.DbNull)
   })

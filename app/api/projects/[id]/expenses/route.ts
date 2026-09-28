@@ -202,7 +202,12 @@ export async function POST(
       if (!result.ok) {
         return NextResponse.json({ error: result.error }, { status: 400 })
       }
-      validatedSplitDetail = result.detail
+      // Normalize a detail with no personal items and no custom shares (e.g.
+      // {version:1, personalItems:{}, customShares:{}}) down to null instead
+      // of storing a degenerate, functionally-empty splitDetail.
+      const isEmpty =
+        Object.keys(result.detail.personalItems).length === 0 && Object.keys(result.detail.customShares).length === 0
+      validatedSplitDetail = isEmpty ? null : result.detail
     }
 
     // 創建費用記錄（匯率轉換在結算時執行）

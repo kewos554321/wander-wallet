@@ -34,7 +34,7 @@ export interface DraftInit {
     latitude: number | null
     longitude: number | null
     image: string | null
-    participants: { memberId: string }[]
+    participants: { memberId: string; shareAmount: number }[]
     splitDetail: SplitDetail | null
   }
 }
@@ -64,6 +64,38 @@ function initialState(init: DraftInit) {
     }
   }
   const detail = e.splitDetail
+  if (!detail) {
+    // Legacy split with no stored splitDetail: a plain equal split also has no
+    // stored detail, so we can't tell the two apart from `splitDetail` alone.
+    // Compare the stored shares against what a fresh equal split (same
+    // computeShares/order a real one would use) would produce; if they
+    // differ, seed customShares from every stored share so re-saving keeps
+    // the original split instead of silently flattening it to equal. This
+    // mirrors v1's "all fixed" legacy fallback (components/expense/expense-form.tsx).
+    const participantIds = e.participants.map((p) => p.memberId)
+    const equalShares = computeShares({ amount: e.amount, participantIds, personalItems: {}, customShares: {} })
+    const isEqual = e.participants.every((p, i) => Math.abs(p.shareAmount - equalShares[i].shareAmount) <= 0.01)
+    const customShares: Record<string, string> = {}
+    if (!isEqual) {
+      for (const p of e.participants) customShares[p.memberId] = String(p.shareAmount)
+    }
+    return {
+      amount: String(e.amount),
+      currency: e.currency,
+      description: e.description ?? "",
+      category: e.category ?? "",
+      paidBy: e.paidByMemberId,
+      expenseDate: new Date(e.expenseDate),
+      location: { location: e.location, latitude: e.latitude, longitude: e.longitude },
+      image: { image: e.image, pendingFile: null, preview: null },
+      notifyLine: true,
+      pool: participantIds,
+      personalMode: false,
+      personalItems: {} as Record<string, DraftItem[]>,
+      personalMembers: [] as string[],
+      customShares,
+    }
+  }
   // A member is "personal-only" when their custom share is 0 and they have personal
   // items: they were removed from the shared pool but still hold their own items.
   const personalOnly = new Set(
@@ -168,11 +200,24 @@ export function useExpenseDraft(init: DraftInit) {
       }),
   }
 
+  // In edit mode, order participants the way the expense was originally
+  // stored (falling back to member order for anyone newly added to the
+  // pool). computeShares hands any rounding remainder to the first auto
+  // member, so keeping the stored order keeps that remainder on the same
+  // person instead of shifting it when the project's member order differs.
+  const participantOrder = useMemo(() => {
+    if (!init.expense) return init.members.map((m) => m.id)
+    const stored = init.expense.participants.map((p) => p.memberId)
+    const storedSet = new Set(stored)
+    const extra = init.members.map((m) => m.id).filter((id) => !storedSet.has(id))
+    return [...stored, ...extra]
+  }, [init.expense, init.members])
+
   const derived = useMemo(() => {
     const amountNum = Number(state.amount)
     const withItems = (id: string) =>
       state.personalMode && state.personalMembers.includes(id) && (state.personalItems[id]?.length ?? 0) > 0
-    const participantIds = init.members.map((m) => m.id).filter((id) => state.pool.includes(id) || withItems(id))
+    const participantIds = participantOrder.filter((id) => state.pool.includes(id) || withItems(id))
 
     const personalItems: SplitInput["personalItems"] = {}
     if (state.personalMode) {
@@ -223,7 +268,7 @@ export function useExpenseDraft(init: DraftInit) {
       matches,
       error,
     }
-  }, [state, init.members])
+  }, [state, init.members, participantOrder])
 
   return { state, actions, derived }
 }

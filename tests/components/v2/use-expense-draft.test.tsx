@@ -123,7 +123,11 @@ describe("useExpenseDraft", () => {
         latitude: null,
         longitude: null,
         image: null,
-        participants: [{ memberId: "a" }, { memberId: "b" }, { memberId: "c" }],
+        participants: [
+          { memberId: "a", shareAmount: 40 },
+          { memberId: "b", shareAmount: 50 },
+          { memberId: "c", shareAmount: 10 },
+        ],
         splitDetail: {
           version: 1,
           personalItems: { c: [{ name: "紀念品", amount: 10 }] },
@@ -139,6 +143,125 @@ describe("useExpenseDraft", () => {
       { memberId: "a", shareAmount: 40 },
       { memberId: "b", shareAmount: 50 },
       { memberId: "c", shareAmount: 10 },
+    ])
+  })
+
+  it("keeps a legacy custom split (no stored splitDetail) instead of flattening it to equal", () => {
+    const { result } = setup({
+      expense: {
+        amount: 100,
+        currency: "TWD",
+        description: "計程車",
+        category: "transport",
+        paidByMemberId: "a",
+        expenseDate: new Date(2026, 10, 16, 19).toISOString(),
+        location: null,
+        latitude: null,
+        longitude: null,
+        image: null,
+        participants: [
+          { memberId: "a", shareAmount: 60 },
+          { memberId: "b", shareAmount: 40 },
+        ],
+        splitDetail: null,
+      },
+    })
+    expect(result.current.state.pool).toEqual(["a", "b"])
+    expect(result.current.state.customShares).toEqual({ a: "60", b: "40" })
+    expect(result.current.derived.shares).toEqual([
+      { memberId: "a", shareAmount: 60 },
+      { memberId: "b", shareAmount: 40 },
+    ])
+  })
+
+  it("keeps a legacy equal split (no stored splitDetail) in equal mode with empty customShares", () => {
+    const { result } = setup({
+      expense: {
+        amount: 90,
+        currency: "TWD",
+        description: "午餐",
+        category: "food",
+        paidByMemberId: "a",
+        expenseDate: new Date(2026, 10, 16, 19).toISOString(),
+        location: null,
+        latitude: null,
+        longitude: null,
+        image: null,
+        participants: [
+          { memberId: "a", shareAmount: 30 },
+          { memberId: "b", shareAmount: 30 },
+          { memberId: "c", shareAmount: 30 },
+        ],
+        splitDetail: null,
+      },
+    })
+    expect(result.current.state.customShares).toEqual({})
+    expect(result.current.derived.shares).toEqual([
+      { memberId: "a", shareAmount: 30 },
+      { memberId: "b", shareAmount: 30 },
+      { memberId: "c", shareAmount: 30 },
+    ])
+    expect(result.current.derived.splitDetail).toBeNull()
+  })
+
+  it("keeps a seeded 0 share (no personal items) in the pool instead of treating it as personal-only", () => {
+    const { result } = setup({
+      expense: {
+        amount: 100,
+        currency: "TWD",
+        description: "計程車",
+        category: "transport",
+        paidByMemberId: "a",
+        expenseDate: new Date(2026, 10, 16, 19).toISOString(),
+        location: null,
+        latitude: null,
+        longitude: null,
+        image: null,
+        // Legacy split: b intentionally pays nothing, but has no personal
+        // items (unlike the detail-driven personal-only case), so b must
+        // stay a normal (fixed-at-0) pool member, not be dropped from it.
+        participants: [
+          { memberId: "a", shareAmount: 100 },
+          { memberId: "b", shareAmount: 0 },
+        ],
+        splitDetail: null,
+      },
+    })
+    expect(result.current.state.pool).toEqual(["a", "b"])
+    expect(result.current.state.customShares).toEqual({ a: "100", b: "0" })
+    expect(result.current.derived.shares).toEqual([
+      { memberId: "a", shareAmount: 100 },
+      { memberId: "b", shareAmount: 0 },
+    ])
+  })
+
+  it("keeps the stored participant order so the rounding remainder stays put", () => {
+    const { result } = setup({
+      expense: {
+        amount: 100,
+        currency: "TWD",
+        description: "住宿",
+        category: "accommodation",
+        paidByMemberId: "a",
+        expenseDate: new Date(2026, 10, 16, 19).toISOString(),
+        location: null,
+        latitude: null,
+        longitude: null,
+        image: null,
+        // Stored in a different order than the project's member list (a, b, c):
+        // the rounding remainder was originally assigned to c.
+        participants: [
+          { memberId: "c", shareAmount: 33.34 },
+          { memberId: "a", shareAmount: 33.33 },
+          { memberId: "b", shareAmount: 33.33 },
+        ],
+        splitDetail: null,
+      },
+    })
+    expect(result.current.derived.shares).toEqual([
+      { memberId: "c", shareAmount: 33.34 },
+      { memberId: "a", shareAmount: 33.33 },
+      { memberId: "b", shareAmount: 33.33 },
     ])
   })
 })

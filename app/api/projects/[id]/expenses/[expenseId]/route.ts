@@ -214,7 +214,12 @@ export async function PUT(
         if (!result.ok) {
           return NextResponse.json({ error: result.error }, { status: 400 })
         }
-        splitDetailUpdate = result.detail as unknown as Prisma.InputJsonValue
+        // Normalize a detail with no personal items and no custom shares down
+        // to clearing the column, instead of persisting a degenerate,
+        // functionally-empty splitDetail.
+        const isEmpty =
+          Object.keys(result.detail.personalItems).length === 0 && Object.keys(result.detail.customShares).length === 0
+        splitDetailUpdate = isEmpty ? Prisma.DbNull : (result.detail as unknown as Prisma.InputJsonValue)
       }
     } else if (participants && Array.isArray(participants)) {
       splitDetailUpdate = Prisma.DbNull

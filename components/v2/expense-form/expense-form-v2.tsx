@@ -122,7 +122,10 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
           latitude: expense.latitude,
           longitude: expense.longitude,
           image: expense.image,
-          participants: expense.participants.map((p) => ({ memberId: p.member?.id ?? p.memberId ?? "" })),
+          participants: expense.participants.map((p) => ({
+            memberId: p.member?.id ?? p.memberId ?? "",
+            shareAmount: Number(p.shareAmount),
+          })),
           splitDetail: expense.splitDetail ?? null,
         }
       : undefined,
