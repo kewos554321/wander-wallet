@@ -15,6 +15,7 @@ import { AmountCard } from "./amount-card"
 import { CategoryPicker } from "./category-picker"
 import { PayerPicker } from "./payer-picker"
 import { SplitEditor } from "./split-editor"
+import { SplitSummary } from "./split-summary"
 import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
 
 export interface ExpenseFormV2ViewProps {
@@ -80,6 +81,7 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
       <CategoryPicker value={state.category} onChange={actions.setCategory} />
       <PayerPicker members={props.members} value={state.paidBy} onChange={actions.setPaidBy} />
       <SplitEditor members={props.members} draft={draft} currency={state.currency} />
+      <SplitSummary members={props.members} draft={draft} currency={state.currency} />
 
       <div className="mx-4 mb-4">
         <p className={sectionTitle}>支出日期</p>

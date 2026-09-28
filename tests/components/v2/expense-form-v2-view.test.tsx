@@ -160,6 +160,29 @@ describe("ExpenseFormV2View", () => {
     expect(hook.result.current.derived.shares.map((s) => s.shareAmount)).toEqual([550, 450])
   })
 
+  it("shows the split breakdown only when personal items are in use", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("1000"))
+    rerender()
+    expect(screen.queryByRole("region", { name: "分攤明細" })).not.toBeInTheDocument()
+    act(() => {
+      hook.result.current.actions.setPersonalMode(true)
+      hook.result.current.actions.togglePersonalMember("a")
+    })
+    const itemId = hook.result.current.state.personalItems.a[0].id
+    act(() => {
+      hook.result.current.actions.updateItem("a", itemId, "name", "咖啡")
+      hook.result.current.actions.updateItem("a", itemId, "amount", "100")
+      hook.result.current.actions.togglePool("a")
+    })
+    rerender()
+    const table = screen.getByRole("region", { name: "分攤明細" })
+    const row = (name: string) => within(table).getByRole("row", { name: new RegExp(`^${name}`) })
+    expect(row("小雨")).toHaveTextContent("小雨TWD 100TWD 0TWD 100")
+    expect(row("志明")).toHaveTextContent("志明TWD 0TWD 900TWD 900")
+    expect(row("合計")).toHaveTextContent("合計TWD 100TWD 900TWD 1,000")
+  })
+
   it("disables submit and shows the draft error", () => {
     renderForm()
     expect(screen.getByRole("alert")).toHaveTextContent("請輸入有效金額")
