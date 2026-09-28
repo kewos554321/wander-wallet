@@ -28,7 +28,7 @@ export function SplitSummary({ members, draft, currency }: { members: DraftMembe
 
   return (
     <section aria-label="分攤明細" className="mt-3">
-      <p className="mb-2 text-xs font-semibold text-v2-ink-muted">分攤明細（{currency}）</p>
+      <p className="mb-2 text-xs font-semibold text-v2-ink-muted">分攤明細 <span className="font-bold text-v2-lake">（{currency}）</span></p>
       <div className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-surface">
         <table className="w-full text-xs">
           <thead className="bg-v2-lake-soft text-v2-ink-muted">

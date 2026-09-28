@@ -184,7 +184,7 @@ describe("ExpenseFormV2View", () => {
     })
     rerender()
     const table = screen.getByRole("region", { name: "分攤明細" })
-    expect(within(table).getByText("分攤明細（TWD）")).toBeInTheDocument()
+    expect(within(table).getByText("（TWD）")).toBeInTheDocument()
     const row = (name: string) => within(table).getByRole("row", { name: new RegExp(`^${name}`) })
     expect(row("小雨")).toHaveTextContent("小雨1000100")
     expect(row("志明")).toHaveTextContent("志明0900900")
