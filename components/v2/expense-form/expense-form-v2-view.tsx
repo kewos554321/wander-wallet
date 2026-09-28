@@ -103,7 +103,7 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
 
       <div className="mx-4 mb-4">
         <p className={sectionTitle}>收據/消費圖片</p>
-        <ImagePicker value={state.image} onChange={actions.setImage} />
+        <ImagePicker value={state.image} onChange={actions.setImage} disabled={props.submitting} />
       </div>
 
       {props.canNotifyLine && (
