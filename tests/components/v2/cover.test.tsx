@@ -44,4 +44,23 @@ describe("CoverPickerV2", () => {
     fireEvent.click(screen.getByRole("button", { name: "移除自訂圖片" }))
     expect(onChange).toHaveBeenLastCalledWith("icon:leaf;color:lake")
   })
+  it("does not submit form when clicking icon or color buttons", () => {
+    const onChange = vi.fn()
+    const submit = vi.fn()
+    const { rerender } = render(
+      <form onSubmit={submit}>
+        <CoverPickerV2 value={null} onChange={onChange} />
+      </form>
+    )
+    fireEvent.click(screen.getByRole("button", { name: "汽車" }))
+    expect(submit).not.toHaveBeenCalled()
+    rerender(
+      <form onSubmit={submit}>
+        <CoverPickerV2 value="icon:car;color:lake" onChange={onChange} />
+      </form>
+    )
+    fireEvent.click(screen.getByRole("button", { name: "顏色 gold" }))
+    expect(submit).not.toHaveBeenCalled()
+    expect(screen.getByRole("button", { name: "汽車" })).toHaveClass("ring-2")
+  })
 })

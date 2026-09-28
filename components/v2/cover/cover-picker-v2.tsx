@@ -53,16 +53,17 @@ export function CoverPickerV2({ value, onChange, disabled }: { value: string | n
     <div className="space-y-6">
       {/* Icon picker section */}
       <div className="space-y-3">
-        <div className="text-sm font-medium text-v2-text">封面圖示</div>
+        <div className="text-sm font-medium text-v2-ink">封面圖示</div>
         <div className="grid grid-cols-7 gap-2">
           {COVER_ICONS.map((icon) => (
             <button
               key={icon.id}
+              type="button"
               onClick={() => handleIconClick(icon.id)}
               disabled={disabled}
               aria-label={icon.label}
               aria-pressed={parsed.type === "icon" && parsed.iconId === icon.id}
-              className="rounded-xl transition-all disabled:opacity-50"
+              className={`rounded-xl transition-all disabled:opacity-50 ${parsed.type === "icon" && parsed.iconId === icon.id ? "ring-2 ring-v2-lake" : ""}`}
             >
               <CoverArt cover={buildIconCover(icon.id, currentColor)} className="h-11 w-11" />
             </button>
@@ -72,16 +73,17 @@ export function CoverPickerV2({ value, onChange, disabled }: { value: string | n
 
       {/* Color picker section */}
       <div className="space-y-3">
-        <div className="text-sm font-medium text-v2-text">封面顏色</div>
+        <div className="text-sm font-medium text-v2-ink">封面顏色</div>
         <div className="flex gap-3">
           {COVER_COLORS.map((color) => (
             <button
               key={color.id}
+              type="button"
               onClick={() => handleColorClick(color.id)}
               disabled={disabled}
               aria-label={`顏色 ${color.id}`}
               aria-pressed={currentColor === color.id}
-              className="h-7 w-7 rounded-full transition-all disabled:opacity-50"
+              className={`h-7 w-7 rounded-full transition-all disabled:opacity-50 ${currentColor === color.id ? "ring-2 ring-v2-lake ring-offset-2" : ""}`}
               style={{ backgroundColor: color.fg }}
             />
           ))}
@@ -95,9 +97,10 @@ export function CoverPickerV2({ value, onChange, disabled }: { value: string | n
             <div className="flex items-center gap-3">
               <CoverArt cover={value} className="h-11 w-16 rounded-lg" />
               <button
+                type="button"
                 onClick={handleRemoveCustom}
                 disabled={disabled}
-                className="inline-flex items-center gap-1 rounded-lg border border-v2-line px-3 py-2 text-sm text-v2-text transition-colors hover:bg-v2-surface disabled:opacity-50"
+                className="inline-flex items-center gap-1 rounded-lg border border-v2-line px-3 py-2 text-sm text-v2-ink transition-colors hover:bg-v2-surface disabled:opacity-50"
               >
                 <X className="h-4 w-4" />
                 移除自訂圖片
@@ -115,9 +118,10 @@ export function CoverPickerV2({ value, onChange, disabled }: { value: string | n
               className="hidden"
             />
             <button
+              type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={disabled || uploading}
-              className="w-full rounded-lg border-2 border-dashed border-v2-line bg-v2-surface px-4 py-3 text-sm text-v2-text transition-colors hover:border-v2-text disabled:opacity-50"
+              className="w-full rounded-lg border-2 border-dashed border-v2-line bg-v2-surface px-4 py-3 text-sm text-v2-ink transition-colors hover:border-v2-ink-muted disabled:opacity-50"
             >
               {uploading ? "上傳中…" : "或上傳自訂圖片"}
             </button>
