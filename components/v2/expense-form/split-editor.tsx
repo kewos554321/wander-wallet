@@ -35,6 +35,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
     Math.round(((derived.shares.find((s) => s.memberId === id)?.shareAmount ?? 0) - personalOf(id)) * 100) / 100
   const sharedTotal = Math.round((derived.splitInput.amount - derived.personalTotal) * 100) / 100
   const allInPool = members.every((m) => state.pool.includes(m.id))
+  const allPersonal = members.every((m) => state.personalMembers.includes(m.id))
   const poolCount = state.pool.length
 
   return (
@@ -58,7 +59,17 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
 
       {state.personalMode && (
         <div className="mb-3">
-          <p className="mb-2 text-xs font-semibold text-v2-ink-muted">個人項目</p>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="m-0 text-xs font-semibold text-v2-ink-muted">個人項目</p>
+            <button
+              type="button"
+              aria-label={allPersonal ? "取消全選個人項目" : "全選個人項目"}
+              onClick={() => actions.setPersonalAll(!allPersonal)}
+              className="shrink-0 text-xs font-bold text-v2-lake"
+            >
+              {allPersonal ? "取消全選" : "全選"}
+            </button>
+          </div>
           <div className="mb-2.5 flex flex-wrap gap-2">
             {members.map((m) => {
               const on = state.personalMembers.includes(m.id)

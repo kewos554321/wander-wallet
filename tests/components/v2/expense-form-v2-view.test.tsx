@@ -83,6 +83,26 @@ describe("ExpenseFormV2View", () => {
     expect(hook.result.current.derived.shares.find((s) => s.memberId === "b")?.shareAmount).toBe(60)
   })
 
+  it("selects and clears all personal-item members", () => {
+    const { hook, rerender } = renderForm()
+    fireEvent.click(screen.getByRole("switch", { name: "先扣個人項目" }))
+    rerender()
+    fireEvent.click(screen.getByRole("button", { name: "志明的個人項目" }))
+    rerender()
+    fireEvent.change(screen.getByLabelText("志明的品項名稱 1"), { target: { value: "咖啡" } })
+    rerender()
+    fireEvent.click(screen.getByRole("button", { name: "全選個人項目" }))
+    rerender()
+    expect(hook.result.current.state.personalMembers).toEqual(["a", "b"])
+    // Existing items are kept; newly added members get one empty item.
+    expect(hook.result.current.state.personalItems.b[0].name).toBe("咖啡")
+    expect(hook.result.current.state.personalItems.a).toHaveLength(1)
+    fireEvent.click(screen.getByRole("button", { name: "取消全選個人項目" }))
+    rerender()
+    expect(hook.result.current.state.personalMembers).toEqual([])
+    expect(hook.result.current.state.personalItems).toEqual({})
+  })
+
   it("sets a custom share for a pool member", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))

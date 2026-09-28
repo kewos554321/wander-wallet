@@ -171,6 +171,17 @@ export function useExpenseDraft(init: DraftInit) {
           personalItems: { ...s.personalItems, [id]: [newItem()] },
         }
       }),
+    // Select all keeps existing items and gives newly added members one empty item;
+    // deselect all drops every member's items.
+    setPersonalAll: (selectAll: boolean) =>
+      setState((s) => {
+        if (!selectAll) return { ...s, personalMembers: [], personalItems: {} }
+        const personalItems = { ...s.personalItems }
+        for (const m of init.members) {
+          if (!s.personalMembers.includes(m.id)) personalItems[m.id] = [newItem()]
+        }
+        return { ...s, personalMembers: init.members.map((m) => m.id), personalItems }
+      }),
     addItem: (memberId: string) =>
       setState((s) => {
         const current = s.personalItems[memberId] ?? []
