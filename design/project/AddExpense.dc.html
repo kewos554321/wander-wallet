@@ -7,7 +7,7 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&amp;family=Noto+Sans+TC:wght@400;500;600;700&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap">
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; }
@@ -151,7 +151,7 @@
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <p style="margin:0;font-size:14px;color:#1B1815;font-weight:500;line-height:20px;letter-spacing:.1px;">分攤成員</p>
       <label style="display:flex;align-items:center;gap:6px;">
-        <span style="font-size:12px;font-weight:600;color:{{personalModeLabelColor}};">先扣個人項目</span>
+        <span style="font-size:14px;font-weight:600;color:{{personalModeLabelColor}};">先扣個人項目</span>
         <button type="button" onClick="{{togglePersonalMode}}" aria-label="切換先扣個人項目" style="width:32px;height:19px;border-radius:99px;position:relative;display:inline-block;flex-shrink:0;{{personalModeTrackStyle}}">
           <span style="position:absolute;top:2px;width:15px;height:15px;border-radius:50%;background:#FFFFFF;transition:left .15s;{{personalModeThumbStyle}}"></span>
         </button>
@@ -204,15 +204,15 @@
           </sc-for>
           <sc-if value="{{m.isAdding}}" hint-placeholder-val="{{false}}">
           <div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
-            <input type="text" placeholder="品項名稱" style="flex:2;min-width:0;box-sizing:border-box;border:1px solid #DDEDE6;border-radius:8px;padding:6px 10px;font-size:12px;background:#FFFFFF;color:#1B1815;outline:none;">
-            <input type="text" placeholder="金額" style="flex:1;min-width:0;box-sizing:border-box;border:1px solid #DDEDE6;border-radius:8px;padding:6px 10px;font-size:12px;background:#FFFFFF;color:#1B1815;outline:none;">
+            <input type="text" placeholder="品項名稱" style="flex:2;min-width:0;box-sizing:border-box;border:1px solid #DDEDE6;border-radius:8px;padding:6px 10px;font-size:12px;background:#FFFFFF;color:#1B1815;outline:none;" />
+            <input type="text" placeholder="金額" style="flex:1;min-width:0;box-sizing:border-box;border:1px solid #DDEDE6;border-radius:8px;padding:6px 10px;font-size:12px;background:#FFFFFF;color:#1B1815;outline:none;" />
             <button type="button" onClick="{{m.cancelAdd}}" aria-label="取消新增" style="width:20px;height:20px;flex-shrink:0;color:#C4432A;display:flex;align-items:center;justify-content:center;">
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
             </button>
           </div>
           <div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
-            <input type="text" placeholder="品項名稱" style="flex:2;min-width:0;box-sizing:border-box;border:1px solid #DDEDE6;border-radius:8px;padding:6px 10px;font-size:12px;background:#FFFFFF;color:#1B1815;outline:none;">
-            <input type="text" placeholder="金額" style="flex:1;min-width:0;box-sizing:border-box;border:1px solid #DDEDE6;border-radius:8px;padding:6px 10px;font-size:12px;background:#FFFFFF;color:#1B1815;outline:none;">
+            <input type="text" placeholder="品項名稱" style="flex:2;min-width:0;box-sizing:border-box;border:1px solid #DDEDE6;border-radius:8px;padding:6px 10px;font-size:12px;background:#FFFFFF;color:#1B1815;outline:none;" />
+            <input type="text" placeholder="金額" style="flex:1;min-width:0;box-sizing:border-box;border:1px solid #DDEDE6;border-radius:8px;padding:6px 10px;font-size:12px;background:#FFFFFF;color:#1B1815;outline:none;" />
             <button type="button" onClick="{{m.cancelAdd}}" aria-label="取消新增" style="width:20px;height:20px;flex-shrink:0;color:#C4432A;display:flex;align-items:center;justify-content:center;">
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
             </button>
@@ -253,7 +253,7 @@
           <span style="font-size:13px;font-weight:700;{{s.amountColor}}{{s.amountBoxStyle}}">NT${{s.amount}}</span>
         </button>
         <button type="button" onClick="{{s.reset}}" aria-label="{{s.pinLabel}}" style="{{s.pinStyle}}">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="{{s.pinFill}}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C9 2 7 4.2 7 7c0 2.6 2.3 4.8 4 6.6V21a1 1 0 002 0v-7.4c1.7-1.8 4-4 4-6.6 0-2.8-2-5-5-5z"></path></svg>
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="{{s.pinFill}}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C9 2 7 4.2 7 7c0 2.6 2.3 4.8 4 6.6V21a1 1 0 002 0v-7.4c1.7-1.8 4-4 4-6.6 0-2.8-2-5-5-5z"/></svg>
         </button>
         <button type="button" onClick="{{s.remove}}" aria-label="移除，不參與共同分攤" style="width:22px;height:22px;border-radius:6px;background:#F6DCD3;color:#C4432A;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"></path></svg>

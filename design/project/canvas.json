@@ -2,13 +2,29 @@
   "v": 3,
   "attachments": {},
   "boards": {
+    "AddExpense-gpea.dc.html": {
+      "h": 1340,
+      "is_interactive": true,
+      "title": "A3 · 新增支出 — After copy",
+      "w": 390,
+      "x": 6580,
+      "y": -260
+    },
     "AddExpense-ngs7.dc.html": {
-      "h": 2420,
+      "h": 2700,
       "is_interactive": true,
       "title": "A3c · 新增支出 — 整合A4b付款人＋分攤成員邏輯",
       "w": 390,
       "x": 1410,
       "y": 2200
+    },
+    "AddExpense-section-demo.dc.html": {
+      "h": 1850,
+      "is_interactive": true,
+      "title": "A3b · 新增支出 — Section Demo（標題移入卡片內，參考A14）",
+      "w": 390,
+      "x": 940,
+      "y": 4050
     },
     "AddExpense.dc.html": {
       "h": 1550,
@@ -82,6 +98,94 @@
       "x": 3760,
       "y": 2200
     },
+    "OldAddExpense.dc.html": {
+      "h": 1520,
+      "is_interactive": true,
+      "title": "B3 · 新增支出 — Before",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "OldExpenseList.dc.html": {
+      "h": 960,
+      "is_interactive": true,
+      "title": "B5 · 支出列表 — Before",
+      "w": 390,
+      "x": 2350,
+      "y": 0
+    },
+    "OldGeneralSettings.dc.html": {
+      "h": 1020,
+      "is_interactive": true,
+      "title": "B11 · 個人設定 — Before",
+      "w": 390,
+      "x": 6110,
+      "y": 0
+    },
+    "OldMain.dc.html": {
+      "h": 720,
+      "is_interactive": true,
+      "title": "B1 · 旅程列表 — Before",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "OldMembers.dc.html": {
+      "h": 480,
+      "is_interactive": true,
+      "title": "B6 · 成員管理 — Before",
+      "w": 390,
+      "x": 2820,
+      "y": 0
+    },
+    "OldProjectSettings.dc.html": {
+      "h": 1980,
+      "is_interactive": true,
+      "title": "B10 · 專案設定 — Before",
+      "w": 390,
+      "x": 5640,
+      "y": 0
+    },
+    "OldSettle.dc.html": {
+      "h": 1320,
+      "is_interactive": true,
+      "title": "B4 · 結算 — Before",
+      "w": 390,
+      "x": 1880,
+      "y": 0
+    },
+    "OldStats.dc.html": {
+      "h": 1360,
+      "is_interactive": true,
+      "title": "B7 · 統計 — Before",
+      "w": 390,
+      "x": 3290,
+      "y": 0
+    },
+    "OldTrip.dc.html": {
+      "h": 1080,
+      "is_interactive": true,
+      "title": "B2 · 旅程總覽 — Before",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "OldVoiceExpense.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "B8 · AI 快速記帳 — Before",
+      "w": 390,
+      "x": 4700,
+      "y": 0
+    },
+    "OldVoiceExpenseConfirm.dc.html": {
+      "h": 1360,
+      "is_interactive": true,
+      "title": "B9 · AI 快速記帳 — 批次確認 — Before",
+      "w": 390,
+      "x": 5170,
+      "y": 0
+    },
     "ProjectSettings.dc.html": {
       "h": 2160,
       "is_interactive": true,
@@ -91,7 +195,7 @@
       "y": 2200
     },
     "Settle.dc.html": {
-      "h": 880,
+      "h": 1140,
       "is_interactive": true,
       "title": "A5 · 結算 — After",
       "w": 390,
@@ -168,6 +272,22 @@
       "x": 3760,
       "y": 3470
     },
+    "before-title": {
+      "color": "gray",
+      "kind": "title1",
+      "maxW": 3210,
+      "text": "現況重現 — Before",
+      "w": 240,
+      "x": 0,
+      "y": -260
+    },
+    "observations": {
+      "color": "gray",
+      "text": "現況觀察（Before 這一列都是依實際程式碼還原）\n\n• 系統預設字體、尺寸邏輯不明顯，粗細與大小交錯使用\n• 旅程總覽被 12 宮格功能選單佔掉大半版面，還要左右滑動\n• 新增支出是一路往下滑的長表單，語音記帳藏在別的入口\n• 結算、支出列表頁都夾了廣告橫幅與贊助卡片\n• 統計頁塞了 4 張圖表 + 排行榜 + 結算預覽，一次全部展開\n• 卡片與強調色偏淡（現有 brand 色 oklch 0.65 0.11 175 一帶），彼此對比較弱\n• 這一列沒有「建立旅程／拍照記帳／更多面板」對應畫面，因為現況是整頁塞滿或藏在別的元件裡",
+      "w": 380,
+      "x": -1380,
+      "y": 0
+    },
     "rationale": {
       "color": "gray",
       "text": "設計方向\n\n• 從「主畫面圖示牆」轉為「旅行手帳」語感：暖調紙感背景 + 登機證式行程卡\n• 新增底部導覽列，取代原本需左右滑動兩頁的 12 宮格功能選單\n• 主色改為更飽和的深湖水綠，搭配珊瑚色點綴語音記帳等 AI 功能，兩色皆延續原品牌色相\n• 標題與金額改用 Noto Serif TC 襯線字體，讓旅行紀錄更有溫度、金額更易讀\n• 新增支出流程把「語音記帳」前置為首選捷徑，手動輸入表單退居第二選擇",
@@ -193,7 +313,19 @@
     }
   },
   "order": [
+    "OldMain.dc.html",
+    "OldTrip.dc.html",
+    "OldAddExpense.dc.html",
+    "OldSettle.dc.html",
+    "OldExpenseList.dc.html",
+    "OldMembers.dc.html",
+    "OldStats.dc.html",
+    "OldVoiceExpense.dc.html",
+    "OldVoiceExpenseConfirm.dc.html",
+    "OldProjectSettings.dc.html",
+    "OldGeneralSettings.dc.html",
     "AddExpense.dc.html",
+    "AddExpense-section-demo.dc.html",
     "Settle.dc.html",
     "ExpenseList.dc.html",
     "Members.dc.html",
@@ -204,6 +336,7 @@
     "VoiceExpense.dc.html",
     "ProjectSettings.dc.html",
     "GeneralSettings.dc.html",
+    "AddExpense-gpea.dc.html",
     "AddExpense-ngs7.dc.html",
     "MainCard3-njus.dc.html",
     "Trip-m0lh.dc.html",

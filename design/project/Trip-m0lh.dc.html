@@ -35,9 +35,19 @@
     </div>
   </div>
 
-  <div style="padding:16px 16px 0;">
-    <h2 style="margin:0;font-family:'Noto Serif TC',serif;font-weight:700;font-size:24px;line-height:32px;">東京賞楓 5 日</h2>
-    <p style="margin:4px 0 0;font-size:12px;line-height:16px;letter-spacing:.4px;color:#6E6860;">11/12 – 11/16 · 4 位旅伴</p>
+  <div style="padding:16px 16px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+    <div style="min-width:0;">
+      <h2 style="margin:0;font-family:'Noto Serif TC',serif;font-weight:700;font-size:24px;line-height:32px;">東京賞楓 5 日</h2>
+      <p style="margin:4px 0 0;font-size:12px;line-height:16px;letter-spacing:.4px;color:#6E6860;">11/12 – 11/16 · 4 位旅伴</p>
+    </div>
+    <div style="display:flex;gap:6px;flex-shrink:0;">
+      <button type="button" aria-label="編輯旅程名稱" style="width:32px;height:32px;border-radius:50%;border:1px solid #E7DFD2;background:#FFFFFF;display:flex;align-items:center;justify-content:center;color:#1B1815;">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.1 2.1 0 013 3L7 19l-4 1 1-4z"></path></svg>
+      </button>
+      <button type="button" aria-label="複製連結" style="width:32px;height:32px;border-radius:50%;border:1px solid #E7DFD2;background:#FFFFFF;display:flex;align-items:center;justify-content:center;color:#1B1815;">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.5.5l2-2a5 5 0 00-7-7l-1 1"></path><path d="M14 11a5 5 0 00-7.5-.5l-2 2a5 5 0 007 7l1-1"></path></svg>
+      </button>
+    </div>
   </div>
 
   <div style="margin:12px 16px 0;position:relative;border-radius:20px;overflow:hidden;color:#FAF7F2;">
@@ -81,7 +91,7 @@
     <div style="background:#FFFFFF;border:1px solid #E7DFD2;border-radius:18px;padding:16px 12px 12px;">
     <div class="hide-scrollbar" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;">
 
-      <div style="flex:0 0 100%;scroll-snap-align:start;">
+      <div id="feature-page-1" style="flex:0 0 100%;scroll-snap-align:start;">
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px 4px;">
           <a href="Settle.dc.html" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;">
             <span style="width:46px;height:46px;border-radius:50%;background:#EAF5F1;color:#1B5847;display:flex;align-items:center;justify-content:center;">
@@ -134,7 +144,7 @@
         </div>
       </div>
 
-      <div style="flex:0 0 100%;scroll-snap-align:start;">
+      <div id="feature-page-2" style="flex:0 0 100%;scroll-snap-align:start;">
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px 4px;">
           <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;">
             <span style="width:46px;height:46px;border-radius:50%;background:#EFEAF7;color:#6B5B95;display:flex;align-items:center;justify-content:center;">
@@ -158,9 +168,9 @@
       </div>
 
     </div>
-    <div style="display:flex;justify-content:center;gap:6px;margin-top:10px;">
-      <span style="width:16px;height:5px;border-radius:99px;background:#1B5847;"></span>
-      <span style="width:5px;height:5px;border-radius:50%;background:#E7DFD2;"></span>
+    <div style="margin-top:12px;display:flex;justify-content:center;align-items:center;gap:6px;">
+      <a href="#feature-page-1" aria-label="跳到第 1 頁" style="display:block;width:16px;height:6px;border-radius:99px;background:#1B1815;transition:width .3s;"></a>
+      <a href="#feature-page-2" aria-label="跳到第 2 頁" style="display:block;width:6px;height:6px;border-radius:99px;background:#C9BFAC;transition:width .3s;"></a>
     </div>
     </div>
   </div>
