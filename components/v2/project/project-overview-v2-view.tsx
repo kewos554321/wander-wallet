@@ -15,12 +15,13 @@ interface ProjectOverviewV2ViewProps {
   summary: ProjectSummary
   onShare: () => void
   onVoice: () => void
+  onCamera: () => void
 }
 
 const iconButton =
   "flex h-[34px] w-[34px] items-center justify-center rounded-full border border-v2-line bg-v2-surface text-v2-ink"
 
-export function ProjectOverviewV2View({ project, summary, onShare, onVoice }: ProjectOverviewV2ViewProps) {
+export function ProjectOverviewV2View({ project, summary, onShare, onVoice, onCamera }: ProjectOverviewV2ViewProps) {
   const currency = project.currency || DEFAULT_CURRENCY
 
   return (
@@ -51,7 +52,7 @@ export function ProjectOverviewV2View({ project, summary, onShare, onVoice }: Pr
       <BalanceCard balance={summary.userBalance} currency={currency} projectId={project.id} />
       <FeatureGrid projectId={project.id} />
       <RecentExpenses projectId={project.id} expenses={project.expenses} currentMemberId={summary.currentMemberId} />
-      <QuickActions projectId={project.id} onVoice={onVoice} />
+      <QuickActions projectId={project.id} onVoice={onVoice} onCamera={onCamera} />
     </>
   )
 }

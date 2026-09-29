@@ -4,16 +4,15 @@ import { Camera, Plus, Sparkles } from "lucide-react"
 const pill =
   "rounded-full border border-v2-line bg-v2-surface px-2.5 py-1.5 text-xs font-medium leading-4 tracking-[.5px] text-v2-ink shadow-[0_2px_6px_rgba(27,24,21,.08)]"
 
-// Camera flow is redesigned in milestone 3; until then it opens the expense form.
-export function QuickActions({ projectId, onVoice }: { projectId: string; onVoice: () => void }) {
+export function QuickActions({ projectId, onVoice, onCamera }: { projectId: string; onVoice: () => void; onCamera: () => void }) {
   return (
     <div className="fixed bottom-6 right-4 z-50 flex flex-col items-end gap-3">
-      <Link href={`/projects/${projectId}/expenses/new`} className="flex items-center gap-2">
+      <button type="button" onClick={onCamera} className="flex items-center gap-2">
         <span className={pill}>拍照記帳</span>
         <span className="flex h-11 w-11 items-center justify-center rounded-full bg-v2-gold text-v2-on-lake shadow-[0_4px_10px_rgba(156,122,40,.35)]">
           <Camera className="h-[17px] w-[17px]" strokeWidth={1.7} />
         </span>
-      </Link>
+      </button>
       <button type="button" onClick={onVoice} className="flex items-center gap-2">
         <span className={pill}>AI 快速記帳</span>
         <span className="flex h-11 w-11 items-center justify-center rounded-full bg-v2-coral text-v2-on-lake shadow-[0_4px_10px_rgba(232,130,90,.35)]">

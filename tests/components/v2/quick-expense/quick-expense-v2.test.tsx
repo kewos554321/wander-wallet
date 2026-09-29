@@ -71,6 +71,12 @@ describe("QuickExpenseV2", () => {
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("沒有辨識到支出，請換個說法再試一次"))
   })
 
+  it("opens straight on the camera step when initialStep is camera", () => {
+    render(<QuickExpenseV2 open onOpenChange={vi.fn()} projectId="p1" projectName="" members={members} currentUserMemberId="a" onSuccess={vi.fn()} initialStep="camera" />)
+    expect(screen.getByText("fake-shot")).toBeInTheDocument()
+    expect(screen.queryByLabelText("消費內容")).not.toBeInTheDocument()
+  })
+
   it("turns a receipt photo into one item", async () => {
     parseReceipt.mockResolvedValue({ amount: 880, description: "超商", category: "shopping", date: null, confidence: 1 })
     setup()

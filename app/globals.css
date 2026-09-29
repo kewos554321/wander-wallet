@@ -334,6 +334,8 @@
   --color-v2-plum: var(--v2-plum);
   --color-v2-plum-soft: var(--v2-plum-soft);
   --color-v2-plum-tint: var(--v2-plum-tint);
+  --color-v2-sky: var(--v2-sky);
+  --color-v2-sky-soft: var(--v2-sky-soft);
   --color-v2-gold: var(--v2-gold);
   --color-v2-gold-soft: var(--v2-gold-soft);
   --color-v2-rose: var(--v2-rose);
@@ -372,6 +374,8 @@
   --v2-plum: #6B5B95;
   --v2-plum-soft: #EFEAF7;
   --v2-plum-tint: #E4DCF2;
+  --v2-sky: #4A6FA5;
+  --v2-sky-soft: #E8EEF7;
   --v2-gold: #9C7A28;
   --v2-gold-soft: #F7EFDD;
   --v2-rose: #A14A68;
@@ -410,6 +414,8 @@
   --v2-plum: #A897D6;
   --v2-plum-soft: #2A2438;
   --v2-plum-tint: #362E48;
+  --v2-sky: #8FB0DE;
+  --v2-sky-soft: #1E2838;
   --v2-gold: #D4AE55;
   --v2-gold-soft: #332A16;
   --v2-rose: #D77E9C;

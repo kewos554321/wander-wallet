@@ -16,7 +16,8 @@ export function ProjectOverviewV2({ projectId }: { projectId: string }) {
   const { project, loading, joinInfo, joining, joinProject, claimMember, refetch, summary } =
     useProjectOverview(projectId)
   const [showInvite, setShowInvite] = useState(false)
-  const [showVoice, setShowVoice] = useState(false)
+  // Which step the quick-expense overlay opens on; null means closed.
+  const [quickStep, setQuickStep] = useState<"input" | "camera" | null>(null)
 
   let content: ReactNode
   if (loading) {
@@ -46,12 +47,14 @@ export function ProjectOverviewV2({ projectId }: { projectId: string }) {
           project={project}
           summary={summary}
           onShare={() => setShowInvite(true)}
-          onVoice={() => setShowVoice(true)}
+          onVoice={() => setQuickStep("input")}
+          onCamera={() => setQuickStep("camera")}
         />
         <InviteDialog open={showInvite} onOpenChange={setShowInvite} projectId={project.id} projectName={project.name} />
         <QuickExpenseV2
-          open={showVoice}
-          onOpenChange={setShowVoice}
+          open={quickStep !== null}
+          onOpenChange={(open) => { if (!open) setQuickStep(null) }}
+          initialStep={quickStep ?? "input"}
           projectId={project.id}
           projectName={project.name}
           members={project.members.map((m) => ({

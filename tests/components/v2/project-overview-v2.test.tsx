@@ -76,7 +76,7 @@ const summary: ProjectSummary = {
 
 describe("ProjectOverviewV2View", () => {
   it("renders header, totals, budget and balance", () => {
-    render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
+    render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} onCamera={vi.fn()} />)
     expect(screen.getByRole("heading", { name: "東京賞楓 5 日" })).toBeInTheDocument()
     expect(screen.getByText("11/12 – 11/16 · 2 位旅伴")).toBeInTheDocument()
     expect(screen.getByText("TWD 48,600")).toBeInTheDocument()
@@ -94,6 +94,7 @@ describe("ProjectOverviewV2View", () => {
         summary={{ ...summary, totalAmount: 80000, budgetProgress: 100, budgetRemaining: -4000 }}
         onShare={vi.fn()}
         onVoice={vi.fn()}
+        onCamera={vi.fn()}
       />
     )
     expect(screen.getByText("100%")).toBeInTheDocument()
@@ -107,6 +108,7 @@ describe("ProjectOverviewV2View", () => {
         summary={{ ...summary, budget: null, budgetProgress: 0, budgetRemaining: null, userBalance: -1200.4 }}
         onShare={vi.fn()}
         onVoice={vi.fn()}
+        onCamera={vi.fn()}
       />
     )
     expect(screen.queryByText(/％|%/)).not.toBeInTheDocument()
@@ -114,7 +116,7 @@ describe("ProjectOverviewV2View", () => {
   })
 
   it("toggles the balance explanation", () => {
-    render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
+    render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} onCamera={vi.fn()} />)
     const info = "＝你付的錢－你應付的錢，正數代表有旅伴欠你款項"
     expect(screen.queryByText(info)).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "說明餘額計算方式" }))
@@ -122,7 +124,7 @@ describe("ProjectOverviewV2View", () => {
   })
 
   it("links all 11 features", () => {
-    render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
+    render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} onCamera={vi.fn()} />)
     const grid = screen.getByRole("navigation", { name: "功能" })
     const expected: [string, string][] = [
       ["結算", "settle"],
@@ -143,7 +145,7 @@ describe("ProjectOverviewV2View", () => {
   })
 
   it("lists recent expenses with payer and split count", () => {
-    render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
+    render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} onCamera={vi.fn()} />)
     expect(screen.getByText("一蘭拉麵晚餐")).toBeInTheDocument()
     expect(screen.getByText("志明 付款 · 2 人分攤")).toBeInTheDocument()
     expect(screen.getByText("我 付款 · 1 人分攤")).toBeInTheDocument()
@@ -152,20 +154,22 @@ describe("ProjectOverviewV2View", () => {
   })
 
   it("shows an empty state without expenses", () => {
-    render(<ProjectOverviewV2View project={{ ...project, expenses: [] }} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
+    render(<ProjectOverviewV2View project={{ ...project, expenses: [] }} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} onCamera={vi.fn()} />)
     expect(screen.getByText("還沒有支出，點右下角開始記帳")).toBeInTheDocument()
   })
 
-  it("wires share, voice and add actions", () => {
+  it("wires share, voice, camera and add actions", () => {
     const onShare = vi.fn()
     const onVoice = vi.fn()
-    render(<ProjectOverviewV2View project={project} summary={summary} onShare={onShare} onVoice={onVoice} />)
+    const onCamera = vi.fn()
+    render(<ProjectOverviewV2View project={project} summary={summary} onShare={onShare} onVoice={onVoice} onCamera={onCamera} />)
     fireEvent.click(screen.getByRole("button", { name: "分享" }))
     fireEvent.click(screen.getByRole("button", { name: /AI 快速記帳/ }))
+    fireEvent.click(screen.getByRole("button", { name: /拍照記帳/ }))
     expect(onShare).toHaveBeenCalled()
     expect(onVoice).toHaveBeenCalled()
+    expect(onCamera).toHaveBeenCalled()
     expect(screen.getByRole("link", { name: "手動新增支出" })).toHaveAttribute("href", "/projects/p1/expenses/new")
-    expect(screen.getByRole("link", { name: /拍照記帳/ })).toHaveAttribute("href", "/projects/p1/expenses/new")
   })
 })
 

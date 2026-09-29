@@ -24,6 +24,8 @@ type QuickExpenseV2Props = {
   currentUserMemberId: string
   onSuccess: () => void
   currency?: string
+  // Which step the flow opens on; "camera" skips straight to the viewfinder.
+  initialStep?: "input" | "camera"
 }
 
 // Thin shell: unmounting the flow when closed resets all its state for
@@ -33,11 +35,11 @@ export function QuickExpenseV2(props: QuickExpenseV2Props) {
   return props.open ? <QuickExpenseFlow {...props} /> : null
 }
 
-function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, currentUserMemberId, onSuccess, currency = DEFAULT_CURRENCY }: QuickExpenseV2Props) {
+function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, currentUserMemberId, onSuccess, currency = DEFAULT_CURRENCY, initialStep = "input" }: QuickExpenseV2Props) {
   const authFetch = useAuthFetch()
   const plainMembers = members.map((m) => ({ id: m.id, displayName: m.displayName }))
   const { save, progress, canNotifyLine } = useQuickSave({ projectId, projectName, members: plainMembers })
-  const [step, setStep] = useState<Step>("input")
+  const [step, setStep] = useState<Step>(initialStep)
   const [text, setText] = useState("")
   const [items, setItems] = useState<QuickItem[]>([])
   const [index, setIndex] = useState(0)
