@@ -42,6 +42,15 @@ describe("NewProjectV2", () => {
     expect(screen.getByText("京都")).toBeInTheDocument()
   })
 
+  it("renders the section cards and the short currency label", () => {
+    render(<NewProjectV2 />)
+    for (const title of ["卡片預覽", "封面", "基本資訊", "描述（選填）", "成員加入方式"]) {
+      expect(screen.getByText(title)).toBeInTheDocument()
+    }
+    expect(screen.getByText("JPY 日圓")).toBeInTheDocument()
+    expect(screen.getByText("¥")).toBeInTheDocument()
+  })
+
   it("blocks submit with an empty name", () => {
     render(<NewProjectV2 />)
     fireEvent.click(screen.getByRole("button", { name: "建立旅程" }))
@@ -56,6 +65,8 @@ describe("NewProjectV2", () => {
     fireEvent.change(screen.getByLabelText("預算"), { target: { value: "10000" } })
     fireEvent.click(screen.getByLabelText("僅建立新成員"))
     fireEvent.click(screen.getByRole("button", { name: "汽車" }))
+
+    expect(screen.getByText("JPY 日圓")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "建立旅程" }))
 
