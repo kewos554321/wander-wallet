@@ -23,7 +23,9 @@ vi.mock("@/components/v2/quick-expense/quick-expense-v2", () => ({
       </button>
     ) : null,
 }))
-vi.mock("@/components/expense/notify-line-checkbox", () => ({ NotifyLineCheckbox: () => null }))
+vi.mock("@/components/expense/notify-line-checkbox", () => ({
+  NotifyLineCheckbox: () => <div data-testid="notify-line" />,
+}))
 vi.mock("@/components/ui/dialog", () => ({
   Dialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -31,11 +33,14 @@ vi.mock("@/components/ui/dialog", () => ({
   DialogTitle: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }))
 vi.mock("@/components/ui/confirm-delete-dialog", () => ({
-  ConfirmDeleteDialog: ({ open, onConfirm }: { open?: boolean; onConfirm?: () => void }) =>
+  ConfirmDeleteDialog: ({ open, onConfirm, children }: { open?: boolean; onConfirm?: () => void; children?: ReactNode }) =>
     open ? (
-      <button type="button" onClick={onConfirm}>
-        confirm-delete
-      </button>
+      <div>
+        <button type="button" onClick={onConfirm}>
+          confirm-delete
+        </button>
+        {children}
+      </div>
     ) : null,
 }))
 
@@ -343,9 +348,10 @@ describe("ExpensesV2 container", () => {
     expect(screen.getByTestId("v2-expenses-skeleton")).toBeInTheDocument()
   })
 
-  it("renders the notify option when the project supports it", () => {
+  it("renders the notify option only when the project supports it", () => {
+    const single = expense({ id: "e1" })
     mocks.projectExpenses.mockReturnValue({
-      expenses: [],
+      expenses: [single],
       loading: false,
       deleting: false,
       canNotifyLine: true,
@@ -353,8 +359,28 @@ describe("ExpensesV2 container", () => {
       deleteExpense: vi.fn(),
       batchDeleteExpenses: vi.fn(),
     })
+    mocks.expenseFilters.mockReturnValue({ ...mocks.expenseFilters(), filteredExpenses: [single] })
     render(<ExpensesV2 projectId="p1" />)
-    expect(screen.getByText("尚無支出記錄")).toBeInTheDocument()
+    expect(screen.queryByTestId("notify-line")).not.toBeInTheDocument()
+    fireEvent.click(screen.getAllByRole("button", { name: "刪除" })[0])
+    expect(screen.getByTestId("notify-line")).toBeInTheDocument()
+  })
+
+  it("hides the notify option when the project does not support it", () => {
+    const single = expense({ id: "e1" })
+    mocks.projectExpenses.mockReturnValue({
+      expenses: [single],
+      loading: false,
+      deleting: false,
+      canNotifyLine: false,
+      refetch: vi.fn(),
+      deleteExpense: vi.fn(),
+      batchDeleteExpenses: vi.fn(),
+    })
+    mocks.expenseFilters.mockReturnValue({ ...mocks.expenseFilters(), filteredExpenses: [single] })
+    render(<ExpensesV2 projectId="p1" />)
+    fireEvent.click(screen.getAllByRole("button", { name: "刪除" })[0])
+    expect(screen.queryByTestId("notify-line")).not.toBeInTheDocument()
   })
 
   it("wires every filter control through the container", () => {
