@@ -77,7 +77,13 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
         />
       </div>
       <CategoryPicker value={state.category} onChange={actions.setCategory} />
-      <PayerPicker members={props.members} value={state.paidBy} onChange={actions.setPaidBy} />
+      <PayerPicker
+        members={props.members}
+        value={state.paidBy}
+        onChange={actions.setPaidBy}
+        amount={derived.splitInput.amount}
+        currency={state.currency}
+      />
       <SplitEditor members={props.members} draft={draft} currency={state.currency} />
 
       <div className={SECTION_CARD}>

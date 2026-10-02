@@ -56,6 +56,20 @@ describe("ExpenseFormV2View", () => {
     expect(screen.getByRole("button", { name: "交通" })).toHaveAttribute("aria-pressed", "true")
   })
 
+  it("renders a single read-only payer row and a payer summary with no select-all", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("1280"))
+    rerender()
+    const payer = screen.getByRole("group", { name: "付款人" })
+    expect(within(payer).getByText("付款明細")).toBeInTheDocument()
+    expect(within(payer).queryByText("全選")).not.toBeInTheDocument()
+    expect(within(payer).getAllByText("小雨")).toHaveLength(2)
+    expect(within(payer).getByText("$1,280")).toBeInTheDocument()
+    expect(within(payer).getByText("已選 1 人")).toBeInTheDocument()
+    expect(within(payer).getByText("金額相符")).toBeInTheDocument()
+    expect(within(payer).getByText("$1,280 = $1,280 / $1,280")).toBeInTheDocument()
+  })
+
   it("shows the split summary and matched state", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))
