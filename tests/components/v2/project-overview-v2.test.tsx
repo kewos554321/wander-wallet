@@ -204,6 +204,43 @@ describe("ProjectOverviewV2View", () => {
     expect(screen.queryByRole("button", { name: /拍照記帳/ })).not.toBeInTheDocument()
     expect(screen.getByRole("link", { name: "手動新增支出" })).toHaveAttribute("href", "/projects/p1/expenses/new")
   })
+
+  it("renders the settings avatar and the edit pill and links them to settings", () => {
+    render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
+    expect(screen.getByRole("link", { name: "通用設定" })).toHaveAttribute("href", "/settings")
+    expect(screen.getByRole("link", { name: "修改" })).toHaveAttribute("href", "/projects/p1/settings")
+    expect(screen.getByRole("button", { name: "分享" })).toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: "專案設定" })).not.toBeInTheDocument()
+  })
+
+  it("renders the description only when present", () => {
+    const description = "跟著楓葉季節走訪京都嵐山與東京近郊，中間安排一晚溫泉旅館放鬆，行程盡量不要太趕，留點時間走走。"
+    const { rerender } = render(
+      <ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />
+    )
+    expect(screen.queryByText(description)).not.toBeInTheDocument()
+
+    rerender(
+      <ProjectOverviewV2View project={{ ...project, description }} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />
+    )
+    expect(screen.getByText(description)).toBeInTheDocument()
+  })
+
+  it("renders an undated, unbudgeted, description-less trip with an empty expenses state", () => {
+    render(
+      <ProjectOverviewV2View
+        project={{ ...project, description: null, budget: null, startDate: null, endDate: null, expenses: [] }}
+        summary={{ ...summary, totalAmount: 0, perPerson: 0, budget: null, budgetProgress: 0, budgetRemaining: null, userBalance: 0 }}
+        onShare={vi.fn()}
+        onVoice={vi.fn()}
+      />
+    )
+    expect(screen.getByText(/尚未設定日期/)).toBeInTheDocument()
+    expect(screen.queryByText(/%|％/)).not.toBeInTheDocument()
+    const card = screen.getByTestId("v2-recent-expenses-card")
+    expect(within(card).getByText("還沒有支出，點右下角開始記帳")).toBeInTheDocument()
+    expect(screen.queryByText("＋TWD 0")).not.toBeInTheDocument()
+  })
 })
 
 describe("ProjectOverviewV2 container", () => {
