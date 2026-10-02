@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Share2, UserMinus, UserPlus, User } from "lucide-react"
 import type { MembersProject } from "@/lib/hooks/useProjectMembers"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
@@ -25,8 +26,8 @@ export interface MembersV2ViewProps {
   onRequestBatchRemove: () => void
 }
 
-const squareButton =
-  "flex h-8 w-8 items-center justify-center rounded-[9px] border border-v2-line bg-v2-surface text-v2-lake"
+const pillButton =
+  "inline-flex h-8 items-center gap-[5px] rounded-lg border border-v2-lake-edge bg-v2-lake-soft px-2.5 text-xs font-semibold text-v2-lake"
 const badge = "rounded-full px-[7px] py-0.5 text-xs font-bold"
 
 export function MembersV2View(props: MembersV2ViewProps) {
@@ -34,82 +35,86 @@ export function MembersV2View(props: MembersV2ViewProps) {
 
   return (
     <>
-      <V2TopBar title="成員" backHref={`/projects/${project.id}`} />
-      <div className="mx-4 mb-2.5 mt-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-v2-ink-muted">{project.members.length} 位旅伴</span>
-          {props.isOwner && (
-            <button type="button" onClick={props.onToggleBatch} className="text-xs font-bold text-v2-link">
-              {props.batchMode ? "取消" : "批次"}
+      <V2TopBar title="成員" backHref={`/projects/${project.id}`} titleClassName="text-[17px] font-semibold" />
+      <div className="mx-4 mb-4 mt-3.5 rounded-2xl border border-v2-line bg-v2-surface p-4">
+        <div className="mb-1 flex items-center justify-between">
+          <p className="m-0 text-[13px] font-bold text-v2-lake">成員列表</p>
+          <div className="flex items-center gap-2">
+            {props.isOwner && (
+              <button type="button" onClick={props.onToggleBatch} className="text-xs font-bold text-v2-link">
+                {props.batchMode ? "取消" : "批次"}
+              </button>
+            )}
+            <button type="button" aria-label="邀請成員" title="邀請成員" onClick={props.onInvite} className={pillButton}>
+              <Share2 className="h-[15px] w-[15px]" strokeWidth={1.8} aria-hidden="true" />
+              分享
             </button>
-          )}
+            <button type="button" aria-label="手動新增成員" title="手動新增" onClick={props.onAdd} className={pillButton}>
+              <UserPlus className="h-[15px] w-[15px]" strokeWidth={1.8} aria-hidden="true" />
+              增加成員
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button type="button" aria-label="邀請成員" title="邀請成員" onClick={props.onInvite} className={squareButton}>
-            <Share2 className="h-[15px] w-[15px]" strokeWidth={1.7} />
-          </button>
-          <button type="button" aria-label="手動新增成員" title="手動新增" onClick={props.onAdd} className={squareButton}>
-            <UserPlus className="h-[15px] w-[15px]" strokeWidth={1.7} />
-          </button>
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-xs text-v2-ink-muted">成員組成 · {project.members.length} 位旅伴</span>
+          <Link href={`/projects/${project.id}/settings`} className="text-xs font-medium text-v2-link">
+            前往專案設定修改加入方式
+          </Link>
         </div>
-      </div>
 
-      <div className="px-4 pb-28">
-        <div className="overflow-hidden rounded-2xl border border-v2-line bg-v2-surface">
-          {project.members.map((member, i) => {
-            const isMe = member.user?.id === props.currentUserId
-            const isCreator = member.role === "owner"
-            const isPlaceholder = !member.userId
-            const canManage = props.isOwner && !isMe
-            return (
-              <div
-                key={member.id}
-                data-testid={`member-${member.id}`}
-                className={`flex items-center gap-3 p-3.5 ${i < project.members.length - 1 ? "border-b border-v2-line-soft" : ""}`}
+        {project.members.map((member, i) => {
+          const isMe = member.user?.id === props.currentUserId
+          const isCreator = member.role === "owner"
+          const isPlaceholder = !member.userId
+          const canManage = props.isOwner && !isMe
+          return (
+            <div
+              key={member.id}
+              data-testid={`member-${member.id}`}
+              className={`flex items-center gap-3 ${i < project.members.length - 1 ? "border-b border-v2-line-soft py-3.5" : "pt-3.5"}`}
+            >
+              {props.batchMode && canManage && (
+                <input
+                  type="checkbox"
+                  checked={props.selected.has(member.id)}
+                  onChange={() => props.onToggleSelect(member.id)}
+                  aria-label={`選取${member.displayName}`}
+                  className="h-4 w-4 shrink-0 accent-v2-lake"
+                />
+              )}
+              <span
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                  isPlaceholder ? "bg-v2-sand text-v2-ink-subtle" : AVATAR_TONES[i % AVATAR_TONES.length]
+                }`}
+                aria-hidden="true"
               >
-                {props.batchMode && canManage && (
-                  <input
-                    type="checkbox"
-                    checked={props.selected.has(member.id)}
-                    onChange={() => props.onToggleSelect(member.id)}
-                    aria-label={`選取${member.displayName}`}
-                    className="h-4 w-4 shrink-0 accent-v2-lake"
-                  />
-                )}
-                <span
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                    isPlaceholder ? "bg-v2-sand text-v2-ink-subtle" : AVATAR_TONES[i % AVATAR_TONES.length]
-                  }`}
-                  aria-hidden="true"
+                {isPlaceholder ? <User className="h-[19px] w-[19px]" strokeWidth={1.7} /> : member.displayName.charAt(0)}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[13px] font-bold">{member.displayName}</span>
+                  {isCreator && <span className={`${badge} bg-v2-lake-soft text-v2-lake`}>建立者</span>}
+                  {isMe && <span className={`${badge} border border-v2-lake-border bg-v2-surface py-px text-v2-lake`}>你</span>}
+                  {isPlaceholder && <span className={`${badge} bg-v2-sand text-v2-ink-muted`}>佔位成員</span>}
+                </span>
+                <span className={`mt-0.5 block text-xs ${isPlaceholder ? "text-v2-ink-subtle" : "text-v2-ink-muted"}`}>
+                  {isPlaceholder ? "尚未加入" : member.user?.email}
+                </span>
+              </span>
+              {!props.batchMode && canManage && (
+                <button
+                  type="button"
+                  aria-label={`移除${member.displayName}`}
+                  disabled={props.removing === member.id}
+                  onClick={() => props.onRemove(member.id)}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] text-v2-danger disabled:opacity-40"
                 >
-                  {isPlaceholder ? <User className="h-[19px] w-[19px]" strokeWidth={1.7} /> : member.displayName.charAt(0)}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-[13px] font-bold">{member.displayName}</span>
-                    {isCreator && <span className={`${badge} bg-v2-lake-soft text-v2-lake`}>建立者</span>}
-                    {isMe && <span className={`${badge} border border-v2-lake-border bg-v2-paper py-px text-v2-lake`}>你</span>}
-                    {isPlaceholder && <span className={`${badge} bg-v2-sand text-v2-ink-muted`}>佔位成員</span>}
-                  </span>
-                  <span className={`mt-0.5 block text-xs ${isPlaceholder ? "text-v2-ink-subtle" : "text-v2-ink-muted"}`}>
-                    {isPlaceholder ? "尚未加入" : member.user?.email}
-                  </span>
-                </span>
-                {!props.batchMode && canManage && (
-                  <button
-                    type="button"
-                    aria-label={`移除${member.displayName}`}
-                    disabled={props.removing === member.id}
-                    onClick={() => props.onRemove(member.id)}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] text-v2-danger disabled:opacity-40"
-                  >
-                    <UserMinus className="h-4 w-4" strokeWidth={1.7} />
-                  </button>
-                )}
-              </div>
-            )
-          })}
-        </div>
+                  <UserMinus className="h-4 w-4" strokeWidth={1.7} />
+                </button>
+              )}
+            </div>
+          )
+        })}
       </div>
 
       {props.batchMode && (

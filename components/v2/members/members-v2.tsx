@@ -42,7 +42,7 @@ export function MembersV2({ projectId }: { projectId: string }) {
   if (m.loading) {
     content = (
       <>
-        <V2TopBar title="成員" backHref={`/projects/${projectId}`} />
+        <V2TopBar title="成員" backHref={`/projects/${projectId}`} titleClassName="text-[17px] font-semibold" />
         <div data-testid="v2-members-skeleton" className="space-y-3 p-4">
           <div className="h-64 animate-pulse rounded-2xl bg-v2-sand" />
         </div>
@@ -51,7 +51,7 @@ export function MembersV2({ projectId }: { projectId: string }) {
   } else if (!m.project) {
     content = (
       <>
-        <V2TopBar title="成員" backHref={`/projects/${projectId}`} />
+        <V2TopBar title="成員" backHref={`/projects/${projectId}`} titleClassName="text-[17px] font-semibold" />
         <p className="py-8 text-center text-v2-ink-muted">專案不存在</p>
       </>
     )

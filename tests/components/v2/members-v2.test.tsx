@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, fireEvent, within } from "@testing-library/react"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import { render, screen, fireEvent, within, waitFor } from "@testing-library/react"
 import { MembersV2View } from "@/components/v2/members/members-v2-view"
 import type { MembersProject } from "@/lib/hooks/useProjectMembers"
 
@@ -7,14 +7,19 @@ vi.mock("next/font/google", () => ({
   Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
   Noto_Sans_TC: () => ({ variable: "font-var-sans" }),
 }))
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }))
 vi.mock("@/components/auth/liff-provider", () => ({
   useLiff: () => ({ user: { id: "u1" } }),
   useAuthFetch: () => vi.fn(),
 }))
 vi.mock("@/components/members/add-member-dialog", () => ({ AddMemberDialog: () => null }))
 vi.mock("@/components/project/invite-dialog", () => ({ InviteDialog: () => null }))
-vi.mock("@/components/ui/confirm-delete-dialog", () => ({ ConfirmDeleteDialog: () => null }))
+vi.mock("@/components/ui/confirm-delete-dialog", async () => {
+  const React = await import("react")
+  return {
+    ConfirmDeleteDialog: (props: { open: boolean; onConfirm: () => void; confirmText?: string }) =>
+      props.open ? React.createElement("button", { onClick: props.onConfirm }, props.confirmText ?? "confirm") : null,
+  }
+})
 
 const mockProjectMembers = vi.fn()
 vi.mock("@/lib/hooks/useProjectMembers", () => ({ useProjectMembers: () => mockProjectMembers() }))
@@ -54,9 +59,11 @@ function renderView(overrides: Partial<Parameters<typeof MembersV2View>[0]> = {}
 }
 
 describe("MembersV2View", () => {
-  it("shows the count, badges and emails", () => {
+  it("shows the heading, count, badges and emails", () => {
     renderView()
-    expect(screen.getByText("3 位旅伴")).toBeInTheDocument()
+    expect(screen.getByText("成員列表")).toBeInTheDocument()
+    expect(screen.getByText("成員組成 · 3 位旅伴")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "前往專案設定修改加入方式" })).toHaveAttribute("href", "/projects/p1/settings")
     const me = screen.getByTestId("member-m1")
     expect(within(me).getByText("建立者")).toBeInTheDocument()
     expect(within(me).getByText("你")).toBeInTheDocument()
@@ -64,6 +71,12 @@ describe("MembersV2View", () => {
     const kai = screen.getByTestId("member-m3")
     expect(within(kai).getByText("佔位成員")).toBeInTheDocument()
     expect(within(kai).getByText("尚未加入")).toBeInTheDocument()
+  })
+
+  it("renders the labelled share and add buttons", () => {
+    renderView()
+    expect(screen.getByRole("button", { name: "邀請成員" })).toHaveTextContent("分享")
+    expect(screen.getByRole("button", { name: "手動新增成員" })).toHaveTextContent("增加成員")
   })
 
   it("lets the owner remove others but not themselves", () => {
@@ -99,7 +112,11 @@ describe("MembersV2View", () => {
 })
 
 describe("MembersV2 container", () => {
-  beforeEach(() => mockProjectMembers.mockReset())
+  beforeEach(() => {
+    mockProjectMembers.mockReset()
+    vi.stubGlobal("confirm", vi.fn(() => true))
+  })
+  afterEach(() => vi.unstubAllGlobals())
 
   it("shows a back link when the project is not found", () => {
     mockProjectMembers.mockReturnValue({
@@ -134,5 +151,80 @@ describe("MembersV2 container", () => {
     render(<MembersV2 projectId="p1" />)
     expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
     expect(screen.getByTestId("v2-members-skeleton")).toBeInTheDocument()
+  })
+
+  it("renders the member list and toggles batch mode", () => {
+    mockProjectMembers.mockReturnValue({
+      project,
+      loading: false,
+      isOwner: true,
+      currentUserId: "u1",
+      removing: null,
+      refetch: vi.fn(),
+      addMember: vi.fn(),
+      removeMember: vi.fn(),
+      batchRemove: vi.fn(),
+    })
+    render(<MembersV2 projectId="p1" />)
+    expect(screen.getByText("成員組成 · 3 位旅伴")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "批次" }))
+    expect(screen.getByRole("button", { name: "移除 0 位" })).toBeInTheDocument()
+  })
+
+  it("opens the invite and add dialogs", () => {
+    mockProjectMembers.mockReturnValue({
+      project,
+      loading: false,
+      isOwner: true,
+      currentUserId: "u1",
+      removing: null,
+      refetch: vi.fn(),
+      addMember: vi.fn(),
+      removeMember: vi.fn(),
+      batchRemove: vi.fn(),
+    })
+    render(<MembersV2 projectId="p1" />)
+    fireEvent.click(screen.getByRole("button", { name: "邀請成員" }))
+    fireEvent.click(screen.getByRole("button", { name: "手動新增成員" }))
+    expect(screen.getByTestId("member-m1")).toBeInTheDocument()
+  })
+
+  it("removes a single member after confirm", async () => {
+    const removeMember = vi.fn().mockResolvedValue(undefined)
+    mockProjectMembers.mockReturnValue({
+      project,
+      loading: false,
+      isOwner: true,
+      currentUserId: "u1",
+      removing: null,
+      refetch: vi.fn(),
+      addMember: vi.fn(),
+      removeMember,
+      batchRemove: vi.fn(),
+    })
+    render(<MembersV2 projectId="p1" />)
+    fireEvent.click(within(screen.getByTestId("member-m2")).getByRole("button", { name: "移除小美" }))
+    await waitFor(() => expect(removeMember).toHaveBeenCalledWith("m2"))
+  })
+
+  it("batch removes selected members", async () => {
+    const batchRemove = vi.fn().mockResolvedValue(undefined)
+    mockProjectMembers.mockReturnValue({
+      project,
+      loading: false,
+      isOwner: true,
+      currentUserId: "u1",
+      removing: null,
+      refetch: vi.fn(),
+      addMember: vi.fn(),
+      removeMember: vi.fn(),
+      batchRemove,
+    })
+    render(<MembersV2 projectId="p1" />)
+    fireEvent.click(screen.getByRole("button", { name: "批次" }))
+    fireEvent.click(within(screen.getByTestId("member-m2")).getByRole("checkbox"))
+    fireEvent.click(screen.getByRole("button", { name: "移除 1 位" }))
+    fireEvent.click(screen.getByRole("button", { name: "移除 (1)" }))
+    await waitFor(() => expect(batchRemove).toHaveBeenCalledWith(["m2"]))
   })
 })
