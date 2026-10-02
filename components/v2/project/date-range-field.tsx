@@ -15,12 +15,14 @@ export function DateRangeField({
   endDate,
   onChange,
   disabled,
+  triggerClassName,
 }: {
   label: string
   startDate: string | null
   endDate: string | null
   onChange: (start: string | null, end: string | null) => void
   disabled?: boolean
+  triggerClassName?: string
 }) {
   const range: DateRange | undefined = startDate
     ? { from: parseLocalDate(startDate), to: endDate ? parseLocalDate(endDate) : undefined }
@@ -38,7 +40,7 @@ export function DateRangeField({
           <button
             type="button"
             disabled={disabled}
-            className="flex w-full items-center gap-2 rounded-xl border border-v2-line bg-v2-surface px-3.5 py-3 text-left text-[13px]"
+            className={`flex w-full items-center gap-2 rounded-xl border border-v2-line bg-v2-paper px-3.5 py-3 text-left text-[13px] ${triggerClassName ?? ""}`}
           >
             <CalendarIcon className="h-[15px] w-[15px] shrink-0 text-v2-ink-muted" aria-hidden="true" />
             <span className={startDate ? "text-v2-ink" : "text-v2-ink-subtle"}>{display}</span>
