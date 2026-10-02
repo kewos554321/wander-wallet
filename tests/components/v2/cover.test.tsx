@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from "vitest"
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import { render, screen, fireEvent } from "@testing-library/react"
 vi.mock("next/image", () => ({ default: (p: { src: string; alt: string }) => <img src={p.src} alt={p.alt} /> }))
-vi.mock("@/lib/image-utils", () => ({ compressImage: vi.fn().mockResolvedValue("data:image/webp;base64,AAAA") }))
 import { CoverArt } from "@/components/v2/cover/cover-art"
 import { CoverPickerV2 } from "@/components/v2/cover/cover-picker-v2"
 
@@ -53,14 +52,26 @@ describe("CoverPickerV2", () => {
     fireEvent.click(screen.getByRole("button", { name: "顏色 gold" }))
     expect(onChange).toHaveBeenLastCalledWith("icon:car;color:gold")
   })
-  it("uploads a custom image as base64 and can remove it", async () => {
+  it("shows the disabled more-icons placeholder, the new icons and hides red", () => {
+    render(<CoverPickerV2 value={null} onChange={vi.fn()} />)
+    const more = screen.getByRole("button", { name: "更多圖示" })
+    expect(more).toBeDisabled()
+    expect(more).toHaveAttribute("title", "即將推出")
+    expect(screen.getByRole("button", { name: "相機" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "亮點" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "顏色 red" })).not.toBeInTheDocument()
+  })
+  it("offers no upload but can remove a custom image", () => {
     const onChange = vi.fn()
-    const { container, rerender } = render(<CoverPickerV2 value={null} onChange={onChange} />)
-    fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [new File(["a"], "a.png", { type: "image/png" })] } })
-    await waitFor(() => expect(onChange).toHaveBeenLastCalledWith("data:image/webp;base64,AAAA"))
-    rerender(<CoverPickerV2 value="data:image/webp;base64,AAAA" onChange={onChange} />)
+    const { container } = render(<CoverPickerV2 value="data:image/webp;base64,AAAA" onChange={onChange} />)
+    expect(screen.queryByText("或上傳自訂圖片")).not.toBeInTheDocument()
+    expect(container.querySelector('input[type="file"]')).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "移除自訂圖片" }))
     expect(onChange).toHaveBeenLastCalledWith("icon:leaf;color:lake")
+  })
+  it("marks the selected color tile", () => {
+    render(<CoverPickerV2 value="icon:car;color:gold" onChange={vi.fn()} />)
+    expect(screen.getByRole("button", { name: "顏色 gold" })).toHaveAttribute("aria-pressed", "true")
   })
   it("does not submit form when clicking icon or color buttons", () => {
     const onChange = vi.fn()
@@ -79,6 +90,6 @@ describe("CoverPickerV2", () => {
     )
     fireEvent.click(screen.getByRole("button", { name: "顏色 gold" }))
     expect(submit).not.toHaveBeenCalled()
-    expect(screen.getByRole("button", { name: "汽車" })).toHaveClass("ring-2")
+    expect(screen.getByRole("button", { name: "汽車" })).toHaveAttribute("aria-pressed", "true")
   })
 })
