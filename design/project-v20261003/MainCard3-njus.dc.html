@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>旅程列表 — 相片卡片版</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&amp;family=Noto+Sans+TC:wght@400;500;600;700&amp;display=swap">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  a:hover { opacity: .85; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; padding: 0; }
+</style>
+</helmet>
+
+<div style="width:390px;height:1170px;position:relative;background:#FAF7F2;font-family:'Noto Sans TC',sans-serif;color:#1B1815;overflow:hidden;">
+
+  <div style="padding:22px 20px 4px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="width:32px;height:32px;border-radius:50%;background:#1B5847;display:flex;align-items:center;justify-content:center;color:#FAF7F2;">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M15.5 8.5l-2 5-5 2 2-5z"></path></svg>
+      </div>
+      <span style="font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:15px;letter-spacing:.1px;">Wander Wallet</span>
+    </div>
+    <a href="GeneralSettings.dc.html" aria-label="通用設定" style="width:36px;height:36px;border-radius:50%;background:#1B5847;display:flex;align-items:center;justify-content:center;color:#FAF7F2;font-size:14px;font-weight:700;">E</a>
+  </div>
+
+  <div style="padding:14px 20px 16px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;">
+    <div>
+      <p style="margin:0 0 4px;font-size:12px;line-height:16px;letter-spacing:.4px;color:#6E6860;">早安，Emma</p>
+      <h1 style="margin:0;font-family:'Noto Serif TC',serif;font-weight:700;font-size:32px;line-height:40px;">你的旅程</h1>
+      <p style="margin:4px 0 0;font-size:12px;line-height:16px;letter-spacing:.3px;color:#6E6860;">每一趟旅程，都值得被好好記住</p>
+    </div>
+    <a href="NewProject.dc.html" aria-label="建立新旅程" style="flex-shrink:0;width:44px;height:44px;border-radius:50%;background:#1B5847;color:#FFFFFF;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(27,88,71,.25);">
+      <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+    </a>
+  </div>
+
+  <div style="padding:0 20px 16px;display:flex;align-items:center;gap:6px;">
+    <button type="button" style="background:#1B5847;color:#FFFFFF;border-radius:99px;padding:8px 18px;font-size:14px;font-weight:500;line-height:20px;letter-spacing:.1px;">全部</button>
+    <button type="button" style="color:#6E6860;border-radius:99px;padding:8px 14px;font-size:14px;font-weight:500;line-height:20px;letter-spacing:.1px;">進行中</button>
+    <button type="button" style="color:#6E6860;border-radius:99px;padding:8px 14px;font-size:14px;font-weight:500;line-height:20px;letter-spacing:.1px;">已完成</button>
+  </div>
+
+  <div style="padding:0 20px;display:flex;flex-direction:column;gap:10px;">
+
+    <a href="Trip.dc.html" style="display:flex;gap:12px;align-items:flex-start;background:#FFFFFF;border:1px solid #E7DFD2;border-radius:16px;padding:12px;box-shadow:0 2px 8px rgba(27,24,21,.05);">
+      <div style="flex-shrink:0;width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#EAF5F1,#CFE8DC);display:flex;align-items:center;justify-content:center;">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1B5847" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c8 0 14-6 14-14-8 0-14 6-14 14z"></path><path d="M5 19c3-3 5-6 6-9"></path></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <h3 style="margin:0;font-family:'Noto Serif TC',serif;font-weight:500;font-size:16px;line-height:24px;letter-spacing:.15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">東京賞楓 5 日</h3>
+          <span style="flex-shrink:0;background:#1B5847;color:#FFFFFF;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:700;line-height:16px;letter-spacing:.5px;">5 天</span>
+        </div>
+        <p style="margin:2px 0 8px;font-size:12px;line-height:16px;letter-spacing:.4px;color:#6E6860;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">11/12 – 11/16</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;">
+            <div style="width:20px;height:20px;border-radius:50%;background:#D2EAE1;color:#1B5847;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;">美</div>
+            <div style="width:20px;height:20px;border-radius:50%;background:#FBE3D2;color:#C4602F;border:2px solid #fff;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;">志</div>
+            <div style="width:20px;height:20px;border-radius:50%;background:#EFEAF7;color:#6B5B95;border:2px solid #fff;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;">凱</div>
+          </div>
+          <p style="margin:0;font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;line-height:24px;letter-spacing:.15px;color:#1B5847;">NT$ 48,600</p>
+        </div>
+      </div>
+    </a>
+
+    
+
+    <a href="Trip.dc.html" style="display:flex;gap:12px;align-items:flex-start;background:#FFFFFF;border:1px solid #E7DFD2;border-radius:16px;padding:12px;box-shadow:0 2px 8px rgba(27,24,21,.05);">
+      <div style="flex-shrink:0;width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#F1EBE0,#E3D8C4);display:flex;align-items:center;justify-content:center;">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#6E6860" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.5 3.8 6 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-6-3.8-9s1.3-6.5 3.8-9z"></path></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <h3 style="margin:0;font-family:'Noto Serif TC',serif;font-weight:500;font-size:16px;line-height:24px;letter-spacing:.15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">清邁數位遊牧</h3>
+          <span style="flex-shrink:0;background:#6E6860;color:#FFFFFF;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:700;line-height:16px;letter-spacing:.5px;">14 天</span>
+        </div>
+        <p style="margin:2px 0 8px;font-size:12px;line-height:16px;letter-spacing:.4px;color:#6E6860;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">尚未設定日期&nbsp;</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;">
+            <div style="width:20px;height:20px;border-radius:50%;background:#F6E9EE;color:#A14A68;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;">婷</div>
+            <div style="width:20px;height:20px;border-radius:50%;background:#FBE3D2;color:#C4602F;border:2px solid #fff;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;">志</div>
+            <div style="width:20px;height:20px;border-radius:50%;background:#D2EAE1;color:#1B5847;border:2px solid #fff;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;">我</div>
+          </div>
+          <p style="margin:0;font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;line-height:24px;letter-spacing:.15px;color:#1B5847;">NT$ 2,300</p>
+        </div>
+      </div>
+    </a>
+
+    <a href="Trip.dc.html" style="display:flex;gap:12px;align-items:flex-start;background:#FFFFFF;border:1px solid #E7DFD2;border-radius:16px;padding:12px;box-shadow:0 2px 8px rgba(27,24,21,.05);">
+      <div style="flex-shrink:0;width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#EAF5F1,#CFE8DC);display:flex;align-items:center;justify-content:center;">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1B5847" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8"></path><path d="M4 12l3-3M4 12l3 3"></path><circle cx="12" cy="12" r="2"></circle></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <h3 style="margin:0;font-family:'Noto Serif TC',serif;font-weight:500;font-size:16px;line-height:24px;letter-spacing:.15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">沖繩潛水之旅</h3>
+          <span style="flex-shrink:0;background:#1B5847;color:#FFFFFF;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:700;line-height:16px;letter-spacing:.5px;">6 天</span>
+        </div>
+        <p style="margin:2px 0 8px;font-size:12px;line-height:16px;letter-spacing:.4px;color:#6E6860;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">9/20 – 9/25 · 5 位旅伴</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;">
+            <div style="width:20px;height:20px;border-radius:50%;background:#D2EAE1;color:#1B5847;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;">我</div>
+            <div style="width:20px;height:20px;border-radius:50%;background:#FBE3D2;color:#C4602F;border:2px solid #fff;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;">志</div>
+            <div style="width:20px;height:20px;border-radius:50%;background:#EFEAF7;color:#6B5B95;border:2px solid #fff;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;">凱</div>
+            <div style="width:20px;height:20px;border-radius:50%;background:#E7DFD2;color:#6E6860;border:2px solid #fff;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">+2</div>
+          </div>
+          <p style="margin:0;font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;line-height:24px;letter-spacing:.15px;color:#1B5847;">NT$ 31,400</p>
+        </div>
+      </div>
+    </a>
+
+    <a href="Trip.dc.html" style="display:flex;gap:12px;align-items:flex-start;background:#FFFFFF;border:1px solid #E7DFD2;border-radius:16px;padding:12px;box-shadow:0 2px 8px rgba(27,24,21,.05);">
+      <div style="flex-shrink:0;width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#F1EBE0,#E3D8C4);display:flex;align-items:center;justify-content:center;">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#6E6860" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5z"></path><path d="M9 8V6a3 3 0 016 0v2"></path></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <h3 style="margin:0;font-family:'Noto Serif TC',serif;font-weight:500;font-size:16px;line-height:24px;letter-spacing:.15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">首爾血拼週末</h3>
+          <span style="flex-shrink:0;background:#1B5847;color:#FFFFFF;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:700;line-height:16px;letter-spacing:.5px;">3 天</span>
+        </div>
+        <p style="margin:2px 0 8px;font-size:12px;line-height:16px;letter-spacing:.4px;color:#6E6860;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">8/1 – 8/3 · 4 位旅伴</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;">
+            <div style="width:20px;height:20px;border-radius:50%;background:#F6E9EE;color:#A14A68;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;">婷</div>
+            <div style="width:20px;height:20px;border-radius:50%;background:#D2EAE1;color:#1B5847;border:2px solid #fff;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;">我</div>
+          </div>
+          <p style="margin:0;font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;line-height:24px;letter-spacing:.15px;color:#1B5847;">NT$ 15,900</p>
+        </div>
+      </div>
+    </a>
+
+    <a href="Trip.dc.html" style="display:flex;gap:12px;align-items:flex-start;background:#FFFFFF;border:1px solid #E7DFD2;border-radius:16px;padding:12px;box-shadow:0 2px 8px rgba(27,24,21,.05);">
+      <div style="flex-shrink:0;width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#EAF5F1,#CFE8DC);display:flex;align-items:center;justify-content:center;">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1B5847" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M12 2v20"></path><circle cx="12" cy="12" r="9"></circle></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <h3 style="margin:0;font-family:'Noto Serif TC',serif;font-weight:500;font-size:16px;line-height:24px;letter-spacing:.15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">紐西蘭南北島自駕環島攝影之旅</h3>
+          <span style="flex-shrink:0;background:#1B5847;color:#FFFFFF;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:700;line-height:16px;letter-spacing:.5px;">21 天</span>
+        </div>
+        <p style="margin:2px 0 8px;font-size:12px;line-height:16px;letter-spacing:.4px;color:#6E6860;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">12/1 – 12/21 · 6 位旅伴</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;">
+            <div style="width:20px;height:20px;border-radius:50%;background:#D2EAE1;color:#1B5847;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;">我</div>
+            <div style="width:20px;height:20px;border-radius:50%;background:#FBE3D2;color:#C4602F;border:2px solid #fff;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;">志</div>
+            <div style="width:20px;height:20px;border-radius:50%;background:#F7EFDD;color:#9C7A28;border:2px solid #fff;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;">凱</div>
+            <div style="width:20px;height:20px;border-radius:50%;background:#E7DFD2;color:#6E6860;border:2px solid #fff;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">+3</div>
+          </div>
+          <p style="margin:0;font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;line-height:24px;letter-spacing:.15px;color:#1B5847;font-variant-numeric:tabular-nums;">NT$ 0</p>
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+  <div style="height:20px;"></div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":1170}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
