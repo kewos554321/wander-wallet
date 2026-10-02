@@ -3,6 +3,7 @@
 import { Calculator as CalculatorIcon } from "lucide-react"
 import { CurrencySelect } from "@/components/ui/currency-select"
 import type { CurrencyCode } from "@/lib/constants/currencies"
+import { SECTION_TITLE } from "./section-card"
 
 interface AmountCardProps {
   amount: string
@@ -16,7 +17,7 @@ export function AmountCard({ amount, currency, onAmount, onCurrency, onOpenCalcu
   return (
     <div className="mx-4 mt-4 rounded-[20px] border border-v2-lake-border bg-gradient-to-br from-v2-lake-soft to-v2-paper px-5 py-[18px] shadow-[0_2px_8px_rgba(27,88,71,.07)]">
       <div className="mb-3 flex items-center justify-between">
-        <label htmlFor="v2-amount" className="text-sm font-medium leading-5 tracking-[.1px]">
+        <label htmlFor="v2-amount" className={SECTION_TITLE}>
           輸入金額
         </label>
         <button

@@ -10,6 +10,7 @@ import { ImagePicker } from "@/components/ui/image-picker"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { LocationPicker } from "@/components/location-picker"
 import { formatCurrency } from "@/lib/constants/currencies"
+import { SECTION_CARD, SECTION_TITLE } from "./section-card"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { AmountCard } from "./amount-card"
 import { CategoryPicker } from "./category-picker"
@@ -28,8 +29,6 @@ export interface ExpenseFormV2ViewProps {
   onSubmit: () => void
   onRequestDelete?: () => void
 }
-
-const sectionTitle = "mb-2 text-sm font-medium leading-5 tracking-[.1px]"
 
 export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
   const { draft } = props
@@ -66,27 +65,27 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
           onClose={() => setShowCalculator(false)}
         />
       )}
-      <div className="mx-4 mb-4 mt-3.5">
-        <label htmlFor="v2-desc" className={`block ${sectionTitle} mb-1.5`}>
+      <div className={`${SECTION_CARD} mt-3.5`}>
+        <label htmlFor="v2-desc" className={`block ${SECTION_TITLE} mb-1.5`}>
           描述
         </label>
         <input
           id="v2-desc"
           value={state.description}
           onChange={(e) => actions.setDescription(e.target.value)}
-          className="w-full rounded-xl border border-v2-line bg-v2-surface px-3.5 py-3 text-[13px] outline-none"
+          className="w-full rounded-xl border border-v2-line bg-v2-paper px-3.5 py-3 text-[13px] outline-none"
         />
       </div>
       <CategoryPicker value={state.category} onChange={actions.setCategory} />
       <PayerPicker members={props.members} value={state.paidBy} onChange={actions.setPaidBy} />
       <SplitEditor members={props.members} draft={draft} currency={state.currency} />
 
-      <div className="mx-4 mb-4">
-        <p className={sectionTitle}>支出日期</p>
+      <div className={SECTION_CARD}>
+        <p className={`mb-2 ${SECTION_TITLE}`}>支出日期</p>
         <Popover>
           <PopoverTrigger asChild>
-            <button type="button" className="flex w-full items-center gap-2 rounded-xl border border-v2-line bg-v2-surface px-3.5 py-3 text-left text-[13px]">
-              <CalendarIcon className="h-4 w-4 text-v2-ink-muted" aria-hidden="true" />
+            <button type="button" className="flex w-full items-center gap-2 rounded-xl border border-v2-line bg-v2-paper px-3.5 py-3 text-left text-[13px]">
+              <CalendarIcon className="h-[15px] w-[15px] text-v2-ink-muted" aria-hidden="true" />
               <span>{format(state.expenseDate, "yyyy/MM/dd（EEEEE）", { locale: zhTW })}</span>
             </button>
           </PopoverTrigger>
@@ -96,13 +95,13 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
         </Popover>
       </div>
 
-      <div className="mx-4 mb-4">
-        <p className={sectionTitle}>消費地點</p>
+      <div className={SECTION_CARD}>
+        <p className={`mb-2 ${SECTION_TITLE}`}>消費地點</p>
         <LocationPicker value={state.location} onChange={actions.setLocation} />
       </div>
 
-      <div className="mx-4 mb-4">
-        <p className={sectionTitle}>收據/消費圖片</p>
+      <div className={SECTION_CARD}>
+        <p className={`mb-2 ${SECTION_TITLE}`}>收據/消費圖片</p>
         <ImagePicker value={state.image} onChange={actions.setImage} disabled={props.submitting} />
       </div>
 

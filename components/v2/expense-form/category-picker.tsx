@@ -1,10 +1,11 @@
 import { CATEGORY_ICONS, CATEGORY_LABELS, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
 import { CATEGORY_TONES } from "@/components/v2/category-style"
+import { SECTION_CARD, SECTION_TITLE } from "./section-card"
 
 export function CategoryPicker({ value, onChange }: { value: string; onChange: (category: string) => void }) {
   return (
-    <div className="mx-4 mb-3">
-      <p className="mb-1.5 text-sm font-medium leading-5 tracking-[.1px]">類別</p>
+    <div className={SECTION_CARD}>
+      <p className={`mb-1.5 ${SECTION_TITLE}`}>類別</p>
       <div className="grid grid-cols-4 gap-1.5">
         {EXPENSE_CATEGORIES.map((key) => {
           const Icon = CATEGORY_ICONS[key]
@@ -21,7 +22,7 @@ export function CategoryPicker({ value, onChange }: { value: string; onChange: (
                   : `border-[1.5px] border-v2-line font-semibold ${CATEGORY_TONES[key]}`
               }`}
             >
-              <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+              <Icon className="h-4 w-4" aria-hidden="true" />
               {CATEGORY_LABELS[key]}
             </button>
           )
