@@ -87,6 +87,14 @@ describe("ProjectOverviewV2View", () => {
     expect(screen.getByRole("link", { name: /查看結算明細/ })).toHaveAttribute("href", "/projects/p1/settle")
   })
 
+  it("uses the sparkle decoration on the trip summary card", () => {
+    const { container } = render(
+      <ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} onCamera={vi.fn()} />
+    )
+    expect(container.querySelector(".lucide-sparkles")).not.toBeNull()
+    expect(container.querySelector(".lucide-compass")).toBeNull()
+  })
+
   it("shows overspending instead of a negative remainder", () => {
     render(
       <ProjectOverviewV2View

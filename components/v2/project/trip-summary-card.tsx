@@ -1,4 +1,4 @@
-import { Compass } from "lucide-react"
+import { Sparkles } from "lucide-react"
 import { formatCurrency } from "@/lib/constants/currencies"
 import type { ProjectSummary } from "@/lib/project-overview"
 
@@ -8,7 +8,7 @@ export function TripSummaryCard({ summary, currency }: { summary: ProjectSummary
 
   return (
     <div className="relative mx-4 mt-3 overflow-hidden rounded-[20px] bg-v2-lake text-v2-paper">
-      <Compass className="absolute -right-6 -top-6 h-[120px] w-[120px] opacity-[.08]" strokeWidth={1.2} aria-hidden="true" />
+      <Sparkles className="absolute -right-6 -top-6 h-[120px] w-[120px] opacity-[.08]" strokeWidth={1.2} aria-hidden="true" />
       <div className="relative px-5 py-4">
         <p className="mb-[3px] text-sm font-medium leading-5 tracking-[.1px] opacity-[.78]">旅程總覽</p>
         <p className="m-0 font-v2-serif text-[32px] font-bold leading-10 tabular-nums">{fmt(totalAmount)}</p>
