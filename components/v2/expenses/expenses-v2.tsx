@@ -83,14 +83,20 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
                 payers={f.uniquePayers}
                 participants={f.uniqueParticipants}
                 currencies={f.uniqueCurrencies}
+                hasActiveFilters={f.hasActiveFilters}
+                currentMemberId={currentMemberId}
                 onSearch={f.setSearchQuery}
                 onToggleCategory={f.toggleCategory}
-                onTogglePayer={f.togglePayer}
+                onClearCategories={() => f.setCategories(new Set())}
+                onSetPayers={f.setPayers}
+                onClearPayers={() => f.setPayers(new Set())}
                 onToggleParticipant={f.toggleParticipant}
+                onClearParticipants={() => f.setParticipants(new Set())}
                 onToggleCurrency={f.toggleCurrency}
+                onClearCurrencies={() => f.setCurrencies(new Set())}
                 onAmountRange={f.setAmountRange}
-                onCreatedRange={f.setCreatedDateRange}
                 onExpenseRange={f.setExpenseDateRange}
+                onClearFilters={f.clearFilters}
               />
             }
             selectMode={selectMode}

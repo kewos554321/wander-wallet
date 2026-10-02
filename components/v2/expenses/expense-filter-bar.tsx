@@ -1,19 +1,12 @@
 "use client"
 
-import type { ReactNode } from "react"
+import { useState } from "react"
 import { format } from "date-fns"
 import type { DateRange } from "react-day-picker"
-import { CalendarDays, ChevronDown, Coins, DollarSign, Filter, Search, User, Users } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import {
-  AmountRangeFilterContent,
-  CategoryFilterItems,
-  CurrencyFilterItems,
-  DateRangeFilterContent,
-  MemberFilterItems,
-} from "@/components/expense/expense-filter-content"
+import { CalendarDays, CircleX, Coins, DollarSign, Filter, Search, User, Users } from "lucide-react"
 import type { ExpenseFilters } from "@/lib/hooks/useExpenseFilters"
+import { FilterPopover } from "./filter-popover"
+import { AmountPanel, CategoryPanel, CurrencyPanel, DatePanel, MemberPanel } from "./filter-panels"
 
 interface ExpenseFilterBarProps {
   filters: ExpenseFilters
@@ -22,37 +15,20 @@ interface ExpenseFilterBarProps {
   payers: { id: string; displayName: string }[]
   participants: { id: string; displayName: string }[]
   currencies: string[]
+  hasActiveFilters: boolean
+  currentMemberId?: string | null
   onSearch: (query: string) => void
   onToggleCategory: (category: string) => void
-  onTogglePayer: (id: string) => void
+  onClearCategories: () => void
+  onSetPayers: (ids: Set<string>) => void
+  onClearPayers: () => void
   onToggleParticipant: (id: string) => void
+  onClearParticipants: () => void
   onToggleCurrency: (code: string) => void
+  onClearCurrencies: () => void
   onAmountRange: (range: [number, number]) => void
-  onCreatedRange: (range: DateRange | undefined) => void
   onExpenseRange: (range: DateRange | undefined) => void
-}
-
-function Chip({ icon, label, count }: { icon: ReactNode; label: string; count: number }) {
-  const active = count > 0
-  return (
-    <span
-      className={
-        active
-          ? "flex w-full items-center gap-[5px] rounded-[10px] border-[1.5px] border-v2-lake-mid bg-v2-lake-soft px-2.5 py-[9px] text-xs font-bold text-v2-lake"
-          : "flex w-full items-center gap-[5px] rounded-[10px] border border-v2-line bg-v2-surface px-2.5 py-[9px] text-xs font-semibold text-v2-ink"
-      }
-    >
-      {icon}
-      <span className="flex-1 truncate text-left">{label}</span>
-      {active ? (
-        <span className="flex h-[15px] min-w-[15px] shrink-0 items-center justify-center rounded-full bg-v2-lake px-[3px] text-[9px] text-v2-on-lake">
-          {count}
-        </span>
-      ) : (
-        <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />
-      )}
-    </span>
-  )
+  onClearFilters: () => void
 }
 
 function rangeLabel(range: DateRange | undefined, fallback: string): string {
@@ -64,7 +40,11 @@ const icon = "h-3.5 w-3.5 shrink-0"
 
 export function ExpenseFilterBar(props: ExpenseFilterBarProps) {
   const { filters } = props
+  const [openId, setOpenId] = useState<string | null>(null)
   const amountActive = filters.amountRange[0] > 0 || filters.amountRange[1] > 0 ? 1 : 0
+  const toggle = (id: string) => setOpenId((cur) => (cur === id ? null : id))
+  const members = (list: { id: string; displayName: string }[]) =>
+    list.map((m) => ({ id: m.id, displayName: m.id === props.currentMemberId ? "我" : m.displayName }))
 
   return (
     <>
@@ -80,76 +60,49 @@ export function ExpenseFilterBar(props: ExpenseFilterBarProps) {
         />
       </label>
       <div className="mx-4 mt-2.5 grid grid-cols-3 gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger className="w-full">
-            <Chip icon={<Filter className={icon} />} label="類別" count={filters.selectedCategories.size} />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-32">
-            <CategoryFilterItems selected={filters.selectedCategories} onToggle={props.onToggleCategory} />
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <DropdownMenu>
-          <DropdownMenuTrigger className="w-full">
-            <Chip icon={<User className={icon} />} label="付款人" count={filters.selectedPayers.size} />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-36 max-h-60 overflow-y-auto">
-            <MemberFilterItems
-              heading="誰付錢"
-              members={props.payers}
-              selected={filters.selectedPayers}
-              onToggle={props.onTogglePayer}
-              emptyText="無付款人"
-            />
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <DropdownMenu>
-          <DropdownMenuTrigger className="w-full">
-            <Chip icon={<Users className={icon} />} label="參與者" count={filters.selectedParticipants.size} />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-36 max-h-60 overflow-y-auto">
-            <MemberFilterItems
-              heading="有參與分攤"
-              members={props.participants}
-              selected={filters.selectedParticipants}
-              onToggle={props.onToggleParticipant}
-              emptyText="無參與者"
-            />
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <FilterPopover label="類別" icon={<Filter className={icon} />} count={filters.selectedCategories.size} open={openId === "category"} onToggle={() => toggle("category")} widthClass="w-[232px]">
+          <CategoryPanel selected={filters.selectedCategories} onToggle={props.onToggleCategory} onClear={props.onClearCategories} />
+        </FilterPopover>
+
+        <FilterPopover label="付款人" icon={<User className={icon} />} count={filters.selectedPayers.size} open={openId === "payer"} onToggle={() => toggle("payer")} widthClass="w-[184px]">
+          <MemberPanel
+            title="選擇付款人"
+            members={members(props.payers)}
+            selected={filters.selectedPayers}
+            onToggle={(id) => props.onSetPayers(filters.selectedPayers.has(id) ? new Set() : new Set([id]))}
+            onClear={props.onClearPayers}
+            round
+          />
+        </FilterPopover>
+
+        <FilterPopover label="參與者" icon={<Users className={icon} />} count={filters.selectedParticipants.size} open={openId === "participant"} onToggle={() => toggle("participant")} align="right" widthClass="w-[190px]">
+          <MemberPanel title="選擇參與者（可複選）" members={members(props.participants)} selected={filters.selectedParticipants} onToggle={props.onToggleParticipant} onClear={props.onClearParticipants} />
+        </FilterPopover>
+
         {props.currencies.length > 1 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger className="w-full">
-              <Chip icon={<Coins className={icon} />} label="幣別" count={filters.selectedCurrencies.size} />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-28">
-              <CurrencyFilterItems currencies={props.currencies} selected={filters.selectedCurrencies} onToggle={props.onToggleCurrency} />
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <FilterPopover label="幣別" icon={<Coins className={icon} />} count={filters.selectedCurrencies.size} open={openId === "currency"} onToggle={() => toggle("currency")} widthClass="w-[150px]">
+            <CurrencyPanel currencies={props.currencies} selected={filters.selectedCurrencies} onToggle={props.onToggleCurrency} onClear={props.onClearCurrencies} />
+          </FilterPopover>
         )}
-        <DropdownMenu>
-          <DropdownMenuTrigger className="w-full">
-            <Chip icon={<DollarSign className={icon} />} label="金額" count={amountActive} />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-44 p-2.5">
-            <AmountRangeFilterContent range={filters.amountRange} max={props.maxAmount} currency={props.currency} onChange={props.onAmountRange} />
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Popover>
-          <PopoverTrigger className="w-full">
-            <Chip icon={<CalendarDays className={icon} />} label={rangeLabel(filters.createdDateRange, "建立日期")} count={filters.createdDateRange?.from ? 1 : 0} />
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="center">
-            <DateRangeFilterContent title="建立日期" range={filters.createdDateRange} onChange={props.onCreatedRange} />
-          </PopoverContent>
-        </Popover>
-        <Popover>
-          <PopoverTrigger className="w-full">
-            <Chip icon={<CalendarDays className={icon} />} label={rangeLabel(filters.expenseDateRange, "付款日期")} count={filters.expenseDateRange?.from ? 1 : 0} />
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <DateRangeFilterContent title="付款日期" range={filters.expenseDateRange} onChange={props.onExpenseRange} />
-          </PopoverContent>
-        </Popover>
+
+        <FilterPopover label="金額" icon={<DollarSign className={icon} />} count={amountActive} open={openId === "amount"} onToggle={() => toggle("amount")} widthClass="w-[230px]">
+          <AmountPanel range={filters.amountRange} max={props.maxAmount} currency={props.currency} onChange={props.onAmountRange} onClear={() => props.onAmountRange([0, 0])} />
+        </FilterPopover>
+
+        <FilterPopover label={rangeLabel(filters.expenseDateRange, "付款日期")} ariaLabel="付款日期" icon={<CalendarDays className={icon} />} count={filters.expenseDateRange?.from ? 1 : 0} open={openId === "date"} onToggle={() => toggle("date")} align="right" widthClass="w-[236px]">
+          <DatePanel range={filters.expenseDateRange} onChange={props.onExpenseRange} />
+        </FilterPopover>
+
+        {props.hasActiveFilters && (
+          <button
+            type="button"
+            onClick={props.onClearFilters}
+            className="flex items-center gap-[5px] rounded-[10px] border border-dashed border-v2-danger-edge bg-v2-danger-wash px-2.5 py-[9px] text-xs font-semibold text-v2-danger"
+          >
+            <CircleX className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span className="flex-1 truncate text-left">移除篩選</span>
+          </button>
+        )}
       </div>
     </>
   )
