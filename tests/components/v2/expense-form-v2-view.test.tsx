@@ -232,12 +232,28 @@ describe("ExpenseFormV2View", () => {
     expect(hook.result.current.derived.shares.map((s) => s.shareAmount)).toEqual([550, 450])
   })
 
-  it("shows the split breakdown only when personal items are in use", () => {
+  it("always shows the split breakdown with dollar amounts", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("1000"))
     rerender()
-    expect(screen.queryByRole("region", { name: "分攤明細" })).not.toBeInTheDocument()
+    const table = screen.getByRole("region", { name: "分攤明細" })
+    expect(within(table).getByText("（TWD）")).toBeInTheDocument()
+    expect(within(table).getAllByRole("columnheader").map((c) => c.textContent)).toEqual([
+      "成員",
+      "個人項目",
+      "共同分攤",
+      "小計",
+    ])
+    const row = (name: string) => within(table).getByRole("row", { name: new RegExp(`^${name}`) })
+    expect(row("小雨")).toHaveTextContent("$500")
+    expect(row("志明")).toHaveTextContent("$500")
+    expect(row("合計")).toHaveTextContent("$1,000")
+  })
+
+  it("breaks down personal and shared amounts per member with dollar amounts", () => {
+    const { hook, rerender } = renderForm()
     act(() => {
+      hook.result.current.actions.setAmount("1000")
       hook.result.current.actions.setPersonalMode(true)
       hook.result.current.actions.togglePersonalMember("a")
     })
@@ -249,11 +265,14 @@ describe("ExpenseFormV2View", () => {
     })
     rerender()
     const table = screen.getByRole("region", { name: "分攤明細" })
-    expect(within(table).getByText("（TWD）")).toBeInTheDocument()
-    const row = (name: string) => within(table).getByRole("row", { name: new RegExp(`^${name}`) })
-    expect(row("小雨")).toHaveTextContent("小雨1000100")
-    expect(row("志明")).toHaveTextContent("志明0900900")
-    expect(row("合計")).toHaveTextContent("合計1009001,000")
+    const cells = (name: string) =>
+      within(within(table).getByRole("row", { name: new RegExp(`^${name}`) }))
+        .getAllByRole("cell")
+        .map((c) => c.textContent)
+    expect(cells("小雨")).toEqual(["$100", "$0", "$100"])
+    expect(cells("志明")).toEqual(["$0", "$900", "$900"])
+    const totalRow = within(table).getByRole("row", { name: /^合計/ })
+    expect(within(totalRow).getAllByRole("cell").map((c) => c.textContent)).toEqual(["$100", "$900", "$1,000"])
   })
 
   it("disables submit and shows the draft error", () => {

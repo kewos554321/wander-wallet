@@ -2,62 +2,68 @@
 
 import { formatAmount } from "@/lib/constants/currencies"
 import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
+import { memberTone } from "./payer-picker"
 
 type Draft = ReturnType<typeof useExpenseDraft>
 
-// Experimental: per-member breakdown of personal items vs shared pool.
-// Only shown when personal items are in use; a plain split already shows
-// each member's share in the shared-pool rows.
+// Always-visible per-member breakdown (design A3d). Non-participants render as
+// 0/0 rows, matching the design.
 export function SplitSummary({ members, draft, currency }: { members: DraftMember[]; draft: Draft; currency: string }) {
   const { derived } = draft
-  if (derived.itemCount === 0 || derived.shares.length === 0) return null
+  if (derived.shares.length === 0) return null
 
-  const fmt = (n: number) => formatAmount(Math.round(n * 100) / 100, currency)
-  const rows = derived.shares.map((s) => {
-    const personal = derived.splitInput.personalItems[s.memberId]?.reduce((sum, i) => sum + i.amount, 0) ?? 0
+  const money = (n: number) => `$${formatAmount(Math.round(n * 100) / 100, currency)}`
+  const shareOf = (id: string) => derived.shares.find((s) => s.memberId === id)?.shareAmount ?? 0
+  const personalOf = (id: string) => derived.splitInput.personalItems[id]?.reduce((sum, i) => sum + i.amount, 0) ?? 0
+  const rows = members.map((m, index) => {
+    const personal = personalOf(m.id)
+    const total = shareOf(m.id)
     return {
-      id: s.memberId,
-      name: members.find((m) => m.id === s.memberId)?.displayName ?? "",
+      id: m.id,
+      name: m.displayName,
+      tone: memberTone(index),
       personal,
-      pool: Math.round((s.shareAmount - personal) * 100) / 100,
-      total: s.shareAmount,
+      pool: Math.round((total - personal) * 100) / 100,
+      total,
     }
   })
   const sum = (key: "personal" | "pool" | "total") => rows.reduce((s, r) => s + r[key], 0)
-  const cell = "px-2 py-2 text-right tabular-nums"
+  const cols = "grid grid-cols-[1.4fr_1fr_1fr_1fr] items-center gap-1 px-3.5"
+  const cell = "text-right text-[13px] tabular-nums"
 
   return (
     <section aria-label="分攤明細" className="mt-3">
-      <p className="mb-2 text-xs font-semibold text-v2-ink-muted">分攤明細 <span className="font-bold text-v2-lake">（{currency}）</span></p>
-      <div className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-surface">
-        <table className="w-full text-xs">
-          <thead className="bg-v2-lake-soft text-v2-ink-muted">
-            <tr>
-              <th scope="col" className="px-3 py-2 text-left font-semibold">成員</th>
-              <th scope="col" className={`${cell} font-semibold`}>個人項目</th>
-              <th scope="col" className={`${cell} font-semibold`}>共同分攤</th>
-              <th scope="col" className={`${cell} pr-3 font-semibold`}>小計</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-t border-v2-line-soft">
-                <th scope="row" className="px-3 py-2 text-left font-semibold">{r.name}</th>
-                <td className={`${cell} ${r.personal ? "" : "text-v2-ink-subtle"}`}>{fmt(r.personal)}</td>
-                <td className={`${cell} ${r.pool ? "" : "text-v2-ink-subtle"}`}>{fmt(r.pool)}</td>
-                <td className={`${cell} pr-3 font-bold`}>{fmt(r.total)}</td>
-              </tr>
-            ))}
-          </tbody>
-          <tfoot className="border-t border-v2-line font-bold">
-            <tr>
-              <th scope="row" className="px-3 py-2 text-left">合計</th>
-              <td className={cell}>{fmt(sum("personal"))}</td>
-              <td className={cell}>{fmt(sum("pool"))}</td>
-              <td className={`${cell} pr-3 text-v2-lake`}>{fmt(sum("total"))}</td>
-            </tr>
-          </tfoot>
-        </table>
+      <p className="mb-2 text-xs font-semibold text-v2-ink-muted">
+        分攤明細<span className="text-v2-lake">（{currency}）</span>
+      </p>
+      <div role="table">
+        <div role="row" className={`${cols} pb-1.5 text-[11px] text-v2-ink-subtle`}>
+          <span role="columnheader" className="text-left">成員</span>
+          <span role="columnheader" className="text-right">個人項目</span>
+          <span role="columnheader" className="text-right">共同分攤</span>
+          <span role="columnheader" className="text-right">小計</span>
+        </div>
+        <div role="rowgroup" className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
+          {rows.map((r) => (
+            <div key={r.id} role="row" className={`${cols} border-t border-v2-line-soft bg-v2-lake-soft py-2.5 first:border-t-0`}>
+              <span role="rowheader" className="flex min-w-0 items-center gap-2 text-left text-[13px] font-semibold">
+                <span className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${r.tone}`} aria-hidden="true">
+                  {r.name.charAt(0)}
+                </span>
+                <span className="truncate">{r.name}</span>
+              </span>
+              <span role="cell" className={`${cell} ${r.personal ? "" : "text-v2-ink-subtle"}`}>{money(r.personal)}</span>
+              <span role="cell" className={`${cell} ${r.pool ? "" : "text-v2-ink-subtle"}`}>{money(r.pool)}</span>
+              <span role="cell" className={`${cell} font-bold`}>{money(r.total)}</span>
+            </div>
+          ))}
+          <div role="row" className={`${cols} border-t border-v2-lake-border bg-v2-lake-tint py-2.5 font-bold`}>
+            <span role="rowheader" className="text-left text-[13px]">合計</span>
+            <span role="cell" className={cell}>{money(sum("personal"))}</span>
+            <span role="cell" className={cell}>{money(sum("pool"))}</span>
+            <span role="cell" className={`${cell} text-v2-lake`}>{money(sum("total"))}</span>
+          </div>
+        </div>
       </div>
     </section>
   )
