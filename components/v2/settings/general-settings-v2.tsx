@@ -2,12 +2,12 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { BookOpen, ChevronRight, ExternalLink, HelpCircle, Loader2, MessageCircle } from "lucide-react"
+import { Bell, BookOpen, ChevronRight, ExternalLink, HelpCircle, Loader2, MessageCircle, Monitor, Moon, Sun, Wallet } from "lucide-react"
 import { useLiff } from "@/components/auth/liff-provider"
 import { useTheme } from "@/components/system/theme-provider"
-import { CurrencySelect } from "@/components/ui/currency-select"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
+import { V2CurrencyField } from "@/components/v2/ui/currency-field"
 import type { CurrencyCode } from "@/lib/constants/currencies"
 import { useOnboarding } from "@/lib/hooks"
 import { useBetaToggle } from "@/lib/hooks/use-beta-toggle"
@@ -23,12 +23,12 @@ const NOTIFICATION_ITEMS: { key: keyof NotificationPreferences; label: string }[
 ]
 
 const APPEARANCE_OPTIONS = [
-  { value: "light", label: "淺色" },
-  { value: "dark", label: "深色" },
-  { value: "system", label: "系統" },
+  { value: "light", label: "淺色", Icon: Sun },
+  { value: "dark", label: "深色", Icon: Moon },
+  { value: "system", label: "系統", Icon: Monitor },
 ] as const
 
-const cardClass = "rounded-2xl border border-v2-line bg-v2-surface p-4"
+const cardClass = "rounded-[18px] border border-v2-line bg-v2-surface p-4"
 const cardTitleClass = "m-0 text-[13px] font-bold text-v2-lake"
 
 export function GeneralSettingsV2() {
@@ -64,9 +64,9 @@ export function GeneralSettingsV2() {
             type="button"
             aria-label="編輯個人資料"
             onClick={() => router.push("/settings/profile")}
-            className="flex items-center gap-3.5 rounded-2xl bg-v2-lake p-4 text-left text-v2-paper"
+            className="flex items-center gap-3.5 rounded-[18px] bg-v2-lake p-4 text-left text-v2-paper"
           >
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-v2-surface/15 text-base font-bold">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-v2-paper/15 text-base font-bold">
               {displayName.charAt(0)}
             </span>
             <span className="min-w-0 flex-1">
@@ -110,63 +110,47 @@ export function GeneralSettingsV2() {
 
           <div className={`${cardClass} flex flex-col gap-3`}>
             <p className={cardTitleClass}>外觀</p>
-            <div className="flex gap-1.5 rounded-[10px] bg-v2-sand p-1">
-              {APPEARANCE_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  aria-pressed={theme === option.value}
-                  onClick={() => setTheme(option.value)}
-                  className={`flex-1 rounded-lg py-2.5 text-xs font-bold ${
-                    theme === option.value ? "bg-v2-surface shadow-sm" : "text-v2-ink-muted"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
+            <div className="flex gap-2">
+              {APPEARANCE_OPTIONS.map(({ value, label, Icon }) => {
+                const active = theme === value
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setTheme(value)}
+                    className={`flex flex-1 flex-col items-center gap-1.5 rounded-xl border px-2 py-3 ${
+                      active ? "border-[1.5px] border-v2-lake bg-v2-lake-soft" : "border-v2-line bg-v2-paper"
+                    }`}
+                  >
+                    <Icon aria-hidden="true" className={`h-4 w-4 ${active ? "text-v2-lake" : "text-v2-ink-muted"}`} />
+                    <span className={`text-xs ${active ? "font-bold text-v2-lake" : "font-semibold text-v2-ink-muted"}`}>{label}</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 
           <div className={`${cardClass} flex flex-col gap-3.5`}>
-            <p className={cardTitleClass}>記帳偏好</p>
-            <div>
-              <label className="mb-2 block text-xs font-semibold text-v2-ink-muted">預設幣別</label>
-              <CurrencySelect
-                value={preferences.defaultCurrency as CurrencyCode}
-                onChange={(currency) => save({ defaultCurrency: currency })}
-                className="w-full"
-              />
-              <p className="mt-1.5 text-xs text-v2-ink-subtle">新增支出時優先使用此幣別</p>
+            <div className="flex items-center gap-2">
+              <Wallet className="h-[15px] w-[15px] text-v2-lake" aria-hidden="true" />
+              <p className={cardTitleClass}>記帳偏好</p>
             </div>
             <div>
-              <label className="mb-2 block text-xs font-semibold text-v2-ink-muted">預設分帳方式</label>
-              <div className="flex gap-1.5 rounded-[10px] bg-v2-sand p-1">
-                <button
-                  type="button"
-                  aria-pressed={preferences.defaultSplitMode === "equal"}
-                  onClick={() => save({ defaultSplitMode: "equal" })}
-                  className={`flex-1 rounded-lg py-2.5 text-xs font-bold ${
-                    preferences.defaultSplitMode === "equal" ? "bg-v2-surface shadow-sm" : "text-v2-ink-muted"
-                  }`}
-                >
-                  均分
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={preferences.defaultSplitMode === "custom"}
-                  onClick={() => save({ defaultSplitMode: "custom" })}
-                  className={`flex-1 rounded-lg py-2.5 text-xs font-bold ${
-                    preferences.defaultSplitMode === "custom" ? "bg-v2-surface shadow-sm" : "text-v2-ink-muted"
-                  }`}
-                >
-                  自訂金額
-                </button>
-              </div>
+              <label className="mb-2 block text-xs font-semibold text-v2-ink-muted">預設幣別</label>
+              <V2CurrencyField
+                value={preferences.defaultCurrency}
+                onChange={(currency) => save({ defaultCurrency: currency as CurrencyCode })}
+              />
+              <p className="mt-1.5 text-xs text-v2-ink-subtle">新增支出時優先使用此幣別</p>
             </div>
           </div>
 
           <div className={`${cardClass} flex flex-col gap-3`}>
-            <p className={cardTitleClass}>LINE 通知</p>
+            <div className="flex items-center gap-2">
+              <Bell className="h-[15px] w-[15px] text-v2-lake" aria-hidden="true" />
+              <p className={cardTitleClass}>LINE 通知</p>
+            </div>
             <p className="m-0 text-xs text-v2-ink-subtle">控制支出操作時是否發送 LINE 群組通知</p>
             {NOTIFICATION_ITEMS.map((item) => {
               const checked = preferences.notifications[item.key]

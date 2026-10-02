@@ -94,20 +94,25 @@ describe("GeneralSettingsV2", () => {
     render(<GeneralSettingsV2 />)
     expect(screen.getByRole("button", { name: "深色" })).toHaveAttribute("aria-pressed", "true")
     expect(screen.getByRole("button", { name: "淺色" })).toHaveAttribute("aria-pressed", "false")
+    expect(screen.getByRole("button", { name: "淺色" }).querySelector("svg")).not.toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "淺色" }))
     expect(mockSetTheme).toHaveBeenCalledWith("light")
+  })
+
+  it("no longer shows the default split mode control", () => {
+    render(<GeneralSettingsV2 />)
+    expect(screen.queryByText("預設分帳方式")).not.toBeInTheDocument()
+  })
+
+  it("shows the full default currency label", () => {
+    render(<GeneralSettingsV2 />)
+    expect(screen.getByText("TWD 新台幣")).toBeInTheDocument()
   })
 
   it("toggles the delete-expense notification off", () => {
     render(<GeneralSettingsV2 />)
     fireEvent.click(screen.getByRole("switch", { name: "刪除支出時通知" }))
     expect(mockSave).toHaveBeenCalledWith({ notifications: { expenseDeleted: false } })
-  })
-
-  it("switches the default split mode to custom", () => {
-    render(<GeneralSettingsV2 />)
-    fireEvent.click(screen.getByRole("button", { name: "自訂金額" }))
-    expect(mockSave).toHaveBeenCalledWith({ defaultSplitMode: "custom" })
   })
 
   it("navigates to the profile page from the profile card", () => {
