@@ -351,6 +351,11 @@
   --color-v2-danger-strong: var(--v2-danger-strong);
   --color-v2-overlay: var(--v2-overlay);
   --color-v2-knob: var(--v2-knob);
+  --color-v2-lake-edge: var(--v2-lake-edge);
+  --color-v2-danger-tint: var(--v2-danger-tint);
+  --color-v2-danger-border: var(--v2-danger-border);
+  --color-v2-danger-wash: var(--v2-danger-wash);
+  --color-v2-danger-edge: var(--v2-danger-edge);
   --font-v2-serif: var(--font-noto-serif-tc), serif;
   --font-v2-sans: var(--font-noto-sans-tc), sans-serif;
 }
@@ -391,6 +396,11 @@
   --v2-danger-strong: #C4432A;
   --v2-overlay: rgb(0 0 0 / 0.4);
   --v2-knob: #FFFFFF;
+  --v2-lake-edge: #B7D9CB;
+  --v2-danger-tint: #FDF1EC;
+  --v2-danger-border: #F3D3C4;
+  --v2-danger-wash: #FDF2EF;
+  --v2-danger-edge: #E8A796;
 }
 
 [data-cover-art] { background-color: var(--cover-bg); color: var(--cover-fg); }
@@ -431,6 +441,16 @@
   --v2-danger-strong: #E8735A;
   --v2-overlay: rgb(0 0 0 / 0.6);
   --v2-knob: #F2EDE4;
+  --v2-lake-edge: #2E5A4C;
+  --v2-danger-tint: #2A1713;
+  --v2-danger-border: #5A2E23;
+  --v2-danger-wash: #2E1914;
+  --v2-danger-edge: #6A3A2E;
 }
 
 .dark [data-ui="v2"] [data-cover-art] { background-color: var(--cover-bg-dark); color: var(--cover-fg-dark); }
+
+[data-ui="v2"] .v2-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--v2-line) transparent;
+}
