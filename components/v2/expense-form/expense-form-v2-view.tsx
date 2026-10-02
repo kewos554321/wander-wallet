@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
-import { CalendarIcon, Trash2 } from "lucide-react"
+import { CalendarIcon, Check, Trash2 } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { Calculator } from "@/components/ui/calculator"
 import { ImagePicker } from "@/components/ui/image-picker"
@@ -112,13 +112,19 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
       </div>
 
       {props.canNotifyLine && (
-        <label className="mx-4 mb-4 flex items-center gap-2.5 rounded-[14px] border border-v2-line bg-v2-surface px-3.5 py-3">
+        <label className="mx-4 mb-4 flex items-center gap-[10px] rounded-[14px] border border-v2-line bg-v2-surface px-[14px] py-3">
           <input
             type="checkbox"
             checked={state.notifyLine}
             onChange={(e) => actions.setNotifyLine(e.target.checked)}
-            className="h-5 w-5 accent-v2-lake"
+            className="peer sr-only"
           />
+          <span
+            aria-hidden="true"
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-v2-check bg-v2-surface text-transparent peer-checked:border-v2-lake peer-checked:bg-v2-lake peer-checked:text-v2-on-lake"
+          >
+            <Check className="h-3 w-3" />
+          </span>
           <span>
             <span className="block text-xs font-bold">通知 LINE 群組</span>
             <span className="mt-px block text-xs text-v2-ink-muted">儲存後自動發送通知到群組</span>

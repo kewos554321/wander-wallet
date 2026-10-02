@@ -308,6 +308,25 @@ describe("ExpenseFormV2View", () => {
     expect(screen.queryByText("通知 LINE 群組")).not.toBeInTheDocument()
   })
 
+  it("keeps a working, accessible notify checkbox", () => {
+    const { hook, rerender } = renderForm()
+    const checkbox = screen.getByRole("checkbox", { name: /通知 LINE 群組/ })
+    expect(checkbox).toBeChecked()
+    fireEvent.click(checkbox)
+    rerender()
+    expect(hook.result.current.state.notifyLine).toBe(false)
+  })
+
+  it("draws a custom lake checkbox for the notify row", () => {
+    renderForm()
+    const checkbox = screen.getByRole("checkbox", { name: /通知 LINE 群組/ })
+    expect(checkbox.className).toContain("peer")
+    expect(checkbox.className).toContain("sr-only")
+    const box = checkbox.parentElement?.querySelector('span[aria-hidden="true"]')
+    expect(box?.className).toContain("border-v2-check")
+    expect(box?.className).toContain("peer-checked:bg-v2-lake")
+  })
+
   it("edit mode shows 儲存變更 and delete", () => {
     const onRequestDelete = vi.fn()
     const { hook, rerender } = renderForm({ mode: "edit", onRequestDelete })
