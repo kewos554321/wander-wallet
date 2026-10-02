@@ -9,13 +9,13 @@ export function BalanceCard({ balance, currency, projectId }: { balance: number;
   const [showInfo, setShowInfo] = useState(false)
   const rounded = Math.round(balance)
   const sign = rounded > 0 ? "+" : rounded < 0 ? "−" : ""
-  const tone = rounded < 0 ? "text-v2-danger" : "text-v2-lake"
+  const tone = rounded < 0 ? "text-v2-danger" : "text-v2-ink"
 
   return (
     <div className="mx-4 mt-3 rounded-[18px] border border-v2-line bg-v2-surface px-4 py-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1">
-          <p className="m-0 text-sm font-medium leading-5 tracking-[.1px]">我的餘額</p>
+          <p className="m-0 text-[13px] font-bold leading-4 text-v2-lake">我的餘額</p>
           <button
             type="button"
             onClick={() => setShowInfo((v) => !v)}

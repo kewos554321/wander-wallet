@@ -166,6 +166,26 @@ describe("ProjectOverviewV2View", () => {
     expect(screen.getByText("還沒有支出，點右下角開始記帳")).toBeInTheDocument()
   })
 
+  it("uses ink for a non-negative balance, danger for a negative one and a lake label", () => {
+    const { rerender } = render(
+      <ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} onCamera={vi.fn()} />
+    )
+    expect(screen.getByText("+TWD 4,820").className).toContain("text-v2-ink")
+    expect(screen.getByText("我的餘額").className).toContain("text-v2-lake")
+    expect(screen.getByText("我的餘額").className).toContain("text-[13px]")
+
+    rerender(
+      <ProjectOverviewV2View
+        project={project}
+        summary={{ ...summary, userBalance: -1200.4 }}
+        onShare={vi.fn()}
+        onVoice={vi.fn()}
+        onCamera={vi.fn()}
+      />
+    )
+    expect(screen.getByText("−TWD 1,200").className).toContain("text-v2-danger")
+  })
+
   it("wires share, voice, camera and add actions", () => {
     const onShare = vi.fn()
     const onVoice = vi.fn()
