@@ -54,6 +54,7 @@ describe("ProjectsV2View", () => {
     render(<ProjectsV2View projects={projects} loading={false} userName="Emma" now={now} />)
     expect(screen.getByText("早安，Emma")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "你的旅程" })).toBeInTheDocument()
+    expect(screen.getByText("每一趟旅程，都值得被好好記住")).toBeInTheDocument()
 
     const tokyo = screen.getByRole("link", { name: /東京賞楓 5 日/ })
     expect(tokyo).toHaveAttribute("href", "/projects/tokyo")

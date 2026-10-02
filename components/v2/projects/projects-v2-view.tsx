@@ -62,6 +62,7 @@ export function ProjectsV2View({ projects, loading, userName, now, adSlot }: Pro
             {userName ? `${getGreeting(now)}，${userName}` : "你好"}
           </p>
           <h1 className="m-0 font-v2-serif text-[32px] font-bold leading-10">你的旅程</h1>
+          <p className="mt-1 text-[12px] leading-4 tracking-[.3px] text-v2-ink-muted">每一趟旅程，都值得被好好記住</p>
         </div>
         <Link
           href="/projects/new"
