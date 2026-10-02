@@ -13,6 +13,31 @@ function setGeolocation(value: unknown) {
 
 const VALUE = { location: "Test Location", latitude: 25.0, longitude: 121.5 }
 
+// jsdom does not provide GeolocationPositionError; the component matches on it
+// inside its catch block, so tests that exercise geolocation errors stub it.
+// WebIDL exposes interface constants on the prototype, which is how the
+// component reads err.PERMISSION_DENIED, so model that here.
+const GEO_CODES = { PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 } as const
+class GeoError extends Error {
+  code: number
+  readonly PERMISSION_DENIED = GEO_CODES.PERMISSION_DENIED
+  readonly POSITION_UNAVAILABLE = GEO_CODES.POSITION_UNAVAILABLE
+  readonly TIMEOUT = GEO_CODES.TIMEOUT
+
+  constructor(code: number) {
+    super("geolocation error")
+    this.code = code
+  }
+}
+
+function setGeolocationReject(code: number) {
+  vi.stubGlobal("GeolocationPositionError", GeoError)
+  setGeolocation({
+    getCurrentPosition: (_resolve: PositionCallback, reject: PositionErrorCallback) =>
+      reject(new GeoError(code) as unknown as GeolocationPositionError),
+  })
+}
+
 describe("LocationPickerV2", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -131,5 +156,67 @@ describe("LocationPickerV2", () => {
     fireEvent.click(screen.getByText("重新定位"))
     expect(screen.getByText("使用目前位置")).toBeInTheDocument()
     expect(screen.getByText("Test Location")).toBeInTheDocument()
+  })
+
+  // Coverage for search early-return and failure branches.
+  it("does not call the API when the query is only whitespace", async () => {
+    render(<LocationPickerV2 onChange={vi.fn()} />)
+    fireEvent.click(screen.getByText("新增地點"))
+    fireEvent.change(screen.getByPlaceholderText("搜尋地點..."), { target: { value: "   " } })
+    await new Promise((resolve) => setTimeout(resolve, 700))
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it("shows an error when the geocode search fails", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, json: () => Promise.resolve({ error: "搜尋失敗" }) })
+    render(<LocationPickerV2 onChange={vi.fn()} />)
+    fireEvent.click(screen.getByText("新增地點"))
+    fireEvent.change(screen.getByPlaceholderText("搜尋地點..."), { target: { value: "台北" } })
+    expect(await screen.findByText("搜尋失敗")).toBeInTheDocument()
+  })
+
+  it("shows a network error when the geocode search throws", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("network down"))
+    render(<LocationPickerV2 onChange={vi.fn()} />)
+    fireEvent.click(screen.getByText("新增地點"))
+    fireEvent.change(screen.getByPlaceholderText("搜尋地點..."), { target: { value: "台北" } })
+    expect(await screen.findByText("網路錯誤，請稍後再試")).toBeInTheDocument()
+  })
+
+  // Coverage for the geolocation error branches.
+  it("shows a permission error when geolocation is denied", async () => {
+    setGeolocationReject(GEO_CODES.PERMISSION_DENIED)
+    render(<LocationPickerV2 onChange={vi.fn()} />)
+    fireEvent.click(screen.getByText("新增地點"))
+    fireEvent.click(screen.getByText("使用目前位置"))
+    expect(await screen.findByText("請允許存取位置權限")).toBeInTheDocument()
+  })
+
+  it("shows an unavailable error when the position is unavailable", async () => {
+    setGeolocationReject(GEO_CODES.POSITION_UNAVAILABLE)
+    render(<LocationPickerV2 onChange={vi.fn()} />)
+    fireEvent.click(screen.getByText("新增地點"))
+    fireEvent.click(screen.getByText("使用目前位置"))
+    expect(await screen.findByText("無法取得位置資訊")).toBeInTheDocument()
+  })
+
+  it("shows a timeout error when geolocation times out", async () => {
+    setGeolocationReject(GEO_CODES.TIMEOUT)
+    render(<LocationPickerV2 onChange={vi.fn()} />)
+    fireEvent.click(screen.getByText("新增地點"))
+    fireEvent.click(screen.getByText("使用目前位置"))
+    expect(await screen.findByText("取得位置逾時，請重試")).toBeInTheDocument()
+  })
+
+  it("shows a generic error when geolocation fails with an unknown error", async () => {
+    vi.stubGlobal("GeolocationPositionError", GeoError)
+    setGeolocation({
+      getCurrentPosition: (_resolve: PositionCallback, reject: PositionErrorCallback) =>
+        reject(new Error("unknown failure")),
+    })
+    render(<LocationPickerV2 onChange={vi.fn()} />)
+    fireEvent.click(screen.getByText("新增地點"))
+    fireEvent.click(screen.getByText("使用目前位置"))
+    expect(await screen.findByText("取得位置時發生錯誤")).toBeInTheDocument()
   })
 })
