@@ -63,7 +63,52 @@ describe("ExpenseFormV2View", () => {
     const split = screen.getByRole("region", { name: "分攤成員" })
     expect(within(split).getByText("已選 2 人")).toBeInTheDocument()
     expect(within(split).getByText("金額相符")).toBeInTheDocument()
-    expect(within(split).getByText("個人項目 0（0 項）＋ 共同分攤 100（2 人）＝ 100 / TWD 100")).toBeInTheDocument()
+    expect(within(split).getByText("個人項目 $0（0 項）＋ 共同分攤 $100（2 人）= $100 / $100")).toBeInTheDocument()
+  })
+
+  it("uses the shared lake section title on the split card", () => {
+    renderForm()
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    expect(split.className).toContain("rounded-2xl")
+    expect(within(split).getByText("分攤成員").className).toContain("text-v2-lake")
+  })
+
+  it("keeps the personal-mode label lake when the toggle is off", () => {
+    renderForm()
+    const label = screen.getByText("先扣個人項目")
+    expect(label.className).toContain("text-[13px]")
+    expect(label.className).toContain("text-v2-lake")
+  })
+
+  it("dims unselected pool pills and their avatars", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    expect(within(split).getByRole("button", { name: "小雨" }).className).not.toContain("opacity-50")
+    act(() => hook.result.current.actions.togglePool("a"))
+    rerender()
+    const unselected = within(split).getByRole("button", { name: "小雨" })
+    expect(unselected.className).toContain("opacity-50")
+    expect(unselected.querySelector("span[aria-hidden='true']")?.className).toContain("opacity-40")
+  })
+
+  it("styles the unpinned pin button with the check border", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    expect(screen.getByRole("button", { name: "小雨固定金額" }).className).toContain("border-v2-check")
+  })
+
+  it("wraps the pinned amount in a bordered box with a dollar prefix", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    fireEvent.click(screen.getByRole("button", { name: "小雨固定金額" }))
+    rerender()
+    const input = screen.getByLabelText("小雨的分攤金額")
+    expect(input.closest("label")?.className).toContain("border-v2-lake-border")
+    expect(input.closest("label")).toHaveTextContent("$")
   })
 
   it("edits personal items", () => {
@@ -108,7 +153,7 @@ describe("ExpenseFormV2View", () => {
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
     // Not pinned: the share is plain text, not an input.
-    expect(screen.getByLabelText("小雨的分攤金額")).toHaveTextContent(/^50$/)
+    expect(screen.getByLabelText("小雨的分攤金額")).toHaveTextContent(/^\$50$/)
     fireEvent.click(screen.getByRole("button", { name: "小雨固定金額" }))
     rerender()
     fireEvent.change(screen.getByLabelText("小雨的分攤金額"), { target: { value: "30" } })
@@ -181,9 +226,9 @@ describe("ExpenseFormV2View", () => {
     })
     rerender()
     // Pool of 2 splits the remaining 900; 小雨's row shows 450, not 450 + 100.
-    expect(screen.getByText(/應分攤金額/)).toHaveTextContent("900")
-    expect(screen.getByLabelText("小雨的分攤金額")).toHaveTextContent(/^450$/)
-    expect(screen.getByLabelText("志明的分攤金額")).toHaveTextContent(/^450$/)
+    expect(screen.getByText(/剩餘應攤分金額/)).toHaveTextContent("$900")
+    expect(screen.getByLabelText("小雨的分攤金額")).toHaveTextContent(/^\$450$/)
+    expect(screen.getByLabelText("志明的分攤金額")).toHaveTextContent(/^\$450$/)
     expect(hook.result.current.derived.shares.map((s) => s.shareAmount)).toEqual([550, 450])
   })
 

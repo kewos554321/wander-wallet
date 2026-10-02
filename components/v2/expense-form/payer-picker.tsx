@@ -5,7 +5,7 @@ const AVATAR_TONES = ["bg-v2-lake-tint text-v2-lake", "bg-v2-coral-soft text-v2-
 // Shared member pill look for the payer, personal-item and shared-pool pickers.
 export function memberPillClass(selected: boolean) {
   return `inline-flex items-center gap-1.5 rounded-full px-3.5 py-[5px] ${
-    selected ? "border border-v2-lake bg-v2-lake text-v2-on-lake" : "border border-v2-lake-border bg-v2-lake-soft text-v2-ink"
+    selected ? "border border-v2-lake bg-v2-lake text-v2-on-lake" : "border border-v2-lake-border bg-v2-lake-soft text-v2-ink opacity-50"
   }`
 }
 

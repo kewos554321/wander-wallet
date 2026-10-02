@@ -1,10 +1,11 @@
 "use client"
 
 import { CheckCircle2, CornerRightDown, Pin, PinOff, Plus, UserMinus, X } from "lucide-react"
-import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
+import { formatAmount } from "@/lib/constants/currencies"
 import { toMoneyInput } from "@/lib/money-input"
 import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
 import { memberPillClass, memberTone } from "./payer-picker"
+import { SECTION_CARD, SECTION_TITLE } from "./section-card"
 import { SplitSummary } from "./split-summary"
 
 type Draft = ReturnType<typeof useExpenseDraft>
@@ -18,7 +19,6 @@ const itemInput = "min-w-0 rounded-lg border border-v2-lake-border bg-v2-surface
 export function SplitEditor({ members, draft, currency }: { members: DraftMember[]; draft: Draft; currency: string }) {
   const { state, actions, derived } = draft
   // Currency code only on totals; per-member amounts show the number alone.
-  const fmt = (n: number) => formatCurrency(Math.round(n * 100) / 100, currency)
   const num = (n: number) => formatAmount(Math.round(n * 100) / 100, currency)
   const tone = (id: string) => memberTone(members.findIndex((m) => m.id === id))
   const name = (id: string) => members.find((m) => m.id === id)?.displayName ?? ""
@@ -32,11 +32,11 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
   const poolCount = state.pool.length
 
   return (
-    <section aria-label="分攤成員" className="mx-4 mb-4">
+    <section aria-label="分攤成員" className={SECTION_CARD}>
       <div className="mb-2.5 flex items-center justify-between">
-        <p className="m-0 text-sm font-medium leading-5 tracking-[.1px]">分攤成員</p>
+        <p className={`m-0 ${SECTION_TITLE}`}>分攤成員</p>
         <label className="flex items-center gap-1.5">
-          <span className={`text-xs font-semibold ${state.personalMode ? "text-v2-link" : "text-v2-ink-muted"}`}>先扣個人項目</span>
+          <span className="text-[13px] font-bold text-v2-lake">先扣個人項目</span>
           <button
             type="button"
             role="switch"
@@ -84,11 +84,11 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
             })}
           </div>
           {state.personalMembers.length === 0 ? (
-            <p className="rounded-[14px] border border-dashed border-v2-line bg-v2-surface py-3.5 text-center text-xs text-v2-ink-subtle">
+            <p className="rounded-[14px] border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
               目前沒有人有個人項目，點上面的名字挑一位。
             </p>
           ) : (
-            <div className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-surface">
+            <div className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
               {state.personalMembers.map((id) => {
                 const items = state.personalItems[id] ?? []
                 const sum = items.reduce((s, i) => s + (Number(i.amount) || 0), 0)
@@ -100,7 +100,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                       </span>
                       <span className="flex flex-1 items-center justify-between gap-2 text-[13px]">
                         <span className="font-semibold">{name(id)}</span>
-                        <span className="font-bold">{num(sum)}</span>
+                        <span className="font-bold">${num(sum)}</span>
                       </span>
                       <button type="button" aria-label={`為${name(id)}新增品項`} onClick={() => actions.addItem(id)} className="flex h-[22px] shrink-0 items-center justify-center gap-px rounded-md bg-v2-lake-tint px-1 text-v2-lake">
                         <CornerRightDown className="h-3 w-3" aria-hidden="true" />
@@ -148,7 +148,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
 
       <div className="mb-2.5 mt-3 flex items-center justify-between gap-2">
         <p className="m-0 text-xs font-semibold text-v2-ink-muted">
-          共同分攤 <span className="font-bold text-v2-lake">（應分攤金額 {fmt(Math.max(0, sharedTotal))}）</span>
+          共同分攤 <span className="font-bold text-v2-ink">（剩餘應攤分金額 ${num(Math.max(0, derived.autoRemaining))}）</span>
         </p>
         <button type="button" onClick={() => actions.setPoolAll(!allInPool)} className="shrink-0 text-xs font-bold text-v2-lake">
           {allInPool ? "取消全選" : "全選"}
@@ -165,7 +165,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
               onClick={() => actions.togglePool(m.id)}
               className={memberPillClass(on)}
             >
-              <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold ${tone(m.id)}`} aria-hidden="true">
+              <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold ${tone(m.id)} ${on ? "" : "opacity-40"}`} aria-hidden="true">
                 {m.displayName.charAt(0)}
               </span>
               <span className="text-xs font-semibold">{m.displayName}</span>
@@ -174,12 +174,12 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
         })}
       </div>
       {state.pool.length === 0 && (
-        <p className="mt-2.5 rounded-[14px] border border-dashed border-v2-line bg-v2-surface py-3.5 text-center text-xs text-v2-ink-subtle">
+        <p className="mt-2.5 rounded-[14px] border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
           目前沒有人參與共同分攤，點上面的名字挑選分攤的人。
         </p>
       )}
       {state.pool.length > 0 && (
-        <div className="mt-2.5 overflow-hidden rounded-[14px] border border-v2-line bg-v2-surface">
+        <div className="mt-2.5 overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
           {state.pool.map((id) => {
             const custom = state.customShares[id]
             const isCustom = custom !== undefined
@@ -191,20 +191,23 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                 <span className="flex-1 text-[13px] font-semibold">{name(id)}</span>
                 {isCustom ? (
                   // An emptied input keeps the pinned state; the draft treats "" as auto.
-                  <input
-                    aria-label={`${name(id)}的分攤金額`}
-                    inputMode="decimal"
-                    value={custom}
-                    placeholder={String(poolShareOf(id))}
-                    onChange={(e) => {
-                      const v = toMoneyInput(e.target.value)
-                      if (v !== null) actions.setCustomShare(id, v)
-                    }}
-                    className="w-24 rounded-lg border border-v2-lake bg-v2-surface px-2.5 py-1.5 text-right text-[13px] font-bold outline-none"
-                  />
+                  <label className="flex w-24 items-center rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-[13px] font-bold">
+                    <span aria-hidden="true">$</span>
+                    <input
+                      aria-label={`${name(id)}的分攤金額`}
+                      inputMode="decimal"
+                      value={custom}
+                      placeholder={String(poolShareOf(id))}
+                      onChange={(e) => {
+                        const v = toMoneyInput(e.target.value)
+                        if (v !== null) actions.setCustomShare(id, v)
+                      }}
+                      className="w-full min-w-0 bg-transparent text-right outline-none"
+                    />
+                  </label>
                 ) : (
                   <span aria-label={`${name(id)}的分攤金額`} className="text-right text-[13px] font-bold">
-                    {num(poolShareOf(id))}
+                    ${num(poolShareOf(id))}
                   </span>
                 )}
                 <button
@@ -212,7 +215,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                   aria-label={isCustom ? `${name(id)}取消固定金額` : `${name(id)}固定金額`}
                   aria-pressed={isCustom}
                   onClick={() => (isCustom ? actions.clearCustomShare(id) : actions.setCustomShare(id, String(poolShareOf(id))))}
-                  className={`${smallButton} ${isCustom ? "bg-v2-lake text-v2-on-lake" : "bg-v2-lake-tint text-v2-lake"}`}
+                  className={`${smallButton} ${isCustom ? "bg-v2-lake text-v2-on-lake" : "border-[1.5px] border-v2-check text-v2-ink-muted"}`}
                 >
                   {isCustom ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
                 </button>
@@ -238,8 +241,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
           )}
         </div>
         <p className="mt-[3px] break-words text-xs leading-normal text-v2-ink-muted">
-          個人項目 {num(derived.personalTotal)}（{derived.itemCount} 項）＋ 共同分攤 {num(sharedTotal)}（{poolCount} 人）＝{" "}
-          {num(derived.shares.reduce((s, x) => s + x.shareAmount, 0))} / {fmt(derived.splitInput.amount)}
+          個人項目 ${num(derived.personalTotal)}（{derived.itemCount} 項）＋ 共同分攤 ${num(sharedTotal)}（{poolCount} 人）= ${num(derived.shares.reduce((s, x) => s + x.shareAmount, 0))} / ${num(derived.splitInput.amount)}
         </p>
       </div>
 
