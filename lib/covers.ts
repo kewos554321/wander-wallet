@@ -97,6 +97,12 @@ export const COVER_ICONS = [
   { id: "car", label: "汽車" },
   { id: "bed", label: "住宿" },
   { id: "star", label: "星星" },
+  { id: "camera", label: "相機" },
+  { id: "fork-knife", label: "美食" },
+  { id: "hiking", label: "登山" },
+  { id: "mountain", label: "山岳" },
+  { id: "heart", label: "愛心" },
+  { id: "sparkle", label: "亮點" },
 ] as const
 
 export const COVER_COLORS = [
@@ -106,7 +112,12 @@ export const COVER_COLORS = [
   { id: "rose", fg: "#A14A68", bg: "#F5DDE6", darkFg: "#D77E9C", darkBg: "#37212A" },
   { id: "gold", fg: "#9C7A28", bg: "#F6ECCF", darkFg: "#D4AE55", darkBg: "#332A16" },
   { id: "plum", fg: "#6B5B95", bg: "#E7E2F2", darkFg: "#A897D6", darkBg: "#2A2438" },
+  { id: "ink", fg: "#2A241F", bg: "#E9E5DF", darkFg: "#D9D2C7", darkBg: "#2A2622" },
 ] as const
+
+// D5: red stays in COVER_COLORS for old saved covers but is hidden from the picker.
+const PICKER_COLOR_IDS = ["lake", "coral", "plum", "gold", "rose", "ink"] as const
+export const COVER_PICKER_COLORS = PICKER_COLOR_IDS.map((id) => COVER_COLORS.find((c) => c.id === id)!)
 
 export const DEFAULT_ICON_COVER = "icon:leaf;color:lake"
 

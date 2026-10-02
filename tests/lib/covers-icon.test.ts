@@ -1,10 +1,13 @@
 import { describe, it, expect } from "vitest"
-import { COVER_ICONS, COVER_COLORS, DEFAULT_ICON_COVER, buildIconCover, isValidCover, parseCover } from "@/lib/covers"
+import { COVER_ICONS, COVER_COLORS, COVER_PICKER_COLORS, DEFAULT_ICON_COVER, PRESET_COVERS, buildIconCover, isValidCover, parseCover, toLegacyCover } from "@/lib/covers"
 
 describe("icon covers", () => {
   it("lists icons and colors", () => {
-    expect(COVER_ICONS.map((i) => i.id)).toEqual(["compass", "leaf", "utensils", "globe", "car", "bed", "star"])
-    expect(COVER_COLORS.map((c) => c.id)).toEqual(["lake", "coral", "red", "rose", "gold", "plum"])
+    expect(COVER_ICONS.map((i) => i.id)).toEqual([
+      "compass", "leaf", "utensils", "globe", "car", "bed", "star",
+      "camera", "fork-knife", "hiking", "mountain", "heart", "sparkle",
+    ])
+    expect(COVER_COLORS.map((c) => c.id)).toEqual(["lake", "coral", "red", "rose", "gold", "plum", "ink"])
     expect(DEFAULT_ICON_COVER).toBe("icon:leaf;color:lake")
   })
   it("builds and parses", () => {
@@ -23,6 +26,17 @@ describe("icon covers", () => {
       expect(isValidCover(bad)).toBe(false)
     }
   })
+  it("accepts the new icon ids and rejects unknown ones", () => {
+    expect(isValidCover("icon:camera;color:ink")).toBe(true)
+    expect(parseCover("icon:fork-knife;color:ink")).toEqual({ type: "icon", iconId: "fork-knife", colorId: "ink" })
+    expect(isValidCover("icon:rocket;color:lake")).toBe(false)
+  })
+  it("keeps red covers parseable for existing data but hides red from the picker", () => {
+    expect(parseCover("icon:compass;color:red")).toEqual({ type: "icon", iconId: "compass", colorId: "red" })
+    expect(isValidCover("icon:compass;color:red")).toBe(true)
+    expect(toLegacyCover(parseCover("icon:compass;color:red"))).toEqual({ type: "preset", presetId: PRESET_COVERS[0].id })
+    expect(COVER_PICKER_COLORS.map((c) => c.id)).toEqual(["lake", "coral", "plum", "gold", "rose", "ink"])
+  })
   it("has dark colors for all cover colors", () => {
     expect(COVER_COLORS.map(({ id, darkFg, darkBg }) => ({ id, darkFg, darkBg }))).toEqual([
       { id: "lake", darkFg: "#4FB394", darkBg: "#17302A" },
@@ -31,6 +45,7 @@ describe("icon covers", () => {
       { id: "rose", darkFg: "#D77E9C", darkBg: "#37212A" },
       { id: "gold", darkFg: "#D4AE55", darkBg: "#332A16" },
       { id: "plum", darkFg: "#A897D6", darkBg: "#2A2438" },
+      { id: "ink", darkFg: "#D9D2C7", darkBg: "#2A2622" },
     ])
   })
 })
