@@ -32,8 +32,8 @@ vi.mock("@/lib/hooks/useSaveExpense", () => ({
 // Renders the current location so tests can observe the shared geolocation
 // helper's result being applied to the draft (the real picker is a full UI
 // widget we don't need here).
-vi.mock("@/components/location-picker", () => ({
-  LocationPicker: ({ value }: { value: { location: string | null } }) => (
+vi.mock("@/components/v2/expense-form/location-picker-v2", () => ({
+  LocationPickerV2: ({ value }: { value: { location: string | null } }) => (
     <span data-testid="location">{value?.location ?? ""}</span>
   ),
 }))

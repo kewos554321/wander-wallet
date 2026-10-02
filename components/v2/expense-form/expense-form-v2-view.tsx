@@ -8,7 +8,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Calculator } from "@/components/ui/calculator"
 import { ImagePicker } from "@/components/ui/image-picker"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { LocationPicker } from "@/components/location-picker"
+import { LocationPickerV2 } from "./location-picker-v2"
 import { formatCurrency } from "@/lib/constants/currencies"
 import { SECTION_CARD, SECTION_TITLE } from "./section-card"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
@@ -97,7 +97,7 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
 
       <div className={SECTION_CARD}>
         <p className={`mb-2 ${SECTION_TITLE}`}>消費地點</p>
-        <LocationPicker value={state.location} onChange={actions.setLocation} />
+        <LocationPickerV2 value={state.location} onChange={actions.setLocation} />
       </div>
 
       <div className={SECTION_CARD}>
