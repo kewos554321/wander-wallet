@@ -329,4 +329,101 @@ describe("ExpensesV2 container", () => {
     fireEvent.click(screen.getByRole("button", { name: "confirm-delete" }))
     await waitFor(() => expect(hook.batchDeleteExpenses).toHaveBeenCalledWith(["e1"], { notifyLine: true }))
   })
+
+  it("shows the skeleton while the project itself is still loading", () => {
+    mocks.projectData.mockReturnValue({
+      project: null,
+      members: [],
+      loading: true,
+      projectCurrency: "TWD",
+      customRates: {},
+      precision: 2,
+    })
+    render(<ExpensesV2 projectId="p1" />)
+    expect(screen.getByTestId("v2-expenses-skeleton")).toBeInTheDocument()
+  })
+
+  it("renders the notify option when the project supports it", () => {
+    mocks.projectExpenses.mockReturnValue({
+      expenses: [],
+      loading: false,
+      deleting: false,
+      canNotifyLine: true,
+      refetch: vi.fn(),
+      deleteExpense: vi.fn(),
+      batchDeleteExpenses: vi.fn(),
+    })
+    render(<ExpensesV2 projectId="p1" />)
+    expect(screen.getByText("尚無支出記錄")).toBeInTheDocument()
+  })
+
+  it("wires every filter control through the container", () => {
+    const f = {
+      filters: {
+        searchQuery: "",
+        selectedCategories: new Set<string>(),
+        selectedPayers: new Set<string>(),
+        selectedParticipants: new Set<string>(),
+        selectedCurrencies: new Set<string>(),
+        amountRange: [0, 0] as [number, number],
+        createdDateRange: undefined,
+        expenseDateRange: undefined,
+      },
+      filteredExpenses: [],
+      hasActiveFilters: true,
+      setSearchQuery: vi.fn(),
+      toggleCategory: vi.fn(),
+      setCategories: vi.fn(),
+      togglePayer: vi.fn(),
+      setPayers: vi.fn(),
+      toggleParticipant: vi.fn(),
+      setParticipants: vi.fn(),
+      toggleCurrency: vi.fn(),
+      setCurrencies: vi.fn(),
+      setAmountRange: vi.fn(),
+      setCreatedDateRange: vi.fn(),
+      setExpenseDateRange: vi.fn(),
+      clearFilters: vi.fn(),
+      uniquePayers: [{ id: "chi", displayName: "志明" }],
+      uniqueParticipants: [{ id: "chi", displayName: "志明" }],
+      uniqueCurrencies: ["TWD", "JPY"],
+      maxAmount: 6400,
+    }
+    mocks.expenseFilters.mockReturnValue(f)
+    render(<ExpensesV2 projectId="p1" />)
+
+    fireEvent.change(screen.getByLabelText("搜尋支出描述"), { target: { value: "拉麵" } })
+    expect(f.setSearchQuery).toHaveBeenCalledWith("拉麵")
+
+    fireEvent.click(screen.getByRole("button", { name: /類別/ }))
+    fireEvent.click(screen.getByRole("button", { name: "清除" }))
+    expect(f.setCategories).toHaveBeenCalledWith(new Set())
+
+    fireEvent.click(screen.getByRole("button", { name: /付款人/ }))
+    fireEvent.click(screen.getByRole("radio", { name: "志明" }))
+    expect(f.setPayers).toHaveBeenCalledWith(new Set(["chi"]))
+    fireEvent.click(screen.getByRole("button", { name: "清除" }))
+    expect(f.setPayers).toHaveBeenCalledWith(new Set())
+
+    fireEvent.click(screen.getByRole("button", { name: /參與者/ }))
+    fireEvent.click(screen.getByRole("checkbox", { name: "志明" }))
+    expect(f.toggleParticipant).toHaveBeenCalledWith("chi")
+    fireEvent.click(screen.getByRole("button", { name: "清除" }))
+    expect(f.setParticipants).toHaveBeenCalledWith(new Set())
+
+    fireEvent.click(screen.getByRole("button", { name: /幣別/ }))
+    fireEvent.click(screen.getByRole("button", { name: "清除" }))
+    expect(f.setCurrencies).toHaveBeenCalledWith(new Set())
+
+    fireEvent.click(screen.getByRole("button", { name: /金額/ }))
+    fireEvent.click(screen.getByRole("button", { name: "清除" }))
+    expect(f.setAmountRange).toHaveBeenCalledWith([0, 0])
+
+    fireEvent.click(screen.getByRole("button", { name: /付款日期/ }))
+    fireEvent.click(screen.getByRole("button", { name: "清除" }))
+    expect(f.setExpenseDateRange).toHaveBeenCalledWith(undefined)
+
+    fireEvent.click(screen.getByRole("button", { name: /移除篩選/ }))
+    expect(f.clearFilters).toHaveBeenCalled()
+  })
 })

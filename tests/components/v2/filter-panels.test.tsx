@@ -180,4 +180,16 @@ describe("ExpenseFilterBar panels", () => {
     fireEvent.click(screen.getByRole("button", { name: /移除篩選/ }))
     expect(props.onClearFilters).toHaveBeenCalled()
   })
+
+  it("shows an open-ended label when only the start date is chosen", () => {
+    renderBar({ filters: { ...baseFilters, expenseDateRange: { from: new Date(2026, 10, 12) } } })
+    expect(screen.getByText("11/12~")).toBeInTheDocument()
+  })
+
+  it("clears the payer when the selected payer is toggled again", () => {
+    const props = renderBar({ filters: { ...baseFilters, selectedPayers: new Set(["chi"]) } })
+    fireEvent.click(screen.getByRole("button", { name: /付款人/ }))
+    fireEvent.click(screen.getByRole("radio", { name: "志明" }))
+    expect(props.onSetPayers).toHaveBeenCalledWith(new Set())
+  })
 })

@@ -227,4 +227,31 @@ describe("MembersV2 container", () => {
     fireEvent.click(screen.getByRole("button", { name: "移除 (1)" }))
     await waitFor(() => expect(batchRemove).toHaveBeenCalledWith(["m2"]))
   })
+
+  it("deselects a member and skips removal when cancelled", async () => {
+    const removeMember = vi.fn().mockResolvedValue(undefined)
+    mockProjectMembers.mockReturnValue({
+      project,
+      loading: false,
+      isOwner: true,
+      currentUserId: "u1",
+      removing: null,
+      refetch: vi.fn(),
+      addMember: vi.fn(),
+      removeMember,
+      batchRemove: vi.fn(),
+    })
+    render(<MembersV2 projectId="p1" />)
+    fireEvent.click(screen.getByRole("button", { name: "批次" }))
+    const checkbox = () => within(screen.getByTestId("member-m2")).getByRole("checkbox")
+    fireEvent.click(checkbox())
+    expect(checkbox()).toBeChecked()
+    fireEvent.click(checkbox())
+    expect(checkbox()).not.toBeChecked()
+
+    vi.stubGlobal("confirm", vi.fn(() => false))
+    fireEvent.click(screen.getByRole("button", { name: "取消" }))
+    fireEvent.click(within(screen.getByTestId("member-m2")).getByRole("button", { name: "移除小美" }))
+    expect(removeMember).not.toHaveBeenCalled()
+  })
 })
