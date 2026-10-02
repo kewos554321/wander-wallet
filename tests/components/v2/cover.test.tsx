@@ -25,6 +25,21 @@ describe("CoverArt", () => {
     rerender(<CoverArt cover="preset:1" />)
     expect(screen.getByTestId("cover-art")).toHaveAttribute("data-cover", "preset:1")
   })
+  it("renders an existing red cover for old data", () => {
+    render(<CoverArt cover="icon:compass;color:red" />)
+    const box = screen.getByTestId("cover-art")
+    expect(box).toHaveAttribute("data-cover", "icon:compass")
+    expect(box.style.getPropertyValue("--cover-fg")).toBe("#C4472F")
+  })
+  it("renders a solid icon cover with the on-lake icon color", () => {
+    render(<CoverArt cover="icon:car;color:gold" variant="solid" />)
+    const box = screen.getByTestId("cover-art")
+    expect(box).toHaveAttribute("data-cover-art-solid", "")
+    expect(box.style.getPropertyValue("--cover-bg")).toBe("#9C7A28")
+    expect(box.style.getPropertyValue("--cover-bg-dark")).toBe("#D4AE55")
+    expect(box.style.getPropertyValue("--cover-fg")).toBe("var(--v2-on-lake)")
+    expect(box.style.getPropertyValue("--cover-fg-dark")).toBe("var(--v2-on-lake)")
+  })
 })
 
 describe("CoverPickerV2", () => {
