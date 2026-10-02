@@ -131,25 +131,32 @@ describe("ProjectOverviewV2View", () => {
     expect(screen.getByText(info)).toBeInTheDocument()
   })
 
-  it("links all 11 features", () => {
+  it("links all ten features", () => {
     render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} onCamera={vi.fn()} />)
     const grid = screen.getByRole("navigation", { name: "功能" })
-    const expected: [string, string][] = [
+    const primary: [string, string][] = [
       ["結算", "settle"],
       ["成員", "members"],
       ["統計", "stats"],
-      ["匯出", "export"],
-      ["設定", "settings"],
+      ["匯率", "currency"],
+    ]
+    for (const [label, path] of primary) {
+      expect(within(grid).getByRole("link", { name: label })).toHaveAttribute("href", `/projects/p1/${path}`)
+    }
+
+    fireEvent.click(within(grid).getByRole("button", { name: "更多功能" }))
+    const secondary: [string, string][] = [
       ["歷史", "activity-logs"],
       ["里程", "mileage"],
-      ["匯率", "currency"],
+      ["匯出", "export"],
       ["筆記", "notes"],
       ["地圖", "map"],
       ["照片", "photos"],
     ]
-    for (const [label, path] of expected) {
+    for (const [label, path] of secondary) {
       expect(within(grid).getByRole("link", { name: label })).toHaveAttribute("href", `/projects/p1/${path}`)
     }
+    expect(within(grid).queryByRole("link", { name: "設定" })).not.toBeInTheDocument()
   })
 
   it("lists recent expenses with payer and split count", () => {
