@@ -117,6 +117,32 @@ describe("SettleV2View", () => {
     renderView({ data: { ...data, balances: [], settlements: [] } })
     expect(within(screen.getByTestId("settle-summary")).getAllByText("0").length).toBeGreaterThan(0)
   })
+
+  it("keeps the summary heading inside the summary card", () => {
+    renderView()
+    const grid = screen.getByTestId("settle-summary")
+    expect(within(grid).getByText("計算總覽")).toBeInTheDocument()
+  })
+
+  it("renders the summary tile values in ink", () => {
+    renderView()
+    const grid = screen.getByTestId("settle-summary")
+    expect(within(grid).getByText("29,660").className).toContain("text-v2-ink")
+  })
+
+  it("keeps the transfer heading in the same card as the rows", () => {
+    renderView()
+    const row = screen.getByTestId("settlement-0")
+    const heading = screen.getByText("轉帳建議")
+    expect(row.closest("div.rounded-2xl")).toBe(heading.closest("div.rounded-2xl"))
+  })
+
+  it("uses the gold tone for the current user avatar", () => {
+    renderView()
+    const row = screen.getByTestId("settlement-0")
+    const meLabel = within(row).getByText("我", { selector: "span.font-medium" })
+    expect(meLabel.previousElementSibling?.className).toContain("bg-v2-gold-soft")
+  })
 })
 
 describe("SettleV2 container", () => {

@@ -31,18 +31,18 @@ export function SettleSummaryGrid({ count, total, dailyAverage, perPerson, curre
   ]
 
   return (
-    <div className="mx-4 mt-3.5">
-      <div className="mb-1.5 flex items-center justify-between">
-        <p className="m-0 text-sm font-medium leading-5 tracking-[.1px]">計算總覽</p>
+    <div data-testid="settle-summary" className="mx-4 mt-3.5 rounded-2xl border border-v2-line bg-v2-surface p-4">
+      <div className="mb-2.5 flex items-center justify-between">
+        <p className="m-0 text-[13px] font-bold text-v2-lake">計算總覽</p>
         {currencySelect}
       </div>
-      <div data-testid="settle-summary" className="grid grid-cols-2 gap-2.5 overflow-hidden rounded-2xl border border-v2-line bg-v2-surface p-4">
+      <div className="grid grid-cols-2 gap-2.5">
         {tiles.map(({ label, value, icon: Icon, tone }) => (
-          <div key={label} className={`flex flex-col items-center rounded-xl px-1 py-3 ${tone.bg}`}>
+          <div key={label} className={`flex flex-col items-center rounded-[12px] px-1 py-3 ${tone.bg}`}>
             <div className={`mb-1.5 flex h-8 w-8 items-center justify-center rounded-full ${tone.iconBg} ${tone.text}`} aria-hidden="true">
-              <Icon className="h-4 w-4" strokeWidth={1.8} />
+              <Icon className="h-[15px] w-[15px]" strokeWidth={1.7} />
             </div>
-            <span className={`font-v2-serif text-base font-bold tabular-nums ${tone.text}`}>{value}</span>
+            <span className="font-v2-serif text-base font-bold tabular-nums text-v2-ink">{value}</span>
             <span className="mt-0.5 text-xs text-v2-ink-muted">{label}</span>
           </div>
         ))}

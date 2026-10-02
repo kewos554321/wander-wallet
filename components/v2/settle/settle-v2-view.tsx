@@ -46,7 +46,7 @@ export function SettleV2View(props: SettleV2ViewProps) {
 
   return (
     <>
-      <V2TopBar title="結算" backHref={`/projects/${props.projectId}`} />
+      <V2TopBar title="結算" backHref={`/projects/${props.projectId}`} titleClassName="font-bold" />
       <SettleSummaryGrid
         count={data.summary.totalExpenses}
         total={toDisplay(data.summary.totalAmount)}
@@ -91,9 +91,9 @@ export function SettleV2View(props: SettleV2ViewProps) {
       />
       <div className="mx-4 mt-3.5 text-center">
         <Link href={`/projects/${props.projectId}/stats`} className="inline-flex items-center gap-[5px] text-xs font-semibold text-v2-ink-muted">
-          <BarChart3 className="h-3.5 w-3.5" aria-hidden="true" />
+          <BarChart3 className="h-[13px] w-[13px]" aria-hidden="true" />
           查看統計
-          <ChevronRight className="h-3 w-3" aria-hidden="true" />
+          <ChevronRight className="h-[11px] w-[11px]" strokeWidth={2.2} aria-hidden="true" />
         </Link>
       </div>
       <SponsorCard />
