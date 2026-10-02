@@ -161,16 +161,19 @@ describe("ProjectOverviewV2View", () => {
 
   it("lists recent expenses with payer and split count", () => {
     render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} onCamera={vi.fn()} />)
+    const card = screen.getByTestId("v2-recent-expenses-card")
+    expect(within(card).getByText("最近支出")).toBeInTheDocument()
+    expect(within(card).getByRole("link", { name: "查看全部" })).toHaveAttribute("href", "/projects/p1/expenses")
     expect(screen.getByText("一蘭拉麵晚餐")).toBeInTheDocument()
     expect(screen.getByText("志明 付款 · 2 人分攤")).toBeInTheDocument()
     expect(screen.getByText("我 付款 · 1 人分攤")).toBeInTheDocument()
     expect(screen.getByText("購物")).toBeInTheDocument() // description fallback to category label
-    expect(screen.getByRole("link", { name: "查看全部" })).toHaveAttribute("href", "/projects/p1/expenses")
   })
 
   it("shows an empty state without expenses", () => {
     render(<ProjectOverviewV2View project={{ ...project, expenses: [] }} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} onCamera={vi.fn()} />)
-    expect(screen.getByText("還沒有支出，點右下角開始記帳")).toBeInTheDocument()
+    const card = screen.getByTestId("v2-recent-expenses-card")
+    expect(within(card).getByText("還沒有支出，點右下角開始記帳")).toBeInTheDocument()
   })
 
   it("uses ink for a non-negative balance, danger for a negative one and a lake label", () => {

@@ -15,13 +15,13 @@ export function RecentExpenses({ projectId, expenses, currentMemberId }: RecentE
 
   return (
     <section className="px-4 pb-44 pt-5">
-      <div className="mb-3 flex items-center justify-between">
-        <p className="m-0 text-sm font-medium leading-5 tracking-[.1px]">最近支出</p>
-        <Link href={`/projects/${projectId}/expenses`} className="text-xs font-medium tracking-[.5px] text-v2-link">
-          查看全部
-        </Link>
-      </div>
-      <div className="overflow-hidden rounded-[18px] border border-v2-line bg-v2-surface">
+      <div data-testid="v2-recent-expenses-card" className="overflow-hidden rounded-[16px] border border-v2-line bg-v2-surface">
+        <div className="flex items-baseline justify-between px-3.5 pb-2 pt-3.5">
+          <p className="m-0 text-[13px] font-bold text-v2-lake">最近支出</p>
+          <Link href={`/projects/${projectId}/expenses`} className="text-xs font-medium tracking-[.5px] text-v2-link">
+            查看全部
+          </Link>
+        </div>
         {recent.length === 0 ? (
           <p className="px-4 py-8 text-center text-[13px] text-v2-ink-muted">還沒有支出，點右下角開始記帳</p>
         ) : (
