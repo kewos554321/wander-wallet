@@ -27,7 +27,7 @@ export function SettleV2({ projectId }: { projectId: string }) {
   if (s.loading) {
     content = (
       <>
-        <V2TopBar title="結算" backHref={`/projects/${projectId}`} />
+        <V2TopBar title="結算" backHref={`/projects/${projectId}`} titleClassName="font-bold" />
         <div data-testid="v2-settle-skeleton" className="space-y-3 p-4">
           <div className="h-48 animate-pulse rounded-2xl bg-v2-sand" />
           <div className="h-32 animate-pulse rounded-2xl bg-v2-sand" />
@@ -37,7 +37,7 @@ export function SettleV2({ projectId }: { projectId: string }) {
   } else if (s.error || !s.data) {
     content = (
       <>
-        <V2TopBar title="結算" backHref={`/projects/${projectId}`} />
+        <V2TopBar title="結算" backHref={`/projects/${projectId}`} titleClassName="font-bold" />
         <p className="py-8 text-center text-v2-ink-muted">{s.error || "獲取結算數據失敗"}</p>
       </>
     )

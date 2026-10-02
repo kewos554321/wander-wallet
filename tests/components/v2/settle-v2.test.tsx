@@ -163,6 +163,7 @@ describe("SettleV2 container", () => {
     })
     render(<SettleV2 projectId="p1" />)
     expect(screen.getByText("結算")).toBeInTheDocument()
+    expect(screen.getByText("結算").className).toContain("font-bold")
     expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
     expect(screen.getByText("獲取結算數據失敗")).toBeInTheDocument()
   })
@@ -178,6 +179,7 @@ describe("SettleV2 container", () => {
       shareText: "",
     })
     render(<SettleV2 projectId="p1" />)
+    expect(screen.getByText("結算").className).toContain("font-bold")
     expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
     expect(screen.getByTestId("v2-settle-skeleton")).toBeInTheDocument()
   })
