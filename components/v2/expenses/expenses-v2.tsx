@@ -93,8 +93,6 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
                 onExpenseRange={f.setExpenseDateRange}
               />
             }
-            hasActiveFilters={f.hasActiveFilters}
-            onClearFilters={f.clearFilters}
             selectMode={selectMode}
             selectedIds={selectedIds}
             onToggleSelectMode={() => {

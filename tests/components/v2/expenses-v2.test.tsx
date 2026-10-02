@@ -1,12 +1,66 @@
-import { describe, it, expect, vi } from "vitest"
-import { render, screen, fireEvent, within } from "@testing-library/react"
+import { describe, it, expect, vi, beforeEach } from "vitest"
+import { render, screen, fireEvent, within, waitFor } from "@testing-library/react"
+import type { ReactNode } from "react"
 import { ExpensesV2View } from "@/components/v2/expenses/expenses-v2-view"
 import type { ProjectExpense } from "@/lib/hooks/useProjectExpenses"
+
+vi.mock("next/font/google", () => ({
+  Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
+  Noto_Sans_TC: () => ({ variable: "font-var-sans" }),
+}))
+vi.mock("next/image", () => ({
+  default: ({ alt, ...props }: Record<string, unknown> & { alt?: string }) => <img alt={String(alt ?? "")} {...props} />,
+}))
+vi.mock("@/components/auth/liff-provider", () => ({
+  useLiff: () => ({ user: { id: "u1" } }),
+  useAuthFetch: () => vi.fn(),
+}))
+vi.mock("@/components/v2/quick-expense/quick-expense-v2", () => ({
+  QuickExpenseV2: ({ open, onSuccess }: { open?: boolean; onSuccess?: () => void }) =>
+    open ? (
+      <button type="button" onClick={onSuccess}>
+        quick-success
+      </button>
+    ) : null,
+}))
+vi.mock("@/components/expense/notify-line-checkbox", () => ({ NotifyLineCheckbox: () => null }))
+vi.mock("@/components/ui/dialog", () => ({
+  Dialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogTitle: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+}))
+vi.mock("@/components/ui/confirm-delete-dialog", () => ({
+  ConfirmDeleteDialog: ({ open, onConfirm }: { open?: boolean; onConfirm?: () => void }) =>
+    open ? (
+      <button type="button" onClick={onConfirm}>
+        confirm-delete
+      </button>
+    ) : null,
+}))
+
+const mocks = vi.hoisted(() => ({
+  projectData: vi.fn(),
+  projectExpenses: vi.fn(),
+  currencyConversion: vi.fn(),
+  expenseFilters: vi.fn(),
+}))
+vi.mock("@/lib/hooks", () => ({
+  useProjectData: () => mocks.projectData(),
+  useCurrencyConversion: () => mocks.currencyConversion(),
+  useExpenseFilters: () => mocks.expenseFilters(),
+}))
+vi.mock("@/lib/hooks/useProjectExpenses", () => ({ useProjectExpenses: () => mocks.projectExpenses() }))
+
+import { ExpensesV2 } from "@/components/v2/expenses/expenses-v2"
 
 const at = (m: number, d: number, h: number, min = 0) => new Date(2026, m - 1, d, h, min).toISOString()
 const now = new Date(2026, 10, 16, 21, 0)
 const zhi = { id: "chi", displayName: "志明", userId: null, user: null }
 const me = { id: "me", displayName: "Emma", userId: "u1", user: null }
+const m2 = { id: "m2", displayName: "小美", userId: null, user: null }
+const m3 = { id: "m3", displayName: "佳婷", userId: null, user: null }
+const m4 = { id: "m4", displayName: "阿凱", userId: null, user: null }
 
 function expense(overrides: Partial<ProjectExpense>): ProjectExpense {
   return {
@@ -46,8 +100,6 @@ function renderView(overrides: Partial<Parameters<typeof ExpensesV2View>[0]> = {
     currentMemberId: "me",
     now,
     filterBar: <div>filters</div>,
-    hasActiveFilters: false,
-    onClearFilters: vi.fn(),
     selectMode: false,
     selectedIds: new Set<string>(),
     onToggleSelectMode: vi.fn(),
@@ -74,11 +126,11 @@ describe("ExpensesV2View", () => {
   it("groups by payment day and renders card details", () => {
     renderView()
     expect(screen.getByText("11/16（今天）")).toBeInTheDocument()
-    expect(screen.getByText("11/15")).toBeInTheDocument()
+    expect(screen.getByText("11/15", { selector: "p" })).toBeInTheDocument()
     const card = screen.getByRole("link", { name: /一蘭拉麵晚餐/ })
     expect(card).toHaveAttribute("href", "/projects/p1/expenses/e1/edit")
-    expect(within(card).getByText("付款 11/16 19:20")).toBeInTheDocument()
-    expect(within(card).getByText("建立 11/16 19:22")).toBeInTheDocument()
+    expect(within(card).getByText("付款日期")).toBeInTheDocument()
+    expect(within(card).getByText("11/16")).toBeInTheDocument()
     expect(screen.getByText("TWD 1,280")).toBeInTheDocument()
   })
 
@@ -86,34 +138,56 @@ describe("ExpensesV2View", () => {
     renderView()
     const card = screen.getByRole("link", { name: /交通/ })
     expect(within(card).getByText("京都市內")).toBeInTheDocument()
-    const footer = screen.getByTestId("expense-footer-e2")
-    expect(within(footer).getByText("我", { selector: "span.font-medium" })).toBeInTheDocument()
-    expect(within(footer).getByText("2人")).toBeInTheDocument()
+    expect(within(card).getByText("我付款")).toBeInTheDocument()
+    expect(within(card).getByText("共2人分攤")).toBeInTheDocument()
   })
 
-  it("shows the count line and wires clear, batch, delete, image and voice", () => {
-    const props = renderView({ hasActiveFilters: true })
+  it("always renders the footer, using placeholders without location or image", () => {
+    renderView()
+    const card = screen.getByRole("link", { name: /一蘭拉麵晚餐/ })
+    expect(within(card).getByText("未填寫地點")).toBeInTheDocument()
+    expect(within(card).getByLabelText("未附明細圖片")).toBeInTheDocument()
+  })
+
+  it("renders a card with no description and a single participant", () => {
+    const single = expense({ id: "e5", description: null, category: "food", location: null, image: null, participants: [{ id: "p1", shareAmount: 100, member: zhi }] })
+    renderView({ expenses: [single], allCount: 1, summary: { total: 100, count: 1, average: 100 } })
+    const card = screen.getByRole("link", { name: /餐飲/ })
+    expect(within(card).getByText("共1人分攤")).toBeInTheDocument()
+    expect(within(card).getByText("未填寫地點")).toBeInTheDocument()
+  })
+
+  it("shows a +N overflow when there are more than three participants", () => {
+    const many = expense({ id: "e6", participants: [me, m2, m3, m4].map((m, i) => ({ id: `p${i}`, shareAmount: 100, member: m })) })
+    renderView({ expenses: [many], allCount: 1, summary: { total: 400, count: 1, average: 400 } })
+    const card = screen.getByRole("link", { name: /一蘭拉麵晚餐/ })
+    expect(within(card).getByText("+1")).toBeInTheDocument()
+    expect(within(card).getByText("共4人分攤")).toBeInTheDocument()
+  })
+
+  it("shows the count line and wires batch, delete, image and voice", () => {
+    const props = renderView()
     expect(screen.getByText(/顯示/).textContent).toBe("顯示 2 / 2 筆")
-    fireEvent.click(screen.getByRole("button", { name: "清除" }))
     fireEvent.click(screen.getByRole("button", { name: "批次" }))
     fireEvent.click(screen.getAllByRole("button", { name: "刪除" })[0])
     fireEvent.click(screen.getByRole("button", { name: "查看圖片" }))
     fireEvent.click(screen.getByRole("button", { name: /AI 快速記帳/ }))
-    expect(props.onClearFilters).toHaveBeenCalled()
     expect(props.onToggleSelectMode).toHaveBeenCalled()
     expect(props.onRequestDelete).toHaveBeenCalledWith(expenses[0])
     expect(props.onViewImage).toHaveBeenCalledWith("https://example.com/r.jpg")
     expect(props.onVoice).toHaveBeenCalled()
   })
 
-  it("hides the clear button without active filters", () => {
+  it("does not render its own clear button", () => {
     renderView()
-    expect(screen.queryByRole("button", { name: "清除" })).not.toBeInTheDocument()
+    expect(screen.queryByText("清除")).not.toBeInTheDocument()
   })
 
   it("switches cards to checkboxes in select mode", () => {
     const props = renderView({ selectMode: true, selectedIds: new Set(["e1"]) })
-    expect(screen.queryAllByRole("button", { name: "刪除" })).toHaveLength(0)
+    const deletes = screen.getAllByRole("button", { name: "刪除" })
+    expect(deletes).toHaveLength(4)
+    deletes.forEach((d) => expect(d).toBeDisabled())
     const boxes = screen.getAllByRole("checkbox")
     expect(boxes[0]).toBeChecked()
     fireEvent.click(boxes[1])
@@ -130,5 +204,129 @@ describe("ExpensesV2View", () => {
   it("shows the no-match state when filters remove everything", () => {
     renderView({ expenses: [], allCount: 2, summary: { total: 0, count: 0, average: 0 } })
     expect(screen.getByText("找不到符合的支出")).toBeInTheDocument()
+  })
+})
+
+describe("ExpensesV2 container", () => {
+  beforeEach(() => {
+    mocks.projectData.mockReset().mockReturnValue({
+      project: { name: "東京", startDate: null, endDate: null, expenses: [] },
+      members: [],
+      loading: false,
+      projectCurrency: "TWD",
+      customRates: {},
+      precision: 2,
+    })
+    mocks.projectExpenses.mockReset().mockReturnValue({
+      expenses: [],
+      loading: false,
+      deleting: false,
+      canNotifyLine: false,
+      refetch: vi.fn(),
+      deleteExpense: vi.fn(),
+      batchDeleteExpenses: vi.fn(),
+    })
+    mocks.currencyConversion.mockReset().mockReturnValue({ convert: (n: number) => n })
+    mocks.expenseFilters.mockReset().mockReturnValue({
+      filters: {
+        searchQuery: "",
+        selectedCategories: new Set<string>(),
+        selectedPayers: new Set<string>(),
+        selectedParticipants: new Set<string>(),
+        selectedCurrencies: new Set<string>(),
+        amountRange: [0, 0] as [number, number],
+        createdDateRange: undefined,
+        expenseDateRange: undefined,
+      },
+      filteredExpenses: [],
+      hasActiveFilters: false,
+      setSearchQuery: vi.fn(),
+      toggleCategory: vi.fn(),
+      setCategories: vi.fn(),
+      togglePayer: vi.fn(),
+      setPayers: vi.fn(),
+      toggleParticipant: vi.fn(),
+      setParticipants: vi.fn(),
+      toggleCurrency: vi.fn(),
+      setCurrencies: vi.fn(),
+      setAmountRange: vi.fn(),
+      setCreatedDateRange: vi.fn(),
+      setExpenseDateRange: vi.fn(),
+      clearFilters: vi.fn(),
+      uniquePayers: [],
+      uniqueParticipants: [],
+      uniqueCurrencies: ["TWD"],
+      maxAmount: 0,
+    })
+  })
+
+  it("renders the list view through the container", () => {
+    render(<ExpensesV2 projectId="p1" />)
+    expect(screen.getByRole("heading", { level: 1, name: "全部支出" })).toBeInTheDocument()
+    expect(screen.getByText("尚無支出記錄")).toBeInTheDocument()
+  })
+
+  it("renders the loading skeleton", () => {
+    mocks.projectExpenses.mockReturnValue({
+      expenses: [],
+      loading: true,
+      deleting: false,
+      canNotifyLine: false,
+      refetch: vi.fn(),
+      deleteExpense: vi.fn(),
+      batchDeleteExpenses: vi.fn(),
+    })
+    render(<ExpensesV2 projectId="p1" />)
+    expect(screen.getByTestId("v2-expenses-skeleton")).toBeInTheDocument()
+  })
+
+  it("opens the image lightbox and voice sheet, and deletes a single expense", async () => {
+    const single = expense({ id: "e1", image: "https://example.com/x.jpg" })
+    const hook = {
+      expenses: [single],
+      loading: false,
+      deleting: false,
+      canNotifyLine: false,
+      refetch: vi.fn(),
+      deleteExpense: vi.fn().mockResolvedValue(true),
+      batchDeleteExpenses: vi.fn().mockResolvedValue(true),
+    }
+    mocks.projectExpenses.mockReturnValue(hook)
+    mocks.expenseFilters.mockReturnValue({ ...mocks.expenseFilters(), filteredExpenses: [single] })
+    render(<ExpensesV2 projectId="p1" />)
+
+    fireEvent.click(screen.getByRole("button", { name: "查看圖片" }))
+    expect(screen.getByAltText("消費圖片")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: /AI 快速記帳/ }))
+    fireEvent.click(screen.getByRole("button", { name: "quick-success" }))
+    expect(hook.refetch).toHaveBeenCalled()
+
+    fireEvent.click(screen.getAllByRole("button", { name: "刪除" })[0])
+    fireEvent.click(screen.getByRole("button", { name: "confirm-delete" }))
+    await waitFor(() => expect(hook.deleteExpense).toHaveBeenCalledWith("e1", { notifyLine: true }))
+  })
+
+  it("toggles select mode and batch deletes through the container", async () => {
+    const single = expense({ id: "e1" })
+    const hook = {
+      expenses: [single],
+      loading: false,
+      deleting: false,
+      canNotifyLine: false,
+      refetch: vi.fn(),
+      deleteExpense: vi.fn().mockResolvedValue(true),
+      batchDeleteExpenses: vi.fn().mockResolvedValue(true),
+    }
+    mocks.projectExpenses.mockReturnValue(hook)
+    mocks.expenseFilters.mockReturnValue({ ...mocks.expenseFilters(), filteredExpenses: [single] })
+    render(<ExpensesV2 projectId="p1" />)
+
+    fireEvent.click(screen.getByRole("button", { name: "批次" }))
+    expect(screen.getByRole("button", { name: "刪除 0 筆" })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByRole("button", { name: "刪除 1 筆" }))
+    fireEvent.click(screen.getByRole("button", { name: "confirm-delete" }))
+    await waitFor(() => expect(hook.batchDeleteExpenses).toHaveBeenCalledWith(["e1"], { notifyLine: true }))
   })
 })

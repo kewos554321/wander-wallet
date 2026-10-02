@@ -19,7 +19,7 @@ export function ExpenseSummaryCard({ currency, dateRangeLabel, summary }: Expens
           </span>
         )}
       </div>
-      <p className="mt-1 font-v2-serif text-2xl font-bold leading-8 tabular-nums text-v2-lake">
+      <p className="mt-1 font-v2-serif text-2xl font-bold leading-8 tabular-nums text-v2-ink">
         {formatCurrency(Math.round(summary.total), currency)}
       </p>
       <div className="mt-3 flex items-center gap-3 border-t border-v2-lake-border pt-3">

@@ -16,8 +16,6 @@ export interface ExpensesV2ViewProps {
   currentMemberId: string | null
   now: Date
   filterBar: ReactNode
-  hasActiveFilters: boolean
-  onClearFilters: () => void
   selectMode: boolean
   selectedIds: Set<string>
   onToggleSelectMode: () => void
@@ -40,21 +38,14 @@ export function ExpensesV2View(props: ExpensesV2ViewProps) {
         <span className="text-xs text-v2-ink-muted">
           顯示 <b className="text-v2-ink">{props.expenses.length}</b> / {props.allCount} 筆
         </span>
-        <div className="flex items-center gap-2.5">
-          {props.hasActiveFilters && (
-            <button type="button" onClick={props.onClearFilters} className="text-xs font-bold text-v2-ink-muted">
-              清除
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={props.onToggleSelectMode}
-            className="inline-flex items-center gap-1 rounded-full border border-v2-line bg-v2-surface px-3 py-1.5 text-xs font-bold"
-          >
-            {props.selectMode ? <X className="h-3 w-3" aria-hidden="true" /> : <CheckSquare className="h-3 w-3" aria-hidden="true" />}
-            {props.selectMode ? "取消" : "批次"}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={props.onToggleSelectMode}
+          className="inline-flex items-center gap-1 rounded-full border border-v2-line bg-v2-surface px-3 py-1.5 text-xs font-bold"
+        >
+          {props.selectMode ? <X className="h-3 w-3" aria-hidden="true" /> : <CheckSquare className="h-3 w-3" aria-hidden="true" />}
+          {props.selectMode ? "取消" : "批次"}
+        </button>
       </div>
 
       <div className="px-4 pb-44 pt-3.5">
@@ -65,7 +56,7 @@ export function ExpensesV2View(props: ExpensesV2ViewProps) {
         ) : (
           groups.map((group) => (
             <section key={group.key}>
-              <p className="mb-2 text-xs font-semibold text-v2-ink-subtle">{group.label}</p>
+              <p className="mb-1.5 text-[11px] font-bold text-v2-ink-subtle">{group.label}</p>
               {group.expenses.map((expense) => (
                 <ExpenseCard
                   key={expense.id}
