@@ -147,4 +147,60 @@ describe("ProjectSettingsV2", () => {
     )
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/projects"))
   })
+
+  it("shows the full currency label and the budget symbol", async () => {
+    mockRoutes()
+    render(<ProjectSettingsV2 projectId="p1" />)
+    await screen.findByLabelText("專案名稱")
+    expect(screen.getByText("TWD 新台幣")).toBeInTheDocument()
+    expect(screen.getByText("NT$")).toBeInTheDocument()
+  })
+
+  it("shows a danger counter for long descriptions but still saves them (RC3)", async () => {
+    mockRoutes()
+    render(<ProjectSettingsV2 projectId="p1" />)
+    const desc = await screen.findByLabelText("描述")
+    expect(screen.getByText("6/50")).toBeInTheDocument()
+    const long = "x".repeat(51)
+    fireEvent.change(desc, { target: { value: long } })
+    expect(screen.getByText("51/50")).toHaveClass("text-v2-danger")
+    fireEvent.click(screen.getByRole("button", { name: "儲存變更" }))
+    await waitFor(() =>
+      expect(mockAuthFetch).toHaveBeenCalledWith("/api/projects/p1", expect.objectContaining({ method: "PUT" }))
+    )
+    const putCall = mockAuthFetch.mock.calls.find(([url, opts]) => url === "/api/projects/p1" && opts?.method === "PUT")
+    expect(JSON.parse(putCall![1].body).description).toBe(long)
+  })
+
+  it("picks a cover through the tile sheet and saves it", async () => {
+    mockRoutes()
+    render(<ProjectSettingsV2 projectId="p1" />)
+    await screen.findByLabelText("專案名稱")
+    fireEvent.click(screen.getByRole("button", { name: "更換封面" }))
+    fireEvent.click(screen.getByRole("button", { name: "相機" }))
+    fireEvent.click(screen.getByRole("button", { name: "顏色 ink" }))
+    fireEvent.click(screen.getByRole("button", { name: "完成" }))
+    fireEvent.click(screen.getByRole("button", { name: "儲存變更" }))
+    await waitFor(() =>
+      expect(mockAuthFetch).toHaveBeenCalledWith("/api/projects/p1", expect.objectContaining({ method: "PUT" }))
+    )
+    const putCall = mockAuthFetch.mock.calls.find(([url, opts]) => url === "/api/projects/p1" && opts?.method === "PUT")
+    expect(JSON.parse(putCall![1].body).cover).toBe("icon:camera;color:ink")
+  })
+
+  it("uses the danger tokens for the danger zone", async () => {
+    mockRoutes()
+    render(<ProjectSettingsV2 projectId="p1" />)
+    await screen.findByText("危險區域")
+    const card = screen.getByText("危險區域").closest("div")!
+    expect(card.className).toContain("bg-v2-danger-tint")
+    expect(card.className).toContain("border-v2-danger-border")
+  })
+
+  it("renders the join-mode title only once in the settings variant", async () => {
+    mockRoutes()
+    render(<ProjectSettingsV2 projectId="p1" />)
+    await screen.findByLabelText("專案名稱")
+    expect(screen.getAllByText("成員加入方式")).toHaveLength(1)
+  })
 })

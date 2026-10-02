@@ -18,7 +18,7 @@ export function ExchangeRateRow({
   return (
     <div>
       <div className="flex items-center gap-2.5">
-        <span className="w-12 shrink-0 text-[13px] font-bold text-v2-lake">{currency}</span>
+        <span className="w-[52px] shrink-0 text-[13px] font-bold text-v2-lake">{currency}</span>
         <span className="text-v2-ink-subtle">=</span>
         <div className="relative flex-1">
           <input
@@ -27,13 +27,13 @@ export function ExchangeRateRow({
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
             inputMode="decimal"
-            className="w-full rounded-xl border border-v2-line bg-v2-surface py-2.5 pl-3 pr-14 text-[13px]"
+            className="w-full rounded-xl border border-v2-line bg-v2-paper py-[10px] pl-3 pr-11 text-[13px]"
           />
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-v2-ink-muted">{settlementCurrency}</span>
         </div>
       </div>
       {liveRate !== null && (
-        <p className="mt-1.5 text-xs text-v2-ink-muted">
+        <p className="mt-2 text-xs text-v2-ink-muted">
           目前使用即時匯率：1 {currency} = {liveRate} {settlementCurrency}
         </p>
       )}
