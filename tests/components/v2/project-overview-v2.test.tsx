@@ -290,4 +290,23 @@ describe("ProjectOverviewV2 container", () => {
     render(<ProjectOverviewV2 projectId="p1" />)
     expect(screen.getByTestId("v2-overview-skeleton")).toBeInTheDocument()
   })
+
+  it("renders the overview view with the share and quick-expense wiring for a member", () => {
+    const refetch = vi.fn()
+    mockOverview.mockReturnValue({
+      project,
+      loading: false,
+      joinInfo: null,
+      joining: false,
+      joinProject: vi.fn(),
+      claimMember: vi.fn(),
+      refetch,
+      summary,
+    })
+    render(<ProjectOverviewV2 projectId="p1" />)
+    expect(screen.getByRole("heading", { name: "東京賞楓 5 日" })).toBeInTheDocument()
+    expect(screen.getByText("TWD 48,600")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "分享" }))
+    expect(screen.getByText("邀請成員加入")).toBeInTheDocument()
+  })
 })
