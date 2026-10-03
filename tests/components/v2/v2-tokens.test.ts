@@ -16,6 +16,11 @@ const NEW_TOKENS: Record<string, [string, string]> = {
   "danger-border": ["#F3D3C4", "#5A2E23"],
   "danger-wash": ["#FDF2EF", "#2E1914"],
   "danger-edge": ["#E8A796", "#6A3A2E"],
+  "coral-deep": ["#8F3714", "#E89872"],
+  "sky-tint": ["#D3E0F5", "#28354A"],
+  "line-green": ["#06C755", "#06C755"],
+  "camera-bg": ["#171412", "#171412"],
+  "on-dark": ["#FFFFFF", "#FFFFFF"],
 }
 
 describe("v2 tokens added in milestone 6", () => {
