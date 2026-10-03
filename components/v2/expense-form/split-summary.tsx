@@ -6,8 +6,8 @@ import { memberTone } from "./payer-picker"
 
 type Draft = ReturnType<typeof useExpenseDraft>
 
-// Always-visible per-member breakdown (design A3d). Non-participants render as
-// 0/0 rows, matching the design.
+// Per-member breakdown (design A3d, deliberately deviating): members whose
+// subtotal is 0 are hidden instead of rendering as 0/0 rows.
 export function SplitSummary({ members, draft, currency }: { members: DraftMember[]; draft: Draft; currency: string }) {
   const { derived } = draft
   if (derived.shares.length === 0) return null
@@ -27,6 +27,8 @@ export function SplitSummary({ members, draft, currency }: { members: DraftMembe
       total,
     }
   })
+  const visibleRows = rows.filter((r) => r.total !== 0)
+  if (visibleRows.length === 0) return null
   const sum = (key: "personal" | "pool" | "total") => rows.reduce((s, r) => s + r[key], 0)
   const cols = "grid grid-cols-[1.4fr_1fr_1fr_1fr] items-center gap-1 px-3.5"
   const cell = "text-right text-[13px] tabular-nums"
@@ -44,7 +46,7 @@ export function SplitSummary({ members, draft, currency }: { members: DraftMembe
           <span role="columnheader" className="text-right">小計</span>
         </div>
         <div role="rowgroup" className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
-          {rows.map((r) => (
+          {visibleRows.map((r) => (
             <div key={r.id} role="row" className={`${cols} border-t border-v2-line-soft bg-v2-lake-soft py-2.5 first:border-t-0`}>
               <span role="rowheader" className="flex min-w-0 items-center gap-2 text-left text-[13px] font-semibold">
                 <span className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${r.tone}`} aria-hidden="true">

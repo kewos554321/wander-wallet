@@ -289,6 +289,19 @@ describe("ExpenseFormV2View", () => {
     expect(within(totalRow).getAllByRole("cell").map((c) => c.textContent)).toEqual(["$100", "$900", "$1,000"])
   })
 
+  it("hides members whose subtotal is zero", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("1000"))
+    rerender()
+    // 小雨 leaves the shared pool, so her subtotal becomes $0.
+    act(() => hook.result.current.actions.togglePool("a"))
+    rerender()
+    const table = screen.getByRole("region", { name: "分攤明細" })
+    expect(within(table).queryByRole("row", { name: /^小雨/ })).not.toBeInTheDocument()
+    expect(within(table).getByRole("row", { name: /^志明/ })).toHaveTextContent("$1,000")
+    expect(within(table).getByRole("row", { name: /^合計/ })).toHaveTextContent("$1,000")
+  })
+
   it("disables submit and shows the draft error", () => {
     renderForm()
     expect(screen.getByRole("alert")).toHaveTextContent("請輸入有效金額")
