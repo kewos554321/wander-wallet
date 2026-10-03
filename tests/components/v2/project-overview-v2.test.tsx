@@ -25,6 +25,7 @@ const project: OverviewProject = {
   id: "p1",
   name: "東京賞楓 5 日",
   description: null,
+  cover: "icon:camera;color:lake",
   budget: "76000",
   currency: "TWD",
   exchangeRatePrecision: 2,
@@ -87,12 +88,24 @@ describe("ProjectOverviewV2View", () => {
     expect(screen.getByRole("link", { name: /查看結算明細/ })).toHaveAttribute("href", "/projects/p1/settle")
   })
 
-  it("uses the sparkle decoration on the trip summary card", () => {
-    const { container } = render(
-      <ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />
+  it("uses the project cover icon on the trip summary card", () => {
+    render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
+    const card = screen.getByTestId("v2-trip-summary-card")
+    expect(card.querySelector(".lucide-camera")).not.toBeNull()
+    expect(card.querySelector(".lucide-sparkles")).toBeNull()
+  })
+
+  it("falls back to the sparkle decoration without an icon cover", () => {
+    render(
+      <ProjectOverviewV2View
+        project={{ ...project, cover: null }}
+        summary={summary}
+        onShare={vi.fn()}
+        onVoice={vi.fn()}
+      />
     )
-    expect(container.querySelector(".lucide-sparkles")).not.toBeNull()
-    expect(container.querySelector(".lucide-compass")).toBeNull()
+    const card = screen.getByTestId("v2-trip-summary-card")
+    expect(card.querySelector(".lucide-sparkles")).not.toBeNull()
   })
 
   it("shows overspending instead of a negative remainder", () => {

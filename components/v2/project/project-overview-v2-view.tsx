@@ -64,7 +64,7 @@ export function ProjectOverviewV2View({ project, summary, onShare, onVoice }: Pr
         </div>
       </div>
 
-      <TripSummaryCard summary={summary} currency={currency} />
+      <TripSummaryCard summary={summary} currency={currency} cover={project.cover ?? null} />
       <BalanceCard balance={summary.userBalance} currency={currency} projectId={project.id} />
       <FeatureGrid projectId={project.id} />
       <RecentExpenses projectId={project.id} expenses={project.expenses} currentMemberId={summary.currentMemberId} />

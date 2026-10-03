@@ -1,14 +1,27 @@
-import { Sparkles } from "lucide-react"
+import { Sparkles, type LucideIcon } from "lucide-react"
 import { formatCurrency } from "@/lib/constants/currencies"
+import { parseCover } from "@/lib/covers"
 import type { ProjectSummary } from "@/lib/project-overview"
+import { COVER_ICON_COMPONENTS } from "@/components/v2/cover/cover-icons"
 
-export function TripSummaryCard({ summary, currency }: { summary: ProjectSummary; currency: string }) {
+export function TripSummaryCard({
+  summary,
+  currency,
+  cover,
+}: {
+  summary: ProjectSummary
+  currency: string
+  cover?: string | null
+}) {
   const { totalAmount, perPerson, budget, budgetProgress, budgetRemaining } = summary
   const fmt = (n: number) => formatCurrency(Math.round(n), currency)
 
+  const parsed = parseCover(cover ?? null)
+  const Decoration: LucideIcon = (parsed.type === "icon" && COVER_ICON_COMPONENTS[parsed.iconId!]) || Sparkles
+
   return (
-    <div className="relative mx-4 mt-3 overflow-hidden rounded-[20px] bg-v2-lake text-v2-paper">
-      <Sparkles className="absolute -right-6 -top-6 h-[120px] w-[120px] opacity-[.08]" strokeWidth={1.2} aria-hidden="true" />
+    <div data-testid="v2-trip-summary-card" className="relative mx-4 mt-3 overflow-hidden rounded-[20px] bg-v2-lake text-v2-paper">
+      <Decoration className="absolute -right-6 -top-6 h-[120px] w-[120px] opacity-[.08]" strokeWidth={1.2} aria-hidden="true" />
       <div className="relative px-5 py-4">
         <p className="mb-[3px] text-sm font-medium leading-5 tracking-[.1px] opacity-[.78]">旅程總覽</p>
         <p className="m-0 font-v2-serif text-[32px] font-bold leading-10 tabular-nums">{fmt(totalAmount)}</p>
