@@ -19,9 +19,6 @@ interface ExpenseCardProps {
   projectId: string
   expense: ProjectExpense
   currentMemberId: string | null
-  selectMode: boolean
-  selected: boolean
-  onToggleSelect: (id: string) => void
   onRequestDelete: (expense: ProjectExpense) => void
   onViewImage: (url: string) => void
 }
@@ -30,9 +27,6 @@ export function ExpenseCard({
   projectId,
   expense,
   currentMemberId,
-  selectMode,
-  selected,
-  onToggleSelect,
   onRequestDelete,
   onViewImage,
 }: ExpenseCardProps) {
@@ -110,14 +104,12 @@ export function ExpenseCard({
           <span className="truncate text-[11px] text-v2-ink-subtle">未填寫地點</span>
         )}
       </span>
-      {!selectMode && expense.image ? (
+      {expense.image ? (
         <span className="block h-8 w-8 shrink-0" aria-hidden="true" />
       ) : (
         <span
-          aria-label={expense.image ? "已附明細圖片" : "未附明細圖片"}
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] ${
-            expense.image ? "bg-v2-lake-border text-v2-lake" : "bg-v2-line-soft text-v2-check"
-          }`}
+          aria-label="未附明細圖片"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-v2-line-soft text-v2-check"
         >
           <ImageIcon className="h-3.5 w-3.5" strokeWidth={1.7} aria-hidden="true" />
         </span>
@@ -127,48 +119,30 @@ export function ExpenseCard({
 
   const card = (
     <div className="relative rounded-[14px] border border-v2-line bg-v2-surface p-[11px] shadow-[0_1px_2px_rgba(27,24,21,.05)]">
-      {selectMode ? (
-        <label className="flex items-start gap-3">
-          <input
-            type="checkbox"
-            checked={selected}
-            onChange={() => onToggleSelect(expense.id)}
-            aria-label={`選取 ${title}`}
-            className="mt-4 h-4 w-4 accent-v2-lake"
-          />
-          <div className="min-w-0 flex-1">
-            {body}
-            {footer}
-          </div>
-        </label>
-      ) : (
-        <>
-          <Link href={`/projects/${projectId}/expenses/${expense.id}/edit`} className="block">
-            {body}
-            {footer}
-          </Link>
-          {expense.image && (
-            <button
-              type="button"
-              aria-label="查看圖片"
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                onViewImage(expense.image!)
-              }}
-              className="absolute bottom-[11px] right-[11px] flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-v2-lake-border text-v2-lake"
-            >
-              <ImageIcon className="h-3.5 w-3.5" strokeWidth={1.7} aria-hidden="true" />
-            </button>
-          )}
-        </>
+      <Link href={`/projects/${projectId}/expenses/${expense.id}/edit`} className="block">
+        {body}
+        {footer}
+      </Link>
+      {expense.image && (
+        <button
+          type="button"
+          aria-label="查看圖片"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            onViewImage(expense.image!)
+          }}
+          className="absolute bottom-[11px] right-[11px] flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-v2-lake-border text-v2-lake"
+        >
+          <ImageIcon className="h-3.5 w-3.5" strokeWidth={1.7} aria-hidden="true" />
+        </button>
       )}
     </div>
   )
 
   return (
     <div className="mb-2">
-      <SwipeRow onDelete={() => onRequestDelete(expense)} disabled={selectMode}>
+      <SwipeRow onDelete={() => onRequestDelete(expense)}>
         {card}
       </SwipeRow>
     </div>

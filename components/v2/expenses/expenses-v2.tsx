@@ -18,15 +18,12 @@ import { ExpensesV2View } from "./expenses-v2-view"
 export function ExpensesV2({ projectId }: { projectId: string }) {
   const { user } = useLiff()
   const { project, members, loading: projectLoading, projectCurrency, customRates, precision } = useProjectData(projectId)
-  const { expenses, loading, deleting, canNotifyLine, refetch, deleteExpense, batchDeleteExpenses } =
+  const { expenses, loading, deleting, canNotifyLine, refetch, deleteExpense } =
     useProjectExpenses(projectId, { projectName: project?.name || "" })
   const f = useExpenseFilters(expenses)
   const { convert } = useCurrencyConversion({ projectCurrency, customRates, precision })
 
   const [deleteTarget, setDeleteTarget] = useState<ProjectExpense | null>(null)
-  const [selectMode, setSelectMode] = useState(false)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [showBatchDelete, setShowBatchDelete] = useState(false)
   const [notifyLine, setNotifyLine] = useState(true)
   const [viewingImage, setViewingImage] = useState<string | null>(null)
   const [showVoice, setShowVoice] = useState(false)
@@ -34,26 +31,9 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
   const currentMemberId = members.find((m) => m.user?.id === user?.id)?.id ?? null
   const dateRange = project ? formatTripDateRange(project.startDate, project.endDate) : null
 
-  function toggleSelect(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
   async function confirmDelete() {
     if (!deleteTarget) return
     if (await deleteExpense(deleteTarget.id, { notifyLine })) setDeleteTarget(null)
-  }
-
-  async function confirmBatchDelete() {
-    if (await batchDeleteExpenses(Array.from(selectedIds), { notifyLine })) {
-      setSelectedIds(new Set())
-      setSelectMode(false)
-      setShowBatchDelete(false)
-    }
   }
 
   return (
@@ -99,15 +79,7 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
                 onClearFilters={f.clearFilters}
               />
             }
-            selectMode={selectMode}
-            selectedIds={selectedIds}
-            onToggleSelectMode={() => {
-              setSelectMode((v) => !v)
-              setSelectedIds(new Set())
-            }}
-            onToggleSelect={toggleSelect}
             onRequestDelete={setDeleteTarget}
-            onRequestBatchDelete={() => setShowBatchDelete(true)}
             onViewImage={setViewingImage}
             onVoice={() => setShowVoice(true)}
           />
@@ -120,18 +92,6 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
         description="確定要刪除這筆支出嗎？此操作無法復原。"
         onConfirm={confirmDelete}
         loading={deleting}
-      >
-        {canNotifyLine && <NotifyLineCheckbox checked={notifyLine} onChange={setNotifyLine} />}
-      </ConfirmDeleteDialog>
-
-      <ConfirmDeleteDialog
-        open={showBatchDelete}
-        onOpenChange={setShowBatchDelete}
-        title="確認批量刪除"
-        description={`確定要刪除選取的 ${selectedIds.size} 筆支出嗎？此操作無法復原。`}
-        onConfirm={confirmBatchDelete}
-        loading={deleting}
-        confirmText={`刪除 ${selectedIds.size} 筆`}
       >
         {canNotifyLine && <NotifyLineCheckbox checked={notifyLine} onChange={setNotifyLine} />}
       </ConfirmDeleteDialog>

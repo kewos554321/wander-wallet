@@ -105,12 +105,7 @@ function renderView(overrides: Partial<Parameters<typeof ExpensesV2View>[0]> = {
     currentMemberId: "me",
     now,
     filterBar: <div>filters</div>,
-    selectMode: false,
-    selectedIds: new Set<string>(),
-    onToggleSelectMode: vi.fn(),
-    onToggleSelect: vi.fn(),
     onRequestDelete: vi.fn(),
-    onRequestBatchDelete: vi.fn(),
     onViewImage: vi.fn(),
     onVoice: vi.fn(),
     ...overrides,
@@ -177,14 +172,12 @@ describe("ExpensesV2View", () => {
     expect(within(card).getByText("共4人分攤")).toBeInTheDocument()
   })
 
-  it("shows the count line and wires batch, delete, image and voice", () => {
+  it("shows the count line and wires delete, image and voice", () => {
     const props = renderView()
     expect(screen.getByText(/顯示/).textContent).toBe("顯示 2 / 2 筆")
-    fireEvent.click(screen.getByRole("button", { name: "批次" }))
     fireEvent.click(screen.getAllByRole("button", { name: "刪除" })[0])
     fireEvent.click(screen.getByRole("button", { name: "查看圖片" }))
     fireEvent.click(screen.getByRole("button", { name: /AI 快速記帳/ }))
-    expect(props.onToggleSelectMode).toHaveBeenCalled()
     expect(props.onRequestDelete).toHaveBeenCalledWith(expenses[0])
     expect(props.onViewImage).toHaveBeenCalledWith("https://example.com/r.jpg")
     expect(props.onVoice).toHaveBeenCalled()
@@ -193,19 +186,6 @@ describe("ExpensesV2View", () => {
   it("does not render its own clear button", () => {
     renderView()
     expect(screen.queryByText("清除")).not.toBeInTheDocument()
-  })
-
-  it("switches cards to checkboxes in select mode", () => {
-    const props = renderView({ selectMode: true, selectedIds: new Set(["e1"]) })
-    const deletes = screen.getAllByRole("button", { name: "刪除" })
-    expect(deletes).toHaveLength(4)
-    deletes.forEach((d) => expect(d).toBeDisabled())
-    const boxes = screen.getAllByRole("checkbox")
-    expect(boxes[0]).toBeChecked()
-    fireEvent.click(boxes[1])
-    expect(props.onToggleSelect).toHaveBeenCalledWith("e2")
-    fireEvent.click(screen.getByRole("button", { name: "刪除 1 筆" }))
-    expect(props.onRequestBatchDelete).toHaveBeenCalled()
   })
 
   it("shows empty states", () => {
@@ -317,29 +297,6 @@ describe("ExpensesV2 container", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "刪除" })[0])
     fireEvent.click(screen.getByRole("button", { name: "confirm-delete" }))
     await waitFor(() => expect(hook.deleteExpense).toHaveBeenCalledWith("e1", { notifyLine: true }))
-  })
-
-  it("toggles select mode and batch deletes through the container", async () => {
-    const single = expense({ id: "e1" })
-    const hook = {
-      expenses: [single],
-      loading: false,
-      deleting: false,
-      canNotifyLine: false,
-      refetch: vi.fn(),
-      deleteExpense: vi.fn().mockResolvedValue(true),
-      batchDeleteExpenses: vi.fn().mockResolvedValue(true),
-    }
-    mocks.projectExpenses.mockReturnValue(hook)
-    mocks.expenseFilters.mockReturnValue({ ...mocks.expenseFilters(), filteredExpenses: [single] })
-    render(<ExpensesV2 projectId="p1" />)
-
-    fireEvent.click(screen.getByRole("button", { name: "批次" }))
-    expect(screen.getByRole("button", { name: "刪除 0 筆" })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole("checkbox"))
-    fireEvent.click(screen.getByRole("button", { name: "刪除 1 筆" }))
-    fireEvent.click(screen.getByRole("button", { name: "confirm-delete" }))
-    await waitFor(() => expect(hook.batchDeleteExpenses).toHaveBeenCalledWith(["e1"], { notifyLine: true }))
   })
 
   it("shows the skeleton while the project itself is still loading", () => {
