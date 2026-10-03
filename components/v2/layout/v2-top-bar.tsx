@@ -1,3 +1,5 @@
+"use client"
+
 import type { ReactNode } from "react"
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
@@ -15,6 +17,13 @@ export function V2TopBar({ title, backHref, actions, titleClassName }: V2TopBarP
       <Link
         href={backHref}
         aria-label="返回"
+        onClick={(event) => {
+          // Prefer real navigation history; on a fresh load fall back to backHref.
+          if (typeof window !== "undefined" && window.history.length > 1) {
+            event.preventDefault()
+            window.history.back()
+          }
+        }}
         className="flex h-[34px] w-[34px] items-center justify-center rounded-full border border-v2-line bg-v2-surface text-v2-ink"
       >
         <ChevronLeft className="h-[18px] w-[18px]" strokeWidth={2} />

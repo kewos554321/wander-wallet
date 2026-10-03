@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { describe, it, expect, vi } from "vitest"
+import { render, screen, fireEvent } from "@testing-library/react"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 
 describe("V2TopBar title classes", () => {
@@ -23,5 +23,18 @@ describe("V2TopBar title classes", () => {
     render(<V2TopBar title="結算" backHref="/projects/p1" titleClassName="font-bold" />)
     expect(screen.getByRole("heading", { level: 1 }).className).toContain("font-v2-serif")
     expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
+  })
+
+  it("goes back in history when a previous entry exists", () => {
+    const back = vi.spyOn(window.history, "back").mockImplementation(() => {})
+    Object.defineProperty(window.history, "length", { configurable: true, get: () => 2 })
+    try {
+      render(<V2TopBar title="結算" backHref="/projects" />)
+      fireEvent.click(screen.getByRole("link", { name: "返回" }))
+      expect(back).toHaveBeenCalledTimes(1)
+    } finally {
+      back.mockRestore()
+      delete (window.history as unknown as { length?: unknown }).length
+    }
   })
 })
