@@ -44,14 +44,9 @@ function renderView(overrides: Partial<Parameters<typeof MembersV2View>[0]> = {}
     currentUserId: "u1",
     isOwner: true,
     removing: null,
-    batchMode: false,
-    selected: new Set<string>(),
     onInvite: vi.fn(),
     onAdd: vi.fn(),
     onRemove: vi.fn(),
-    onToggleBatch: vi.fn(),
-    onToggleSelect: vi.fn(),
-    onRequestBatchRemove: vi.fn(),
     ...overrides,
   }
   render(<MembersV2View {...props} />)
@@ -86,10 +81,9 @@ describe("MembersV2View", () => {
     expect(props.onRemove).toHaveBeenCalledWith("m2")
   })
 
-  it("hides remove and batch for non-owners", () => {
+  it("hides remove for non-owners", () => {
     renderView({ isOwner: false, currentUserId: "u2" })
     expect(screen.queryAllByRole("button", { name: /^移除/ })).toHaveLength(0)
-    expect(screen.queryByRole("button", { name: "批次" })).not.toBeInTheDocument()
   })
 
   it("wires invite and add", () => {
@@ -98,16 +92,6 @@ describe("MembersV2View", () => {
     fireEvent.click(screen.getByRole("button", { name: "手動新增成員" }))
     expect(props.onInvite).toHaveBeenCalled()
     expect(props.onAdd).toHaveBeenCalled()
-  })
-
-  it("uses checkboxes in batch mode, never for yourself", () => {
-    const props = renderView({ batchMode: true, selected: new Set(["m2"]) })
-    expect(within(screen.getByTestId("member-m1")).queryByRole("checkbox")).not.toBeInTheDocument()
-    expect(within(screen.getByTestId("member-m2")).getByRole("checkbox")).toBeChecked()
-    fireEvent.click(within(screen.getByTestId("member-m3")).getByRole("checkbox"))
-    expect(props.onToggleSelect).toHaveBeenCalledWith("m3")
-    fireEvent.click(screen.getByRole("button", { name: "移除 1 位" }))
-    expect(props.onRequestBatchRemove).toHaveBeenCalled()
   })
 })
 
@@ -153,7 +137,7 @@ describe("MembersV2 container", () => {
     expect(screen.getByTestId("v2-members-skeleton")).toBeInTheDocument()
   })
 
-  it("renders the member list and toggles batch mode", () => {
+  it("renders the member list", () => {
     mockProjectMembers.mockReturnValue({
       project,
       loading: false,
@@ -167,8 +151,6 @@ describe("MembersV2 container", () => {
     })
     render(<MembersV2 projectId="p1" />)
     expect(screen.getByText("成員組成 · 3 位旅伴")).toBeInTheDocument()
-    fireEvent.click(screen.getByRole("button", { name: "批次" }))
-    expect(screen.getByRole("button", { name: "移除 0 位" })).toBeInTheDocument()
   })
 
   it("opens the invite and add dialogs", () => {
@@ -207,28 +189,7 @@ describe("MembersV2 container", () => {
     await waitFor(() => expect(removeMember).toHaveBeenCalledWith("m2"))
   })
 
-  it("batch removes selected members", async () => {
-    const batchRemove = vi.fn().mockResolvedValue(undefined)
-    mockProjectMembers.mockReturnValue({
-      project,
-      loading: false,
-      isOwner: true,
-      currentUserId: "u1",
-      removing: null,
-      refetch: vi.fn(),
-      addMember: vi.fn(),
-      removeMember: vi.fn(),
-      batchRemove,
-    })
-    render(<MembersV2 projectId="p1" />)
-    fireEvent.click(screen.getByRole("button", { name: "批次" }))
-    fireEvent.click(within(screen.getByTestId("member-m2")).getByRole("checkbox"))
-    fireEvent.click(screen.getByRole("button", { name: "移除 1 位" }))
-    fireEvent.click(screen.getByRole("button", { name: "移除 (1)" }))
-    await waitFor(() => expect(batchRemove).toHaveBeenCalledWith(["m2"]))
-  })
-
-  it("deselects a member and skips removal when cancelled", async () => {
+  it("skips removal when cancelled", async () => {
     const removeMember = vi.fn().mockResolvedValue(undefined)
     mockProjectMembers.mockReturnValue({
       project,
@@ -241,16 +202,8 @@ describe("MembersV2 container", () => {
       removeMember,
       batchRemove: vi.fn(),
     })
-    render(<MembersV2 projectId="p1" />)
-    fireEvent.click(screen.getByRole("button", { name: "批次" }))
-    const checkbox = () => within(screen.getByTestId("member-m2")).getByRole("checkbox")
-    fireEvent.click(checkbox())
-    expect(checkbox()).toBeChecked()
-    fireEvent.click(checkbox())
-    expect(checkbox()).not.toBeChecked()
-
     vi.stubGlobal("confirm", vi.fn(() => false))
-    fireEvent.click(screen.getByRole("button", { name: "取消" }))
+    render(<MembersV2 projectId="p1" />)
     fireEvent.click(within(screen.getByTestId("member-m2")).getByRole("button", { name: "移除小美" }))
     expect(removeMember).not.toHaveBeenCalled()
   })

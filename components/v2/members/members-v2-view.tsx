@@ -16,14 +16,9 @@ export interface MembersV2ViewProps {
   currentUserId: string | null
   isOwner: boolean
   removing: string | null
-  batchMode: boolean
-  selected: Set<string>
   onInvite: () => void
   onAdd: () => void
   onRemove: (memberId: string) => void
-  onToggleBatch: () => void
-  onToggleSelect: (memberId: string) => void
-  onRequestBatchRemove: () => void
 }
 
 const pillButton =
@@ -40,11 +35,6 @@ export function MembersV2View(props: MembersV2ViewProps) {
         <div className="mb-1 flex items-center justify-between">
           <p className="m-0 text-[13px] font-bold text-v2-lake">成員列表</p>
           <div className="flex items-center gap-2">
-            {props.isOwner && (
-              <button type="button" onClick={props.onToggleBatch} className="text-xs font-bold text-v2-link">
-                {props.batchMode ? "取消" : "批次"}
-              </button>
-            )}
             <button type="button" aria-label="邀請成員" title="邀請成員" onClick={props.onInvite} className={pillButton}>
               <Share2 className="h-[15px] w-[15px]" strokeWidth={1.8} aria-hidden="true" />
               分享
@@ -73,15 +63,6 @@ export function MembersV2View(props: MembersV2ViewProps) {
               data-testid={`member-${member.id}`}
               className={`flex items-center gap-3 ${i < project.members.length - 1 ? "border-b border-v2-line-soft py-3.5" : "pt-3.5"}`}
             >
-              {props.batchMode && canManage && (
-                <input
-                  type="checkbox"
-                  checked={props.selected.has(member.id)}
-                  onChange={() => props.onToggleSelect(member.id)}
-                  aria-label={`選取${member.displayName}`}
-                  className="h-4 w-4 shrink-0 accent-v2-lake"
-                />
-              )}
               <span
                 className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
                   isPlaceholder ? "bg-v2-sand text-v2-ink-subtle" : AVATAR_TONES[i % AVATAR_TONES.length]
@@ -101,7 +82,7 @@ export function MembersV2View(props: MembersV2ViewProps) {
                   {isPlaceholder ? "尚未加入" : member.user?.email}
                 </span>
               </span>
-              {!props.batchMode && canManage && (
+              {canManage && (
                 <button
                   type="button"
                   aria-label={`移除${member.displayName}`}
@@ -116,19 +97,6 @@ export function MembersV2View(props: MembersV2ViewProps) {
           )
         })}
       </div>
-
-      {props.batchMode && (
-        <div className="fixed inset-x-0 bottom-0 z-50 border-t border-v2-line bg-v2-surface px-4 py-3">
-          <button
-            type="button"
-            disabled={props.selected.size === 0 || props.removing === "batch"}
-            onClick={props.onRequestBatchRemove}
-            className="mx-auto block w-full max-w-md rounded-full bg-v2-danger py-3 text-[15px] font-bold text-v2-on-lake disabled:opacity-40"
-          >
-            移除 {props.selected.size} 位
-          </button>
-        </div>
-      )}
     </>
   )
 }
