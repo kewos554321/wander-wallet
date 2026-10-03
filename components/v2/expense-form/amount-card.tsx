@@ -10,40 +10,71 @@ interface AmountCardProps {
   currency: string
   onAmount: (value: string) => void
   onCurrency: (code: string) => void
-  onOpenCalculator: () => void
+  /** Whether the in-card calculator slot is open. Defaults to closed. */
+  calculatorOpen?: boolean
+  /** Toggles the in-card calculator slot. */
+  onToggleCalculator?: () => void
+  /** Rendered inside the card, between the header and the value row, when open. */
+  calculator?: React.ReactNode
+  /**
+   * Transitional v1→v2 prop. The view migrates to `onToggleCalculator` in a
+   * later task; until then the 計算機 button falls back to this callback.
+   * @deprecated use `onToggleCalculator`
+   */
+  onOpenCalculator?: () => void
 }
 
-export function AmountCard({ amount, currency, onAmount, onCurrency, onOpenCalculator }: AmountCardProps) {
+export function AmountCard({
+  amount,
+  currency,
+  onAmount,
+  onCurrency,
+  calculatorOpen = false,
+  onToggleCalculator,
+  calculator,
+  onOpenCalculator,
+}: AmountCardProps) {
+  const open = calculatorOpen
   return (
-    <div className="mx-4 mt-4 rounded-[20px] border border-v2-lake-border bg-gradient-to-br from-v2-lake-soft to-v2-paper px-5 py-[18px] shadow-[0_2px_8px_rgba(27,88,71,.07)]">
+    <div
+      className={`mx-4 mt-4 rounded-[20px] border px-5 py-[18px] shadow-[0_2px_8px_rgba(27,88,71,.07)] ${
+        open ? "border-v2-lake bg-v2-lake" : "border-v2-lake-edge bg-v2-lake-tint"
+      }`}
+    >
       <div className="mb-3 flex items-center justify-between">
-        <label htmlFor="v2-amount" className={SECTION_TITLE}>
+        <label
+          htmlFor={open ? undefined : "v2-amount"}
+          className={open ? "text-[13px] font-bold text-v2-paper opacity-85" : SECTION_TITLE}
+        >
           輸入金額
         </label>
         <button
           type="button"
-          onClick={onOpenCalculator}
+          onClick={onToggleCalculator ?? onOpenCalculator}
           aria-label="開啟計算機"
-          className="inline-flex items-center gap-1 rounded-full bg-v2-surface px-3.5 py-1.5 text-xs font-bold text-v2-lake shadow-[0_1px_2px_rgba(27,24,21,.06)]"
+          className="inline-flex items-center gap-1 rounded-full bg-v2-paper px-3.5 py-1.5 text-xs font-bold text-v2-lake shadow-[0_1px_2px_rgba(27,24,21,.06)]"
         >
           <CalculatorIcon className="h-3.5 w-3.5" aria-hidden="true" />
           計算機
         </button>
       </div>
-      <div className="flex items-center gap-2.5">
-        <div className="shrink-0">
-          <CurrencySelect value={currency as CurrencyCode} onChange={(v) => onCurrency(v)} showName={false} />
+      {open && calculator}
+      {!open && (
+        <div className="flex items-center gap-2.5">
+          <div className="shrink-0">
+            <CurrencySelect value={currency as CurrencyCode} onChange={(v) => onCurrency(v)} showName={false} />
+          </div>
+          <input
+            id="v2-amount"
+            aria-label="金額"
+            inputMode="decimal"
+            value={amount}
+            onChange={(e) => onAmount(e.target.value)}
+            placeholder="0"
+            className="min-w-0 flex-1 bg-transparent font-v2-serif text-[36px] font-bold leading-[44px] tabular-nums outline-none"
+          />
         </div>
-        <input
-          id="v2-amount"
-          aria-label="金額"
-          inputMode="decimal"
-          value={amount}
-          onChange={(e) => onAmount(e.target.value)}
-          placeholder="0"
-          className="min-w-0 flex-1 bg-transparent font-v2-serif text-[36px] font-bold leading-[44px] tabular-nums outline-none"
-        />
-      </div>
+      )}
     </div>
   )
 }
