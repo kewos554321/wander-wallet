@@ -454,3 +454,42 @@
   scrollbar-width: thin;
   scrollbar-color: var(--v2-line) transparent;
 }
+
+[data-ui="v2"] .v2-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+}
+
+[data-ui="v2"] .v2-range::-webkit-slider-runnable-track {
+  height: 4px;
+  background: transparent;
+}
+
+[data-ui="v2"] .v2-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  height: 14px;
+  width: 14px;
+  border-radius: 9999px;
+  background: var(--v2-knob);
+  border: 2px solid var(--v2-lake);
+  cursor: pointer;
+}
+
+[data-ui="v2"] .v2-range::-moz-range-track {
+  height: 4px;
+  background: transparent;
+}
+
+[data-ui="v2"] .v2-range::-moz-range-thumb {
+  pointer-events: auto;
+  height: 14px;
+  width: 14px;
+  border-radius: 9999px;
+  background: var(--v2-knob);
+  border: 2px solid var(--v2-lake);
+  cursor: pointer;
+}

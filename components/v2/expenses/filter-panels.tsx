@@ -4,7 +4,8 @@ import { useState } from "react"
 import type { DateRange } from "react-day-picker"
 import { Check, ChevronLeft, ChevronRight, CircleX } from "lucide-react"
 import { CATEGORY_LABELS, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
-import { formatCurrency } from "@/lib/constants/currencies"
+import { formatAmount } from "@/lib/constants/currencies"
+import { currencySymbol } from "@/components/v2/ui/currency-field"
 import { CATEGORY_TONES } from "@/components/v2/category-style"
 
 function PanelHeader({ title, onClear, showClear }: { title: string; onClear: () => void; showClear: boolean }) {
@@ -155,34 +156,44 @@ export function AmountPanel({
 }) {
   const upper = max || 10000
   const step = Math.max(1, Math.floor(upper / 100))
+  const [lo, hi] = range
+  const hiValue = hi === 0 ? upper : hi
+  const loPct = upper > 0 ? (lo / upper) * 100 : 0
+  const hiPct = upper > 0 ? (hiValue / upper) * 100 : 100
+  const label = (n: number) => `${currencySymbol(currency)}${formatAmount(n, currency)}`
   return (
     <>
-      <PanelHeader title="設定金額區間" onClear={onClear} showClear={range[0] > 0 || range[1] > 0} />
+      <PanelHeader title="設定金額區間" onClear={onClear} showClear={lo > 0 || hi > 0} />
       <div className="px-2.5 pb-3 pt-2">
         <div className="mb-2 flex items-center justify-between text-xs font-bold text-v2-ink">
-          <span>{formatCurrency(range[0], currency)}</span>
-          <span>{range[1] === 0 ? formatCurrency(upper, currency) : formatCurrency(range[1], currency)}</span>
+          <span>{label(lo)}</span>
+          <span>{label(hiValue)}</span>
         </div>
-        <div className="space-y-1.5">
+        <div className="relative flex h-3.5 items-center">
+          <span className="absolute inset-x-0 h-1 rounded-full bg-v2-line-soft" />
+          <span className="absolute h-1 rounded-full bg-v2-lake" style={{ left: `${loPct}%`, right: `${100 - hiPct}%` }} />
           <input
             type="range"
             min={0}
             max={upper}
             step={step}
-            value={range[0]}
+            value={lo}
             aria-label="最低金額"
-            onChange={(e) => onChange([Number(e.target.value), range[1]])}
-            className="h-1 w-full appearance-none rounded-full accent-v2-lake"
+            onChange={(e) => onChange([Math.min(Number(e.target.value), hiValue), hi])}
+            className="v2-range absolute inset-x-0 h-3.5 w-full"
           />
           <input
             type="range"
             min={0}
             max={upper}
             step={step}
-            value={range[1]}
+            value={hiValue}
             aria-label="最高金額"
-            onChange={(e) => onChange([range[0], Number(e.target.value)])}
-            className="h-1 w-full appearance-none rounded-full accent-v2-lake"
+            onChange={(e) => {
+              const v = Number(e.target.value)
+              onChange([lo, v >= upper ? 0 : Math.max(lo, v)])
+            }}
+            className="v2-range absolute inset-x-0 h-3.5 w-full"
           />
         </div>
       </div>

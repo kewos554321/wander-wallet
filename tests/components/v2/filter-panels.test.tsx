@@ -121,6 +121,15 @@ describe("ExpenseFilterBar panels", () => {
     expect(props.onAmountRange).toHaveBeenCalledWith([0, 0])
   })
 
+  it("shows amount labels and updates the maximum", () => {
+    const props = renderBar()
+    fireEvent.click(screen.getByRole("button", { name: /金額/ }))
+    expect(screen.getByText("NT$0")).toBeInTheDocument()
+    expect(screen.getByText("NT$6,400")).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText("最高金額"), { target: { value: "3000" } })
+    expect(props.onAmountRange).toHaveBeenCalledWith([0, 3000])
+  })
+
   it("clears the payment date range", () => {
     const props = renderBar({
       filters: { ...baseFilters, expenseDateRange: { from: new Date(2026, 10, 12), to: new Date(2026, 10, 16) } },
