@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&amp;family=Noto+Sans+TC:wght@400;500;600;700&amp;display=swap">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; padding: 0; }
+</style>
+</helmet>
+
+<div style="width:390px;height:380px;position:relative;background:rgba(27,24,21,.5);font-family:'Noto Sans TC',sans-serif;color:#1B1815;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+
+  <div style="width:340px;background:#FFFFFF;border-radius:20px;padding:22px;">
+
+    <h2 style="margin:0 0 16px;font-family:'Noto Serif TC',serif;font-weight:700;font-size:17px;">分享結算結果</h2>
+
+    <div style="background:#EAF5F1;border:1px solid #DCEAE3;border-radius:12px;padding:13px;font-size:13px;line-height:1.7;white-space:pre-line;max-height:150px;overflow-y:auto;margin-bottom:18px;color:#1B1815;">💰 結算明細
+總支出：$15,280
+
+📋 轉帳清單：
+1. 志明 ➡️ 小美：$2,540</div>
+
+    <div style="display:flex;gap:10px;">
+      <button type="button" style="flex:1;height:44px;border-radius:12px;border:1px solid #E7DFD2;background:#FFFFFF;color:#6E6860;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path></svg>
+        複製文字
+      </button>
+      <button type="button" style="flex:1;height:44px;border-radius:12px;background:#06C755;color:#FFFFFF;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V7.082c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V7.082c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V7.082c0-.345.282-.63.63-.63.345 0 .63.285.63.63v5.797zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V7.082c0-.345.282-.63.63-.63.346 0 .628.285.628.63v5.797zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V7.082c0-.345.285-.63.63-.63.348 0 .63.285.63.63v5.168h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.575 12 .575S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08 0 0-.14.848-.17 1.027-.053.303-.242 1.186 1.038.647 1.281-.54 6.911-4.07 9.428-6.97C23.279 14.78 24 12.609 24 10.314"></path></svg>
+        LINE 分享
+      </button>
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":380}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&amp;family=Noto+Sans+TC:wght@400;500;600;700&amp;display=swap">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  a:hover { opacity: .85; }
+  button { font-family: inherit; cursor: pointer; }
+  summary { list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  details[open] .chev { transform: rotate(180deg); }
+</style>
+</helmet>
+
+<div style="width:390px;height:1200px;position:relative;background:#FAF7F2;font-family:'Noto Sans TC',sans-serif;color:#1B1815;overflow:hidden;">
+
+  <div style="padding:16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E7DFD2;">
+    <a href="Trip.dc.html" aria-label="返回" style="width:34px;height:34px;border-radius:50%;border:1px solid #E7DFD2;background:#FFFFFF;display:flex;align-items:center;justify-content:center;color:#1B1815;">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <h1 style="margin:0;flex:1;text-align:center;font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;line-height:24px;letter-spacing:.15px;">結算</h1>
+    <span style="width:34px;height:34px;" aria-hidden="true"></span>
+  </div>
+
+  
+
+  <div style="margin:14px 16px 0;background:#FFFFFF;border:1px solid #E7DFD2;border-radius:16px;padding:16px;">
+    <p style="margin:0 0 10px;font-size:13px;color:#1B5847;font-weight:700;">計算總覽</p>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+      <div style="display:flex;flex-direction:column;align-items:center;padding:12px 4px;border-radius:12px;background:#EAF5F1;">
+        <div style="width:32px;height:32px;border-radius:50%;background:#D2EAE1;display:flex;align-items:center;justify-content:center;margin-bottom:6px;color:#1B5847;">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 8h8M8 12h8M8 16h5"></path></svg>
+        </div>
+        <span style="font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;color:#1B1815;">12</span>
+        <span style="font-size:12px;color:#6E6860;margin-top:2px;">支出筆數</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:12px 4px;border-radius:12px;background:#FBEAE0;">
+        <div style="width:32px;height:32px;border-radius:50%;background:#F6DCCB;display:flex;align-items:center;justify-content:center;margin-bottom:6px;color:#C4602F;">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"></rect><path d="M2 10h20M16 15h2"></path></svg>
+        </div>
+        <span style="font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;color:#1B1815;">60,730</span>
+        <span style="font-size:12px;color:#6E6860;margin-top:2px;">總金額 (TWD)</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:12px 4px;border-radius:12px;background:#E8EEF7;">
+        <div style="width:32px;height:32px;border-radius:50%;background:#D3E0F5;display:flex;align-items:center;justify-content:center;margin-bottom:6px;color:#4A6FA5;">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-6"></path></svg>
+        </div>
+        <span style="font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;color:#1B1815;">12,146</span>
+        <span style="font-size:12px;color:#6E6860;margin-top:2px;">日均花費 (TWD)</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:12px 4px;border-radius:12px;background:#EFEAF7;">
+        <div style="width:32px;height:32px;border-radius:50%;background:#E4DCF2;display:flex;align-items:center;justify-content:center;margin-bottom:6px;color:#6B5B95;">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"></circle><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path><circle cx="17" cy="9" r="2.4"></circle><path d="M15.5 14.2c2.4.4 4.5 2.4 4.5 5.8"></path></svg>
+        </div>
+        <span style="font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;color:#1B1815;">15,182</span>
+        <span style="font-size:12px;color:#6E6860;margin-top:2px;">人均 (TWD)</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin:16px 16px 0;background:#FFFFFF;border:1px solid #E7DFD2;border-radius:16px;padding:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 12px;">
+      <p style="margin:0;font-size:13px;color:#1B5847;font-weight:700;">轉帳建議</p>
+      <div style="display:flex;gap:8px;">
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #B7D9CB;border-radius:8px;font-size:12px;font-weight:600;color:#1B5847;background:#EAF5F1;">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12.99 6.74 1.93 3.44"></path><path d="M19.136 12a10 10 0 0 1-14.271 0"></path><path d="m21 21-2.16-3.84"></path><path d="m3 21 8.02-14.26"></path><circle cx="12" cy="5" r="2"></circle></svg>
+          計算說明
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #B7D9CB;border-radius:8px;font-size:12px;font-weight:600;color:#1B5847;background:#EAF5F1;">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.2"></circle><circle cx="6" cy="12" r="2.2"></circle><circle cx="18" cy="19" r="2.2"></circle><path d="M8 10.8l8-4.4M8 13.2l8 4.4"></path></svg>
+          分享
+        </span>
+      </div>
+    </div>
+    <div>
+
+    <div style="padding:12px 0;border-bottom:1px solid #F0EAE0;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+        <div style="width:26px;height:26px;flex-shrink:0;border-radius:50%;background:#D2EAE1;color:#1B5847;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">美</div>
+        <span style="font-size:14px;font-weight:500;line-height:20px;letter-spacing:.1px;">小美</span>
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#B7AE9D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        <div style="width:26px;height:26px;flex-shrink:0;border-radius:50%;background:#F7EFDD;color:#9C7A28;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">我</div>
+        <span style="font-size:14px;font-weight:500;line-height:20px;letter-spacing:.1px;">我</span>
+      </div>
+      <p style="margin:0;flex-shrink:0;font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;line-height:24px;letter-spacing:.15px;">NT$ 2,400</p>
+    </div>
+
+    <div style="padding:12px 0;border-bottom:1px solid #F0EAE0;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+        <div style="width:26px;height:26px;flex-shrink:0;border-radius:50%;background:#F6E9EE;color:#A14A68;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">婷</div>
+        <span style="font-size:14px;font-weight:500;line-height:20px;letter-spacing:.1px;">佳婷</span>
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#B7AE9D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        <div style="width:26px;height:26px;flex-shrink:0;border-radius:50%;background:#FBE3D2;color:#C4602F;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">志</div>
+        <span style="font-size:14px;font-weight:500;line-height:20px;letter-spacing:.1px;">志明</span>
+      </div>
+      <p style="margin:0;flex-shrink:0;font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;line-height:24px;letter-spacing:.15px;">NT$ 1,850</p>
+    </div>
+
+    <div style="padding:12px 0 0;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+        <div style="width:26px;height:26px;flex-shrink:0;border-radius:50%;background:#EFEAF7;color:#6B5B95;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">凱</div>
+        <span style="font-size:14px;font-weight:500;line-height:20px;letter-spacing:.1px;">阿凱</span>
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#B7AE9D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        <div style="width:26px;height:26px;flex-shrink:0;border-radius:50%;background:#F7EFDD;color:#9C7A28;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">我</div>
+        <span style="font-size:14px;font-weight:500;line-height:20px;letter-spacing:.1px;">我</span>
+      </div>
+      <p style="margin:0;flex-shrink:0;font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;line-height:24px;letter-spacing:.15px;">NT$ 970</p>
+    </div>
+
+    </div>
+  </div>
+
+  <div style="margin:14px 16px 0;text-align:center;">
+    <a href="Stats.dc.html" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#6E6860;font-weight:600;">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 15l4-4 3 3 5-6"></path></svg>
+      查看統計
+      <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+    </a>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

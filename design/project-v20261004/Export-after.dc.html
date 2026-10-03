@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&amp;family=Noto+Sans+TC:wght@400;500;600;700&amp;display=swap">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; padding: 0; }
+</style>
+</helmet>
+
+<div style="width:390px;height:730px;position:relative;background:#FAF7F2;font-family:'Noto Sans TC',sans-serif;color:#1B1815;overflow:hidden;">
+
+  <div style="padding:16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E7DFD2;">
+    <a href="Trip-m0lh.dc.html" aria-label="返回" style="width:34px;height:34px;border-radius:50%;border:1px solid #E7DFD2;background:#FFFFFF;display:flex;align-items:center;justify-content:center;color:#1B1815;">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <h1 style="margin:0;flex:1;text-align:center;font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;line-height:24px;letter-spacing:.15px;">匯出</h1>
+    <span style="width:34px;height:34px;" aria-hidden="true"></span>
+  </div>
+
+  <div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+
+    <div style="background:#FFFFFF;border:1px solid #E7DFD2;border-radius:16px;padding:16px;">
+
+      <p style="margin:0 0 10px;font-size:13px;color:#1B5847;font-weight:700;">匯出格式</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div style="border:2px solid #1B5847;background:#EAF5F1;border-radius:12px;padding:14px;text-align:center;">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1B5847" stroke-width="2" style="margin:0 auto 6px;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+          <p style="margin:0;font-size:13px;font-weight:700;color:#1B5847;">CSV</p>
+          <p style="margin:2px 0 0;font-size:10px;color:#6E6860;">Excel 相容</p>
+        </div>
+        <div style="border:1px solid #E7DFD2;border-radius:12px;padding:14px;text-align:center;">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#6E6860" stroke-width="2" style="margin:0 auto 6px;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+          <p style="margin:0;font-size:13px;font-weight:600;">PDF</p>
+          <p style="margin:2px 0 0;font-size:10px;color:#6E6860;">可列印報表</p>
+        </div>
+      </div>
+
+      <p style="margin:0 0 10px;font-size:13px;color:#1B5847;font-weight:700;">匯出內容</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+        <label style="display:flex;align-items:center;gap:10px;border:1px solid #E7DFD2;border-radius:12px;padding:11px;">
+          <input type="checkbox" checked style="margin:0;accent-color:#1B5847;">
+          <span>
+            <p style="margin:0;font-size:13px;font-weight:600;">支出明細</p>
+            <p style="margin:1px 0 0;font-size:11px;color:#A79F8F;">每筆支出的日期、金額、類別、付款人</p>
+          </span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;border:1px solid #E7DFD2;border-radius:12px;padding:11px;">
+          <input type="checkbox" checked style="margin:0;accent-color:#1B5847;">
+          <span>
+            <p style="margin:0;font-size:13px;font-weight:600;">結算資訊</p>
+            <p style="margin:1px 0 0;font-size:11px;color:#A79F8F;">誰該付誰多少錢的結算清單</p>
+          </span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;border:1px solid #E7DFD2;border-radius:12px;padding:11px;">
+          <input type="checkbox" style="margin:0;accent-color:#1B5847;">
+          <span>
+            <p style="margin:0;font-size:13px;font-weight:600;">統計摘要</p>
+            <p style="margin:1px 0 0;font-size:11px;color:#A79F8F;">總額、人均、分類統計、成員餘額</p>
+          </span>
+        </label>
+      </div>
+
+      <p style="margin:0 0 10px;font-size:13px;color:#1B5847;font-weight:700;display:flex;align-items:center;justify-content:space-between;">
+        篩選條件
+        <span style="font-size:12px;font-weight:600;color:#1B5847;display:flex;align-items:center;gap:4px;">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+          新增篩選
+        </span>
+      </p>
+      <p style="margin:0;font-size:11px;color:#A79F8F;">預設匯出所有資料，點擊「新增篩選」可選擇日期範圍或分類</p>
+
+    </div>
+
+    <div style="background:#EAF5F1;border:1px solid #DCEAE3;border-radius:14px;padding:14px;">
+      <p style="margin:0 0 4px;font-size:11px;color:#1B5847;">專案：京都賞楓行</p>
+      <p style="margin:0 0 4px;font-size:11px;color:#1B5847;">支出筆數：18 筆（共 18 筆）</p>
+      <p style="margin:0;font-size:11px;color:#1B5847;">成員人數：4 人</p>
+    </div>
+
+  </div>
+
+  <div style="position:absolute;left:0;right:0;bottom:0;padding:14px 16px;border-top:1px solid #E7DFD2;background:#FAF7F2;">
+    <button type="button" style="width:100%;height:48px;border-radius:14px;background:#1B5847;color:#FAF7F2;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      匯出 CSV
+    </button>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":730}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
