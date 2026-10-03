@@ -212,7 +212,7 @@ describe("LocationPickerV2", () => {
     vi.stubGlobal("GeolocationPositionError", GeoError)
     setGeolocation({
       getCurrentPosition: (_resolve: PositionCallback, reject: PositionErrorCallback) =>
-        reject(new Error("unknown failure")),
+        reject(Object.assign(new Error("unknown failure"), { code: 1 }) as unknown as GeolocationPositionError),
     })
     render(<LocationPickerV2 onChange={vi.fn()} />)
     fireEvent.click(screen.getByText("新增地點"))

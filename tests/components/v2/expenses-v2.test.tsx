@@ -154,6 +154,13 @@ describe("ExpensesV2View", () => {
     expect(within(card).getByLabelText("未附明細圖片")).toBeInTheDocument()
   })
 
+  it("keeps the image button outside the card link", () => {
+    renderView()
+    const button = screen.getByRole("button", { name: "查看圖片" })
+    expect(button.closest("a")).toBeNull()
+    expect(screen.getByRole("link", { name: /交通/ })).toHaveAttribute("href", "/projects/p1/expenses/e2/edit")
+  })
+
   it("renders a card with no description and a single participant", () => {
     const single = expense({ id: "e5", description: null, category: "food", location: null, image: null, participants: [{ id: "p1", shareAmount: 100, member: zhi }] })
     renderView({ expenses: [single], allCount: 1, summary: { total: 100, count: 1, average: 100 } })

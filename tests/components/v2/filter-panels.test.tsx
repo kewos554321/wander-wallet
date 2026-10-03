@@ -165,7 +165,7 @@ describe("ExpenseFilterBar panels", () => {
     fireEvent.mouseDown(document.body)
     fireEvent.click(screen.getByRole("button", { name: /幣別/ }))
     expect(screen.getByRole("checkbox", { name: "JPY" })).toHaveAttribute("aria-checked", "true")
-    expect(props.filters.selectedPayers).toBeDefined()
+    expect(props.filters.selectedPayers).toEqual(new Set(["chi"]))
   })
 
   it("shows 移除篩選 only when filters are active", () => {

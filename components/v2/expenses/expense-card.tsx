@@ -110,19 +110,8 @@ export function ExpenseCard({
           <span className="truncate text-[11px] text-v2-ink-subtle">未填寫地點</span>
         )}
       </span>
-      {expense.image && !selectMode ? (
-        <button
-          type="button"
-          aria-label="查看圖片"
-          onClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            onViewImage(expense.image!)
-          }}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-v2-lake-border text-v2-lake"
-        >
-          <ImageIcon className="h-3.5 w-3.5" strokeWidth={1.7} aria-hidden="true" />
-        </button>
+      {!selectMode && expense.image ? (
+        <span className="block h-8 w-8 shrink-0" aria-hidden="true" />
       ) : (
         <span
           aria-label={expense.image ? "已附明細圖片" : "未附明細圖片"}
@@ -137,7 +126,7 @@ export function ExpenseCard({
   )
 
   const card = (
-    <div className="rounded-[14px] border border-v2-line bg-v2-surface p-[11px] shadow-[0_1px_2px_rgba(27,24,21,.05)]">
+    <div className="relative rounded-[14px] border border-v2-line bg-v2-surface p-[11px] shadow-[0_1px_2px_rgba(27,24,21,.05)]">
       {selectMode ? (
         <label className="flex items-start gap-3">
           <input
@@ -153,10 +142,26 @@ export function ExpenseCard({
           </div>
         </label>
       ) : (
-        <Link href={`/projects/${projectId}/expenses/${expense.id}/edit`} className="block">
-          {body}
-          {footer}
-        </Link>
+        <>
+          <Link href={`/projects/${projectId}/expenses/${expense.id}/edit`} className="block">
+            {body}
+            {footer}
+          </Link>
+          {expense.image && (
+            <button
+              type="button"
+              aria-label="查看圖片"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onViewImage(expense.image!)
+              }}
+              className="absolute bottom-[11px] right-[11px] flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-v2-lake-border text-v2-lake"
+            >
+              <ImageIcon className="h-3.5 w-3.5" strokeWidth={1.7} aria-hidden="true" />
+            </button>
+          )}
+        </>
       )}
     </div>
   )
