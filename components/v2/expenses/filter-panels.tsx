@@ -7,15 +7,17 @@ import { CATEGORY_LABELS, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
 import { formatCurrency } from "@/lib/constants/currencies"
 import { CATEGORY_TONES } from "@/components/v2/category-style"
 
-function PanelHeader({ title, onClear }: { title: string; onClear: () => void }) {
+function PanelHeader({ title, onClear, showClear }: { title: string; onClear: () => void; showClear: boolean }) {
   return (
     <>
       <div className="flex items-center justify-between px-2.5 pb-1.5 pt-2">
         <p className="m-0 text-[10px] font-bold text-v2-ink-subtle">{title}</p>
-        <button type="button" onClick={onClear} className="flex items-center gap-[3px] rounded-md px-1 py-0.5 text-[10px] font-bold text-v2-danger">
-          <CircleX className="h-[11px] w-[11px]" strokeWidth={2.4} aria-hidden="true" />
-          清除
-        </button>
+        {showClear && (
+          <button type="button" onClick={onClear} className="flex items-center gap-[3px] rounded-md px-1 py-0.5 text-[10px] font-bold text-v2-danger">
+            <CircleX className="h-[11px] w-[11px]" strokeWidth={2.4} aria-hidden="true" />
+            清除
+          </button>
+        )}
       </div>
       <div className="h-px bg-v2-line-soft" />
     </>
@@ -37,7 +39,7 @@ function CheckBox({ checked, round }: { checked: boolean; round?: boolean }) {
 export function CategoryPanel({ selected, onToggle, onClear }: { selected: Set<string>; onToggle: (category: string) => void; onClear: () => void }) {
   return (
     <>
-      <PanelHeader title="選擇類別（可複選）" onClear={onClear} />
+      <PanelHeader title="選擇類別（可複選）" onClear={onClear} showClear={selected.size > 0} />
       <div className="v2-scroll max-h-44 overflow-y-auto">
         {EXPENSE_CATEGORIES.map((key) => (
           <button
@@ -76,7 +78,7 @@ export function MemberPanel({
 }) {
   return (
     <>
-      <PanelHeader title={title} onClear={onClear} />
+      <PanelHeader title={title} onClear={onClear} showClear={selected.size > 0} />
       <div className="v2-scroll max-h-44 overflow-y-auto">
         {members.length === 0 ? (
           <div className="px-2.5 py-2 text-xs text-v2-ink-muted">沒有資料</div>
@@ -117,7 +119,7 @@ export function CurrencyPanel({
 }) {
   return (
     <>
-      <PanelHeader title="選擇幣別" onClear={onClear} />
+      <PanelHeader title="選擇幣別" onClear={onClear} showClear={selected.size > 0} />
       <div className="v2-scroll max-h-44 overflow-y-auto">
         {currencies.map((code) => (
           <button
@@ -155,7 +157,7 @@ export function AmountPanel({
   const step = Math.max(1, Math.floor(upper / 100))
   return (
     <>
-      <PanelHeader title="設定金額區間" onClear={onClear} />
+      <PanelHeader title="設定金額區間" onClear={onClear} showClear={range[0] > 0 || range[1] > 0} />
       <div className="px-2.5 pb-3 pt-2">
         <div className="mb-2 flex items-center justify-between text-xs font-bold text-v2-ink">
           <span>{formatCurrency(range[0], currency)}</span>
@@ -223,7 +225,7 @@ export function DatePanel({ range, onChange }: { range: DateRange | undefined; o
 
   return (
     <>
-      <PanelHeader title="付款日期" onClear={() => onChange(undefined)} />
+      <PanelHeader title="付款日期" onClear={() => onChange(undefined)} showClear={!!(range?.from || range?.to)} />
       <div className="px-2.5 pb-2.5 pt-2">
         <div className="mb-1.5 flex items-center justify-between">
           <button

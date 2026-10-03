@@ -61,8 +61,14 @@ describe("ExpenseFilterBar panels", () => {
     expect(screen.getAllByRole("checkbox")).toHaveLength(8)
   })
 
+  it("hides the panel clear action when nothing is selected", () => {
+    renderBar()
+    fireEvent.click(screen.getByRole("button", { name: /類別/ }))
+    expect(screen.queryByRole("button", { name: "清除" })).not.toBeInTheDocument()
+  })
+
   it("toggles a category and clears the panel", () => {
-    const props = renderBar()
+    const props = renderBar({ filters: { ...baseFilters, selectedCategories: new Set(["food"]) } })
     fireEvent.click(screen.getByRole("button", { name: /類別/ }))
     fireEvent.click(screen.getByRole("checkbox", { name: "餐飲" }))
     expect(props.onToggleCategory).toHaveBeenCalledWith("food")
@@ -70,11 +76,16 @@ describe("ExpenseFilterBar panels", () => {
     expect(props.onClearCategories).toHaveBeenCalled()
   })
 
-  it("single-selects a payer and clears", () => {
+  it("single-selects a payer", () => {
     const props = renderBar()
     fireEvent.click(screen.getByRole("button", { name: /付款人/ }))
     fireEvent.click(screen.getByRole("radio", { name: "志明" }))
     expect(props.onSetPayers).toHaveBeenCalledWith(new Set(["chi"]))
+  })
+
+  it("clears the selected payer", () => {
+    const props = renderBar({ filters: { ...baseFilters, selectedPayers: new Set(["chi"]) } })
+    fireEvent.click(screen.getByRole("button", { name: /付款人/ }))
     fireEvent.click(screen.getByRole("button", { name: "清除" }))
     expect(props.onClearPayers).toHaveBeenCalled()
   })
@@ -93,7 +104,7 @@ describe("ExpenseFilterBar panels", () => {
   })
 
   it("toggles a currency and clears", () => {
-    const props = renderBar({ currencies: ["TWD", "JPY"] })
+    const props = renderBar({ currencies: ["TWD", "JPY"], filters: { ...baseFilters, selectedCurrencies: new Set(["JPY"]) } })
     fireEvent.click(screen.getByRole("button", { name: /幣別/ }))
     fireEvent.click(screen.getByRole("checkbox", { name: "JPY" }))
     expect(props.onToggleCurrency).toHaveBeenCalledWith("JPY")
@@ -102,10 +113,10 @@ describe("ExpenseFilterBar panels", () => {
   })
 
   it("changes the amount range and clears", () => {
-    const props = renderBar()
+    const props = renderBar({ filters: { ...baseFilters, amountRange: [100, 200] } })
     fireEvent.click(screen.getByRole("button", { name: /金額/ }))
-    fireEvent.change(screen.getByLabelText("最低金額"), { target: { value: "100" } })
-    expect(props.onAmountRange).toHaveBeenCalledWith([100, 0])
+    fireEvent.change(screen.getByLabelText("最低金額"), { target: { value: "150" } })
+    expect(props.onAmountRange).toHaveBeenCalledWith([150, 200])
     fireEvent.click(screen.getByRole("button", { name: "清除" }))
     expect(props.onAmountRange).toHaveBeenCalledWith([0, 0])
   })
