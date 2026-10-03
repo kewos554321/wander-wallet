@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react"
 import Link from "next/link"
-import { Compass, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 import type { ProjectListItem, ProjectListMember } from "@/lib/hooks/useProjects"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { formatTripDateRange, getGreeting, getTripDays, getTripStatus, type TripStatus } from "@/lib/trip"
@@ -42,8 +42,15 @@ export function ProjectsV2View({ projects, loading, userName, now, adSlot }: Pro
     <div className="pb-5">
       <div className="flex items-center justify-between px-5 pb-1 pt-[22px]">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-v2-lake text-v2-paper">
-            <Compass className="h-[17px] w-[17px]" strokeWidth={1.6} />
+          <div
+            data-testid="v2-brand-mark"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-v2-link to-v2-lake text-v2-paper shadow-[0_2px_6px_rgba(27,88,71,.35)]"
+          >
+            <svg viewBox="0 0 32 32" className="h-[19px] w-[19px]" fill="none" aria-hidden="true">
+              <rect x="4" y="8" width="24" height="18" rx="4" stroke="currentColor" strokeWidth="2.5" />
+              <path d="M4 14 H28" stroke="currentColor" strokeWidth="2" />
+              <circle cx="22" cy="19" r="3" fill="currentColor" fillOpacity="0.4" />
+            </svg>
           </div>
           <span className="text-[15px] font-bold tracking-[.1px]">Wander Wallet</span>
         </div>
