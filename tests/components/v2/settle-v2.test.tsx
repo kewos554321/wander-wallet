@@ -84,11 +84,9 @@ describe("SettleV2View", () => {
     expect(screen.queryByText("所有人都已結清")).not.toBeInTheDocument()
   })
 
-  it("shows per-member balances", () => {
+  it("does not render the per-member balances section", () => {
     renderView()
-    const section = screen.getByRole("region", { name: "各人收支" })
-    expect(within(section).getByText("+TWD 3,370")).toBeInTheDocument()
-    expect(within(section).getByText("−TWD 2,400")).toBeInTheDocument()
+    expect(screen.queryByRole("region", { name: "各人收支" })).not.toBeInTheDocument()
   })
 
   it("wires calc, share, stats link and currency select", () => {
@@ -111,6 +109,16 @@ describe("SettleV2View", () => {
     expect(screen.getByRole("link", { name: /前往專案設定調整匯率/ })).toHaveAttribute("href", "/projects/p1/settings")
     expect(screen.getByText("喜歡 Wander Wallet 嗎？")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Buy Me a Coffee/ })).toBeInTheDocument()
+  })
+
+  it("opens the sponsor links", () => {
+    const open = vi.spyOn(window, "open").mockImplementation(() => null)
+    renderView()
+    fireEvent.click(screen.getByRole("button", { name: /Buy Me a Coffee/ }))
+    fireEvent.click(screen.getByRole("button", { name: "Ko-fi" }))
+    fireEvent.click(screen.getByRole("button", { name: "PayPal" }))
+    expect(open).toHaveBeenCalledTimes(3)
+    open.mockRestore()
   })
 
   it("shows 0 per person without balances", () => {

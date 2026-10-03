@@ -6,7 +6,6 @@ import type { SettleData } from "@/lib/hooks/useSettlement"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { SettleSummaryGrid } from "./settle-summary-grid"
 import { SettlementList } from "./settlement-list"
-import { MemberBalances } from "./member-balances"
 import { SponsorCard } from "./sponsor-card"
 
 export interface SettleV2ViewProps {
@@ -82,12 +81,6 @@ export function SettleV2View(props: SettleV2ViewProps) {
         onShowCalc={props.onShowCalc}
         onShare={props.onShare}
         expenseCount={data.summary.totalExpenses}
-      />
-      <MemberBalances
-        balances={data.balances}
-        currentMemberId={props.currentMemberId}
-        currencyCode={props.displayCurrencyCode}
-        toDisplay={toDisplay}
       />
       <div className="mx-4 mt-3.5 text-center">
         <Link href={`/projects/${props.projectId}/stats`} className="inline-flex items-center gap-[5px] text-xs font-semibold text-v2-ink-muted">
