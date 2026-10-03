@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { useLiff } from "@/components/auth/liff-provider"
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
@@ -13,6 +13,7 @@ import { summarizeExpenses } from "@/lib/expense-list"
 import { formatTripDateRange } from "@/lib/trip"
 import { ExpenseFilterBar } from "./expense-filter-bar"
 import { ExpensesV2View } from "./expenses-v2-view"
+import { loadFilters, saveFilters } from "./filter-storage"
 
 export function ExpensesV2({ projectId }: { projectId: string }) {
   const { user } = useLiff()
@@ -21,6 +22,46 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
     useProjectExpenses(projectId, { projectName: project?.name || "" })
   const f = useExpenseFilters(expenses)
   const { convert } = useCurrencyConversion({ projectCurrency, customRates, precision })
+
+  // Restore filters saved for this project when returning to the list (e.g.
+  // pressing back from a card), then keep them persisted until cleared.
+  const restoredRef = useRef(false)
+  const skipPersistRef = useRef(false)
+  const {
+    filters,
+    setSearchQuery,
+    setCategories,
+    setPayers,
+    setParticipants,
+    setCurrencies,
+    setAmountRange,
+    setCreatedDateRange,
+    setExpenseDateRange,
+  } = f
+  useEffect(() => {
+    const saved = loadFilters(projectId)
+    if (saved) {
+      skipPersistRef.current = true
+      if (saved.searchQuery !== undefined) setSearchQuery(saved.searchQuery)
+      if (saved.selectedCategories) setCategories(saved.selectedCategories)
+      if (saved.selectedPayers) setPayers(saved.selectedPayers)
+      if (saved.selectedParticipants) setParticipants(saved.selectedParticipants)
+      if (saved.selectedCurrencies) setCurrencies(saved.selectedCurrencies)
+      if (saved.amountRange) setAmountRange(saved.amountRange)
+      if (saved.createdDateRange) setCreatedDateRange(saved.createdDateRange)
+      if (saved.expenseDateRange) setExpenseDateRange(saved.expenseDateRange)
+    }
+    restoredRef.current = true
+  }, [projectId, setSearchQuery, setCategories, setPayers, setParticipants, setCurrencies, setAmountRange, setCreatedDateRange, setExpenseDateRange])
+
+  useEffect(() => {
+    if (!restoredRef.current) return
+    if (skipPersistRef.current) {
+      skipPersistRef.current = false
+      return
+    }
+    saveFilters(projectId, filters)
+  }, [projectId, filters])
 
   const [deleteTarget, setDeleteTarget] = useState<ProjectExpense | null>(null)
   const [notifyLine, setNotifyLine] = useState(true)

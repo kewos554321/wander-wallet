@@ -191,6 +191,7 @@ describe("ExpensesV2View", () => {
 
 describe("ExpensesV2 container", () => {
   beforeEach(() => {
+    sessionStorage.clear()
     mocks.projectData.mockReset().mockReturnValue({
       project: { name: "東京", startDate: null, endDate: null, expenses: [] },
       members: [],
@@ -401,5 +402,23 @@ describe("ExpensesV2 container", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /移除篩選/ }))
     expect(f.clearFilters).toHaveBeenCalled()
+  })
+
+  it("restores filters saved for the project when remounting", () => {
+    sessionStorage.setItem(
+      "wander-wallet:expense-filters:p1",
+      JSON.stringify({
+        searchQuery: "拉麵",
+        selectedCategories: ["food"],
+        selectedPayers: [],
+        selectedParticipants: [],
+        selectedCurrencies: [],
+        amountRange: [0, 0],
+      })
+    )
+    const f = mocks.expenseFilters()
+    render(<ExpensesV2 projectId="p1" />)
+    expect(f.setSearchQuery).toHaveBeenCalledWith("拉麵")
+    expect(f.setCategories).toHaveBeenCalledWith(new Set(["food"]))
   })
 })
