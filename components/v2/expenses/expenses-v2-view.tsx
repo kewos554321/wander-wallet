@@ -1,5 +1,4 @@
 import type { ReactNode } from "react"
-import { Sparkles } from "lucide-react"
 import type { ProjectExpense } from "@/lib/hooks/useProjectExpenses"
 import { groupExpensesByDay } from "@/lib/expense-list"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
@@ -18,7 +17,6 @@ export interface ExpensesV2ViewProps {
   filterBar: ReactNode
   onRequestDelete: (expense: ProjectExpense) => void
   onViewImage: (url: string) => void
-  onVoice: () => void
 }
 
 export function ExpensesV2View(props: ExpensesV2ViewProps) {
@@ -58,19 +56,6 @@ export function ExpensesV2View(props: ExpensesV2ViewProps) {
           ))
         )}
       </div>
-
-      <button
-        type="button"
-        onClick={props.onVoice}
-        className="fixed bottom-6 right-4 z-50 flex items-center gap-2"
-      >
-        <span className="rounded-full border border-v2-line bg-v2-surface px-2.5 py-1.5 text-xs font-medium shadow-[0_2px_6px_rgba(27,24,21,.08)]">
-          AI 快速記帳
-        </span>
-        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-v2-coral text-v2-on-lake shadow-[0_4px_10px_rgba(232,130,90,.35)]">
-          <Sparkles className="h-[17px] w-[17px]" strokeWidth={1.7} />
-        </span>
-      </button>
     </>
   )
 }

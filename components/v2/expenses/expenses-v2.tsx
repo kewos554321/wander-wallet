@@ -5,7 +5,6 @@ import Image from "next/image"
 import { useLiff } from "@/components/auth/liff-provider"
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { QuickExpenseV2 } from "@/components/v2/quick-expense/quick-expense-v2"
 import { NotifyLineCheckbox } from "@/components/expense/notify-line-checkbox"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { useCurrencyConversion, useExpenseFilters, useProjectData } from "@/lib/hooks"
@@ -18,7 +17,7 @@ import { ExpensesV2View } from "./expenses-v2-view"
 export function ExpensesV2({ projectId }: { projectId: string }) {
   const { user } = useLiff()
   const { project, members, loading: projectLoading, projectCurrency, customRates, precision } = useProjectData(projectId)
-  const { expenses, loading, deleting, canNotifyLine, refetch, deleteExpense } =
+  const { expenses, loading, deleting, canNotifyLine, deleteExpense } =
     useProjectExpenses(projectId, { projectName: project?.name || "" })
   const f = useExpenseFilters(expenses)
   const { convert } = useCurrencyConversion({ projectCurrency, customRates, precision })
@@ -26,7 +25,6 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
   const [deleteTarget, setDeleteTarget] = useState<ProjectExpense | null>(null)
   const [notifyLine, setNotifyLine] = useState(true)
   const [viewingImage, setViewingImage] = useState<string | null>(null)
-  const [showVoice, setShowVoice] = useState(false)
 
   const currentMemberId = members.find((m) => m.user?.id === user?.id)?.id ?? null
   const dateRange = project ? formatTripDateRange(project.startDate, project.endDate) : null
@@ -81,7 +79,6 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
             }
             onRequestDelete={setDeleteTarget}
             onViewImage={setViewingImage}
-            onVoice={() => setShowVoice(true)}
           />
         )}
       </div>
@@ -106,19 +103,6 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
           )}
         </DialogContent>
       </Dialog>
-
-      <QuickExpenseV2
-        open={showVoice}
-        onOpenChange={setShowVoice}
-        projectId={projectId}
-        projectName={project?.name || ""}
-        members={members.map((m) => ({ id: m.id, displayName: m.displayName, userId: m.userId, user: m.user }))}
-        currentUserMemberId={currentMemberId || ""}
-        currency={projectCurrency}
-        onSuccess={() => {
-          refetch()
-        }}
-      />
     </UiV2Scope>
   )
 }

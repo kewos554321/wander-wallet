@@ -15,14 +15,6 @@ vi.mock("@/components/auth/liff-provider", () => ({
   useLiff: () => ({ user: { id: "u1" } }),
   useAuthFetch: () => vi.fn(),
 }))
-vi.mock("@/components/v2/quick-expense/quick-expense-v2", () => ({
-  QuickExpenseV2: ({ open, onSuccess }: { open?: boolean; onSuccess?: () => void }) =>
-    open ? (
-      <button type="button" onClick={onSuccess}>
-        quick-success
-      </button>
-    ) : null,
-}))
 vi.mock("@/components/expense/notify-line-checkbox", () => ({
   NotifyLineCheckbox: () => <div data-testid="notify-line" />,
 }))
@@ -107,7 +99,6 @@ function renderView(overrides: Partial<Parameters<typeof ExpensesV2View>[0]> = {
     filterBar: <div>filters</div>,
     onRequestDelete: vi.fn(),
     onViewImage: vi.fn(),
-    onVoice: vi.fn(),
     ...overrides,
   }
   render(<ExpensesV2View {...props} />)
@@ -172,15 +163,14 @@ describe("ExpensesV2View", () => {
     expect(within(card).getByText("共4人分攤")).toBeInTheDocument()
   })
 
-  it("shows the count line and wires delete, image and voice", () => {
+  it("shows the count line and wires delete and image", () => {
     const props = renderView()
     expect(screen.getByText(/顯示/).textContent).toBe("顯示 2 / 2 筆")
+    expect(screen.queryByRole("button", { name: /AI 快速記帳/ })).not.toBeInTheDocument()
     fireEvent.click(screen.getAllByRole("button", { name: "刪除" })[0])
     fireEvent.click(screen.getByRole("button", { name: "查看圖片" }))
-    fireEvent.click(screen.getByRole("button", { name: /AI 快速記帳/ }))
     expect(props.onRequestDelete).toHaveBeenCalledWith(expenses[0])
     expect(props.onViewImage).toHaveBeenCalledWith("https://example.com/r.jpg")
-    expect(props.onVoice).toHaveBeenCalled()
   })
 
   it("does not render its own clear button", () => {
@@ -272,7 +262,7 @@ describe("ExpensesV2 container", () => {
     expect(screen.getByTestId("v2-expenses-skeleton")).toBeInTheDocument()
   })
 
-  it("opens the image lightbox and voice sheet, and deletes a single expense", async () => {
+  it("opens the image lightbox and deletes a single expense", async () => {
     const single = expense({ id: "e1", image: "https://example.com/x.jpg" })
     const hook = {
       expenses: [single],
@@ -289,10 +279,6 @@ describe("ExpensesV2 container", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "查看圖片" }))
     expect(screen.getByAltText("消費圖片")).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole("button", { name: /AI 快速記帳/ }))
-    fireEvent.click(screen.getByRole("button", { name: "quick-success" }))
-    expect(hook.refetch).toHaveBeenCalled()
 
     fireEvent.click(screen.getAllByRole("button", { name: "刪除" })[0])
     fireEvent.click(screen.getByRole("button", { name: "confirm-delete" }))
