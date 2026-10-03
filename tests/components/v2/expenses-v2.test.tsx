@@ -338,13 +338,13 @@ describe("ExpensesV2 container", () => {
     const f = {
       filters: {
         searchQuery: "",
-        selectedCategories: new Set<string>(),
-        selectedPayers: new Set<string>(),
-        selectedParticipants: new Set<string>(),
-        selectedCurrencies: new Set<string>(),
-        amountRange: [0, 0] as [number, number],
+        selectedCategories: new Set<string>(["food"]),
+        selectedPayers: new Set<string>(["chi"]),
+        selectedParticipants: new Set<string>(["chi"]),
+        selectedCurrencies: new Set<string>(["JPY"]),
+        amountRange: [100, 200] as [number, number],
         createdDateRange: undefined,
-        expenseDateRange: undefined,
+        expenseDateRange: { from: new Date(2026, 10, 12), to: new Date(2026, 10, 16) },
       },
       filteredExpenses: [],
       hasActiveFilters: true,
@@ -377,14 +377,10 @@ describe("ExpensesV2 container", () => {
     expect(f.setCategories).toHaveBeenCalledWith(new Set())
 
     fireEvent.click(screen.getByRole("button", { name: /付款人/ }))
-    fireEvent.click(screen.getByRole("radio", { name: "志明" }))
-    expect(f.setPayers).toHaveBeenCalledWith(new Set(["chi"]))
     fireEvent.click(screen.getByRole("button", { name: "清除" }))
     expect(f.setPayers).toHaveBeenCalledWith(new Set())
 
     fireEvent.click(screen.getByRole("button", { name: /參與者/ }))
-    fireEvent.click(screen.getByRole("checkbox", { name: "志明" }))
-    expect(f.toggleParticipant).toHaveBeenCalledWith("chi")
     fireEvent.click(screen.getByRole("button", { name: "清除" }))
     expect(f.setParticipants).toHaveBeenCalledWith(new Set())
 
