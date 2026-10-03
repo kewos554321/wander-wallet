@@ -1,8 +1,8 @@
 "use client"
 
+import { useState } from "react"
 import type { DateRange } from "react-day-picker"
-import { Check, CircleX } from "lucide-react"
-import { Calendar } from "@/components/ui/calendar"
+import { Check, ChevronLeft, ChevronRight, CircleX } from "lucide-react"
 import { CATEGORY_LABELS, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
 import { formatCurrency } from "@/lib/constants/currencies"
 import { CATEGORY_TONES } from "@/components/v2/category-style"
@@ -188,17 +188,97 @@ export function AmountPanel({
   )
 }
 
+const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"]
+const pad = (n: number) => String(n).padStart(2, "0")
+const isoDay = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+const sameDay = (a: Date | undefined, b: Date | undefined) =>
+  !!a && !!b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+
 export function DatePanel({ range, onChange }: { range: DateRange | undefined; onChange: (range: DateRange | undefined) => void }) {
+  const [month, setMonth] = useState<Date>(() => range?.from ?? new Date())
+  const year = month.getFullYear()
+  const m = month.getMonth()
+  const startDow = new Date(year, m, 1).getDay()
+  const daysInMonth = new Date(year, m + 1, 0).getDate()
+
+  const cells: { date: Date; outside: boolean }[] = []
+  for (let i = startDow; i > 0; i--) cells.push({ date: new Date(year, m, 1 - i), outside: true })
+  for (let d = 1; d <= daysInMonth; d++) cells.push({ date: new Date(year, m, d), outside: false })
+  while (cells.length % 7 !== 0) {
+    const last = cells[cells.length - 1].date
+    cells.push({ date: new Date(last.getFullYear(), last.getMonth(), last.getDate() + 1), outside: true })
+  }
+
+  function pick(date: Date) {
+    if (!range?.from || range.to) {
+      onChange({ from: date, to: undefined })
+      return
+    }
+    if (date < range.from) {
+      onChange({ from: date, to: range.from })
+      return
+    }
+    onChange({ from: range.from, to: date })
+  }
+
   return (
     <>
-      <div className="flex items-center justify-between border-b border-v2-line px-2.5 py-[7px]">
-        <span className="text-[11px] font-semibold text-v2-ink">付款日期</span>
-        <button type="button" onClick={() => onChange(undefined)} className="rounded-[5px] px-[5px] py-0.5 text-[10px] text-v2-ink-muted">
-          清除
-        </button>
-      </div>
+      <PanelHeader title="付款日期" onClear={() => onChange(undefined)} />
       <div className="px-2.5 pb-2.5 pt-2">
-        <Calendar mode="range" numberOfMonths={1} selected={range} onSelect={onChange} />
+        <div className="mb-1.5 flex items-center justify-between">
+          <button
+            type="button"
+            aria-label="上個月"
+            onClick={() => setMonth(new Date(year, m - 1, 1))}
+            className="flex h-[18px] w-[18px] items-center justify-center text-v2-ink-muted"
+          >
+            <ChevronLeft className="h-3 w-3" strokeWidth={2.4} aria-hidden="true" />
+          </button>
+          <span className="text-[11px] font-semibold text-v2-ink">
+            {year}年{m + 1}月
+          </span>
+          <button
+            type="button"
+            aria-label="下個月"
+            onClick={() => setMonth(new Date(year, m + 1, 1))}
+            className="flex h-[18px] w-[18px] items-center justify-center text-v2-ink-muted"
+          >
+            <ChevronRight className="h-3 w-3" strokeWidth={2.4} aria-hidden="true" />
+          </button>
+        </div>
+        <div className="grid grid-cols-7 text-center">
+          {WEEKDAYS.map((w) => (
+            <span key={w} className="text-[9px] text-v2-ink-subtle">
+              {w}
+            </span>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-y-px text-center">
+          {cells.map(({ date, outside }, i) => {
+            const selected = sameDay(date, range?.from) || sameDay(date, range?.to)
+            const between = !!range?.from && !!range?.to && date > range.from && date < range.to
+            return (
+              <button
+                key={i}
+                type="button"
+                aria-label={isoDay(date)}
+                aria-pressed={selected}
+                onClick={() => pick(date)}
+                className={`py-1 text-[10px] ${
+                  selected
+                    ? "rounded-[5px] bg-v2-lake font-bold text-v2-on-lake"
+                    : between
+                      ? "bg-v2-sand text-v2-ink"
+                      : outside
+                        ? "text-v2-check"
+                        : "text-v2-ink"
+                }`}
+              >
+                {date.getDate()}
+              </button>
+            )
+          })}
+        </div>
       </div>
     </>
   )

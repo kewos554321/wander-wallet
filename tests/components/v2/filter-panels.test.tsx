@@ -119,6 +119,22 @@ describe("ExpenseFilterBar panels", () => {
     expect(props.onExpenseRange).toHaveBeenCalledWith(undefined)
   })
 
+  it("picks the range end from the date panel", () => {
+    const props = renderBar({ filters: { ...baseFilters, expenseDateRange: { from: new Date(2026, 10, 12) } } })
+    fireEvent.click(screen.getByRole("button", { name: /付款日期/ }))
+    fireEvent.click(screen.getByRole("button", { name: "2026-11-14" }))
+    expect(props.onExpenseRange).toHaveBeenCalledWith({ from: new Date(2026, 10, 12), to: new Date(2026, 10, 14) })
+  })
+
+  it("restarts the range when both ends are already set", () => {
+    const props = renderBar({
+      filters: { ...baseFilters, expenseDateRange: { from: new Date(2026, 10, 12), to: new Date(2026, 10, 16) } },
+    })
+    fireEvent.click(screen.getByRole("button", { name: /付款日期/ }))
+    fireEvent.click(screen.getByRole("button", { name: "2026-11-20" }))
+    expect(props.onExpenseRange).toHaveBeenCalledWith({ from: new Date(2026, 10, 20), to: undefined })
+  })
+
   it("closes the open panel on outside click", () => {
     renderBar()
     const trigger = screen.getByRole("button", { name: /類別/ })
