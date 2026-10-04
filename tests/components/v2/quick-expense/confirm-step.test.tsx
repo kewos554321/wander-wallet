@@ -154,4 +154,18 @@ describe("ConfirmStep", () => {
     fireEvent.touchEnd(surface, { changedTouches: [{ clientX: 10 }] })
     expect(p.onIndexChange).not.toHaveBeenCalled()
   })
+
+  it("navigates with the previous/next buttons and disables them at the ends", () => {
+    const p = setup({ index: 0 })
+    expect(screen.getByRole("button", { name: "上一筆" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "下一筆" })).toBeEnabled()
+    fireEvent.click(screen.getByRole("button", { name: "下一筆" }))
+    expect(p.onIndexChange).toHaveBeenLastCalledWith(1)
+  })
+
+  it("disables the next button on the last item", () => {
+    setup({ index: 1 })
+    expect(screen.getByRole("button", { name: "下一筆" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "上一筆" })).toBeEnabled()
+  })
 })

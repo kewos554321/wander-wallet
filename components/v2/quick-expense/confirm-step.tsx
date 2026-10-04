@@ -1,7 +1,7 @@
 "use client"
 
-import { useRef } from "react"
-import { Check, RotateCcw, Send, Trash2, X } from "lucide-react"
+import { useRef, useState } from "react"
+import { Check, ChevronLeft, ChevronRight, RotateCcw, Send, Trash2, X } from "lucide-react"
 import { formatCurrency } from "@/lib/constants/currencies"
 import { itemTotals, type QuickItem } from "@/lib/quick-expense/draft"
 import { QuickItemCard } from "./quick-item-card"
@@ -24,14 +24,35 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
   error: string | null
 }) {
   const touchX = useRef<number | null>(null)
+  const [dragX, setDragX] = useState(0)
   const current = items[index]
   const go = (i: number) => i >= 0 && i < items.length && onIndexChange(i)
+  const isFirst = index === 0
+  const isLast = index === items.length - 1
   const patch = (p: Partial<QuickItem>) => onItemsChange(items.map((it, i) => (i === index ? { ...it, ...p } : it)))
   const remove = () => {
     onItemsChange(items.filter((_, i) => i !== index))
     if (index > 0 && index >= items.length - 1) onIndexChange(index - 1)
   }
   const totals = itemTotals(items).map((t) => formatCurrency(t.total, t.currency)).join(" · ")
+
+  const startSwipe = (e: React.TouchEvent) => {
+    touchX.current = e.touches[0].clientX
+  }
+  const moveSwipe = (e: React.TouchEvent) => {
+    if (touchX.current !== null) setDragX(e.touches[0].clientX - touchX.current)
+  }
+  const endSwipe = (e: React.TouchEvent) => {
+    if (touchX.current === null) {
+      setDragX(0)
+      return
+    }
+    const dx = e.changedTouches[0].clientX - touchX.current
+    touchX.current = null
+    setDragX(0)
+    if (dx <= -SWIPE_THRESHOLD) go(index + 1)
+    else if (dx >= SWIPE_THRESHOLD) go(index - 1)
+  }
 
   if (!current) return null
   return (
@@ -44,22 +65,49 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
         <span className="h-8 w-8" aria-hidden="true" />
       </div>
 
+      <div
+        className="flex-1"
+        style={{ touchAction: "pan-y" }}
+        onTouchStart={startSwipe}
+        onTouchMove={moveSwipe}
+        onTouchEnd={endSwipe}
+      >
       <div className="mx-4 mt-5 flex items-center justify-between">
         <p className="m-0 text-[13px] font-bold">支出明細</p>
         <span className="text-xs tabular-nums text-v2-ink-muted">{`${index + 1} / ${items.length}`}</span>
       </div>
 
-      <div className="mx-4 mt-2 flex items-center justify-center gap-1.5">
-        {items.map((it, i) => (
-          <button
-            key={it.id}
-            type="button"
-            aria-label={`第 ${i + 1} 筆`}
-            aria-current={i === index ? "true" : undefined}
-            onClick={() => onIndexChange(i)}
-            className={`h-2 rounded-full ${i === index ? "w-6 bg-v2-lake" : "w-2 bg-v2-line"}`}
-          />
-        ))}
+      <div className="mx-4 mt-2 flex items-center justify-center gap-2.5">
+        <button
+          type="button"
+          aria-label="上一筆"
+          disabled={isFirst}
+          onClick={() => go(index - 1)}
+          className="flex h-7 w-7 items-center justify-center rounded-full border border-v2-line text-v2-ink-muted disabled:opacity-30"
+        >
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+        </button>
+        <div className="flex items-center gap-1.5">
+          {items.map((it, i) => (
+            <button
+              key={it.id}
+              type="button"
+              aria-label={`第 ${i + 1} 筆`}
+              aria-current={i === index ? "true" : undefined}
+              onClick={() => onIndexChange(i)}
+              className={`h-2 rounded-full ${i === index ? "w-6 bg-v2-lake" : "w-2 bg-v2-line"}`}
+            />
+          ))}
+        </div>
+        <button
+          type="button"
+          aria-label="下一筆"
+          disabled={isLast}
+          onClick={() => go(index + 1)}
+          className="flex h-7 w-7 items-center justify-center rounded-full border border-v2-line text-v2-ink-muted disabled:opacity-30"
+        >
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        </button>
       </div>
 
       <div className="mx-4 mt-3 flex justify-end">
@@ -73,18 +121,12 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
 
       <div
         className="mt-2"
-        onTouchStart={(e) => (touchX.current = e.touches[0].clientX)}
-        onTouchEnd={(e) => {
-          if (touchX.current === null) return
-          const dx = e.changedTouches[0].clientX - touchX.current
-          touchX.current = null
-          if (dx <= -SWIPE_THRESHOLD) go(index + 1)
-          else if (dx >= SWIPE_THRESHOLD) go(index - 1)
-        }}
+        style={{ transform: dragX ? `translateX(${dragX}px)` : undefined, transition: dragX ? "none" : "transform 200ms ease" }}
       >
         <QuickItemCard key={current.id} item={current} members={members} onChange={patch} />
       </div>
       <div className="h-44" />
+      </div>
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-v2-line bg-v2-surface px-4 py-3.5">
         <div className="mx-auto max-w-md">
