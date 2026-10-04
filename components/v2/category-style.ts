@@ -11,6 +11,22 @@ export const CATEGORY_TONES: Record<ExpenseCategory, string> = {
   other: "bg-v2-sand text-v2-ink-muted",
 }
 
+/**
+ * Picker-scoped identity palette: bg + text are the category's fixed identity
+ * colour, used by `CategoryPicker` when a category is checked. `CATEGORY_TONES`
+ * stays untouched because A2/A6b list & filter chips rely on its 餐飲 colour.
+ */
+export const CATEGORY_PICKER_TONES: Record<ExpenseCategory, { tone: string; border: string }> = {
+  food: { tone: "bg-v2-coral-soft text-v2-coral-deep", border: "border-v2-coral-deep" },
+  transport: { tone: CATEGORY_TONES.transport, border: "border-v2-lake-mid" },
+  accommodation: { tone: CATEGORY_TONES.accommodation, border: "border-v2-plum" },
+  ticket: { tone: CATEGORY_TONES.ticket, border: "border-v2-gold" },
+  shopping: { tone: CATEGORY_TONES.shopping, border: "border-v2-rose" },
+  entertainment: { tone: CATEGORY_TONES.entertainment, border: "border-v2-sky" },
+  gift: { tone: CATEGORY_TONES.gift, border: "border-v2-gold" },
+  other: { tone: CATEGORY_TONES.other, border: "border-v2-ink-muted" },
+}
+
 export function categoryKey(category: string | null): ExpenseCategory {
   return category && category in CATEGORY_ICONS ? (category as ExpenseCategory) : "other"
 }
