@@ -88,6 +88,26 @@ describe("ExpenseFilterBar panels", () => {
     expect(within(trigger).queryByTestId("filter-chevron")).not.toBeInTheDocument()
   })
 
+  it("renders the light date-panel header", () => {
+    renderBar({ filters: { ...baseFilters, expenseDateRange: { from: new Date(2026, 10, 12) } } })
+    fireEvent.click(screen.getByRole("button", { name: /付款日期/ }))
+    const panel = screen.getByTestId("filter-panel")
+    expect(within(panel).getByText("付款日期")).toHaveClass("text-[11px]")
+    const clear = within(panel).getByRole("button", { name: "清除" })
+    expect(clear).toHaveClass("text-v2-ink-muted")
+    expect(clear.querySelector("svg")).toBeNull()
+  })
+
+  it("renders the amount panel without a divider", () => {
+    renderBar({ filters: { ...baseFilters, amountRange: [100, 200] } })
+    fireEvent.click(screen.getByRole("button", { name: /金額/ }))
+    const panel = screen.getByTestId("filter-panel")
+    expect(panel.querySelector(".h-px.bg-v2-line-soft")).toBeNull()
+    const frame = panel.querySelector(".px-3")
+    expect(frame).not.toBeNull()
+    expect(frame).toHaveClass("pt-2.5", "pb-3.5")
+  })
+
   it("hides the panel clear action when nothing is selected", () => {
     renderBar()
     fireEvent.click(screen.getByRole("button", { name: /類別/ }))

@@ -163,8 +163,20 @@ export function AmountPanel({
   const label = (n: number) => `${currencySymbol(currency)}${formatAmount(n, currency)}`
   return (
     <>
-      <PanelHeader title="設定金額區間" onClear={onClear} showClear={lo > 0 || hi > 0} />
-      <div className="px-2.5 pb-3 pt-2">
+      <div className="px-3 pt-2.5 pb-3.5">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="m-0 text-[10px] font-bold text-v2-ink-subtle">設定金額區間</p>
+          {(lo > 0 || hi > 0) && (
+            <button
+              type="button"
+              onClick={onClear}
+              className="flex items-center gap-[3px] rounded-md px-1 py-0.5 text-[10px] font-bold text-v2-danger"
+            >
+              <CircleX className="h-[11px] w-[11px]" strokeWidth={2.4} aria-hidden="true" />
+              清除
+            </button>
+          )}
+        </div>
         <div className="mb-2 flex items-center justify-between text-xs font-bold text-v2-ink">
           <span>{label(lo)}</span>
           <span>{label(hiValue)}</span>
@@ -236,7 +248,18 @@ export function DatePanel({ range, onChange }: { range: DateRange | undefined; o
 
   return (
     <>
-      <PanelHeader title="付款日期" onClear={() => onChange(undefined)} showClear={!!(range?.from || range?.to)} />
+      <div className="flex items-center justify-between border-b border-v2-line px-2.5 py-[7px]">
+        <span className="text-[11px] font-semibold text-v2-ink">付款日期</span>
+        {!!(range?.from || range?.to) && (
+          <button
+            type="button"
+            onClick={() => onChange(undefined)}
+            className="rounded-[5px] px-[5px] py-0.5 text-[10px] text-v2-ink-muted"
+          >
+            清除
+          </button>
+        )}
+      </div>
       <div className="px-2.5 pb-2.5 pt-2">
         <div className="mb-1.5 flex items-center justify-between">
           <button
