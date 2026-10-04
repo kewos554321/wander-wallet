@@ -31,6 +31,10 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
   const allInPool = members.every((m) => state.pool.includes(m.id))
   const allPersonal = members.every((m) => state.personalMembers.includes(m.id))
   const poolCount = state.pool.length
+  // A split-detail table renders rows when personal items or custom shares
+  // exist; in that case the compact inline equation is redundant and hidden.
+  const hasDetail =
+    Object.keys(derived.splitInput.personalItems).length > 0 || Object.keys(derived.splitInput.customShares).length > 0
 
   return (
     <section aria-label="分攤成員" className={SECTION_CARD}>
@@ -128,17 +132,20 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                             onChange={(e) => actions.updateItem(id, item.id, "name", e.target.value)}
                             className={`${itemInput} flex-[2]`}
                           />
-                          <input
-                            aria-label={`${name(id)}的品項金額 ${idx + 1}`}
-                            placeholder="金額"
-                            inputMode="decimal"
-                            value={item.amount}
-                            onChange={(e) => {
-                              const v = toMoneyInput(e.target.value)
-                              if (v !== null) actions.updateItem(id, item.id, "amount", v)
-                            }}
-                            className={`${itemInput} flex-1`}
-                          />
+                          <label className={`${itemInput} flex flex-1 items-center gap-1`}>
+                            <span aria-hidden="true">$</span>
+                            <input
+                              aria-label={`${name(id)}的品項金額 ${idx + 1}`}
+                              placeholder="金額"
+                              inputMode="decimal"
+                              value={item.amount}
+                              onChange={(e) => {
+                                const v = toMoneyInput(e.target.value)
+                                if (v !== null) actions.updateItem(id, item.id, "amount", v)
+                              }}
+                              className="w-full min-w-0 bg-transparent text-right outline-none"
+                            />
+                          </label>
                           <button type="button" aria-label="刪除項目" onClick={() => actions.removeItem(id, item.id)} className="flex h-5 w-5 shrink-0 items-center justify-center text-v2-danger-strong">
                             <X className="h-3 w-3" />
                           </button>
@@ -253,9 +260,11 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
             <span className="text-xs font-bold text-v2-danger">金額不符</span>
           )}
         </div>
-        <p className="mt-[3px] break-words text-xs leading-normal text-v2-ink-muted">
-          個人項目 ${num(derived.personalTotal)}（{derived.itemCount} 項）＋ 共同分攤 ${num(sharedTotal)}（{poolCount} 人）= ${num(derived.shares.reduce((s, x) => s + x.shareAmount, 0))} / ${num(derived.splitInput.amount)}
-        </p>
+        {!hasDetail && (
+          <p className="mt-[3px] break-words text-xs leading-normal text-v2-ink-muted">
+            個人項目 ${num(derived.personalTotal)}（{derived.itemCount} 項）＋ 共同分攤 ${num(sharedTotal)}（{poolCount} 人）= ${num(derived.shares.reduce((s, x) => s + x.shareAmount, 0))} / ${num(derived.splitInput.amount)}
+          </p>
+        )}
       </div>
 
       <SplitSummary members={members} draft={draft} currency={currency} />

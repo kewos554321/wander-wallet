@@ -190,6 +190,32 @@ describe("ExpenseFormV2View", () => {
     expect(hook.result.current.derived.shares.find((s) => s.memberId === "b")?.shareAmount).toBe(60)
   })
 
+  it("prefixes the personal-item amount input with a dollar sign", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    fireEvent.click(screen.getByRole("switch", { name: "先扣個人項目" }))
+    rerender()
+    fireEvent.click(screen.getByRole("button", { name: "志明的個人項目" }))
+    rerender()
+    expect(screen.getByLabelText("志明的品項金額 1").closest("label")).toHaveTextContent("$")
+  })
+
+  it("hides the inline split equation once personal items are present", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    // Plain equal split still shows the summary equation.
+    expect(screen.getByText(/個人項目 \$0（0 項）＋ 共同分攤 \$100/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("switch", { name: "先扣個人項目" }))
+    rerender()
+    fireEvent.click(screen.getByRole("button", { name: "志明的個人項目" }))
+    rerender()
+    // A split-detail table is now shown, so the equation disappears.
+    expect(screen.getByRole("region", { name: "分攤明細" })).toBeInTheDocument()
+    expect(screen.queryByText(/個人項目 \$.*＋ 共同分攤 \$.*= \$/)).not.toBeInTheDocument()
+  })
+
   it("selects and clears all personal-item members", () => {
     const { hook, rerender } = renderForm()
     fireEvent.click(screen.getByRole("switch", { name: "先扣個人項目" }))
