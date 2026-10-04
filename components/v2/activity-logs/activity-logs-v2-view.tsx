@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, type ReactNode } from "react"
-import { formatDistanceToNow } from "date-fns"
+import { format, formatDistanceToNow } from "date-fns"
 import { zhTW } from "date-fns/locale"
-import { Calendar, Coins, DollarSign, Pencil, Plus, SlidersHorizontal, Tag, Trash2, User, Users } from "lucide-react"
+import { CalendarDays, CircleX, Coins, DollarSign, Pencil, Plus, SlidersHorizontal, Tag, Trash2, User, Users } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { SearchField } from "@/components/v2/ui/search-field"
@@ -41,7 +41,6 @@ export interface ActivityFiltersState {
   categories: Set<string>
   currencies: Set<string>
   amountRange: [number, number]
-  createdRange: DateRange | undefined
   expenseRange: DateRange | undefined
 }
 
@@ -64,7 +63,6 @@ export interface ActivityLogsV2ViewProps {
   onSearch: (value: string) => void
   onToggle: (field: "actions" | "actors" | "payers" | "categories" | "currencies", key: string) => void
   onAmountRange: (range: [number, number]) => void
-  onCreatedRange: (range: DateRange | undefined) => void
   onExpenseRange: (range: DateRange | undefined) => void
   onClear: () => void
   onLoadMore: () => void
@@ -91,6 +89,11 @@ function relative(createdAt: string): string {
   }
 }
 
+function rangeLabel(range: DateRange | undefined, fallback: string): string {
+  if (!range?.from) return fallback
+  return range.to ? `${format(range.from, "M/d")}~${format(range.to, "M/d")}` : `${format(range.from, "M/d")}~`
+}
+
 export function ActivityLogsV2View(props: ActivityLogsV2ViewProps) {
   const {
     projectId,
@@ -110,7 +113,6 @@ export function ActivityLogsV2View(props: ActivityLogsV2ViewProps) {
     onSearch,
     onToggle,
     onAmountRange,
-    onCreatedRange,
     onExpenseRange,
     onClear,
     onLoadMore,
@@ -152,23 +154,35 @@ export function ActivityLogsV2View(props: ActivityLogsV2ViewProps) {
             <FilterPopover label="金額" icon={<DollarSign className="h-3.5 w-3.5" />} count={filters.amountRange[0] > 0 || filters.amountRange[1] > 0 ? 1 : 0} open={openPanel === "amount"} onToggle={() => togglePanel("amount")} widthClass="w-56">
               <AmountPanel range={filters.amountRange} max={amountMax} currency={projectCurrency} onChange={onAmountRange} onClear={() => onAmountRange([0, 0])} />
             </FilterPopover>
-            <FilterPopover label="建立日期" icon={<Calendar className="h-3.5 w-3.5" />} count={filters.createdRange ? 1 : 0} open={openPanel === "created"} onToggle={() => togglePanel("created")} widthClass="w-72">
-              <DatePanel range={filters.createdRange} onChange={onCreatedRange} />
-            </FilterPopover>
-            <FilterPopover label="付款日期" icon={<Calendar className="h-3.5 w-3.5" />} count={filters.expenseRange ? 1 : 0} open={openPanel === "expense"} onToggle={() => togglePanel("expense")} align="right" widthClass="w-72">
+            <FilterPopover
+              label={rangeLabel(filters.expenseRange, "付款日期")}
+              ariaLabel="付款日期"
+              icon={<CalendarDays className="h-3.5 w-3.5" />}
+              count={filters.expenseRange?.from ? 1 : 0}
+              open={openPanel === "expense"}
+              onToggle={() => togglePanel("expense")}
+              align="right"
+              widthClass="w-[236px]"
+              panelRadiusClass="rounded-[10px]"
+            >
               <DatePanel range={filters.expenseRange} onChange={onExpenseRange} />
             </FilterPopover>
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={onClear}
+                className="flex items-center gap-[5px] rounded-[10px] border border-dashed border-v2-danger-edge bg-v2-danger-wash px-2.5 py-[9px] text-xs font-semibold text-v2-danger"
+              >
+                <CircleX className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span className="flex-1 truncate text-left">移除篩選</span>
+              </button>
+            ) : null}
           </div>
 
           <div className="mb-3 flex items-center justify-between">
             <span className="text-[12px] text-v2-ink-muted">
               顯示 {filteredLogs.length} / {logs.length} 筆
             </span>
-            {hasActiveFilters ? (
-              <button type="button" onClick={onClear} className="text-[12px] font-semibold text-v2-lake">
-                清除篩選
-              </button>
-            ) : null}
           </div>
 
           {logs.length === 0 ? (

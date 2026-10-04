@@ -4,6 +4,51 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { ChevronDown } from "lucide-react"
 import { useDismiss } from "@/components/v2/use-dismiss"
 
+interface TriggerRect {
+  top: number
+  bottom: number
+  left: number
+  right: number
+}
+
+/**
+ * Position a filter panel below (or above) its trigger.
+ *
+ * The panel is anchored to the trigger's left or right edge and clamped into
+ * the viewport. Because the trigger sits in a 3-column grid, a preferred
+ * `align` can be impossible to satisfy (e.g. a right-aligned panel on a
+ * left-column chip would run off-screen); in that case we keep the panel
+ * attached to whichever edge is closest. `align` only breaks ties.
+ */
+export function computePopoverPosition({
+  align,
+  trigger,
+  panelWidth,
+  panelHeight,
+  viewportWidth,
+  viewportHeight,
+}: {
+  align: "left" | "right"
+  trigger: TriggerRect
+  panelWidth: number
+  panelHeight: number
+  viewportWidth: number
+  viewportHeight: number
+}): { top: number; left: number } {
+  const top =
+    trigger.bottom + 4 + panelHeight > viewportHeight
+      ? Math.max(4, trigger.top - panelHeight - 4)
+      : trigger.bottom + 4
+  const maxLeft = Math.max(4, viewportWidth - panelWidth - 4)
+  const clampLeft = (value: number) => Math.min(Math.max(4, value), maxLeft)
+  const leftAnchor = clampLeft(trigger.left)
+  const rightAnchor = clampLeft(trigger.right - panelWidth)
+  const leftError = Math.abs(leftAnchor - trigger.left)
+  const rightError = Math.abs(rightAnchor + panelWidth - trigger.right)
+  const useRight = align === "right" ? rightError <= leftError : rightError < leftError
+  return { top, left: useRight ? rightAnchor : leftAnchor }
+}
+
 interface FilterPopoverProps {
   label: string
   icon: ReactNode
@@ -44,14 +89,16 @@ export function FilterPopover({
     const panel = panelRef.current
     if (!trigger || !panel) return
     const r = trigger.getBoundingClientRect()
-    const pw = panel.offsetWidth
-    const ph = panel.offsetHeight
-    const vw = window.innerWidth
-    const vh = window.innerHeight
-    const top = r.bottom + 4 + ph > vh ? Math.max(4, r.top - ph - 4) : r.bottom + 4
-    const preferred = align === "right" ? r.right - pw : r.left
-    const left = Math.min(Math.max(4, preferred), Math.max(4, vw - pw - 4))
-    setPos({ top, left })
+    setPos(
+      computePopoverPosition({
+        align,
+        trigger: { top: r.top, bottom: r.bottom, left: r.left, right: r.right },
+        panelWidth: panel.offsetWidth,
+        panelHeight: panel.offsetHeight,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+      })
+    )
   }, [align])
 
   // Measure when the panel mounts (ref callback commit) rather than in an

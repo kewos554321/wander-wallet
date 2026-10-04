@@ -17,7 +17,6 @@ const EMPTY_FILTERS: ActivityFiltersState = {
   categories: new Set(),
   currencies: new Set(),
   amountRange: [0, 0],
-  createdRange: undefined,
   expenseRange: undefined,
 }
 
@@ -79,7 +78,6 @@ export function ActivityLogsV2({ projectId }: { projectId: string }) {
       const [lo, hi] = filters.amountRange
       if (lo > 0 && amount < lo) return false
       if (hi > 0 && amount > hi) return false
-      if (!withinRange(log.createdAt, filters.createdRange)) return false
       if (!withinRange(log.metadata?.expenseDate, filters.expenseRange)) return false
       if (query) {
         const haystack = [log.metadata?.description, log.metadata?.payerName, log.actor?.displayName]
@@ -127,7 +125,6 @@ export function ActivityLogsV2({ projectId }: { projectId: string }) {
     filters.currencies.size > 0 ||
     filters.amountRange[0] > 0 ||
     filters.amountRange[1] > 0 ||
-    Boolean(filters.createdRange) ||
     Boolean(filters.expenseRange)
 
   const onToggle = useCallback((field: "actions" | "actors" | "payers" | "categories" | "currencies", key: string) => {
@@ -161,7 +158,6 @@ export function ActivityLogsV2({ projectId }: { projectId: string }) {
           onSearch={(value) => setFilters((prev) => ({ ...prev, search: value }))}
           onToggle={onToggle}
           onAmountRange={(range) => setFilters((prev) => ({ ...prev, amountRange: range }))}
-          onCreatedRange={(range) => setFilters((prev) => ({ ...prev, createdRange: range }))}
           onExpenseRange={(range) => setFilters((prev) => ({ ...prev, expenseRange: range }))}
           onClear={() => setFilters(EMPTY_FILTERS)}
           onLoadMore={() => fetchLogs(logs.length, true)}

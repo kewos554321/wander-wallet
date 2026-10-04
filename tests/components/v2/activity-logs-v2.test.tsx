@@ -25,7 +25,6 @@ const emptyFilters: ActivityFiltersState = {
   categories: new Set(),
   currencies: new Set(),
   amountRange: [0, 0],
-  createdRange: undefined,
   expenseRange: undefined,
 }
 
@@ -67,7 +66,6 @@ function renderView(overrides: Partial<Parameters<typeof ActivityLogsV2View>[0]>
     onSearch: vi.fn(),
     onToggle: vi.fn(),
     onAmountRange: vi.fn(),
-    onCreatedRange: vi.fn(),
     onExpenseRange: vi.fn(),
     onClear: vi.fn(),
     onLoadMore: vi.fn(),
@@ -85,7 +83,13 @@ describe("ActivityLogsV2View", () => {
     expect(screen.getByText("操作者")).toBeInTheDocument()
     expect(screen.getByText("類別")).toBeInTheDocument()
     expect(screen.getByText("付款人")).toBeInTheDocument()
+    expect(screen.getByText("付款日期")).toBeInTheDocument()
     expect(screen.getByText("顯示 2 / 2 筆")).toBeInTheDocument()
+  })
+
+  it("does not offer a created-date filter", () => {
+    renderView()
+    expect(screen.queryByText("建立日期")).not.toBeInTheDocument()
   })
 
   it("reports search input", () => {
@@ -94,10 +98,15 @@ describe("ActivityLogsV2View", () => {
     expect(props.onSearch).toHaveBeenCalledWith("拉麵")
   })
 
-  it("clears filters when active", () => {
+  it("removes all filters from a dashed chip in the grid when active", () => {
     const props = renderView({ hasActiveFilters: true })
-    fireEvent.click(screen.getByText("清除篩選"))
+    fireEvent.click(screen.getByRole("button", { name: /移除篩選/ }))
     expect(props.onClear).toHaveBeenCalled()
+  })
+
+  it("hides the remove-all chip when no filters are active", () => {
+    renderView()
+    expect(screen.queryByRole("button", { name: /移除篩選/ })).not.toBeInTheDocument()
   })
 
   it("renders action-tinted cards and change chips", () => {
@@ -128,7 +137,7 @@ describe("ActivityLogsV2View", () => {
 
   it("opens every filter panel and toggles a category", () => {
     const props = renderView({ currencyOptions: ["TWD", "JPY"] })
-    for (const label of ["操作", "操作者", "類別", "付款人", "幣別", "金額", "建立日期", "付款日期"]) {
+    for (const label of ["操作", "操作者", "類別", "付款人", "幣別", "金額", "付款日期"]) {
       fireEvent.click(screen.getAllByText(label)[0])
       expect(screen.getAllByTestId("filter-panel").length).toBeGreaterThan(0)
       fireEvent.click(screen.getAllByText(label)[0])
@@ -141,6 +150,19 @@ describe("ActivityLogsV2View", () => {
   it("hides the currency filter with a single currency", () => {
     renderView({ currencyOptions: ["TWD"] })
     expect(screen.queryByText("幣別")).not.toBeInTheDocument()
+  })
+
+  it("opens the payment-date panel in the shared date-panel style", () => {
+    renderView()
+    fireEvent.click(screen.getByRole("button", { name: "付款日期" }))
+    const panel = screen.getByTestId("filter-panel")
+    expect(panel.className).toContain("w-[236px]")
+    expect(panel.className).toContain("rounded-[10px]")
+  })
+
+  it("shows the selected payment-date range on the chip", () => {
+    renderView({ filters: { ...emptyFilters, expenseRange: { from: new Date(2026, 9, 4), to: new Date(2026, 9, 18) } } })
+    expect(screen.getByRole("button", { name: "付款日期" })).toHaveTextContent("10/4~10/18")
   })
 
   it("renders a log with no metadata and no actor", () => {
