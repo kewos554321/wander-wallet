@@ -14,10 +14,10 @@ const save = vi.fn()
 let canNotifyLine = false
 vi.mock("@/lib/quick-expense/use-quick-save", () => ({ useQuickSave: () => ({ save, progress: null, canNotifyLine }) }))
 vi.mock("@/components/v2/quick-expense/camera-step", () => ({
-  CameraStep: ({ onImage, onManual }: { onImage: (f: File) => void; onManual: () => void }) => (
+  CameraStep: ({ onImage, onClose }: { onImage: (f: File) => void; onClose: () => void }) => (
     <div>
       <button onClick={() => onImage(new File(["a"], "r.jpg"))}>fake-shot</button>
-      <button onClick={onManual}>改用手動輸入</button>
+      <button onClick={onClose}>關閉相機</button>
     </div>
   ),
 }))
@@ -85,6 +85,12 @@ describe("QuickExpenseV2", () => {
     render(<QuickExpenseV2 open onOpenChange={vi.fn()} projectId="p1" projectName="" members={members} currentUserMemberId="a" onSuccess={vi.fn()} initialStep="camera" />)
     expect(screen.getByText("fake-shot")).toBeInTheDocument()
     expect(screen.queryByLabelText("消費內容")).not.toBeInTheDocument()
+  })
+
+  it("returns to the input step when the camera is closed", () => {
+    render(<QuickExpenseV2 open onOpenChange={vi.fn()} projectId="p1" projectName="" members={members} currentUserMemberId="a" onSuccess={vi.fn()} initialStep="camera" />)
+    fireEvent.click(screen.getByText("關閉相機"))
+    expect(screen.getByLabelText("消費內容")).toBeInTheDocument()
   })
 
   it("turns a receipt photo into one item", async () => {

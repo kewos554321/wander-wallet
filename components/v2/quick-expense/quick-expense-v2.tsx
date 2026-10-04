@@ -129,7 +129,7 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
         {step === "input" && (
           <QuickInputStep text={text} onTextChange={setText} onParse={handleParse} onCamera={() => { setError(null); setStep("camera") }} onGallery={() => galleryInput.current?.click()} onClose={close} error={error} />
         )}
-        {step === "camera" && <CameraStep onImage={handleImage} onManual={() => setStep("input")} onClose={close} />}
+        {step === "camera" && <CameraStep onImage={handleImage} onClose={() => setStep("input")} />}
         {(step === "parsing" || step === "saving") && (
           <div role="status" className="flex min-h-screen flex-col items-center justify-center gap-3 text-sm text-v2-ink-muted">
             <Loader2 className="h-8 w-8 animate-spin text-v2-lake" aria-hidden="true" />

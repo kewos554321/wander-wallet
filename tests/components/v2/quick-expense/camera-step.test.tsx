@@ -30,7 +30,7 @@ describe("isIOSDevice", () => {
 })
 
 describe("CameraStep", () => {
-  const props = () => ({ onImage: vi.fn(), onManual: vi.fn(), onClose: vi.fn() })
+  const props = () => ({ onImage: vi.fn(), onClose: vi.fn() })
 
   it("renders a centred title with the close button on the left", () => {
     const p = props()
@@ -116,14 +116,13 @@ describe("CameraStep", () => {
     expect(stop).toHaveBeenCalled()
   })
 
-  it("passes a picked file and supports manual input", async () => {
+  it("passes a picked file and no longer offers manual input", async () => {
     const p = props()
     const { container } = render(<CameraStep {...p} />)
     const file = new File(["a"], "r.jpg", { type: "image/jpeg" })
     fireEvent.change(container.querySelector('input[data-testid="gallery-input"]')!, { target: { files: [file] } })
     expect(p.onImage).toHaveBeenCalledWith(file)
-    fireEvent.click(screen.getByRole("button", { name: "改用手動輸入" }))
-    expect(p.onManual).toHaveBeenCalled()
+    expect(screen.queryByRole("button", { name: "改用手動輸入" })).toBeNull()
   })
 
   it("starts camera stream only once and does not restart", async () => {

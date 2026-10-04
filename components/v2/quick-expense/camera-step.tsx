@@ -1,10 +1,10 @@
 "use client"
 
 import { useRef } from "react"
-import { Camera, Images, Sparkles, X } from "lucide-react"
+import { Camera, Images, X } from "lucide-react"
 import { useCamera } from "./use-camera"
 
-export function CameraStep({ onImage, onManual, onClose }: { onImage: (file: File) => void; onManual: () => void; onClose: () => void }) {
+export function CameraStep({ onImage, onClose }: { onImage: (file: File) => void; onClose: () => void }) {
   const { videoRef, mode, capture } = useCamera()
   const cameraInput = useRef<HTMLInputElement>(null)
   const galleryInput = useRef<HTMLInputElement>(null)
@@ -25,9 +25,7 @@ export function CameraStep({ onImage, onManual, onClose }: { onImage: (file: Fil
           <X className="h-[17px] w-[17px]" aria-hidden="true" />
         </button>
         <p className="m-0 text-[13px] font-semibold">拍照記帳</p>
-        <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(255,255,255,.12)]">
-          <Sparkles className="h-[17px] w-[17px]" />
-        </span>
+        <span aria-hidden="true" className="h-9 w-9" />
       </div>
 
       <div className="relative mx-6 mt-3 h-[460px]">
@@ -74,9 +72,6 @@ export function CameraStep({ onImage, onManual, onClose }: { onImage: (file: Fil
         )}
       </div>
 
-      <button type="button" onClick={onManual} className="absolute inset-x-0 bottom-2 z-[1] text-xs text-[rgba(255,255,255,.7)]">
-        改用手動輸入
-      </button>
     </div>
   )
 }
