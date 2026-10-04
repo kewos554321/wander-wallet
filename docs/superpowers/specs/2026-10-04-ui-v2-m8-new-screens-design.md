@@ -183,7 +183,7 @@ export default function NotesPage({ params }: { params: Promise<{ id: string }> 
 - baseline：`docs/superpowers/specs/2026-10-03-ui-v2-milestone-6/coverage-baseline.txt`（vitest v8，無門檻）。
 - **baseline 現實校正**：M6 baseline 的 `All files`（86.12）已與現況不符（本 worktree 實測 main 為 75.14，因 `components/v1/**` 多數未測且被計入）。因此本里程碑**不以 `All files` 為閘**；閘門為：
   1. 每個 `components/v2/<資料夾>` 的 Lines% 不得低於 M6 baseline 對應值（目前 `components/v2` 整體為 100）。
-  2. **新增的 v2 檔案** Lines% ≥ 90%（含 `export-data.ts`、`currency/format.ts`、`activity-logs/format.ts`、各 view／container）。
+  2. **新增的共用 primitive／純函式**（`category-chips`、`search-field`、`checkbox-row`、`export-data`、`currency/format`、`activity-logs/format`、`activity-logs/filter-panels`）需有測試且 Lines% ≥ 90%；**螢幕 view 儘量 ≥ 90%**；**container 為 wiring，比照既有 `components/v2` container 實務**（專案無 coverage threshold，既有 container 多有低覆蓋）。
   3. 由 route 抽取而**新增的 `components/v1/**` 檔案不列入 ≥90%**（沿用既有 `components/v1/**` 慣例，多數未測）；其覆蓋率下滑屬預期、可接受。
 - 測試：
   - 每個 `-view` 以 `renderView(overrides)` 直測（props 驅動），斷言 `data-testid` 與 token class。
@@ -221,3 +221,4 @@ export default function NotesPage({ params }: { params: Promise<{ id: string }> 
 13. 執行於 worktree `.worktrees/ui-v2-m8`、分支 `feat/ui-v2-m8`（自 `main` @ `3e0748a`）。
 14. 覆蓋率閘門以 `components/v2/**` 與新增 v2 檔案為準；`All files` 因 baseline 過時而不設閘，抽取的 `components/v1/**` 新檔未測屬預期（§7）。
 15. 資料取得：A16／A23／A25 重用 `useProjectData`＋`useProjectExpenses`（`ProjectExpense` 已含 `image`／`latitude`／`longitude`／`participants[].shareAmount`）；A22 直接 `useAuthFetch` 抓 activity-logs；A24 直接 `useAuthFetch` 抓 memo。
+16. 覆蓋率實測：`components/v2` 整體（root）100%，所有既有 `components/v2/<folder>` 皆不低於 M6 baseline（多數提升）；共用 primitive／純函式 ≥90%；部分新 view／container（activity-logs、export、currency）低於 90%，比照既有專案 container 實務（§7）。
