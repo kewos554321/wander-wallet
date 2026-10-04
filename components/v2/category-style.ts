@@ -32,3 +32,15 @@ export const CATEGORY_PICKER_TONES: Record<ExpenseCategory, { tone: string; bord
 export function categoryKey(category: string | null): ExpenseCategory {
   return category && category in CATEGORY_ICONS ? (category as ExpenseCategory) : "other"
 }
+
+/** Emoji per category for the map/photos filter chips (design boards use emoji). */
+export const CATEGORY_EMOJI: Record<ExpenseCategory, string> = {
+  food: "🍜",
+  transport: "🚗",
+  accommodation: "🏨",
+  ticket: "🎫",
+  shopping: "🛍️",
+  entertainment: "🎮",
+  gift: "🎁",
+  other: "🧾",
+}
