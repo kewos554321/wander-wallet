@@ -18,6 +18,18 @@ describe("isIOSDevice", () => {
 describe("CameraStep", () => {
   const props = () => ({ onImage: vi.fn(), onManual: vi.fn(), onClose: vi.fn() })
 
+  it("renders a centred title with the close button on the left", () => {
+    const p = props()
+    render(<CameraStep {...p} />)
+    const title = screen.getByText("拍照記帳")
+    const close = screen.getByRole("button", { name: "關閉" })
+    const header = close.parentElement!
+    expect(header.children[0]).toBe(close)
+    expect(header.children[1]).toBe(title)
+    fireEvent.click(close)
+    expect(p.onClose).toHaveBeenCalled()
+  })
+
   it("shows copy and falls back when there is no camera api", async () => {
     render(<CameraStep {...props()} />)
     expect(screen.getByText("將發票或收據置於框內")).toBeInTheDocument()

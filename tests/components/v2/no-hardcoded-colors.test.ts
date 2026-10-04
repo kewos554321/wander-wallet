@@ -3,7 +3,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs"
 import { join } from "node:path"
 
 const ROOT = join(process.cwd(), "components/v2")
-const EXEMPT = new Set(["quick-expense/camera-step.tsx"])
+const EXEMPT = new Set<string>()
 const BANNED = [/-\[#[0-9a-fA-F]{3,8}\]/, /\bbg-white\b/, /\btext-white\b/, /\bbg-black\b/, /\bdark:/]
 
 function files(dir: string): string[] {
