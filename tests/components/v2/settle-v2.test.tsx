@@ -126,6 +126,15 @@ describe("SettleV2View", () => {
     expect(within(screen.getByTestId("settle-summary")).getAllByText("0").length).toBeGreaterThan(0)
   })
 
+  it("uses the sky tone for the daily-average tile", () => {
+    renderView()
+    const tile = screen.getByTestId("settle-tile-daily")
+    expect(tile.className).toContain("bg-v2-sky-soft")
+    expect(tile.className).not.toContain("bg-v2-lake-soft")
+    const iconCircle = tile.querySelector("div[aria-hidden='true']")
+    expect(iconCircle?.className).toContain("bg-v2-sky-tint")
+  })
+
   it("keeps the summary heading inside the summary card", () => {
     renderView()
     const grid = screen.getByTestId("settle-summary")

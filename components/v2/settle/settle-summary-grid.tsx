@@ -5,9 +5,11 @@ interface Tile {
   value: string
   icon: LucideIcon
   tone: { bg: string; iconBg: string; text: string }
+  testId?: string
 }
 
 const LAKE = { bg: "bg-v2-lake-soft", iconBg: "bg-v2-lake-tint", text: "text-v2-lake" }
+const SKY = { bg: "bg-v2-sky-soft", iconBg: "bg-v2-sky-tint", text: "text-v2-sky" }
 const CORAL = { bg: "bg-v2-coral-soft", iconBg: "bg-v2-coral-tint", text: "text-v2-coral-strong" }
 const PLUM = { bg: "bg-v2-plum-soft", iconBg: "bg-v2-plum-tint", text: "text-v2-plum" }
 
@@ -26,7 +28,7 @@ export function SettleSummaryGrid({ count, total, dailyAverage, perPerson, curre
   const tiles: Tile[] = [
     { label: "支出筆數", value: String(count), icon: Receipt, tone: LAKE },
     { label: `總金額 (${currencyCode})`, value: n(total), icon: Calculator, tone: CORAL },
-    { label: `日均花費 (${currencyCode})`, value: n(dailyAverage), icon: TrendingUp, tone: LAKE },
+    { label: `日均花費 (${currencyCode})`, value: n(dailyAverage), icon: TrendingUp, tone: SKY, testId: "settle-tile-daily" },
     { label: `人均 (${currencyCode})`, value: n(perPerson), icon: Users, tone: PLUM },
   ]
 
@@ -37,8 +39,8 @@ export function SettleSummaryGrid({ count, total, dailyAverage, perPerson, curre
         {currencySelect}
       </div>
       <div className="grid grid-cols-2 gap-2.5">
-        {tiles.map(({ label, value, icon: Icon, tone }) => (
-          <div key={label} className={`flex flex-col items-center rounded-[12px] px-1 py-3 ${tone.bg}`}>
+        {tiles.map(({ label, value, icon: Icon, tone, testId }) => (
+          <div key={label} data-testid={testId} className={`flex flex-col items-center rounded-[12px] px-1 py-3 ${tone.bg}`}>
             <div className={`mb-1.5 flex h-8 w-8 items-center justify-center rounded-full ${tone.iconBg} ${tone.text}`} aria-hidden="true">
               <Icon className="h-[15px] w-[15px]" strokeWidth={1.7} />
             </div>
