@@ -21,6 +21,8 @@ const NEW_TOKENS: Record<string, [string, string]> = {
   "line-green": ["#06C755", "#06C755"],
   "camera-bg": ["#171412", "#171412"],
   "on-dark": ["#FFFFFF", "#FFFFFF"],
+  "gold-tint": ["#F0E0AD", "#4A3C18"],
+  "lightbox": ["rgb(23 20 18 / 0.96)", "rgb(23 20 18 / 0.96)"],
 }
 
 describe("v2 tokens added in milestone 6", () => {
