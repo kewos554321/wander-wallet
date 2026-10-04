@@ -1,11 +1,21 @@
-import { describe, it, expect, vi, beforeAll } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
 import { SwipeRow } from "@/components/v2/expenses/swipe-row"
 
-beforeAll(() => {
+const originalPointerEvent = window.PointerEvent
+
+beforeEach(() => {
   if (typeof window.PointerEvent === "undefined") {
     // jsdom has no PointerEvent; MouseEvent carries clientX/clientY.
     ;(window as unknown as { PointerEvent: typeof MouseEvent }).PointerEvent = class PointerEvent extends MouseEvent {}
+  }
+})
+
+afterEach(() => {
+  if (typeof originalPointerEvent === "undefined") {
+    delete (window as unknown as { PointerEvent?: unknown }).PointerEvent
+  } else {
+    window.PointerEvent = originalPointerEvent
   }
 })
 

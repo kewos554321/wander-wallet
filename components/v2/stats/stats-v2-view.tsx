@@ -15,26 +15,31 @@ interface StatsV2ViewProps {
 
 const heading = "mb-2.5 text-xs font-semibold text-v2-ink-muted"
 const titleClassName = "text-[17px] font-semibold"
+// Stable heading ids so the cards expose an accessible name (region) without
+// coupling tests to the rounded-2xl card markup.
+const CATEGORY_HEADING_ID = "stats-category-heading"
+const MEMBER_HEADING_ID = "stats-member-heading"
+const TREND_HEADING_ID = "stats-trend-heading"
 
 export function StatsV2View({ projectId, currency, stats, currentMemberId }: StatsV2ViewProps) {
   return (
     <>
       <V2TopBar title="統計" backHref={`/projects/${projectId}`} titleClassName={titleClassName} />
-      <section className="px-4 pt-[22px]">
+      <section aria-labelledby={CATEGORY_HEADING_ID} className="px-4 pt-[22px]">
         <div className="rounded-2xl border border-v2-line bg-v2-surface p-4">
-          <p className={heading}>類別佔比</p>
+          <p id={CATEGORY_HEADING_ID} className={heading}>類別佔比</p>
           <CategoryDonut categories={stats.categories} currency={currency} />
         </div>
       </section>
-      <section className="px-4 pt-[22px]">
+      <section aria-labelledby={MEMBER_HEADING_ID} className="px-4 pt-[22px]">
         <div className="rounded-2xl border border-v2-line bg-v2-surface p-4">
-          <p className={heading}>成員排行</p>
+          <p id={MEMBER_HEADING_ID} className={heading}>成員排行</p>
           <MemberRanking members={stats.members} currency={currency} currentMemberId={currentMemberId} />
         </div>
       </section>
-      <section className="px-4 pt-[22px]">
+      <section aria-labelledby={TREND_HEADING_ID} className="px-4 pt-[22px]">
         <figure aria-label="每日趨勢" className="m-0 rounded-[14px] border border-v2-line bg-v2-surface px-4 pb-2.5 pt-4">
-          <p className={heading}>每日趨勢</p>
+          <p id={TREND_HEADING_ID} className={heading}>每日趨勢</p>
           <DailyTrend daily={stats.daily} />
         </figure>
       </section>

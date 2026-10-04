@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 
 vi.mock("next/font/google", () => ({
@@ -40,10 +40,20 @@ const typeAndParse = (text = "早餐 100") => {
   fireEvent.click(screen.getByRole("button", { name: "AI 解析" }))
 }
 
+const originalCreateObjectURL = globalThis.URL.createObjectURL
+
 beforeEach(() => {
   parseText.mockReset(); parseReceipt.mockReset(); save.mockReset()
   canNotifyLine = false
   globalThis.URL.createObjectURL = vi.fn(() => "blob:1")
+})
+
+afterEach(() => {
+  if (originalCreateObjectURL) {
+    globalThis.URL.createObjectURL = originalCreateObjectURL
+  } else {
+    delete (globalThis.URL as { createObjectURL?: unknown }).createObjectURL
+  }
 })
 
 describe("QuickExpenseV2", () => {

@@ -45,16 +45,22 @@ export function SettlementList({
     const label = name(memberId, displayName)
     return (
       <>
-        <span className={`flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${tone(memberId)}`} aria-hidden="true">
+        <span
+          data-testid={`settlement-avatar-${memberId}`}
+          className={`flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${tone(memberId)}`}
+          aria-hidden="true"
+        >
           {label.charAt(0)}
         </span>
-        <span className="text-sm font-medium leading-5 tracking-[.1px]">{label}</span>
+        <span data-testid={`settlement-name-${memberId}`} className="text-sm font-medium leading-5 tracking-[.1px]">
+          {label}
+        </span>
       </>
     )
   }
 
   return (
-    <div className="mx-4 mt-4 rounded-2xl border border-v2-line bg-v2-surface p-4">
+    <div data-testid="settlement-list" className="mx-4 mt-4 rounded-2xl border border-v2-line bg-v2-surface p-4">
       <div className="mb-3 flex items-center justify-between">
         <p className="m-0 text-[13px] font-bold text-v2-lake">轉帳建議</p>
         <div className="flex gap-2">

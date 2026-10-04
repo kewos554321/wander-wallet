@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, fireEvent, within, waitFor } from "@testing-library/react"
-import type { ReactNode } from "react"
+import { render, screen, fireEvent, within, waitFor, act } from "@testing-library/react"
 import { ExpensesV2View } from "@/components/v2/expenses/expenses-v2-view"
 import type { ProjectExpense } from "@/lib/hooks/useProjectExpenses"
 
@@ -14,26 +13,6 @@ vi.mock("next/image", () => ({
 vi.mock("@/components/auth/liff-provider", () => ({
   useLiff: () => ({ user: { id: "u1" } }),
   useAuthFetch: () => vi.fn(),
-}))
-vi.mock("@/components/expense/notify-line-checkbox", () => ({
-  NotifyLineCheckbox: () => <div data-testid="notify-line" />,
-}))
-vi.mock("@/components/ui/dialog", () => ({
-  Dialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogTitle: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}))
-vi.mock("@/components/ui/confirm-delete-dialog", () => ({
-  ConfirmDeleteDialog: ({ open, onConfirm, children }: { open?: boolean; onConfirm?: () => void; children?: ReactNode }) =>
-    open ? (
-      <div>
-        <button type="button" onClick={onConfirm}>
-          confirm-delete
-        </button>
-        {children}
-      </div>
-    ) : null,
 }))
 
 const mocks = vi.hoisted(() => ({
@@ -275,27 +254,66 @@ describe("ExpensesV2 container", () => {
     expect(screen.getByTestId("v2-expenses-skeleton")).toBeInTheDocument()
   })
 
-  it("opens the image lightbox and deletes a single expense", async () => {
+  it("opens the image lightbox", () => {
     const single = expense({ id: "e1", image: "https://example.com/x.jpg" })
-    const hook = {
+    mocks.projectExpenses.mockReturnValue({
       expenses: [single],
       loading: false,
       deleting: false,
       canNotifyLine: false,
       refetch: vi.fn(),
       deleteExpense: vi.fn().mockResolvedValue(true),
-      batchDeleteExpenses: vi.fn().mockResolvedValue(true),
-    }
-    mocks.projectExpenses.mockReturnValue(hook)
+      batchDeleteExpenses: vi.fn(),
+    })
     mocks.expenseFilters.mockReturnValue({ ...mocks.expenseFilters(), filteredExpenses: [single] })
     render(<ExpensesV2 projectId="p1" />)
 
     fireEvent.click(screen.getByRole("button", { name: "查看圖片" }))
     expect(screen.getByAltText("消費圖片")).toBeInTheDocument()
+  })
+
+  // Sets up the real ConfirmDeleteDialog and drives it through the rendered
+  // controls (rather than a stub) so the container's delete wiring is exercised.
+  async function openDeleteDialog(options: { canNotifyLine: boolean; uncheck?: boolean; cancel?: boolean }) {
+    const single = expense({ id: "e1" })
+    const hook = {
+      expenses: [single],
+      loading: false,
+      deleting: false,
+      canNotifyLine: options.canNotifyLine,
+      refetch: vi.fn(),
+      deleteExpense: vi.fn().mockResolvedValue(true),
+      batchDeleteExpenses: vi.fn(),
+    }
+    mocks.projectExpenses.mockReturnValue(hook)
+    mocks.expenseFilters.mockReturnValue({ ...mocks.expenseFilters(), filteredExpenses: [single] })
+    render(<ExpensesV2 projectId="p1" />)
 
     fireEvent.click(screen.getAllByRole("button", { name: "刪除" })[0])
-    fireEvent.click(screen.getByRole("button", { name: "confirm-delete" }))
+    const dialog = screen.getByRole("dialog")
+    if (options.uncheck) {
+      fireEvent.click(within(dialog).getByRole("checkbox", { name: /通知 LINE 群組/ }))
+    }
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole("button", { name: options.cancel ? "取消" : "刪除" }))
+    })
+    return { hook, dialog }
+  }
+
+  it("deletes an expense with the LINE notification by default", async () => {
+    const { hook } = await openDeleteDialog({ canNotifyLine: true })
     await waitFor(() => expect(hook.deleteExpense).toHaveBeenCalledWith("e1", { notifyLine: true }))
+  })
+
+  it("deletes an expense without the LINE notification once the checkbox is unchecked", async () => {
+    const { hook } = await openDeleteDialog({ canNotifyLine: true, uncheck: true })
+    await waitFor(() => expect(hook.deleteExpense).toHaveBeenCalledWith("e1", { notifyLine: false }))
+  })
+
+  it("does not delete when the confirmation is cancelled", async () => {
+    const { hook } = await openDeleteDialog({ canNotifyLine: true, cancel: true })
+    expect(hook.deleteExpense).not.toHaveBeenCalled()
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
   })
 
   it("shows the skeleton while the project itself is still loading", () => {
@@ -324,9 +342,9 @@ describe("ExpensesV2 container", () => {
     })
     mocks.expenseFilters.mockReturnValue({ ...mocks.expenseFilters(), filteredExpenses: [single] })
     render(<ExpensesV2 projectId="p1" />)
-    expect(screen.queryByTestId("notify-line")).not.toBeInTheDocument()
+    expect(screen.queryByRole("checkbox", { name: /通知 LINE 群組/ })).not.toBeInTheDocument()
     fireEvent.click(screen.getAllByRole("button", { name: "刪除" })[0])
-    expect(screen.getByTestId("notify-line")).toBeInTheDocument()
+    expect(within(screen.getByRole("dialog")).getByRole("checkbox", { name: /通知 LINE 群組/ })).toBeInTheDocument()
   })
 
   it("hides the notify option when the project does not support it", () => {
@@ -343,7 +361,7 @@ describe("ExpensesV2 container", () => {
     mocks.expenseFilters.mockReturnValue({ ...mocks.expenseFilters(), filteredExpenses: [single] })
     render(<ExpensesV2 projectId="p1" />)
     fireEvent.click(screen.getAllByRole("button", { name: "刪除" })[0])
-    expect(screen.queryByTestId("notify-line")).not.toBeInTheDocument()
+    expect(within(screen.getByRole("dialog")).queryByRole("checkbox", { name: /通知 LINE 群組/ })).not.toBeInTheDocument()
   })
 
   it("wires every filter control through the container", () => {
@@ -405,6 +423,10 @@ describe("ExpensesV2 container", () => {
     expect(f.setAmountRange).toHaveBeenCalledWith([0, 0])
 
     fireEvent.click(screen.getByRole("button", { name: /付款日期/ }))
+    // Selecting a day exercises DatePanel's range selection, which the
+    // container forwards through onExpenseRange.
+    fireEvent.click(screen.getByRole("button", { name: "2026-11-05" }))
+    expect(f.setExpenseDateRange).toHaveBeenCalledWith({ from: new Date(2026, 10, 5), to: undefined })
     fireEvent.click(screen.getByRole("button", { name: "清除" }))
     expect(f.setExpenseDateRange).toHaveBeenCalledWith(undefined)
 

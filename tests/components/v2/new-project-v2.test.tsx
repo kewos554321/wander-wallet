@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import type { DateRange } from "react-day-picker"
 
 vi.mock("next/font/google", () => ({
   Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
@@ -25,28 +26,33 @@ vi.mock("@/components/ui/currency-select", () => ({
   ),
 }))
 
+// Capture the props DateRangeField passes to the shared Calendar and drive its
+// onSelect directly with fixed dates. This keeps the range-preview assertions
+// deterministic and independent of the host locale / calendar grid layout
+// (the real Calendar renders locale-dependent `data-day` values).
+const calendarProps = vi.hoisted(() => ({ current: null as Record<string, unknown> | null }))
+
+vi.mock("@/components/ui/calendar", () => ({
+  Calendar: (props: Record<string, unknown>) => {
+    calendarProps.current = props
+    const onSelect = props.onSelect as (range: DateRange | undefined) => void
+    return (
+      <div data-testid="calendar-stub">
+        <button
+          type="button"
+          onClick={() => onSelect({ from: new Date(2026, 10, 12), to: new Date(2026, 10, 16) })}
+        >
+          stub-full-range
+        </button>
+        <button type="button" onClick={() => onSelect({ from: new Date(2026, 10, 12) })}>
+          stub-from-only
+        </button>
+      </div>
+    )
+  },
+}))
+
 import { NewProjectV2 } from "@/components/v2/new-project/new-project-v2"
-
-// tests/setup.ts stubs ResizeObserver with a bare vi.fn() whose implementation
-// is not a constructor, so Radix popper crashes when the date-range popover
-// opens. Provide a constructable stub so the calendar can mount.
-class ResizeObserverStub {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-}
-globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver
-
-// data-day attributes use toLocaleDateString() (e.g. "2026/10/7"); convert to
-// the zero-padded yyyy/MM/dd form the v2 date display renders.
-function slashDay(dayAttribute: string): string {
-  const [year, month, day] = dayAttribute.split("/").map(Number)
-  return `${year}/${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}`
-}
-
-function dayButtons(): HTMLButtonElement[] {
-  return Array.from(document.querySelectorAll<HTMLButtonElement>("button[data-day]"))
-}
 
 describe("NewProjectV2", () => {
   beforeEach(() => {
@@ -117,25 +123,30 @@ describe("NewProjectV2", () => {
     expect(mockPush).not.toHaveBeenCalled()
   })
 
-  it("updates the preview and trigger when a date range is picked from the calendar", () => {
+  it("updates the preview, trigger and calendar while picking a date range", () => {
     render(<NewProjectV2 />)
     fireEvent.click(screen.getByRole("button", { name: "選擇日期" }))
+    expect(calendarProps.current).not.toBeNull()
 
-    const first = dayButtons()[10]
-    const startLabel = slashDay(first.getAttribute("data-day")!)
-    fireEvent.click(first)
+    // A start-only selection previews the single date and an open-ended trigger.
+    fireEvent.click(screen.getByRole("button", { name: "stub-from-only" }))
+    expect(screen.getByText("2026/11/12 – 2026/11/12 · 尚未邀請旅伴")).toBeInTheDocument()
+    expect(screen.getByText("— 天")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "2026/11/12 – ..." })).toBeInTheDocument()
 
-    const second = dayButtons()[14]
-    const endLabel = slashDay(second.getAttribute("data-day")!)
-    fireEvent.click(second)
-
-    const dayCount =
-      Math.round((new Date(endLabel).getTime() - new Date(startLabel).getTime()) / 86400000) + 1
-    expect(screen.getByText(`${startLabel} – ${endLabel} · 尚未邀請旅伴`)).toBeInTheDocument()
-    expect(screen.getByText(`${dayCount} 天`)).toBeInTheDocument()
-    // The trigger shows the same range once both ends are chosen.
-    expect(screen.getByRole("button", { name: `${startLabel} – ${endLabel}` })).toBeInTheDocument()
+    // Completing the range updates the preview, the day count and the trigger.
+    fireEvent.click(screen.getByRole("button", { name: "stub-full-range" }))
+    expect(screen.getByText("2026/11/12 – 2026/11/16 · 尚未邀請旅伴")).toBeInTheDocument()
+    expect(screen.getByText("5 天")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "2026/11/12 – 2026/11/16" })).toBeInTheDocument()
     expect(screen.queryByText("選擇日期")).not.toBeInTheDocument()
+
+    // The chosen range is fed back to the Calendar in range mode.
+    expect(calendarProps.current!.mode).toBe("range")
+    const selected = calendarProps.current!.selected as DateRange
+    expect(selected.from).toEqual(new Date(2026, 10, 12))
+    expect(selected.to).toEqual(new Date(2026, 10, 16))
+    expect(calendarProps.current!.defaultMonth).toEqual(new Date(2026, 10, 12))
   })
 
   it("sends the description and changed currency in the create payload", async () => {

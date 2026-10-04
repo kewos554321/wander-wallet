@@ -17,11 +17,18 @@ export function TripSummaryCard({
   const fmt = (n: number) => formatCurrency(Math.round(n), currency)
 
   const parsed = parseCover(cover ?? null)
-  const Decoration: LucideIcon = (parsed.type === "icon" && COVER_ICON_COMPONENTS[parsed.iconId!]) || Sparkles
+  const coverIcon = parsed.type === "icon" && parsed.iconId && COVER_ICON_COMPONENTS[parsed.iconId] ? parsed.iconId : null
+  const Decoration: LucideIcon = coverIcon ? COVER_ICON_COMPONENTS[coverIcon] : Sparkles
 
   return (
     <div data-testid="v2-trip-summary-card" className="relative mx-4 mt-3 overflow-hidden rounded-[20px] bg-v2-lake text-v2-paper">
-      <Decoration className="absolute -right-6 -top-6 h-[120px] w-[120px] opacity-[.08]" strokeWidth={1.2} aria-hidden="true" />
+      <Decoration
+        data-testid="trip-summary-decoration"
+        data-cover={coverIcon ?? "sparkles"}
+        className="absolute -right-6 -top-6 h-[120px] w-[120px] opacity-[.08]"
+        strokeWidth={1.2}
+        aria-hidden="true"
+      />
       <div className="relative px-5 py-4">
         <p className="mb-[3px] text-sm font-medium leading-5 tracking-[.1px] opacity-[.78]">旅程總覽</p>
         <p className="m-0 font-v2-serif text-[32px] font-bold leading-10 tabular-nums">{fmt(totalAmount)}</p>

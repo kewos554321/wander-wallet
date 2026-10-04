@@ -7,15 +7,41 @@ vi.mock("@/components/ui/image-picker", () => ({ ImagePicker: () => <div data-te
 
 import { ExpenseFormV2View } from "@/components/v2/expense-form/expense-form-v2-view"
 import { useExpenseDraft } from "@/components/v2/expense-form/use-expense-draft"
+import type { SplitDetail } from "@/lib/expense-split"
 
 const members = [
   { id: "a", displayName: "小雨" },
   { id: "b", displayName: "志明" },
 ]
 
+/** The draft fields the container turns into its save payload. */
+interface SubmittedDraft {
+  amount: number
+  currency: string
+  category: string
+  paidBy: string
+  description: string
+  participants: { memberId: string; shareAmount: number }[]
+  splitDetail: SplitDetail | null
+}
+
 function renderForm(overrides: Partial<Parameters<typeof ExpenseFormV2View>[0]> = {}) {
   const hook = renderHook(() => useExpenseDraft({ members, currency: "TWD", paidBy: "a" }))
-  const onSubmit = vi.fn()
+  // Snapshot the draft at the moment submit fires so we assert the payload,
+  // not just that the no-arg onSubmit callback ran.
+  const submissions: SubmittedDraft[] = []
+  const onSubmit = vi.fn(() => {
+    const { state, derived } = hook.result.current
+    submissions.push({
+      amount: derived.splitInput.amount,
+      currency: state.currency,
+      category: state.category,
+      paidBy: state.paidBy,
+      description: state.description,
+      participants: derived.shares.map((s) => ({ ...s })),
+      splitDetail: derived.splitDetail,
+    })
+  })
   const view = () => (
     <ExpenseFormV2View
       mode="create"
@@ -31,7 +57,7 @@ function renderForm(overrides: Partial<Parameters<typeof ExpenseFormV2View>[0]> 
   )
   const utils = render(view())
   const rerender = () => utils.rerender(view())
-  return { hook, onSubmit, rerender }
+  return { hook, onSubmit, submissions, rerender }
 }
 
 describe("ExpenseFormV2View", () => {
@@ -79,48 +105,62 @@ describe("ExpenseFormV2View", () => {
     expect(within(split).getByText("個人項目 $0（0 項）＋ 共同分攤 $100（2 人）= $100 / $100")).toBeInTheDocument()
   })
 
-  it("uses the shared lake section title on the split card", () => {
-    renderForm()
-    const split = screen.getByRole("region", { name: "分攤成員" })
-    expect(split.className).toContain("rounded-2xl")
-    expect(within(split).getByText("分攤成員").className).toContain("text-v2-lake")
-  })
-
-  it("keeps the personal-mode label lake when the toggle is off", () => {
-    renderForm()
-    const label = screen.getByText("先扣個人項目")
-    expect(label.className).toContain("text-[13px]")
-    expect(label.className).toContain("text-v2-lake")
-  })
-
-  it("dims unselected pool pills and their avatars", () => {
+  it("groups the pool pills and the breakdown under the 分攤成員 region", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
     const split = screen.getByRole("region", { name: "分攤成員" })
-    expect(within(split).getByRole("button", { name: "小雨" }).className).not.toContain("opacity-50")
-    act(() => hook.result.current.actions.togglePool("a"))
-    rerender()
-    const unselected = within(split).getByRole("button", { name: "小雨" })
-    expect(unselected.className).toContain("opacity-50")
-    expect(unselected.querySelector("span[aria-hidden='true']")?.className).toContain("opacity-40")
+    expect(within(split).getByRole("button", { name: "小雨" })).toHaveAttribute("aria-pressed", "true")
+    expect(within(split).getByRole("region", { name: "分攤明細" })).toBeInTheDocument()
+    expect(within(split).getByText(/剩餘應攤分金額/)).toBeInTheDocument()
   })
 
-  it("styles the unpinned pin button with the check border", () => {
+  it("keeps personal items off until the personal-mode switch is turned on", () => {
+    const { rerender } = renderForm()
+    const toggle = screen.getByRole("switch", { name: "先扣個人項目" })
+    expect(toggle).toHaveAttribute("aria-checked", "false")
+    expect(screen.queryByText(/目前沒有人有個人項目/)).not.toBeInTheDocument()
+    fireEvent.click(toggle)
+    rerender()
+    expect(screen.getByRole("switch", { name: "先扣個人項目" })).toHaveAttribute("aria-checked", "true")
+    expect(screen.getByText(/目前沒有人有個人項目/)).toBeInTheDocument()
+  })
+
+  it("toggles a member's participation in the shared pool", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
-    expect(screen.getByRole("button", { name: "小雨固定金額" }).className).toContain("border-v2-check")
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    expect(within(split).getByRole("button", { name: "小雨" })).toHaveAttribute("aria-pressed", "true")
+
+    fireEvent.click(within(split).getByRole("button", { name: "小雨" }))
+    rerender()
+    expect(within(split).getByRole("button", { name: "小雨" })).toHaveAttribute("aria-pressed", "false")
+    expect(hook.result.current.derived.shares.map((s) => s.memberId)).toEqual(["b"])
   })
 
-  it("wraps the pinned amount in a bordered box with a dollar prefix", () => {
+  it("puts the edited description into the submitted payload", () => {
+    const { hook, rerender, submissions } = renderForm()
+    act(() => hook.result.current.actions.setAmount("100"))
+    fireEvent.change(screen.getByLabelText("描述"), { target: { value: "晚餐" } })
+    rerender()
+    fireEvent.click(screen.getByRole("button", { name: "新增支出 · TWD 100" }))
+    expect(submissions).toHaveLength(1)
+    expect(submissions[0].description).toBe("晚餐")
+  })
+
+  it("turns the pinned share into an editable field with a dollar prefix", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
+    // Before pinning the share is read-only text.
+    expect(screen.getByLabelText("小雨的分攤金額").tagName).toBe("SPAN")
+
     fireEvent.click(screen.getByRole("button", { name: "小雨固定金額" }))
     rerender()
     const input = screen.getByLabelText("小雨的分攤金額")
-    expect(input.closest("label")?.className).toContain("border-v2-lake-border")
+    expect(input.tagName).toBe("INPUT")
+    expect(input).toHaveValue("50")
     expect(input.closest("label")).toHaveTextContent("$")
   })
 
@@ -301,18 +341,35 @@ describe("ExpenseFormV2View", () => {
     expect(within(table).getByRole("row", { name: /^合計/ })).toHaveTextContent("$1,000")
   })
 
-  it("disables submit and shows the draft error", () => {
-    renderForm()
+  it("disables submit, shows the draft error and does not submit while invalid", () => {
+    const { onSubmit } = renderForm()
     expect(screen.getByRole("alert")).toHaveTextContent("請輸入有效金額")
-    expect(screen.getByRole("button", { name: /新增支出/ })).toBeDisabled()
+    const submit = screen.getByRole("button", { name: /新增支出/ })
+    expect(submit).toBeDisabled()
+    fireEvent.click(submit)
+    expect(onSubmit).not.toHaveBeenCalled()
   })
 
-  it("submits when valid", () => {
-    const { hook, rerender, onSubmit } = renderForm()
+  it("submits the draft payload when valid", () => {
+    const { hook, rerender, onSubmit, submissions } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
     fireEvent.click(screen.getByRole("button", { name: "新增支出 · TWD 100" }))
-    expect(onSubmit).toHaveBeenCalled()
+    expect(onSubmit).toHaveBeenCalledTimes(1)
+    expect(submissions).toEqual([
+      {
+        amount: 100,
+        currency: "TWD",
+        category: "",
+        paidBy: "a",
+        description: "",
+        participants: [
+          { memberId: "a", shareAmount: 50 },
+          { memberId: "b", shareAmount: 50 },
+        ],
+        splitDetail: null,
+      },
+    ])
   })
 
   it("shows the LINE toggle only when notifications are possible", () => {
@@ -329,14 +386,14 @@ describe("ExpenseFormV2View", () => {
     expect(hook.result.current.state.notifyLine).toBe(false)
   })
 
-  it("draws a custom lake checkbox for the notify row", () => {
-    renderForm()
-    const checkbox = screen.getByRole("checkbox", { name: /通知 LINE 群組/ })
-    expect(checkbox.className).toContain("peer")
-    expect(checkbox.className).toContain("sr-only")
-    const box = checkbox.parentElement?.querySelector('span[aria-hidden="true"]')
-    expect(box?.className).toContain("border-v2-check")
-    expect(box?.className).toContain("peer-checked:bg-v2-lake")
+  it("blocks submission and shows a busy label while submitting", () => {
+    const { hook, rerender, onSubmit } = renderForm({ submitting: true })
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    const submit = screen.getByRole("button", { name: "儲存中..." })
+    expect(submit).toBeDisabled()
+    fireEvent.click(submit)
+    expect(onSubmit).not.toHaveBeenCalled()
   })
 
   it("edit mode shows 儲存變更 · amount and a top-bar delete action", () => {
@@ -348,7 +405,7 @@ describe("ExpenseFormV2View", () => {
     // The bottom full-width delete block is gone; delete lives in the top bar.
     expect(screen.queryByRole("button", { name: "刪除支出" })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "刪除此筆" }))
-    expect(onRequestDelete).toHaveBeenCalled()
+    expect(onRequestDelete).toHaveBeenCalledTimes(1)
   })
 
   it("uses the create LINE notify sub-copy", () => {

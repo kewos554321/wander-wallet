@@ -60,14 +60,6 @@ window.HTMLElement.prototype.scrollIntoView = vi.fn()
 window.HTMLElement.prototype.hasPointerCapture = vi.fn()
 window.HTMLElement.prototype.releasePointerCapture = vi.fn()
 
-// Mock ResizeObserver properly as a class
-class MockResizeObserver {
-  observe = vi.fn()
-  unobserve = vi.fn()
-  disconnect = vi.fn()
-}
-global.ResizeObserver = MockResizeObserver
-
 // Mock data
 const mockMembers = [
   {

@@ -1,11 +1,13 @@
-import { describe, it, expect, vi, afterEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
 
 const speech = { supported: true, recording: false, transcribing: false, error: null as string | null, toggle: vi.fn() }
-let emit: (t: string) => void = () => {}
+// `emit` is assigned while the component renders, so keep it in a hoisted ref
+// that every test resets instead of relying on module-init ordering.
+const speechRef = vi.hoisted(() => ({ emit: undefined as ((t: string) => void) | undefined }))
 vi.mock("@/lib/quick-expense/speech-input", () => ({
   useSpeechInput: ({ onText }: { onText: (t: string) => void }) => {
-    emit = onText
+    speechRef.emit = onText
     return speech
   },
 }))
@@ -22,6 +24,9 @@ const setup = (text = "", error: string | null = null) => {
 }
 
 describe("QuickInputStep", () => {
+  beforeEach(() => {
+    speechRef.emit = undefined
+  })
   afterEach(() => {
     speech.supported = true
     speech.recording = false
@@ -36,7 +41,7 @@ describe("QuickInputStep", () => {
     const p = setup("午餐 200")
     fireEvent.click(screen.getByRole("button", { name: "早餐 100 我付" }))
     expect(p.onTextChange).toHaveBeenCalledWith("午餐 200 早餐 100 我付")
-    emit("晚餐 600")
+    speechRef.emit!("晚餐 600")
     expect(p.onTextChange).toHaveBeenLastCalledWith("午餐 200 晚餐 600")
   })
   it("parses, opens camera, opens gallery, shows error, toggles mic", () => {

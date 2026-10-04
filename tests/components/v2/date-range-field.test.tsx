@@ -33,16 +33,6 @@ vi.mock("@/components/ui/calendar", () => ({
 
 import { DateRangeField } from "@/components/v2/project/date-range-field"
 
-// The shared jsdom setup installs a non-constructable ResizeObserver stub, but
-// Radix Popover's floating-ui layer calls `new ResizeObserver(...)` when the
-// content mounts. Provide a constructable stub so the popover can open.
-class MockResizeObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-}
-global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver
-
 function openPopover(name = "選擇日期") {
   fireEvent.click(screen.getByRole("button", { name }))
   return screen.getByTestId("calendar-stub")

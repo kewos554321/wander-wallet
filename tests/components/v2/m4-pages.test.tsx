@@ -1,67 +1,44 @@
-import { describe, it, expect, vi } from "vitest"
-import { render, screen, act } from "@testing-library/react"
-import { Suspense } from "react"
+import { describe, it, expect, vi, beforeEach } from "vitest"
+import { render, screen } from "@testing-library/react"
 
-vi.mock("@/components/ui-version/ui-version-switch", () => ({
-  UiVersionSwitch: ({ v1, v2 }: { v1: React.ReactNode; v2: React.ReactNode }) => (
-    <div>
-      <div data-testid="v1">{v1}</div>
-      <div data-testid="v2">{v2}</div>
-    </div>
-  ),
-}))
+// Only the UI-version preference resolution is mocked; the switch and both
+// branches are rendered for real so the branch selection logic is exercised.
+const mockUseUiVersion = vi.hoisted(() => vi.fn())
+vi.mock("@/lib/hooks/useUiVersion", () => ({ useUiVersion: () => mockUseUiVersion() }))
 
-vi.mock("@/components/v1/new-project/new-project-v1", () => ({
-  NewProjectV1: () => <span>NewProjectV1</span>,
-}))
+import { UiVersionSwitch } from "@/components/ui-version/ui-version-switch"
 
-vi.mock("@/components/v2/new-project/new-project-v2", () => ({
-  NewProjectV2: () => <span>NewProjectV2</span>,
-}))
+describe("UiVersionSwitch", () => {
+  beforeEach(() => mockUseUiVersion.mockReset())
 
-vi.mock("@/components/v1/project-settings/project-settings-v1", () => ({
-  ProjectSettingsV1: ({ projectId }: { projectId: string }) => <span>{`ProjectSettingsV1:${projectId}`}</span>,
-}))
-
-vi.mock("@/components/v2/project-settings/project-settings-v2", () => ({
-  ProjectSettingsV2: ({ projectId }: { projectId: string }) => <span>{`ProjectSettingsV2:${projectId}`}</span>,
-}))
-
-vi.mock("@/components/v1/settings/general-settings-v1", () => ({
-  GeneralSettingsV1: () => <span>GeneralSettingsV1</span>,
-}))
-
-vi.mock("@/components/v2/settings/general-settings-v2", () => ({
-  GeneralSettingsV2: () => <span>GeneralSettingsV2</span>,
-}))
-
-import NewProjectPage from "@/app/projects/new/page"
-import ProjectSettingsPage from "@/app/projects/[id]/settings/page"
-import SettingsPage from "@/app/settings/page"
-
-describe("Pages with UI version switch", () => {
-  it("renders NewProjectPage with both v1 and v2", () => {
-    render(<NewProjectPage />)
-    expect(screen.getByTestId("v1")).toHaveTextContent("NewProjectV1")
-    expect(screen.getByTestId("v2")).toHaveTextContent("NewProjectV2")
+  it("renders the v1 branch when the resolved version is v1", () => {
+    mockUseUiVersion.mockReturnValue({ version: "v1", overridden: false, setVersion: vi.fn() })
+    render(<UiVersionSwitch v1={<span>v1-content</span>} v2={<span>v2-content</span>} />)
+    expect(screen.getByText("v1-content")).toBeInTheDocument()
+    expect(screen.queryByText("v2-content")).not.toBeInTheDocument()
   })
 
-  it("renders ProjectSettingsPage with both v1 and v2", async () => {
-    const params = Object.assign(Promise.resolve({ id: "p1" }), { status: "fulfilled", value: { id: "p1" } }) as unknown as Promise<{ id: string }>
-    await act(async () => {
-      render(
-        <Suspense fallback={null}>
-          <ProjectSettingsPage params={params} />
-        </Suspense>
-      )
-    })
-    expect(await screen.findByText("ProjectSettingsV1:p1")).toBeInTheDocument()
-    expect(screen.getByTestId("v2")).toHaveTextContent("ProjectSettingsV2:p1")
+  it("renders the v2 branch when the resolved version is v2", () => {
+    mockUseUiVersion.mockReturnValue({ version: "v2", overridden: false, setVersion: vi.fn() })
+    render(<UiVersionSwitch v1={<span>v1-content</span>} v2={<span>v2-content</span>} />)
+    expect(screen.getByText("v2-content")).toBeInTheDocument()
+    expect(screen.queryByText("v1-content")).not.toBeInTheDocument()
   })
 
-  it("renders SettingsPage with both v1 and v2", () => {
-    render(<SettingsPage />)
-    expect(screen.getByTestId("v1")).toHaveTextContent("GeneralSettingsV1")
-    expect(screen.getByTestId("v2")).toHaveTextContent("GeneralSettingsV2")
+  it("renders nothing while the version is unresolved", () => {
+    mockUseUiVersion.mockReturnValue({ version: null, overridden: false, setVersion: vi.fn() })
+    render(<UiVersionSwitch v1={<span>v1-content</span>} v2={<span>v2-content</span>} />)
+    expect(screen.queryByText("v1-content")).not.toBeInTheDocument()
+    expect(screen.queryByText("v2-content")).not.toBeInTheDocument()
+  })
+
+  it("renders the fallback while unresolved when one is provided", () => {
+    mockUseUiVersion.mockReturnValue({ version: null, overridden: false, setVersion: vi.fn() })
+    render(
+      <UiVersionSwitch v1={<span>v1-content</span>} v2={<span>v2-content</span>} fallback={<span>loading</span>} />
+    )
+    expect(screen.getByText("loading")).toBeInTheDocument()
+    expect(screen.queryByText("v1-content")).not.toBeInTheDocument()
+    expect(screen.queryByText("v2-content")).not.toBeInTheDocument()
   })
 })

@@ -109,8 +109,7 @@ describe("ProjectOverviewV2View", () => {
   it("uses the project cover icon on the trip summary card", () => {
     render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
     const card = screen.getByTestId("v2-trip-summary-card")
-    expect(card.querySelector(".lucide-camera")).not.toBeNull()
-    expect(card.querySelector(".lucide-sparkles")).toBeNull()
+    expect(within(card).getByTestId("trip-summary-decoration")).toHaveAttribute("data-cover", "camera")
   })
 
   it("falls back to the sparkle decoration without an icon cover", () => {
@@ -123,7 +122,7 @@ describe("ProjectOverviewV2View", () => {
       />
     )
     const card = screen.getByTestId("v2-trip-summary-card")
-    expect(card.querySelector(".lucide-sparkles")).not.toBeNull()
+    expect(within(card).getByTestId("trip-summary-decoration")).toHaveAttribute("data-cover", "sparkles")
   })
 
   it("shows overspending instead of a negative remainder", () => {
@@ -230,8 +229,10 @@ describe("ProjectOverviewV2View", () => {
     render(<ProjectOverviewV2View project={project} summary={summary} onShare={onShare} onVoice={onVoice} />)
     fireEvent.click(screen.getByRole("button", { name: "分享" }))
     fireEvent.click(screen.getByRole("button", { name: /AI 快速記帳/ }))
-    expect(onShare).toHaveBeenCalled()
-    expect(onVoice).toHaveBeenCalled()
+    expect(onShare).toHaveBeenCalledTimes(1)
+    expect(onShare).toHaveBeenCalledWith(expect.objectContaining({ type: "click" }))
+    expect(onVoice).toHaveBeenCalledTimes(1)
+    expect(onVoice).toHaveBeenCalledWith(expect.objectContaining({ type: "click" }))
     expect(screen.queryByRole("button", { name: /拍照記帳/ })).not.toBeInTheDocument()
     expect(screen.getByRole("link", { name: "手動新增支出" })).toHaveAttribute("href", "/projects/p1/expenses/new")
   })

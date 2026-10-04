@@ -44,8 +44,8 @@ function renderBar(overrides: Partial<Parameters<typeof ExpenseFilterBar>[0]> = 
     onClearFilters: vi.fn(),
     ...overrides,
   }
-  render(<ExpenseFilterBar {...props} />)
-  return props
+  const { unmount } = render(<ExpenseFilterBar {...props} />)
+  return { ...props, unmount }
 }
 
 describe("ExpenseFilterBar panels", () => {
@@ -61,23 +61,37 @@ describe("ExpenseFilterBar panels", () => {
     expect(screen.getAllByRole("checkbox")).toHaveLength(8)
   })
 
-  it("uses a 12px panel radius by default", () => {
+  it("toggles a panel open and closed from its trigger", () => {
     renderBar()
-    fireEvent.click(screen.getByRole("button", { name: /類別/ }))
-    expect(screen.getByTestId("filter-panel")).toHaveClass("rounded-[12px]")
-  })
-
-  it("uses a 10px radius for the date panel", () => {
-    renderBar()
-    fireEvent.click(screen.getByRole("button", { name: /付款日期/ }))
-    expect(screen.getByTestId("filter-panel")).toHaveClass("rounded-[10px]")
-  })
-
-  it("rotates the chevron when open", () => {
-    renderBar()
-    const trigger = screen.getByRole("button", { name: /付款人/ })
+    const trigger = screen.getByRole("button", { name: /類別/ })
+    expect(trigger).toHaveAttribute("aria-haspopup", "dialog")
     fireEvent.click(trigger)
-    expect(within(trigger).getByTestId("filter-chevron")).toHaveClass("rotate-180")
+    expect(screen.getByRole("button", { name: /類別/ })).toHaveAttribute("aria-expanded", "true")
+    expect(screen.getByTestId("filter-panel")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: /類別/ }))
+    expect(screen.getByRole("button", { name: /類別/ })).toHaveAttribute("aria-expanded", "false")
+    expect(screen.queryByTestId("filter-panel")).not.toBeInTheDocument()
+  })
+
+  it("keeps the date trigger's accessible name when its label becomes a range", () => {
+    renderBar({
+      filters: {
+        ...baseFilters,
+        expenseDateRange: { from: new Date(2026, 10, 12), to: new Date(2026, 10, 16) },
+      },
+    })
+    const trigger = screen.getByRole("button", { name: "付款日期" })
+    expect(within(trigger).getByText("11/12~11/16")).toBeInTheDocument()
+  })
+
+  it("shows the chevron for an inactive trigger and the count badge once a filter is active", () => {
+    const first = renderBar()
+    expect(within(screen.getByRole("button", { name: /付款人/ })).getByTestId("filter-chevron")).toBeInTheDocument()
+    first.unmount()
+    renderBar({ filters: { ...baseFilters, selectedPayers: new Set(["chi"]) } })
+    const active = screen.getByRole("button", { name: /付款人/ })
+    expect(within(active).getByText("1")).toBeInTheDocument()
+    expect(within(active).queryByTestId("filter-chevron")).not.toBeInTheDocument()
   })
 
   it("shows the badge and not the chevron when an active chip is open", () => {
@@ -88,24 +102,24 @@ describe("ExpenseFilterBar panels", () => {
     expect(within(trigger).queryByTestId("filter-chevron")).not.toBeInTheDocument()
   })
 
-  it("renders the light date-panel header", () => {
+  it("navigates the date panel months with the arrow buttons", () => {
     renderBar({ filters: { ...baseFilters, expenseDateRange: { from: new Date(2026, 10, 12) } } })
     fireEvent.click(screen.getByRole("button", { name: /付款日期/ }))
-    const panel = screen.getByTestId("filter-panel")
-    expect(within(panel).getByText("付款日期")).toHaveClass("text-[11px]")
-    const clear = within(panel).getByRole("button", { name: "清除" })
-    expect(clear).toHaveClass("text-v2-ink-muted")
-    expect(clear.querySelector("svg")).toBeNull()
+    expect(screen.getByText("2026年11月")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "下個月" }))
+    expect(screen.getByText("2026年12月")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "上個月" }))
+    expect(screen.getByText("2026年11月")).toBeInTheDocument()
   })
 
-  it("renders the amount panel without a divider", () => {
+  it("shows the amount panel clear action only once a range is set", () => {
+    const first = renderBar()
+    fireEvent.click(screen.getByRole("button", { name: /金額/ }))
+    expect(screen.queryByRole("button", { name: "清除" })).not.toBeInTheDocument()
+    first.unmount()
     renderBar({ filters: { ...baseFilters, amountRange: [100, 200] } })
     fireEvent.click(screen.getByRole("button", { name: /金額/ }))
-    const panel = screen.getByTestId("filter-panel")
-    expect(panel.querySelector(".h-px.bg-v2-line-soft")).toBeNull()
-    const frame = panel.querySelector(".px-3")
-    expect(frame).not.toBeNull()
-    expect(frame).toHaveClass("pt-2.5", "pb-3.5")
+    expect(screen.getByRole("button", { name: "清除" })).toBeInTheDocument()
   })
 
   it("hides the panel clear action when nothing is selected", () => {
@@ -191,6 +205,13 @@ describe("ExpenseFilterBar panels", () => {
     fireEvent.click(screen.getByRole("button", { name: /付款日期/ }))
     fireEvent.click(screen.getByRole("button", { name: "2026-11-14" }))
     expect(props.onExpenseRange).toHaveBeenCalledWith({ from: new Date(2026, 10, 12), to: new Date(2026, 10, 14) })
+  })
+
+  it("restarts the range when the picked day precedes the current start", () => {
+    const props = renderBar({ filters: { ...baseFilters, expenseDateRange: { from: new Date(2026, 10, 12) } } })
+    fireEvent.click(screen.getByRole("button", { name: /付款日期/ }))
+    fireEvent.click(screen.getByRole("button", { name: "2026-11-05" }))
+    expect(props.onExpenseRange).toHaveBeenCalledWith({ from: new Date(2026, 10, 5), to: new Date(2026, 10, 12) })
   })
 
   it("restarts the range when both ends are already set", () => {

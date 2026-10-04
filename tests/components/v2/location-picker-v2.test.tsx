@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react"
 import { LocationPickerV2 } from "@/components/v2/expense-form/location-picker-v2"
 
 const mockFetch = vi.fn()
-vi.stubGlobal("fetch", mockFetch)
 
 const originalGeolocation = navigator.geolocation
 
@@ -41,10 +40,13 @@ function setGeolocationReject(code: number) {
 describe("LocationPickerV2", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.stubGlobal("fetch", mockFetch)
   })
 
   afterEach(() => {
     setGeolocation(originalGeolocation)
+    vi.unstubAllGlobals()
+    vi.useRealTimers()
   })
 
   // Ported from tests/components/location-picker.test.tsx (shared behaviour).
@@ -159,11 +161,14 @@ describe("LocationPickerV2", () => {
   })
 
   // Coverage for search early-return and failure branches.
-  it("does not call the API when the query is only whitespace", async () => {
+  it("does not call the API when the query is only whitespace", () => {
+    vi.useFakeTimers()
     render(<LocationPickerV2 onChange={vi.fn()} />)
     fireEvent.click(screen.getByText("新增地點"))
     fireEvent.change(screen.getByPlaceholderText("搜尋地點..."), { target: { value: "   " } })
-    await new Promise((resolve) => setTimeout(resolve, 700))
+    act(() => {
+      vi.advanceTimersByTime(500)
+    })
     expect(mockFetch).not.toHaveBeenCalled()
   })
 

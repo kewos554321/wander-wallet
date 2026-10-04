@@ -68,8 +68,8 @@ describe("SettleV2View", () => {
   it("lists transfers with 我 for the current member", () => {
     renderView()
     const row = screen.getByTestId("settlement-0")
-    expect(within(row).getByText("小美")).toBeInTheDocument()
-    expect(within(row).getByText("我", { selector: "span.font-medium" })).toBeInTheDocument()
+    expect(within(row).getByTestId("settlement-name-mei")).toHaveTextContent("小美")
+    expect(within(row).getByTestId("settlement-name-me")).toHaveTextContent("我")
     expect(within(row).getByText("TWD 2,400")).toBeInTheDocument()
   })
 
@@ -126,13 +126,11 @@ describe("SettleV2View", () => {
     expect(within(screen.getByTestId("settle-summary")).getAllByText("0").length).toBeGreaterThan(0)
   })
 
-  it("uses the sky tone for the daily-average tile", () => {
+  it("labels the daily-average tile with the display currency", () => {
     renderView()
     const tile = screen.getByTestId("settle-tile-daily")
-    expect(tile.className).toContain("bg-v2-sky-soft")
-    expect(tile.className).not.toContain("bg-v2-lake-soft")
-    const iconCircle = tile.querySelector("div[aria-hidden='true']")
-    expect(iconCircle?.className).toContain("bg-v2-sky-tint")
+    expect(within(tile).getByText("日均花費 (TWD)")).toBeInTheDocument()
+    expect(within(tile).getByText("5,932")).toBeInTheDocument()
   })
 
   it("keeps the summary heading inside the summary card", () => {
@@ -141,24 +139,25 @@ describe("SettleV2View", () => {
     expect(within(grid).getByText("計算總覽")).toBeInTheDocument()
   })
 
-  it("renders the summary tile values in ink", () => {
-    renderView()
+  it("renders the summary values through the display-currency conversion", () => {
+    renderView({ toDisplay: (n) => n * 2 })
     const grid = screen.getByTestId("settle-summary")
-    expect(within(grid).getByText("29,660").className).toContain("text-v2-ink")
+    expect(within(grid).getByText("59,320")).toBeInTheDocument()
+    expect(within(grid).getByText("11,864")).toBeInTheDocument()
   })
 
   it("keeps the transfer heading in the same card as the rows", () => {
     renderView()
-    const row = screen.getByTestId("settlement-0")
-    const heading = screen.getByText("轉帳建議")
-    expect(row.closest("div.rounded-2xl")).toBe(heading.closest("div.rounded-2xl"))
+    const list = screen.getByTestId("settlement-list")
+    expect(within(list).getByText("轉帳建議")).toBeInTheDocument()
+    expect(list).toContainElement(screen.getByTestId("settlement-0"))
   })
 
   it("uses the gold tone for the current user avatar", () => {
     renderView()
     const row = screen.getByTestId("settlement-0")
-    const meLabel = within(row).getByText("我", { selector: "span.font-medium" })
-    expect(meLabel.previousElementSibling?.className).toContain("bg-v2-gold-soft")
+    // Intentional token check: the current member's avatar must use the gold tone.
+    expect(within(row).getByTestId("settlement-avatar-me").className).toContain("bg-v2-gold-soft")
   })
 })
 
@@ -179,8 +178,7 @@ describe("SettleV2 container", () => {
       shareText: "",
     })
     render(<SettleV2 projectId="p1" />)
-    expect(screen.getByText("結算")).toBeInTheDocument()
-    expect(screen.getByText("結算").className).toContain("font-bold")
+    expect(screen.getByRole("heading", { level: 1, name: "結算" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
     expect(screen.getByText("獲取結算數據失敗")).toBeInTheDocument()
   })
@@ -196,7 +194,7 @@ describe("SettleV2 container", () => {
       shareText: "",
     })
     render(<SettleV2 projectId="p1" />)
-    expect(screen.getByText("結算").className).toContain("font-bold")
+    expect(screen.getByRole("heading", { level: 1, name: "結算" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
     expect(screen.getByTestId("v2-settle-skeleton")).toBeInTheDocument()
   })

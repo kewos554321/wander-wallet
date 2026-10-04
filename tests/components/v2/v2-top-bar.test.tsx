@@ -2,27 +2,25 @@ import { describe, it, expect, vi } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 
-describe("V2TopBar title classes", () => {
-  it("uses the default size and weight when titleClassName is omitted", () => {
+describe("V2TopBar", () => {
+  it("renders the title as a level-1 heading with a back link", () => {
     render(<V2TopBar title="結算" backHref="/projects" />)
-    const h1 = screen.getByRole("heading", { level: 1, name: "結算" })
-    expect(h1.className).toContain("text-base")
-    expect(h1.className).toContain("font-medium")
+    expect(screen.getByRole("heading", { level: 1, name: "結算" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects")
   })
 
-  it("replaces the default size and weight with titleClassName", () => {
-    render(<V2TopBar title="成員" backHref="/projects" titleClassName="text-[17px] font-semibold" />)
-    const h1 = screen.getByRole("heading", { level: 1, name: "成員" })
-    expect(h1.className).toContain("text-[17px]")
-    expect(h1.className).toContain("font-semibold")
-    expect(h1.className).not.toContain("font-medium")
-    expect(h1.className).not.toContain("text-base")
-  })
-
-  it("keeps the serif font and back link", () => {
-    render(<V2TopBar title="結算" backHref="/projects/p1" titleClassName="font-bold" />)
-    expect(screen.getByRole("heading", { level: 1 }).className).toContain("font-v2-serif")
+  it("renders supplied actions next to the title", () => {
+    render(<V2TopBar title="成員" backHref="/projects/p1" actions={<button>儲存</button>} />)
+    expect(screen.getByRole("heading", { level: 1, name: "成員" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "儲存" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
+  })
+
+  it("applies the v2 serif font token to the title", () => {
+    render(<V2TopBar title="結算" backHref="/projects" titleClassName="text-[17px] font-semibold" />)
+    // Intentional token check: the v2 serif typeface is a design contract
+    // retained while titleClassName customises the size/weight.
+    expect(screen.getByRole("heading", { level: 1, name: "結算" }).className).toContain("font-v2-serif")
   })
 
   it("goes back in history when a previous entry exists", () => {

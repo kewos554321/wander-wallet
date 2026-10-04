@@ -1,5 +1,19 @@
 import { describe, it, expect, vi } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
+
+// CurrencySelect is a Radix combobox whose own behaviour is covered by
+// tests/components/currency-select.test.tsx. AmountCard only needs to forward
+// its onChange, so it is stubbed with a native select here for a deterministic
+// interaction (test-only stub; no product code changed).
+vi.mock("@/components/ui/currency-select", () => ({
+  CurrencySelect: ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
+    <select aria-label="幣別" value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="TWD">TWD</option>
+      <option value="JPY">JPY</option>
+    </select>
+  ),
+}))
+
 import { AmountCard } from "@/components/v2/expense-form/amount-card"
 
 type AmountCardProps = Parameters<typeof AmountCard>[0]
@@ -14,44 +28,46 @@ function setup(overrides: Partial<AmountCardProps> = {}) {
     onToggleCalculator: vi.fn(),
     ...overrides,
   }
-  const utils = render(<AmountCard {...props} />)
-  const card = utils.container.firstElementChild as HTMLElement
-  return { ...utils, card, props }
+  render(<AmountCard {...props} />)
+  return props
 }
 
-describe("AmountCard states + calculator slot", () => {
-  it("closed card uses the lake-tint fill and lake-edge border, not the old gradient", () => {
-    const { card } = setup()
-    expect(card.className).toContain("bg-v2-lake-tint")
-    expect(card.className).toContain("border-v2-lake-edge")
-    expect(card.className).not.toContain("bg-gradient-to-br")
-  })
-
-  it("closed card shows the amount input and a paper 計算機 button", () => {
+describe("AmountCard", () => {
+  it("shows a labelled amount field, a currency selector and a calculator toggle when closed", () => {
     setup()
     expect(screen.getByLabelText("金額")).toHaveValue("1280")
-    const button = screen.getByRole("button", { name: "開啟計算機" })
-    expect(button.className).toContain("bg-v2-paper")
-    expect(button.className).not.toContain("bg-v2-surface")
+    expect(screen.getByLabelText("幣別")).toHaveValue("TWD")
+    expect(screen.getByRole("button", { name: "開啟計算機" })).toBeInTheDocument()
+    expect(screen.queryByTestId("calculator")).not.toBeInTheDocument()
   })
 
-  it("clicking 計算機 calls onToggleCalculator", () => {
+  it("forwards amount edits to onAmount", () => {
+    const { onAmount } = setup()
+    fireEvent.change(screen.getByLabelText("金額"), { target: { value: "88" } })
+    expect(onAmount).toHaveBeenCalledTimes(1)
+    expect(onAmount).toHaveBeenCalledWith("88")
+  })
+
+  it("forwards currency changes to onCurrency", () => {
+    const { onCurrency } = setup()
+    fireEvent.change(screen.getByLabelText("幣別"), { target: { value: "JPY" } })
+    expect(onCurrency).toHaveBeenCalledTimes(1)
+    expect(onCurrency).toHaveBeenCalledWith("JPY")
+  })
+
+  it("calls onToggleCalculator when the calculator toggle is pressed", () => {
     const onToggleCalculator = vi.fn()
     setup({ onToggleCalculator })
     fireEvent.click(screen.getByRole("button", { name: "開啟計算機" }))
     expect(onToggleCalculator).toHaveBeenCalledTimes(1)
   })
 
-  it("open card turns solid lake and hides the 金額 input", () => {
-    const { card } = setup({ calculatorOpen: true, calculator: <div data-testid="calculator">pad</div> })
-    expect(card.className).toContain("bg-v2-lake")
-    expect(card.className).not.toContain("bg-v2-lake-tint")
+  it("replaces the amount field with the calculator node and swaps the toggle label when open", () => {
+    setup({ calculatorOpen: true, calculator: <div data-testid="calculator">pad</div> })
     expect(screen.queryByLabelText("金額")).not.toBeInTheDocument()
-  })
-
-  it("renders the calculator node inside the card when open", () => {
-    setup({ calculatorOpen: true, calculator: <div data-testid="calculator" /> })
     expect(screen.getByTestId("calculator")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "關閉計算機" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "開啟計算機" })).not.toBeInTheDocument()
   })
 
   it("does not render the calculator slot while closed", () => {
@@ -59,20 +75,19 @@ describe("AmountCard states + calculator slot", () => {
     expect(screen.queryByTestId("calculator")).not.toBeInTheDocument()
   })
 
-  it("open card shows the title in paper with reduced opacity", () => {
-    setup({ calculatorOpen: true, calculator: <div data-testid="calculator" /> })
-    const label = screen.getByText("輸入金額")
-    expect(label.className).toContain("text-v2-paper")
-    expect(label.className).toContain("opacity-85")
-    expect(label.tagName).toBe("SPAN")
-    expect(label).not.toHaveAttribute("for")
+  it("renders 輸入金額 as a real label bound to the amount input when closed", () => {
+    setup()
+    const caption = screen.getByText("輸入金額")
+    expect(caption.tagName).toBe("LABEL")
+    expect(caption).toHaveAttribute("for", "v2-amount")
+    expect(screen.getByLabelText("金額")).toHaveAttribute("id", "v2-amount")
   })
 
-  it("labels the calculator toggle by state", () => {
-    const { unmount } = setup()
-    expect(screen.getByRole("button", { name: "開啟計算機" })).toBeInTheDocument()
-    unmount()
+  it("drops the label semantics for the 輸入金額 caption once the calculator is open", () => {
     setup({ calculatorOpen: true, calculator: <div data-testid="calculator" /> })
-    expect(screen.getByRole("button", { name: "關閉計算機" })).toBeInTheDocument()
+    const caption = screen.getByText("輸入金額")
+    expect(caption.tagName).toBe("SPAN")
+    expect(caption).not.toHaveAttribute("for")
+    expect(screen.queryByLabelText("金額")).not.toBeInTheDocument()
   })
 })

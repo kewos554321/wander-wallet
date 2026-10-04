@@ -25,12 +25,16 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }))
 
-// Mock ResizeObserver (for Radix UI components)
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}))
+// Mock ResizeObserver (for Radix UI components). This must be a constructable
+// class: Radix/floating-ui calls `new ResizeObserver(...)` when a popover or
+// popper mounts, which a bare `vi.fn()` is not.
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver
 
 // Mock matchMedia
 Object.defineProperty(window, "matchMedia", {

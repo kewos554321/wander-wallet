@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import type { DateRange } from "react-day-picker"
 
 vi.mock("next/font/google", () => ({
   Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
@@ -22,18 +23,30 @@ vi.mock("@/components/ui/currency-select", () => ({
   ),
 }))
 
+// Capture the props DateRangeField passes to the shared Calendar and drive its
+// onSelect callback directly with fixed Dates. The Calendar's day-cell markup
+// (and therefore its `data-day` labels) depends on the host locale, so stubbing
+// it keeps this suite deterministic under any LANG, including en_US.UTF-8.
+const calendarProps = vi.hoisted(() => ({ current: null as Record<string, unknown> | null }))
+vi.mock("@/components/ui/calendar", () => ({
+  Calendar: (props: Record<string, unknown>) => {
+    calendarProps.current = props
+    const onSelect = props.onSelect as (range: DateRange | undefined) => void
+    return (
+      <div data-testid="calendar-stub">
+        <button type="button" onClick={() => onSelect({ from: new Date(2026, 10, 2) })}>
+          stub-start-day
+        </button>
+        <button type="button" onClick={() => onSelect({ from: new Date(2026, 10, 2), to: new Date(2026, 10, 25) })}>
+          stub-end-day
+        </button>
+      </div>
+    )
+  },
+}))
+
 import { ProjectSettingsV2 } from "@/components/v2/project-settings/project-settings-v2"
 import { DeleteProjectSheet } from "@/components/v2/project-settings/delete-project-sheet"
-
-// tests/setup.ts stubs ResizeObserver with a bare vi.fn() whose implementation
-// is not a constructor, so Radix popper (and therefore the date-range
-// popover) crashes when it opens. Use a real class so the popover can mount.
-class ResizeObserverStub {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-}
-globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver
 
 function putCall() {
   return mockAuthFetch.mock.calls.find(([url, opts]) => url === "/api/projects/p1" && opts?.method === "PUT")
@@ -56,25 +69,43 @@ const project = {
   expenses: [{ currency: "JPY" }, { currency: "TWD" }],
 }
 
-function mockRoutes({ profileId = "u1" }: { profileId?: string } = {}) {
+type MockResponse = { ok: boolean; json: () => Promise<unknown> }
+type Pending = { pending: (resolve: (value: MockResponse) => void) => void }
+type RouteResult = MockResponse | Error | Pending
+
+const ok = (body: unknown): MockResponse => ({ ok: true, json: async () => body })
+const fail = (body: unknown = {}): MockResponse => ({ ok: false, json: async () => body })
+const noJson = (): MockResponse => ({ ok: false, json: () => Promise.reject(new Error("no json")) })
+
+function respond(result: RouteResult): Promise<unknown> {
+  if (result instanceof Error) return Promise.reject(result)
+  if ("pending" in result) return new Promise(result.pending)
+  return Promise.resolve(result)
+}
+
+// Single parameterised route table; each test only overrides the calls it cares
+// about instead of re-implementing the whole fetch mock.
+function mockRoutes({
+  profileId = "u1",
+  projectRes = ok(project),
+  ratesRes = ok({ rates: { JPY: 100, TWD: 21 } }),
+  putRes = ok({}),
+  deleteRes = ok({}),
+}: {
+  profileId?: string
+  projectRes?: RouteResult
+  ratesRes?: RouteResult
+  putRes?: RouteResult
+  deleteRes?: RouteResult
+} = {}) {
   mockAuthFetch.mockImplementation((url: string, options?: { method?: string }) => {
     const method = options?.method
-    if (url === "/api/projects/p1" && !method) {
-      return Promise.resolve({ ok: true, json: async () => project })
-    }
-    if (url === "/api/users/profile") {
-      return Promise.resolve({ ok: true, json: async () => ({ id: profileId }) })
-    }
-    if (url === "/api/exchange-rates") {
-      return Promise.resolve({ ok: true, json: async () => ({ rates: { JPY: 100, TWD: 21 } }) })
-    }
-    if (url === "/api/projects/p1" && method === "PUT") {
-      return Promise.resolve({ ok: true, json: async () => ({}) })
-    }
-    if (url === "/api/projects/p1" && method === "DELETE") {
-      return Promise.resolve({ ok: true, json: async () => ({}) })
-    }
-    return Promise.resolve({ ok: false, json: async () => ({}) })
+    if (url === "/api/projects/p1" && !method) return respond(projectRes)
+    if (url === "/api/users/profile") return respond(ok({ id: profileId }))
+    if (url === "/api/exchange-rates") return respond(ratesRes)
+    if (url === "/api/projects/p1" && method === "PUT") return respond(putRes)
+    if (url === "/api/projects/p1" && method === "DELETE") return respond(deleteRes)
+    return Promise.resolve(fail())
   })
 }
 
@@ -100,8 +131,7 @@ describe("ProjectSettingsV2", () => {
     await waitFor(() =>
       expect(mockAuthFetch).toHaveBeenCalledWith("/api/projects/p1", expect.objectContaining({ method: "PUT" }))
     )
-    const putCall = mockAuthFetch.mock.calls.find(([url, opts]) => url === "/api/projects/p1" && opts?.method === "PUT")
-    const body = JSON.parse(putCall![1].body)
+    const body = JSON.parse(putCall()![1].body)
     expect(body.name).toBe("京都楓葉五日遊")
     expect(body.cover).toBe("icon:leaf;color:lake")
     expect(body.customRates).toEqual({ JPY: 0.21 })
@@ -183,8 +213,7 @@ describe("ProjectSettingsV2", () => {
     await waitFor(() =>
       expect(mockAuthFetch).toHaveBeenCalledWith("/api/projects/p1", expect.objectContaining({ method: "PUT" }))
     )
-    const putCall = mockAuthFetch.mock.calls.find(([url, opts]) => url === "/api/projects/p1" && opts?.method === "PUT")
-    expect(JSON.parse(putCall![1].body).description).toBe(long)
+    expect(JSON.parse(putCall()![1].body).description).toBe(long)
   })
 
   it("picks a cover through the tile sheet and saves it", async () => {
@@ -199,8 +228,7 @@ describe("ProjectSettingsV2", () => {
     await waitFor(() =>
       expect(mockAuthFetch).toHaveBeenCalledWith("/api/projects/p1", expect.objectContaining({ method: "PUT" }))
     )
-    const putCall = mockAuthFetch.mock.calls.find(([url, opts]) => url === "/api/projects/p1" && opts?.method === "PUT")
-    expect(JSON.parse(putCall![1].body).cover).toBe("icon:camera;color:ink")
+    expect(JSON.parse(putCall()![1].body).cover).toBe("icon:camera;color:ink")
   })
 
   it("uses the danger tokens for the danger zone", async () => {
@@ -259,12 +287,7 @@ describe("ProjectSettingsV2", () => {
   })
 
   it("still renders when the exchange-rate request fails", async () => {
-    mockAuthFetch.mockImplementation((url: string, options?: { method?: string }) => {
-      if (url === "/api/projects/p1" && !options?.method) return Promise.resolve({ ok: true, json: async () => project })
-      if (url === "/api/users/profile") return Promise.resolve({ ok: true, json: async () => ({ id: "u1" }) })
-      if (url === "/api/exchange-rates") return Promise.reject(new Error("rates down"))
-      return Promise.resolve({ ok: false, json: async () => ({}) })
-    })
+    mockRoutes({ ratesRes: new Error("rates down") })
     render(<ProjectSettingsV2 projectId="p1" />)
     expect(await screen.findByLabelText("專案名稱")).toHaveValue("京都紅葉五日遊")
     await waitFor(() => expect(mockAuthFetch).toHaveBeenCalledWith("/api/exchange-rates"))
@@ -278,15 +301,13 @@ describe("ProjectSettingsV2", () => {
     await screen.findByLabelText("專案名稱")
 
     fireEvent.click(screen.getByRole("button", { name: /2026\/11\/12/ }))
+    // The calendar receives the loaded Nov 12–16 range.
+    expect((calendarProps.current!.selected as DateRange).from).toEqual(new Date(2026, 10, 12))
+    expect((calendarProps.current!.selected as DateRange).to).toEqual(new Date(2026, 10, 16))
+
     // The existing range is Nov 12–16, so pick a start before it and an end after it.
-    const startLabel = new Date(2026, 10, 2).toLocaleDateString()
-    const endLabel = new Date(2026, 10, 25).toLocaleDateString()
-    fireEvent.click(await waitFor(() => {
-      const el = document.querySelector(`[data-day="${startLabel}"]`)
-      if (!el) throw new Error("start day not rendered")
-      return el as HTMLElement
-    }))
-    fireEvent.click(document.querySelector(`[data-day="${endLabel}"]`) as HTMLElement)
+    fireEvent.click(screen.getByRole("button", { name: "stub-start-day" }))
+    fireEvent.click(screen.getByRole("button", { name: "stub-end-day" }))
 
     expect(await screen.findByText("2026/11/02 – 2026/11/25")).toBeInTheDocument()
 
@@ -300,50 +321,37 @@ describe("ProjectSettingsV2", () => {
   })
 
   it("shows the not-found state when the project request fails", async () => {
-    mockAuthFetch.mockImplementation((url: string) => {
-      if (url === "/api/projects/p1") return Promise.resolve({ ok: false, json: async () => ({}) })
-      if (url === "/api/users/profile") return Promise.resolve({ ok: true, json: async () => ({ id: "u1" }) })
-      return Promise.resolve({ ok: false, json: async () => ({}) })
-    })
+    mockRoutes({ projectRes: fail() })
     render(<ProjectSettingsV2 projectId="p1" />)
     expect(await screen.findByText("專案不存在")).toBeInTheDocument()
   })
 
   it("shows the not-found state when loading rejects", async () => {
-    mockAuthFetch.mockImplementation((url: string) => {
-      if (url === "/api/projects/p1") return Promise.reject(new Error("network"))
-      if (url === "/api/users/profile") return Promise.resolve({ ok: true, json: async () => ({ id: "u1" }) })
-      return Promise.reject(new Error("network"))
-    })
+    mockRoutes({ projectRes: new Error("network") })
     render(<ProjectSettingsV2 projectId="p1" />)
     expect(await screen.findByText("專案不存在")).toBeInTheDocument()
   })
 
-  it("does not update after unmounting mid-load", async () => {
-    let releaseProject: (value: { ok: boolean; json: () => Promise<unknown> }) => void = () => {}
-    mockAuthFetch.mockImplementation((url: string) => {
-      if (url === "/api/projects/p1") return new Promise((resolve) => { releaseProject = resolve })
-      if (url === "/api/users/profile") return Promise.resolve({ ok: true, json: async () => ({ id: "u1" }) })
-      return Promise.resolve({ ok: false, json: async () => ({}) })
-    })
-    const { unmount } = render(<ProjectSettingsV2 projectId="p1" />)
-    unmount()
-    releaseProject({ ok: true, json: async () => project })
-    // No assertion needed beyond not throwing; the cancelled guard must swallow the late update.
-    await Promise.resolve()
+  it("does not update or log after unmounting mid-load", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    try {
+      let releaseProject!: (value: MockResponse) => void
+      mockRoutes({ projectRes: { pending: (resolve) => (releaseProject = resolve) } })
+      const { unmount, container } = render(<ProjectSettingsV2 projectId="p1" />)
+      unmount()
+      releaseProject(ok(project))
+      // Let the late load continuation run; the cancelled guard must swallow it.
+      await Promise.resolve()
+      await Promise.resolve()
+      expect(container).toBeEmptyDOMElement()
+      expect(errorSpy).not.toHaveBeenCalled()
+    } finally {
+      errorSpy.mockRestore()
+    }
   })
 
   it("shows the server error when saving fails", async () => {
-    mockRoutes()
-    mockAuthFetch.mockImplementation((url: string, options?: { method?: string }) => {
-      const method = options?.method
-      if (url === "/api/projects/p1" && !method) return Promise.resolve({ ok: true, json: async () => project })
-      if (url === "/api/users/profile") return Promise.resolve({ ok: true, json: async () => ({ id: "u1" }) })
-      if (url === "/api/exchange-rates") return Promise.resolve({ ok: true, json: async () => ({ rates: { JPY: 100, TWD: 21 } }) })
-      if (url === "/api/projects/p1" && method === "PUT")
-        return Promise.resolve({ ok: false, json: async () => ({ error: "名稱重複" }) })
-      return Promise.resolve({ ok: false, json: async () => ({}) })
-    })
+    mockRoutes({ putRes: fail({ error: "名稱重複" }) })
     render(<ProjectSettingsV2 projectId="p1" />)
     await screen.findByLabelText("專案名稱")
     fireEvent.click(screen.getByRole("button", { name: "儲存變更" }))
@@ -352,16 +360,7 @@ describe("ProjectSettingsV2", () => {
   })
 
   it("falls back to a generic error when the save response has no body", async () => {
-    mockRoutes()
-    mockAuthFetch.mockImplementation((url: string, options?: { method?: string }) => {
-      const method = options?.method
-      if (url === "/api/projects/p1" && !method) return Promise.resolve({ ok: true, json: async () => project })
-      if (url === "/api/users/profile") return Promise.resolve({ ok: true, json: async () => ({ id: "u1" }) })
-      if (url === "/api/exchange-rates") return Promise.resolve({ ok: true, json: async () => ({ rates: { JPY: 100, TWD: 21 } }) })
-      if (url === "/api/projects/p1" && method === "PUT")
-        return Promise.resolve({ ok: false, json: () => Promise.reject(new Error("no json")) })
-      return Promise.resolve({ ok: false, json: async () => ({}) })
-    })
+    mockRoutes({ putRes: noJson() })
     render(<ProjectSettingsV2 projectId="p1" />)
     await screen.findByLabelText("專案名稱")
     fireEvent.click(screen.getByRole("button", { name: "儲存變更" }))
@@ -369,15 +368,7 @@ describe("ProjectSettingsV2", () => {
   })
 
   it("shows a generic error when the save request rejects", async () => {
-    mockRoutes()
-    mockAuthFetch.mockImplementation((url: string, options?: { method?: string }) => {
-      const method = options?.method
-      if (url === "/api/projects/p1" && !method) return Promise.resolve({ ok: true, json: async () => project })
-      if (url === "/api/users/profile") return Promise.resolve({ ok: true, json: async () => ({ id: "u1" }) })
-      if (url === "/api/exchange-rates") return Promise.resolve({ ok: true, json: async () => ({ rates: { JPY: 100, TWD: 21 } }) })
-      if (url === "/api/projects/p1" && method === "PUT") return Promise.reject(new Error("network"))
-      return Promise.resolve({ ok: false, json: async () => ({}) })
-    })
+    mockRoutes({ putRes: new Error("network") })
     render(<ProjectSettingsV2 projectId="p1" />)
     await screen.findByLabelText("專案名稱")
     fireEvent.click(screen.getByRole("button", { name: "儲存變更" }))
@@ -385,33 +376,18 @@ describe("ProjectSettingsV2", () => {
   })
 
   it("shows the saving label while the PUT is in flight", async () => {
-    let releasePut: (value: { ok: boolean; json: () => Promise<unknown> }) => void = () => {}
-    mockAuthFetch.mockImplementation((url: string, options?: { method?: string }) => {
-      const method = options?.method
-      if (url === "/api/projects/p1" && !method) return Promise.resolve({ ok: true, json: async () => project })
-      if (url === "/api/users/profile") return Promise.resolve({ ok: true, json: async () => ({ id: "u1" }) })
-      if (url === "/api/exchange-rates") return Promise.resolve({ ok: true, json: async () => ({ rates: { JPY: 100, TWD: 21 } }) })
-      if (url === "/api/projects/p1" && method === "PUT") return new Promise((resolve) => { releasePut = resolve })
-      return Promise.resolve({ ok: false, json: async () => ({}) })
-    })
+    let releasePut!: (value: MockResponse) => void
+    mockRoutes({ putRes: { pending: (resolve) => (releasePut = resolve) } })
     render(<ProjectSettingsV2 projectId="p1" />)
     await screen.findByLabelText("專案名稱")
     fireEvent.click(screen.getByRole("button", { name: "儲存變更" }))
     expect(await screen.findByRole("button", { name: "儲存中…" })).toBeDisabled()
-    releasePut({ ok: true, json: async () => ({}) })
+    releasePut(ok({}))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/projects/p1"))
   })
 
   it("shows a delete error and keeps the creator on the page when DELETE fails", async () => {
-    mockRoutes()
-    mockAuthFetch.mockImplementation((url: string, options?: { method?: string }) => {
-      const method = options?.method
-      if (url === "/api/projects/p1" && !method) return Promise.resolve({ ok: true, json: async () => project })
-      if (url === "/api/users/profile") return Promise.resolve({ ok: true, json: async () => ({ id: "u1" }) })
-      if (url === "/api/exchange-rates") return Promise.resolve({ ok: true, json: async () => ({ rates: { JPY: 100, TWD: 21 } }) })
-      if (url === "/api/projects/p1" && method === "DELETE") return Promise.resolve({ ok: false, json: async () => ({}) })
-      return Promise.resolve({ ok: false, json: async () => ({}) })
-    })
+    mockRoutes({ deleteRes: fail() })
     render(<ProjectSettingsV2 projectId="p1" />)
     fireEvent.click(await screen.findByRole("button", { name: "刪除專案" }))
     fireEvent.change(screen.getByLabelText("輸入 delete 確認"), { target: { value: "delete" } })
@@ -421,15 +397,7 @@ describe("ProjectSettingsV2", () => {
   })
 
   it("shows a delete error when the DELETE request rejects", async () => {
-    mockRoutes()
-    mockAuthFetch.mockImplementation((url: string, options?: { method?: string }) => {
-      const method = options?.method
-      if (url === "/api/projects/p1" && !method) return Promise.resolve({ ok: true, json: async () => project })
-      if (url === "/api/users/profile") return Promise.resolve({ ok: true, json: async () => ({ id: "u1" }) })
-      if (url === "/api/exchange-rates") return Promise.resolve({ ok: true, json: async () => ({ rates: { JPY: 100, TWD: 21 } }) })
-      if (url === "/api/projects/p1" && method === "DELETE") return Promise.reject(new Error("network"))
-      return Promise.resolve({ ok: false, json: async () => ({}) })
-    })
+    mockRoutes({ deleteRes: new Error("network") })
     render(<ProjectSettingsV2 projectId="p1" />)
     fireEvent.click(await screen.findByRole("button", { name: "刪除專案" }))
     fireEvent.change(screen.getByLabelText("輸入 delete 確認"), { target: { value: "delete" } })

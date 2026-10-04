@@ -132,12 +132,12 @@ describe("ProjectsV2View", () => {
     expect(screen.getAllByTestId("v2-project-skeleton")).toHaveLength(3)
   })
 
-  it("renders the v2 brand mark", () => {
+  it("renders the v2 brand mark beside the app name", () => {
     render(<ProjectsV2View projects={projects} loading={false} userName="Emma" now={now} />)
     const mark = screen.getByTestId("v2-brand-mark")
-    expect(mark).toHaveClass("rounded-[10px]", "bg-gradient-to-br", "from-v2-link", "to-v2-lake")
-    expect(mark).toHaveClass("shadow-[0_2px_6px_rgba(27,88,71,.35)]")
-    expect(mark).not.toHaveClass("rounded-full")
+    expect(mark).toBeInTheDocument()
+    // The mark is an icon-only element; its decorative svg carries the brand.
+    expect(mark.querySelector("svg")).not.toBeNull()
     expect(screen.getByText("Wander Wallet")).toBeInTheDocument()
   })
 })

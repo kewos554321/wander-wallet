@@ -1,5 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import { readFileSync } from "node:fs"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { render, screen, fireEvent, within } from "@testing-library/react"
 import type { SettleData } from "@/lib/hooks/useSettlement"
 
@@ -11,6 +10,18 @@ vi.mock("next/font/google", () => ({
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { SettlementCalcDialog } from "@/components/v2/settle/settle-calc-dialog"
 import { SettleShareDialog } from "@/components/v2/settle/settle-share-dialog"
+
+// Capture whatever clipboard existed before any test stub, so the stub can be
+// removed cleanly instead of leaking into later test files.
+const originalClipboardDescriptor = Object.getOwnPropertyDescriptor(navigator, "clipboard")
+
+afterEach(() => {
+  if (originalClipboardDescriptor) {
+    Object.defineProperty(navigator, "clipboard", originalClipboardDescriptor)
+  } else {
+    delete (navigator as { clipboard?: unknown }).clipboard
+  }
+})
 
 function equalSplitData(): SettleData {
   return {
@@ -58,14 +69,10 @@ describe("SettlementCalcDialog (A26)", () => {
     expect(dialog).toHaveFocus()
   })
 
-  it("renders the v2 overlay and card frame classes", () => {
-    renderDialog(equalSplitData())
-    const overlay = screen.getByTestId("settle-calc-overlay")
-    expect(overlay.className).toContain("bg-v2-overlay")
-    const card = screen.getByRole("dialog")
-    expect(card.className).toContain("bg-v2-surface")
-    expect(card.className).toContain("rounded-[20px]")
-    expect(card.className).toContain("w-[350px]")
+  it("stays open when the dialog card itself is clicked", () => {
+    const onOpenChange = renderDialog(equalSplitData())
+    fireEvent.click(screen.getByRole("dialog"))
+    expect(onOpenChange).not.toHaveBeenCalled()
   })
 
   it("renders the expense detail heading, payer and converted amount", () => {
@@ -97,14 +104,10 @@ describe("SettlementCalcDialog (A26)", () => {
     expect(screen.getByRole("columnheader", { name: "餘額" })).toBeInTheDocument()
   })
 
-  it("colours negative balances danger and positive balances lake", () => {
+  it("formats negative and positive balances with their signs", () => {
     renderDialog(equalSplitData())
-    const negative = screen.getByTestId("balance-a")
-    expect(negative.className).toContain("text-v2-danger")
-    expect(negative.textContent).toContain("TWD -2,540")
-    const positive = screen.getByTestId("balance-b")
-    expect(positive.className).toContain("text-v2-lake")
-    expect(positive.className).not.toContain("text-v2-danger")
+    expect(screen.getByTestId("balance-a").textContent).toBe("TWD -2,540")
+    expect(screen.getByTestId("balance-b").textContent).toBe("+TWD 2,540")
   })
 
   it("renders the settlement plan row and the transfer count note", () => {
@@ -211,31 +214,24 @@ describe("SettleShareDialog (A27)", () => {
     expect(dialog).toHaveFocus()
   })
 
-  it("renders the v2 overlay and card frame classes", () => {
-    renderShare()
-    const overlay = screen.getByTestId("settle-share-overlay")
-    expect(overlay.className).toContain("bg-v2-overlay")
-    const card = screen.getByRole("dialog")
-    expect(card.className).toContain("bg-v2-surface")
-    expect(card.className).toContain("rounded-[20px]")
-    expect(card.className).toContain("w-[340px]")
+  it("stays open when the dialog card itself is clicked", () => {
+    const onOpenChange = renderShare()
+    fireEvent.click(screen.getByRole("dialog"))
+    expect(onOpenChange).not.toHaveBeenCalled()
   })
 
-  it("shows the share text in the pre-line preview", () => {
+  it("shows the share text in the preview", () => {
     renderShare()
     const preview = screen.getByTestId("settle-share-preview")
     expect(preview).toHaveTextContent("💰 結算明細")
     expect(preview).toHaveTextContent("1. 志明 ➡️ 小美：TWD 2,540")
-    expect(preview.className).toContain("whitespace-pre-line")
-    expect(preview.className).toContain("bg-v2-lake-soft")
   })
 
   it("copies the share text and flips the button to 已複製", async () => {
     renderShare()
     fireEvent.click(screen.getByRole("button", { name: "複製文字" }))
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(SHARE_TEXT)
-    const copied = await screen.findByRole("button", { name: "已複製" })
-    expect(copied.className).toContain("text-v2-lake")
+    expect(await screen.findByRole("button", { name: "已複製" })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "複製文字" })).not.toBeInTheDocument()
   })
 
@@ -248,15 +244,11 @@ describe("SettleShareDialog (A27)", () => {
     open.mockRestore()
   })
 
-  it("styles the LINE button with the v2 token and no raw hex", () => {
+  it("styles the LINE button with the v2 line-green token", () => {
     renderShare()
     const line = screen.getByRole("button", { name: /LINE 分享/ })
+    // Intentional token check: LINE's brand green must use the v2 token.
     expect(line.className).toContain("bg-v2-line-green")
-    expect(line.className).toContain("text-v2-on-lake")
-    expect(line.className).not.toMatch(/#[0-9a-fA-F]{3,8}/)
-    const source = readFileSync("components/v2/settle/settle-share-dialog.tsx", "utf8")
-    expect(source).not.toMatch(/-\[#[0-9a-fA-F]{3,8}\]/)
-    expect(source).not.toContain("text-white")
   })
 
   it("calls onOpenChange(false) when the overlay is clicked", () => {
