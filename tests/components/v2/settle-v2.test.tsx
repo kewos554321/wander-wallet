@@ -111,6 +111,13 @@ describe("SettleV2View", () => {
     expect(screen.getByRole("button", { name: /Buy Me a Coffee/ })).toBeInTheDocument()
   })
 
+  it("places the ad banner above the summary grid", () => {
+    renderView()
+    const ad = screen.getByText("ad")
+    const summary = screen.getByTestId("settle-summary")
+    expect(ad.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it("opens the sponsor links", () => {
     const open = vi.spyOn(window, "open").mockImplementation(() => null)
     renderView()

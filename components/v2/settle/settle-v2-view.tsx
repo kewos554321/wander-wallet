@@ -46,6 +46,7 @@ export function SettleV2View(props: SettleV2ViewProps) {
   return (
     <>
       <V2TopBar title="結算" backHref={`/projects/${props.projectId}`} titleClassName="font-bold" />
+      {props.adSlot && <div className="mx-4 mt-3">{props.adSlot}</div>}
       <SettleSummaryGrid
         count={data.summary.totalExpenses}
         total={toDisplay(data.summary.totalAmount)}
@@ -54,7 +55,6 @@ export function SettleV2View(props: SettleV2ViewProps) {
         currencyCode={props.displayCurrencyCode}
         currencySelect={currencySelect}
       />
-      {props.adSlot && <div className="mx-4 mt-3">{props.adSlot}</div>}
       {Object.keys(rates).length > 0 && (
         <div className="mx-4 mt-3 flex items-start gap-2 rounded-xl border border-v2-line bg-v2-surface px-3 py-2.5 text-xs text-v2-ink-muted">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
