@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent, within } from "@testing-library/react"
 import { SettleV2View } from "@/components/v2/settle/settle-v2-view"
+import { SPONSOR_LINKS } from "@/lib/constants/sponsor"
 import type { SettleData } from "@/lib/hooks/useSettlement"
 
 vi.mock("next/font/google", () => ({
@@ -108,7 +109,7 @@ describe("SettleV2View", () => {
     renderView()
     expect(screen.getByRole("link", { name: /前往專案設定調整匯率/ })).toHaveAttribute("href", "/projects/p1/settings")
     expect(screen.getByText("喜歡 Wander Wallet 嗎？")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Buy Me a Coffee/ })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /請我們喝杯咖啡/ })).toBeInTheDocument()
   })
 
   it("places the ad banner above the summary grid", () => {
@@ -118,14 +119,16 @@ describe("SettleV2View", () => {
     expect(ad.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
-  it("opens the sponsor links", () => {
-    const open = vi.spyOn(window, "open").mockImplementation(() => null)
+  it("links the sponsor options to their destinations", () => {
     renderView()
-    fireEvent.click(screen.getByRole("button", { name: /Buy Me a Coffee/ }))
-    fireEvent.click(screen.getByRole("button", { name: "Ko-fi" }))
-    fireEvent.click(screen.getByRole("button", { name: "PayPal" }))
-    expect(open).toHaveBeenCalledTimes(3)
-    open.mockRestore()
+    const primary = screen.getByRole("link", { name: /請我們喝杯咖啡/ })
+    expect(primary).toHaveAttribute("href", SPONSOR_LINKS.buyMeACoffee)
+    expect(primary).toHaveAttribute("target", "_blank")
+
+    // Secondary options stay available but are visually de-emphasised.
+    expect(screen.getByRole("link", { name: /Ko-fi/ })).toHaveAttribute("href", SPONSOR_LINKS.koFi)
+    expect(screen.getByRole("link", { name: /PayPal/ })).toHaveAttribute("href", SPONSOR_LINKS.paypal)
+    expect(screen.getByRole("link", { name: /其他方式/ })).toHaveAttribute("href", SPONSOR_LINKS.email)
   })
 
   it("shows 0 per person without balances", () => {
