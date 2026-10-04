@@ -54,7 +54,7 @@ export function PhotosV2View({ projectId, currency, expenses, loading }: PhotosV
     }))
   }, [withPhotos])
 
-  const selected = selectedIndex !== null ? filtered[selectedIndex] ?? null : null
+  const selected = selectedIndex !== null && selectedIndex < filtered.length ? filtered[selectedIndex] : null
 
   const close = () => setSelectedIndex(null)
   const goPrev = () => setSelectedIndex((i) => (i === null || filtered.length === 0 ? i : (i - 1 + filtered.length) % filtered.length))
@@ -70,10 +70,6 @@ export function PhotosV2View({ projectId, currency, expenses, loading }: PhotosV
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   })
-
-  useEffect(() => {
-    if (selectedIndex !== null && selectedIndex >= filtered.length) setSelectedIndex(null)
-  }, [selectedIndex, filtered.length])
 
   return (
     <div className="min-h-screen">
@@ -101,7 +97,15 @@ export function PhotosV2View({ projectId, currency, expenses, loading }: PhotosV
             <span>{withPhotos.length} 張收據照片</span>
           </div>
           <div className="pt-2.5">
-            <CategoryChips items={chipItems} totalCount={withPhotos.length} selected={selectedCategory} onSelect={setSelectedCategory} />
+            <CategoryChips
+              items={chipItems}
+              totalCount={withPhotos.length}
+              selected={selectedCategory}
+              onSelect={(key) => {
+                setSelectedCategory(key)
+                setSelectedIndex(null)
+              }}
+            />
           </div>
           {filtered.length === 0 ? (
             <p className="mx-4 mt-10 text-center text-[13px] text-v2-ink-muted">此分類沒有照片</p>
@@ -122,7 +126,7 @@ export function PhotosV2View({ projectId, currency, expenses, loading }: PhotosV
                       {CATEGORY_EMOJI[key]} {getCategoryLabel(key)}
                     </span>
                     <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-v2-ink/75 to-transparent p-[9px] text-left text-v2-paper">
-                      <span className="block font-v2-serif text-[13px] font-bold">{formatCurrency(expense.amount, expense.currency)}</span>
+                      <span className="block font-v2-serif text-[13px] font-bold">{formatCurrency(expense.amount, expense.currency || currency)}</span>
                       <span className="block truncate text-[10px]">{expense.description || "無描述"}</span>
                     </span>
                   </button>
@@ -173,7 +177,7 @@ export function PhotosV2View({ projectId, currency, expenses, loading }: PhotosV
               <span className={cn("w-fit rounded-full bg-v2-paper/15 px-2 py-0.5 text-[10px] font-semibold", CATEGORY_TONES[categoryKey(selected.category)])}>
                 {CATEGORY_EMOJI[categoryKey(selected.category)]} {getCategoryLabel(categoryKey(selected.category))}
               </span>
-              <span className="font-v2-serif text-[15px] font-bold">{formatCurrency(selected.amount, selected.currency)}</span>
+              <span className="font-v2-serif text-[15px] font-bold">{formatCurrency(selected.amount, selected.currency || currency)}</span>
               <span className="text-[13px]">{selected.description || "無描述"}</span>
               <span className="text-[12px] opacity-80">
                 {new Date(selected.expenseDate).toLocaleDateString("zh-TW")} · 👤 {selected.payer.displayName}
