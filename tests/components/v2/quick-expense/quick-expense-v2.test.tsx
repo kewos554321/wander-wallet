@@ -21,7 +21,7 @@ vi.mock("@/components/v2/quick-expense/camera-step", () => ({
     </div>
   ),
 }))
-vi.mock("@/components/location-picker", () => ({ LocationPicker: () => null }))
+vi.mock("@/components/v2/expense-form/location-picker-v2", () => ({ LocationPickerV2: () => null }))
 vi.mock("@/components/ui/image-picker", () => ({ ImagePicker: () => null }))
 vi.mock("@/components/ui/currency-select", () => ({ CurrencySelect: () => null }))
 
