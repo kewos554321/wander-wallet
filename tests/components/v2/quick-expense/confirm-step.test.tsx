@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest"
 import { render, screen, fireEvent, within } from "@testing-library/react"
 
 vi.mock("@/components/v2/expense-form/location-picker-v2", () => ({ LocationPickerV2: () => <div data-testid="location-picker" /> }))
-vi.mock("@/components/ui/image-picker", () => ({ ImagePicker: () => <div data-testid="image-picker" /> }))
+vi.mock("@/components/v2/expense-form/v2-image-picker", () => ({ V2ImagePicker: () => <div data-testid="image-picker" /> }))
 vi.mock("@/components/ui/currency-select", () => ({ CurrencySelect: ({ value }: { value: string }) => <div data-testid="currency">{value}</div> }))
 
 import { ConfirmStep } from "@/components/v2/quick-expense/confirm-step"

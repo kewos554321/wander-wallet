@@ -3,7 +3,7 @@ import { render, screen, fireEvent, within } from "@testing-library/react"
 import { renderHook, act } from "@testing-library/react"
 
 vi.mock("@/components/v2/expense-form/location-picker-v2", () => ({ LocationPickerV2: () => <div data-testid="location-picker" /> }))
-vi.mock("@/components/ui/image-picker", () => ({ ImagePicker: () => <div data-testid="image-picker" /> }))
+vi.mock("@/components/v2/expense-form/v2-image-picker", () => ({ V2ImagePicker: () => <div data-testid="image-picker" /> }))
 
 import { ExpenseFormV2View } from "@/components/v2/expense-form/expense-form-v2-view"
 import { useExpenseDraft } from "@/components/v2/expense-form/use-expense-draft"

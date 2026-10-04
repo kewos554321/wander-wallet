@@ -5,7 +5,6 @@ import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
 import { CalendarIcon } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
-import { ImagePicker } from "@/components/ui/image-picker"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { formatAmount } from "@/lib/constants/currencies"
 import { computeShares } from "@/lib/expense-split"
@@ -17,6 +16,7 @@ import { CategoryPicker } from "@/components/v2/expense-form/category-picker"
 import { LocationPickerV2 } from "@/components/v2/expense-form/location-picker-v2"
 import { memberPillClass, memberTone, PayerPicker } from "@/components/v2/expense-form/payer-picker"
 import { SECTION_CARD, SECTION_TITLE } from "@/components/v2/expense-form/section-card"
+import { V2ImagePicker } from "@/components/v2/expense-form/v2-image-picker"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 
 type Member = { id: string; displayName: string; image?: string | null }
@@ -131,10 +131,14 @@ export function QuickItemCard({ item, members, onChange }: { item: QuickItem; me
         />
       </div>
 
-      <div className={SECTION_CARD}>
-        <p className={`mb-2 ${SECTION_TITLE}`}>收據/消費圖片</p>
-        <ImagePicker value={item.image} onChange={(v) => onChange({ image: v })} />
-      </div>
+      <V2ImagePicker
+        label="收據/消費圖片"
+        value={item.image.preview ?? item.image.image}
+        onChange={(file) => {
+          if (item.image.preview) URL.revokeObjectURL(item.image.preview)
+          onChange({ image: { image: null, pendingFile: file, preview: URL.createObjectURL(file) } })
+        }}
+      />
     </div>
   )
 }

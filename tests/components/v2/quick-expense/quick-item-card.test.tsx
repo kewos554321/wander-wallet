@@ -27,11 +27,11 @@ vi.mock("@/components/ui/calendar", () => ({
     </div>
   ),
 }))
-vi.mock("@/components/ui/image-picker", () => ({
-  ImagePicker: ({ value, onChange }: { value: unknown; onChange: (v: unknown) => void }) => (
+vi.mock("@/components/v2/expense-form/v2-image-picker", () => ({
+  V2ImagePicker: ({ onChange }: { onChange: (file: File) => void }) => (
     <button
       type="button"
-      onClick={() => onChange({ image: "https://cdn.example/receipt.jpg", pendingFile: null, preview: null })}
+      onClick={() => onChange(new File(["x"], "receipt.jpg", { type: "image/jpeg" }))}
     >
       set-image
     </button>
@@ -172,10 +172,15 @@ describe("QuickItemCard", () => {
     const p = setup()
     fireEvent.click(screen.getByRole("button", { name: "set-location" }))
     expect(p.onChange).toHaveBeenLastCalledWith({ location: "台北 101", latitude: 25.033, longitude: 121.5645 })
+    const createObjectURL = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:preview")
     fireEvent.click(screen.getByRole("button", { name: "set-image" }))
-    expect(p.onChange).toHaveBeenLastCalledWith({
-      image: { image: "https://cdn.example/receipt.jpg", pendingFile: null, preview: null },
-    })
+    const patch = vi.mocked(p.onChange).mock.calls.at(-1)?.[0] as {
+      image: { image: string | null; pendingFile: File | null; preview: string | null }
+    }
+    expect(patch.image.image).toBeNull()
+    expect(patch.image.pendingFile).toBeInstanceOf(File)
+    expect(patch.image.preview).toBe("blob:preview")
+    createObjectURL.mockRestore()
   })
 
   it("renders the member image in the payer option when present", () => {

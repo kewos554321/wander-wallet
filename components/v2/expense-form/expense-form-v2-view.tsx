@@ -5,9 +5,9 @@ import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
 import { CalendarIcon, Check, Trash2 } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
-import { ImagePicker } from "@/components/ui/image-picker"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { LocationPickerV2 } from "./location-picker-v2"
+import { V2ImagePicker } from "./v2-image-picker"
 import { formatCurrency } from "@/lib/constants/currencies"
 import { SECTION_CARD, SECTION_TITLE } from "./section-card"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
@@ -122,10 +122,14 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
         <LocationPickerV2 value={state.location} onChange={actions.setLocation} />
       </div>
 
-      <div className={SECTION_CARD}>
-        <p className={`mb-2 ${SECTION_TITLE}`}>收據/消費圖片</p>
-        <ImagePicker value={state.image} onChange={actions.setImage} disabled={props.submitting} />
-      </div>
+      <V2ImagePicker
+        label="收據/消費圖片"
+        value={state.image.preview ?? state.image.image}
+        onChange={(file) => {
+          if (state.image.preview) URL.revokeObjectURL(state.image.preview)
+          actions.setImage({ image: null, pendingFile: file, preview: URL.createObjectURL(file) })
+        }}
+      />
 
       {props.canNotifyLine && (
         <label className="mx-4 mb-4 flex items-center gap-[10px] rounded-[14px] border border-v2-line bg-v2-surface px-[14px] py-3">
