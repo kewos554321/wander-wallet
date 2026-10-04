@@ -244,6 +244,7 @@ describe("ProjectOverviewV2View", () => {
     render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
     expect(screen.getByRole("link", { name: "通用設定" })).toHaveAttribute("href", "/settings")
     expect(screen.getByRole("link", { name: "修改" })).toHaveAttribute("href", "/projects/p1/settings")
+    expect(screen.getByRole("link", { name: "回旅程列表" })).toHaveAttribute("href", "/projects")
     expect(screen.getByRole("button", { name: "分享" })).toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "專案設定" })).not.toBeInTheDocument()
   })

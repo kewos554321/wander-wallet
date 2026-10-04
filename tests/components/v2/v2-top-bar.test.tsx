@@ -23,6 +23,21 @@ describe("V2TopBar", () => {
     expect(screen.getByRole("heading", { level: 1, name: "結算" }).className).toContain("font-v2-serif")
   })
 
+  it("ignores history and uses backHref when fixedBack is set", () => {
+    const back = vi.spyOn(window.history, "back").mockImplementation(() => {})
+    Object.defineProperty(window.history, "length", { configurable: true, get: () => 2 })
+    try {
+      render(<V2TopBar title="旅程總覽" backHref="/projects" fixedBack backAriaLabel="回旅程列表" />)
+      const link = screen.getByRole("link", { name: "回旅程列表" })
+      expect(link).toHaveAttribute("href", "/projects")
+      fireEvent.click(link)
+      expect(back).not.toHaveBeenCalled()
+    } finally {
+      back.mockRestore()
+      delete (window.history as unknown as { length?: unknown }).length
+    }
+  })
+
   it("goes back in history when a previous entry exists", () => {
     const back = vi.spyOn(window.history, "back").mockImplementation(() => {})
     Object.defineProperty(window.history, "length", { configurable: true, get: () => 2 })

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Pencil, Share2 } from "lucide-react"
+import { Folders, Pencil, Share2 } from "lucide-react"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import type { OverviewProject, ProjectSummary } from "@/lib/project-overview"
 import { formatTripDateRange } from "@/lib/trip"
@@ -38,6 +38,9 @@ export function ProjectOverviewV2View({
       <V2TopBar
         title="旅程總覽"
         backHref="/projects"
+        fixedBack
+        backAriaLabel="回旅程列表"
+        backIcon={<Folders className="h-[18px] w-[18px]" strokeWidth={2} />}
         actions={
           <Link
             href="/settings"
