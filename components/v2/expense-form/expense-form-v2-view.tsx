@@ -72,6 +72,7 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
           <CalculatorPad
             // onApply receives the evaluated number, not a string.
             initialValue={state.amount}
+            currency={state.currency}
             onApply={(value: number) => {
               actions.setAmount(String(value))
               setShowCalculator(false)

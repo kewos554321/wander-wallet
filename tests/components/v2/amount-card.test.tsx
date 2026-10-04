@@ -62,12 +62,43 @@ describe("AmountCard", () => {
     expect(onToggleCalculator).toHaveBeenCalledTimes(1)
   })
 
-  it("replaces the amount field with the calculator node and swaps the toggle label when open", () => {
+  it("keeps the amount and currency visible at the input's serif size while the calculator is open", () => {
     setup({ calculatorOpen: true, calculator: <div data-testid="calculator">pad</div> })
-    expect(screen.queryByLabelText("金額")).not.toBeInTheDocument()
+    expect(screen.getByLabelText("金額")).toHaveValue("1280")
+    expect(screen.getByLabelText("幣別")).toHaveValue("TWD")
+    expect(screen.getByLabelText("金額")).toHaveClass("font-v2-serif")
+    expect(screen.getByLabelText("金額")).not.toHaveClass("text-[26px]")
     expect(screen.getByTestId("calculator")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "關閉計算機" })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "開啟計算機" })).not.toBeInTheDocument()
+  })
+
+  it("uses the light lake-tint face in both states, never the dark lake fill", () => {
+    const { unmount } = render(<AmountCard {...{
+      amount: "1280",
+      currency: "TWD",
+      onAmount: vi.fn(),
+      onCurrency: vi.fn(),
+      calculatorOpen: false,
+      onToggleCalculator: vi.fn(),
+    }} />)
+    const closed = screen.getByTestId("amount-card")
+    expect(closed).toHaveClass("bg-v2-lake-tint", "border-v2-lake-edge")
+    expect(closed).not.toHaveClass("bg-v2-lake")
+    unmount()
+
+    render(<AmountCard {...{
+      amount: "1280",
+      currency: "TWD",
+      onAmount: vi.fn(),
+      onCurrency: vi.fn(),
+      calculatorOpen: true,
+      onToggleCalculator: vi.fn(),
+      calculator: <div data-testid="calculator" />,
+    }} />)
+    const open = screen.getByTestId("amount-card")
+    expect(open).toHaveClass("bg-v2-lake-tint", "border-v2-lake-edge")
+    expect(open).not.toHaveClass("bg-v2-lake")
   })
 
   it("does not render the calculator slot while closed", () => {
@@ -83,11 +114,11 @@ describe("AmountCard", () => {
     expect(screen.getByLabelText("金額")).toHaveAttribute("id", "v2-amount")
   })
 
-  it("drops the label semantics for the 輸入金額 caption once the calculator is open", () => {
+  it("keeps the label bound to the amount input while the calculator is open", () => {
     setup({ calculatorOpen: true, calculator: <div data-testid="calculator" /> })
     const caption = screen.getByText("輸入金額")
-    expect(caption.tagName).toBe("SPAN")
-    expect(caption).not.toHaveAttribute("for")
-    expect(screen.queryByLabelText("金額")).not.toBeInTheDocument()
+    expect(caption.tagName).toBe("LABEL")
+    expect(caption).toHaveAttribute("for", "v2-amount")
+    expect(screen.getByLabelText("金額")).toHaveAttribute("id", "v2-amount")
   })
 })

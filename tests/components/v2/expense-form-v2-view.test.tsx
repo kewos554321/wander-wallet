@@ -428,12 +428,12 @@ describe("ExpenseFormV2View", () => {
     expect(screen.queryByText("儲存後自動發送通知到群組")).not.toBeInTheDocument()
   })
 
-  it("opens the in-card calculator, hides the amount input and writes the value back", () => {
+  it("opens the in-card calculator while keeping the amount input and writes the value back", () => {
     const { rerender } = renderForm()
     fireEvent.click(screen.getByRole("button", { name: "開啟計算機" }))
     rerender()
     expect(screen.getByTestId("calc-display")).toBeInTheDocument()
-    expect(screen.queryByLabelText("金額")).not.toBeInTheDocument()
+    expect(screen.getByLabelText("金額")).toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "7" }))
     fireEvent.click(screen.getByRole("button", { name: "✓" }))
     rerender()
