@@ -1,13 +1,19 @@
 "use client"
 
-import { useRef } from "react"
-import { Camera, Images, RotateCcw, X } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { Camera, Flashlight, FlashlightOff, Images, RotateCcw, X } from "lucide-react"
 import { useCamera } from "./use-camera"
 
 export function CameraStep({ onImage, onClose }: { onImage: (file: File) => void; onClose: () => void }) {
-  const { videoRef, mode, denied, retry, capture } = useCamera()
+  const { videoRef, mode, denied, canFocus, canTorch, torchOn, facing, retry, focusAt, toggleTorch, capture } = useCamera()
   const cameraInput = useRef<HTMLInputElement>(null)
   const galleryInput = useRef<HTMLInputElement>(null)
+  const [focus, setFocus] = useState<{ x: number; y: number; key: number } | null>(null)
+  useEffect(() => {
+    if (!focus) return
+    const t = setTimeout(() => setFocus(null), 800)
+    return () => clearTimeout(t)
+  }, [focus])
   const pick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ""
@@ -17,37 +23,60 @@ export function CameraStep({ onImage, onClose }: { onImage: (file: File) => void
     const file = await capture()
     if (file) onImage(file)
   }
+  const tapToFocus = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (mode !== "live" || !canFocus) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const nx = (e.clientX - rect.left) / rect.width
+    const ny = (e.clientY - rect.top) / rect.height
+    const x = Number.isFinite(nx) ? Math.min(1, Math.max(0, nx)) : 0.5
+    const y = Number.isFinite(ny) ? Math.min(1, Math.max(0, ny)) : 0.5
+    setFocus({ x, y, key: Date.now() })
+    void focusAt(x, y)
+  }
 
   return (
-    <div data-testid="camera-step" data-mode={mode} data-denied={denied} className="fixed inset-0 z-50 flex flex-col bg-v2-camera-bg text-v2-on-dark">
+    <div data-testid="camera-step" data-mode={mode} data-denied={denied} data-can-focus={canFocus} data-can-torch={canTorch} data-facing={facing ?? ""} className="fixed inset-0 z-50 flex flex-col bg-v2-camera-bg text-v2-on-dark">
       <div className="flex items-center justify-between px-4 py-[18px]">
         <button type="button" aria-label="關閉" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(255,255,255,.12)]">
           <X className="h-[17px] w-[17px]" aria-hidden="true" />
         </button>
         <p className="m-0 text-[13px] font-semibold">拍照記帳</p>
-        <span aria-hidden="true" className="h-9 w-9" />
+        {canTorch ? (
+          <button
+            type="button"
+            aria-label="手電筒"
+            aria-pressed={torchOn}
+            onClick={() => void toggleTorch()}
+            className={`flex h-9 w-9 items-center justify-center rounded-full ${torchOn ? "bg-v2-coral text-v2-on-dark" : "bg-[rgba(255,255,255,.12)]"}`}
+          >
+            {torchOn ? <Flashlight className="h-[17px] w-[17px]" aria-hidden="true" /> : <FlashlightOff className="h-[17px] w-[17px]" aria-hidden="true" />}
+          </button>
+        ) : (
+          <span aria-hidden="true" className="h-9 w-9" />
+        )}
       </div>
 
-      <div className="relative mx-6 mt-3 h-[460px]">
+      <div data-testid="camera-viewfinder" onPointerDown={tapToFocus} className="relative mx-6 mt-3 h-[460px]">
         <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
         <span aria-hidden="true" className="absolute left-0 top-0 h-[34px] w-[34px] rounded-tl-lg border-l-[3px] border-t-[3px] border-v2-coral" />
         <span aria-hidden="true" className="absolute right-0 top-0 h-[34px] w-[34px] rounded-tr-lg border-r-[3px] border-t-[3px] border-v2-coral" />
         <span aria-hidden="true" className="absolute bottom-0 left-0 h-[34px] w-[34px] rounded-bl-lg border-b-[3px] border-l-[3px] border-v2-coral" />
         <span aria-hidden="true" className="absolute bottom-0 right-0 h-[34px] w-[34px] rounded-br-lg border-b-[3px] border-r-[3px] border-v2-coral" />
-        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center text-[rgba(255,255,255,.6)]">
-          <Camera className="mx-auto mb-2.5 h-[30px] w-[30px]" aria-hidden="true" />
-          {denied ? (
-            <>
-              <p className="m-0 text-[13px]">請允許相機權限</p>
-              <p className="m-0 mt-1 text-xs">在瀏覽器允許相機後按「重新嘗試」</p>
-            </>
-          ) : (
-            <>
-              <p className="m-0 text-[13px]">將發票或收據置於框內</p>
-              <p className="m-0 mt-1 text-xs">AI 會自動辨識金額與商家</p>
-            </>
-          )}
-        </div>
+        {focus && canFocus && (
+          <span
+            key={focus.key}
+            data-testid="focus-ring"
+            aria-hidden="true"
+            className="pointer-events-none absolute h-16 w-16 -translate-x-1/2 -translate-y-1/2 animate-ping rounded-lg border-2 border-v2-coral"
+            style={{ left: `${focus.x * 100}%`, top: `${focus.y * 100}%` }}
+          />
+        )}
+        {denied && (
+          <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center text-[rgba(255,255,255,.6)]">
+            <p className="m-0 text-[13px]">請允許相機權限</p>
+            <p className="m-0 mt-1 text-xs">在瀏覽器允許相機後按「重新嘗試」</p>
+          </div>
+        )}
       </div>
 
       <input ref={cameraInput} data-testid="camera-input" type="file" accept="image/*" capture="environment" className="hidden" onChange={pick} />

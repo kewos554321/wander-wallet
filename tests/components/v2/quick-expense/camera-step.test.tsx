@@ -52,12 +52,12 @@ describe("CameraStep", () => {
     expect(p.onClose).toHaveBeenCalled()
   })
 
-  it("shows copy and falls back when there is no camera api", async () => {
+  it("falls back to the capture buttons when there is no camera api", async () => {
     render(<CameraStep {...props()} />)
-    expect(screen.getByText("將發票或收據置於框內")).toBeInTheDocument()
-    expect(screen.getByText("AI 會自動辨識金額與商家")).toBeInTheDocument()
     await waitFor(() => expect(screen.getByRole("button", { name: "開啟相機" })).toBeInTheDocument())
     expect(screen.getByRole("button", { name: "從相簿選擇" })).toBeInTheDocument()
+    // The centred framing copy was removed.
+    expect(screen.queryByText("將發票或收據置於框內")).toBeNull()
   })
 
   it("falls back when the camera fails for a non-permission reason", async () => {
@@ -85,6 +85,72 @@ describe("CameraStep", () => {
     render(<CameraStep {...props()} />)
     await waitFor(() => expect(screen.getByRole("button", { name: "拍照" })).toBeInTheDocument())
     expect(getUserMedia).toHaveBeenCalledTimes(2)
+  })
+
+  it("requests a high-resolution stream so shots are not blurry", async () => {
+    const getUserMedia = vi.fn().mockResolvedValue({ getTracks: () => [] })
+    setMedia(getUserMedia)
+    render(<CameraStep {...props()} />)
+    await waitFor(() => expect(screen.getByRole("button", { name: "拍照" })).toBeInTheDocument())
+    expect(getUserMedia.mock.calls[0][0]).toMatchObject({
+      video: { facingMode: { ideal: "environment" }, width: { ideal: 3840 }, height: { ideal: 2160 } },
+    })
+  })
+
+  it("taps to focus when the track supports it", async () => {
+    const applyConstraints = vi.fn().mockResolvedValue(undefined)
+    const track = { getCapabilities: () => ({ focusMode: ["single-shot", "continuous"], pointsOfInterest: [{}] }), applyConstraints, getTracks: () => [] }
+    setMedia(vi.fn().mockResolvedValue({ getTracks: () => [], getVideoTracks: () => [track] }))
+    render(<CameraStep {...props()} />)
+    await screen.findByRole("button", { name: "拍照" })
+    const viewfinder = screen.getByTestId("camera-viewfinder")
+    viewfinder.getBoundingClientRect = () => ({ left: 0, top: 0, width: 200, height: 400, right: 200, bottom: 400, x: 0, y: 0, toJSON: () => ({}) })
+    fireEvent(viewfinder, new MouseEvent("pointerdown", { bubbles: true, clientX: 100, clientY: 100 }))
+    expect(screen.getByTestId("focus-ring")).toBeInTheDocument()
+    await waitFor(() => expect(applyConstraints).toHaveBeenCalled())
+    expect(applyConstraints.mock.calls[0][0].advanced[0]).toMatchObject({ focusMode: "single-shot", pointsOfInterest: [{ x: 0.5, y: 0.25 }] })
+  })
+
+  it("does not tap-to-focus when the track has no focus capabilities", async () => {
+    const applyConstraints = vi.fn().mockResolvedValue(undefined)
+    const track = { getCapabilities: () => ({}), applyConstraints, getTracks: () => [] }
+    setMedia(vi.fn().mockResolvedValue({ getTracks: () => [], getVideoTracks: () => [track] }))
+    render(<CameraStep {...props()} />)
+    await screen.findByRole("button", { name: "拍照" })
+    fireEvent.pointerDown(screen.getByTestId("camera-viewfinder"), { clientX: 10, clientY: 10 })
+    expect(screen.queryByTestId("focus-ring")).toBeNull()
+    expect(applyConstraints).not.toHaveBeenCalled()
+  })
+
+  it("toggles the torch when the track supports it", async () => {
+    const applyConstraints = vi.fn().mockResolvedValue(undefined)
+    const track = { getCapabilities: () => ({ torch: true }), applyConstraints, getTracks: () => [] }
+    setMedia(vi.fn().mockResolvedValue({ getTracks: () => [], getVideoTracks: () => [track] }))
+    render(<CameraStep {...props()} />)
+    const torch = await screen.findByRole("button", { name: "手電筒" })
+    expect(torch).toHaveAttribute("aria-pressed", "false")
+    fireEvent.click(torch)
+    await waitFor(() => expect(applyConstraints).toHaveBeenCalledWith(expect.objectContaining({ advanced: [{ torch: true }] })))
+    await waitFor(() => expect(screen.getByRole("button", { name: "手電筒" })).toHaveAttribute("aria-pressed", "true"))
+  })
+
+  it("hides the torch button when the track does not support it", async () => {
+    const track = { getCapabilities: () => ({}), applyConstraints: vi.fn(), getTracks: () => [] }
+    setMedia(vi.fn().mockResolvedValue({ getTracks: () => [], getVideoTracks: () => [track] }))
+    render(<CameraStep {...props()} />)
+    await screen.findByRole("button", { name: "拍照" })
+    expect(screen.queryByRole("button", { name: "手電筒" })).toBeNull()
+  })
+
+  it("does not show the focus ring when the device only offers manual focus", async () => {
+    const applyConstraints = vi.fn().mockResolvedValue(undefined)
+    const track = { getCapabilities: () => ({ focusMode: ["manual"] }), applyConstraints, getTracks: () => [] }
+    setMedia(vi.fn().mockResolvedValue({ getTracks: () => [], getVideoTracks: () => [track] }))
+    render(<CameraStep {...props()} />)
+    await screen.findByRole("button", { name: "拍照" })
+    fireEvent.pointerDown(screen.getByTestId("camera-viewfinder"), { clientX: 10, clientY: 10 })
+    expect(screen.queryByTestId("focus-ring")).toBeNull()
+    expect(applyConstraints).not.toHaveBeenCalled()
   })
 
   it("opens the hidden native camera and gallery inputs from the fallback buttons", async () => {
