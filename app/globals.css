@@ -361,6 +361,8 @@
   --color-v2-line-green: var(--v2-line-green);
   --color-v2-camera-bg: var(--v2-camera-bg);
   --color-v2-on-dark: var(--v2-on-dark);
+  --color-v2-gold-tint: var(--v2-gold-tint);
+  --color-v2-lightbox: var(--v2-lightbox);
   --font-v2-serif: var(--font-noto-serif-tc), serif;
   --font-v2-sans: var(--font-noto-sans-tc), sans-serif;
 }
@@ -411,6 +413,8 @@
   --v2-line-green: #06C755;
   --v2-camera-bg: #171412;
   --v2-on-dark: #FFFFFF;
+  --v2-gold-tint: #F0E0AD;
+  --v2-lightbox: rgb(23 20 18 / 0.96);
 }
 
 [data-cover-art] { background-color: var(--cover-bg); color: var(--cover-fg); }
@@ -461,6 +465,8 @@
   --v2-line-green: #06C755;
   --v2-camera-bg: #171412;
   --v2-on-dark: #FFFFFF;
+  --v2-gold-tint: #4A3C18;
+  --v2-lightbox: rgb(23 20 18 / 0.96);
 }
 
 .dark [data-ui="v2"] [data-cover-art] { background-color: var(--cover-bg-dark); color: var(--cover-fg-dark); }
