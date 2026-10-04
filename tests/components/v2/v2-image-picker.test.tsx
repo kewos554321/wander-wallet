@@ -38,11 +38,14 @@ describe("V2ImagePicker", () => {
     expect(screen.getByRole("button", { name: "選擇圖片" }).querySelector(".bg-v2-lake-soft")).not.toBeNull()
   })
 
-  it("opens the camera input (capture=environment) from 拍照", () => {
-    const { container } = setup()
-    const { camera } = fileInputs(container)
-    const spy = vi.spyOn(camera, "click")
+  it("opens the full-screen camera from 拍照", () => {
+    setup()
     fireEvent.click(screen.getByRole("button", { name: "拍照" }))
+    // jsdom has no mediaDevices, so CameraStep shows its capture fallback.
+    expect(screen.getByText("拍照記帳")).toBeInTheDocument()
+    const camera = screen.getByTestId("camera-input") as HTMLInputElement
+    const spy = vi.spyOn(camera, "click")
+    fireEvent.click(screen.getByRole("button", { name: "開啟相機" }))
     expect(spy).toHaveBeenCalled()
   })
 
