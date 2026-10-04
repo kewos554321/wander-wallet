@@ -146,6 +146,27 @@ describe("CalculatorPad", () => {
     expect(onApply).toHaveBeenCalledWith(9)
   })
 
+  it("sanitises a malicious initial value and never executes it", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch")
+    const { onApply, onClose, result } = setup({ initialValue: "1+fetch('x')" })
+    expect(result()).toBe("")
+    press("✓")
+    expect(fetchSpy).not.toHaveBeenCalled()
+    expect(onApply).toHaveBeenCalledTimes(1)
+    expect(Number.isFinite(onApply.mock.calls[0][0])).toBe(true)
+    expect(onApply).toHaveBeenCalledWith(0)
+    expect(onClose).toHaveBeenCalledTimes(1)
+    fetchSpy.mockRestore()
+  })
+
+  it("sanitises a process.exit initial value instead of running it", () => {
+    const { onApply } = setup({ initialValue: "process.exit()" })
+    press("✓")
+    expect(onApply).toHaveBeenCalledTimes(1)
+    expect(Number.isFinite(onApply.mock.calls[0][0])).toBe(true)
+    expect(onApply).toHaveBeenCalledWith(0)
+  })
+
   it("uses v2 tokens for the display box and keypad", () => {
     setup()
     expect(screen.getByTestId("calc-display").className).toContain("bg-v2-surface")

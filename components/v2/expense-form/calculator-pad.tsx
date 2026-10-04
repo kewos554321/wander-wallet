@@ -37,21 +37,100 @@ const KEYS: Key[] = [
   { label: ".", kind: "dot" },
 ]
 
-/** Evaluates a keypad expression. Returns null for empty/invalid input. */
+/**
+ * Evaluates a keypad expression with a tiny hand-written recursive-descent
+ * parser. It never executes arbitrary code: only digits, `.`, the four
+ * operators (ASCII and the design glyphs `− × ÷`) and whitespace are accepted;
+ * any other character makes the expression invalid (`null`).
+ */
 function evaluateExpression(expr: string): number | null {
   if (!expr) return null
-  try {
-    const jsExpr = expr.replace(/×/g, "*").replace(/÷/g, "/").replace(/−/g, "-")
-    const cleanExpr = jsExpr.replace(/[+\-*/]$/, "")
-    if (!cleanExpr) return null
-    const result = new Function(`return ${cleanExpr}`)()
-    if (typeof result === "number" && !isNaN(result) && isFinite(result)) {
-      return Math.round(result * 100) / 100
+
+  // Normalise the design glyphs and reject anything outside the safe alphabet.
+  const src = expr.replace(/−/g, "-").replace(/×/g, "*").replace(/÷/g, "/")
+  if (!/^[0-9+\-*/. ]*$/.test(src)) return null
+
+  interface NumberToken {
+    type: "number"
+    value: number
+  }
+  interface OperatorToken {
+    type: "operator"
+    value: "+" | "-" | "*" | "/"
+  }
+  type Token = NumberToken | OperatorToken
+
+  // Tokenise: numbers (at most one dot) and operators.
+  const tokens: Token[] = []
+  let i = 0
+  while (i < src.length) {
+    const ch = src[i]
+    if (ch === " ") {
+      i++
+      continue
+    }
+    if (ch === "+" || ch === "-" || ch === "*" || ch === "/") {
+      tokens.push({ type: "operator", value: ch })
+      i++
+      continue
+    }
+    let j = i
+    while (j < src.length && /[0-9.]/.test(src[j])) j++
+    const raw = src.slice(i, j)
+    if (raw === "" || raw === "." || !/^\d*\.?\d*$/.test(raw)) return null
+    tokens.push({ type: "number", value: Number(raw) })
+    i = j
+  }
+  if (tokens.length === 0) return null
+
+  // Recursive descent with operator precedence: +/− lowest, ×/÷ higher.
+  let pos = 0
+  const peek = (): Token | undefined => tokens[pos]
+
+  function parseFactor(): number | null {
+    const token = peek()
+    if (token?.type === "operator" && (token.value === "-" || token.value === "+")) {
+      pos++
+      const value = parseFactor()
+      if (value === null) return null
+      return token.value === "-" ? -value : value
+    }
+    if (token?.type === "number") {
+      pos++
+      return token.value
     }
     return null
-  } catch {
-    return null
   }
+
+  function parseTerm(): number | null {
+    let left = parseFactor()
+    if (left === null) return null
+    while (peek()?.type === "operator" && (peek().value === "*" || peek().value === "/")) {
+      const op = (peek() as OperatorToken).value
+      pos++
+      const right = parseFactor()
+      if (right === null) return left
+      left = op === "*" ? left * right : left / right
+    }
+    return left
+  }
+
+  function parseExpression(): number | null {
+    let left = parseTerm()
+    if (left === null) return null
+    while (peek()?.type === "operator" && (peek().value === "+" || peek().value === "-")) {
+      const op = (peek() as OperatorToken).value
+      pos++
+      const right = parseTerm()
+      if (right === null) return left
+      left = op === "+" ? left + right : left - right
+    }
+    return left
+  }
+
+  const value = parseExpression()
+  if (value === null || pos !== tokens.length || !isFinite(value)) return null
+  return Math.round(value * 100) / 100
 }
 
 function isOperator(char: string): boolean {
