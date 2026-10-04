@@ -7,6 +7,7 @@ import { useLiff } from "@/components/auth/liff-provider"
 import { useTheme } from "@/components/system/theme-provider"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
+import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import { V2CurrencyField } from "@/components/v2/ui/currency-field"
 import type { CurrencyCode } from "@/lib/constants/currencies"
 import { useOnboarding } from "@/lib/hooks"
@@ -66,9 +67,12 @@ export function GeneralSettingsV2() {
             onClick={() => router.push("/settings/profile")}
             className="flex items-center gap-3.5 rounded-[18px] bg-v2-lake p-4 text-left text-v2-paper"
           >
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-v2-paper/15 text-base font-bold">
-              {displayName.charAt(0)}
-            </span>
+            <V2Avatar
+              image={user?.image ?? null}
+              name={displayName}
+              className="h-12 w-12 shrink-0 rounded-full"
+              fallbackClassName="bg-v2-paper/15 text-base font-bold"
+            />
             <span className="min-w-0 flex-1">
               <p className="m-0 font-v2-serif text-[15px] font-semibold">{displayName}</p>
               <p className="mt-0.5 text-xs opacity-75">LINE 用戶 · 點擊編輯個人資料</p>

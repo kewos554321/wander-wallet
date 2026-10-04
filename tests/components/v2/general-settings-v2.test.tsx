@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react"
 
 vi.mock("next/font/google", () => ({
   Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
@@ -7,8 +7,9 @@ vi.mock("next/font/google", () => ({
 }))
 const mockPush = vi.fn()
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mockPush }) }))
+const liffMocks = vi.hoisted(() => ({ useLiff: vi.fn() }))
 vi.mock("@/components/auth/liff-provider", () => ({
-  useLiff: () => ({ user: { name: "Emma" } }),
+  useLiff: () => liffMocks.useLiff(),
 }))
 vi.mock("@/components/ui/currency-select", () => ({
   CurrencySelect: ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
@@ -54,6 +55,7 @@ import { GeneralSettingsV2 } from "@/components/v2/settings/general-settings-v2"
 describe("GeneralSettingsV2", () => {
   beforeEach(() => {
     mockPush.mockReset()
+    liffMocks.useLiff.mockReset().mockReturnValue({ user: { name: "Emma" } })
     mockSave.mockReset()
     mockResetOnboarding.mockReset().mockResolvedValue(undefined)
     preferences = {
@@ -73,6 +75,21 @@ describe("GeneralSettingsV2", () => {
   it("shows the user's name", () => {
     render(<GeneralSettingsV2 />)
     expect(screen.getByText("Emma")).toBeInTheDocument()
+  })
+
+  it("renders the user's LINE avatar in the profile card", () => {
+    liffMocks.useLiff.mockReturnValue({ user: { name: "Emma", image: "https://x/e.png" } })
+    render(<GeneralSettingsV2 />)
+    const card = screen.getByLabelText("編輯個人資料")
+    expect(card.querySelector("img")).toHaveAttribute("src", "https://x/e.png")
+  })
+
+  it("falls back to the user's initial when there is no image", () => {
+    liffMocks.useLiff.mockReturnValue({ user: { name: "Emma", image: null } })
+    render(<GeneralSettingsV2 />)
+    const card = screen.getByLabelText("編輯個人資料")
+    expect(card.querySelector("img")).toBeNull()
+    expect(within(card).getByText("E")).toBeInTheDocument()
   })
 
   it("shows the beta switch checked and toggles it off on click", () => {

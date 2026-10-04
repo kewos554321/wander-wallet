@@ -4,6 +4,7 @@ import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import type { OverviewProject, ProjectSummary } from "@/lib/project-overview"
 import { formatTripDateRange } from "@/lib/trip"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
+import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import { TripSummaryCard } from "./trip-summary-card"
 import { BalanceCard } from "./balance-card"
 import { FeatureGrid } from "./feature-grid"
@@ -15,14 +16,22 @@ interface ProjectOverviewV2ViewProps {
   summary: ProjectSummary
   onShare: () => void
   onVoice: () => void
+  currentUserName?: string | null
+  currentUserImage?: string | null
 }
 
 const pill =
   "flex h-8 items-center gap-1.5 rounded-[9px] border border-v2-lake-edge bg-v2-lake-soft px-2.5 text-[12px] font-semibold text-v2-lake"
 
-export function ProjectOverviewV2View({ project, summary, onShare, onVoice }: ProjectOverviewV2ViewProps) {
+export function ProjectOverviewV2View({
+  project,
+  summary,
+  onShare,
+  onVoice,
+  currentUserName,
+  currentUserImage,
+}: ProjectOverviewV2ViewProps) {
   const currency = project.currency || DEFAULT_CURRENCY
-  const initial = project.creator.name?.trim().charAt(0).toUpperCase() || "?"
 
   return (
     <>
@@ -33,9 +42,14 @@ export function ProjectOverviewV2View({ project, summary, onShare, onVoice }: Pr
           <Link
             href="/settings"
             aria-label="通用設定"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-v2-lake text-sm font-bold text-v2-paper"
+            className="flex h-9 w-9 items-center justify-center"
           >
-            {initial}
+            <V2Avatar
+              image={currentUserImage ?? null}
+              name={currentUserName ?? null}
+              className="h-9 w-9 rounded-full"
+              fallbackClassName="bg-v2-lake text-sm font-bold text-v2-paper"
+            />
           </Link>
         }
       />

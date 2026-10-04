@@ -115,6 +115,21 @@ describe("ProjectsV2View", () => {
     expect(screen.getByRole("link", { name: "建立新旅程" })).toHaveAttribute("href", "/projects/new")
   })
 
+  it("renders the signed-in user's avatar in the settings link", () => {
+    render(
+      <ProjectsV2View
+        projects={projects}
+        loading={false}
+        userName="小明"
+        userImage="https://x/a.png"
+        now={now}
+      />
+    )
+    const link = screen.getByRole("link", { name: "通用設定" })
+    expect(link).toHaveAttribute("href", "/settings")
+    expect(link.querySelector("img")).toHaveAttribute("src", "https://x/a.png")
+  })
+
   it("shows an empty state", () => {
     render(<ProjectsV2View projects={[]} loading={false} userName={null} now={now} />)
     expect(screen.getByText("還沒有旅程")).toBeInTheDocument()
@@ -157,6 +172,16 @@ describe("ProjectsV2 container", () => {
     expect(screen.getByRole("heading", { name: "你的旅程" })).toBeInTheDocument()
     expect(screen.getByText(/，Emma$/)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /東京賞楓 5 日/ })).toHaveAttribute("href", "/projects/tokyo")
+  })
+
+  it("passes the signed-in user's image to the view avatar", () => {
+    mocks.useLiff.mockReturnValue({ user: { name: "Emma", image: "https://x/e.png" } })
+    mocks.useProjects.mockReturnValue({ projects, loading: false })
+
+    render(<ProjectsV2 />)
+
+    const link = screen.getByRole("link", { name: "通用設定" })
+    expect(link.querySelector("img")).toHaveAttribute("src", "https://x/e.png")
   })
 
   it("falls back to the anonymous greeting and empty state without a user", () => {

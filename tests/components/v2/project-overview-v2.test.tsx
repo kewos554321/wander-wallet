@@ -8,8 +8,11 @@ vi.mock("next/font/google", () => ({
 }))
 const routerPush = vi.hoisted(() => vi.fn())
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: routerPush }) }))
+const liff = vi.hoisted(() => ({
+  user: { id: "u1" } as { id: string; name?: string | null; image?: string | null },
+}))
 vi.mock("@/components/auth/liff-provider", () => ({
-  useLiff: () => ({ user: { id: "u1" } }),
+  useLiff: () => ({ user: liff.user }),
   useAuthFetch: () => vi.fn(),
 }))
 const quickExpenseProps = vi.hoisted(() => ({ current: null as Record<string, unknown> | null }))
@@ -245,6 +248,22 @@ describe("ProjectOverviewV2View", () => {
     expect(screen.queryByRole("link", { name: "專案設定" })).not.toBeInTheDocument()
   })
 
+  it("shows the current user's avatar instead of the project creator's initial", () => {
+    render(
+      <ProjectOverviewV2View
+        project={project}
+        summary={summary}
+        onShare={vi.fn()}
+        onVoice={vi.fn()}
+        currentUserName="小明"
+        currentUserImage="https://x/b.png"
+      />
+    )
+    const link = screen.getByRole("link", { name: "通用設定" })
+    expect(link.querySelector("img")).toHaveAttribute("src", "https://x/b.png")
+    expect(link.textContent).not.toContain("E")
+  })
+
   it("renders the description only when present", () => {
     const description = "跟著楓葉季節走訪京都嵐山與東京近郊，中間安排一晚溫泉旅館放鬆，行程盡量不要太趕，留點時間走走。"
     const { rerender } = render(
@@ -276,7 +295,10 @@ describe("ProjectOverviewV2View", () => {
 })
 
 describe("ProjectOverviewV2 container", () => {
-  beforeEach(() => mockOverview.mockReset())
+  beforeEach(() => {
+    mockOverview.mockReset()
+    liff.user = { id: "u1" }
+  })
 
   it("shows the join dialog for non-members", () => {
     mockOverview.mockReturnValue({
@@ -340,6 +362,23 @@ describe("ProjectOverviewV2 container", () => {
     expect(screen.getByText("TWD 48,600")).toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "分享" }))
     expect(screen.getByText("邀請成員加入")).toBeInTheDocument()
+  })
+
+  it("passes the signed-in user to the overview avatar", () => {
+    liff.user = { id: "u1", name: "小明", image: "https://x/b.png" }
+    mockOverview.mockReturnValue({
+      project,
+      loading: false,
+      joinInfo: null,
+      joining: false,
+      joinProject: vi.fn(),
+      claimMember: vi.fn(),
+      refetch: vi.fn(),
+      summary,
+    })
+    render(<ProjectOverviewV2 projectId="p1" />)
+    const link = screen.getByRole("link", { name: "通用設定" })
+    expect(link.querySelector("img")).toHaveAttribute("src", "https://x/b.png")
   })
 
   it("opens the quick-expense overlay from the voice action and closes it without refetching", () => {

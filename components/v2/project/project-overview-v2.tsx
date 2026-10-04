@@ -6,6 +6,7 @@ import { QuickExpenseV2 } from "@/components/v2/quick-expense/quick-expense-v2"
 import { JoinProjectDialog } from "@/components/project/join-project-dialog"
 import { InviteDialog } from "@/components/project/invite-dialog"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
+import { useLiff } from "@/components/auth/liff-provider"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { useProjectOverview } from "@/lib/hooks/useProjectOverview"
 import { ProjectOverviewV2View } from "./project-overview-v2-view"
@@ -13,6 +14,7 @@ import { ProjectOverviewV2View } from "./project-overview-v2-view"
 // The onboarding tour targets v1 markup (data-tour) and is not shown in v2.
 export function ProjectOverviewV2({ projectId }: { projectId: string }) {
   const router = useRouter()
+  const { user } = useLiff()
   const { project, loading, joinInfo, joining, joinProject, claimMember, refetch, summary } =
     useProjectOverview(projectId)
   const [showInvite, setShowInvite] = useState(false)
@@ -48,6 +50,8 @@ export function ProjectOverviewV2({ projectId }: { projectId: string }) {
           summary={summary}
           onShare={() => setShowInvite(true)}
           onVoice={() => setQuickStep("input")}
+          currentUserName={user?.name ?? null}
+          currentUserImage={user?.image ?? null}
         />
         <InviteDialog open={showInvite} onOpenChange={setShowInvite} projectId={project.id} projectName={project.name} />
         <QuickExpenseV2

@@ -7,6 +7,7 @@ import type { ProjectListItem, ProjectListMember } from "@/lib/hooks/useProjects
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { formatTripDateRange, getGreeting, getTripDays, getTripStatus, type TripStatus } from "@/lib/trip"
 import { CoverThumb } from "./cover-thumb"
+import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 
 type Filter = "all" | TripStatus
 
@@ -29,14 +30,14 @@ interface ProjectsV2ViewProps {
   projects: ProjectListItem[]
   loading: boolean
   userName: string | null
+  userImage?: string | null
   now: Date
   adSlot?: ReactNode
 }
 
-export function ProjectsV2View({ projects, loading, userName, now, adSlot }: ProjectsV2ViewProps) {
+export function ProjectsV2View({ projects, loading, userName, userImage, now, adSlot }: ProjectsV2ViewProps) {
   const [filter, setFilter] = useState<Filter>("all")
   const visible = projects.filter((p) => filter === "all" || getTripStatus(p.endDate, now) === filter)
-  const initial = userName?.trim().charAt(0).toUpperCase() || "?"
 
   return (
     <div className="pb-5">
@@ -57,9 +58,14 @@ export function ProjectsV2View({ projects, loading, userName, now, adSlot }: Pro
         <Link
           href="/settings"
           aria-label="通用設定"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-v2-lake text-sm font-bold text-v2-paper"
+          className="flex h-9 w-9 items-center justify-center"
         >
-          {initial}
+          <V2Avatar
+            image={userImage ?? null}
+            name={userName}
+            className="h-9 w-9 rounded-full"
+            fallbackClassName="bg-v2-lake text-sm font-bold text-v2-paper"
+          />
         </Link>
       </div>
 
