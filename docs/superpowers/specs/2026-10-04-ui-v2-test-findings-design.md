@@ -230,7 +230,7 @@
 |---|---|---|
 | 新增 `tests/components/v2/v2-avatar.test.tsx` | new | 三態（自訂頭像／URL／首字 fallback）、`aria-hidden` |
 | `projects-v2-view.test.tsx`、`project-overview-v2.test.tsx` | update | 改用頭像（有 image 時 render `<img>`） |
-| 既有 members 測試（或 `m4-pages.test.tsx`） | update | 成員頭像；「前往專案設定」新位置與可及名稱 |
+| `members-v2.test.tsx` | update | 成員頭像；「前往專案設定」新位置與可及名稱 |
 | `expense-form-v2-view.test.tsx`、`quick-expense/*` | update | `付款成員` 文案、個人項目 `$`、分攤總結條件顯示、`Member` 型別帶頭像 |
 | `filter-panels.test.tsx`、`expenses-v2.test.tsx` | update | 日期面板 fixed/翻轉/夾邊（用 trigger rect mock 斷言）；`付款成員` chip |
 | `confirm-step.test.tsx` | update | 上一筆／下一筆按鈕、邊界 disabled、滑動仍可切換、結果頁新標題 |
