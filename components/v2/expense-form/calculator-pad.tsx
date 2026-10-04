@@ -105,12 +105,13 @@ function evaluateExpression(expr: string): number | null {
   function parseTerm(): number | null {
     let left = parseFactor()
     if (left === null) return null
-    while (peek()?.type === "operator" && (peek().value === "*" || peek().value === "/")) {
-      const op = (peek() as OperatorToken).value
+    let token = peek()
+    while (token?.type === "operator" && (token.value === "*" || token.value === "/")) {
       pos++
       const right = parseFactor()
       if (right === null) return left
-      left = op === "*" ? left * right : left / right
+      left = token.value === "*" ? left * right : left / right
+      token = peek()
     }
     return left
   }
@@ -118,12 +119,13 @@ function evaluateExpression(expr: string): number | null {
   function parseExpression(): number | null {
     let left = parseTerm()
     if (left === null) return null
-    while (peek()?.type === "operator" && (peek().value === "+" || peek().value === "-")) {
-      const op = (peek() as OperatorToken).value
+    let token = peek()
+    while (token?.type === "operator" && (token.value === "+" || token.value === "-")) {
       pos++
       const right = parseTerm()
       if (right === null) return left
-      left = op === "+" ? left + right : left - right
+      left = token.value === "+" ? left + right : left - right
+      token = peek()
     }
     return left
   }
