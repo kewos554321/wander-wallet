@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import dynamic from "next/dynamic"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { List, MapPin } from "lucide-react"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
@@ -83,6 +84,9 @@ export function MapV2View({ projectId, projectCurrency, expenses, loading }: Map
             <br />
             就能在地圖上顯示消費地點
           </p>
+          <Link href={`/projects/${projectId}/expenses/new`} className="text-[13px] font-semibold text-v2-lake">
+            新增消費
+          </Link>
         </div>
       ) : (
         <>

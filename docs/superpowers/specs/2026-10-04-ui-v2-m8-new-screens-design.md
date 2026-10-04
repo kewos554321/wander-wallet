@@ -67,7 +67,7 @@ export default function NotesPage({ params }: { params: Promise<{ id: string }> 
 | D47 | 共用 primitives | 新增 `components/v2/ui/category-chips.tsx`（A16＋A25）、`components/v2/ui/search-field.tsx`（A22）、`components/v2/ui/checkbox-row.tsx`（A23）。重用既有 `V2TopBar`、`SECTION_CARD`/`SECTION_TITLE`、`V2CurrencyField`、`FilterPopover`＋`filter-panels`、`DateRangeField`、`use-dismiss`。A15 深色 hero 卡先內嵌（只有 A15 用到）。 |
 | D48 | A22 篩選 | 保留 v1 全部 8 篩選＋條件式幣別；沿用 v1「只對已載入分頁做 client-side 篩選」的行為（spec 註明此限制）。新增 `activity-logs/filter-panels.tsx`（操作／操作者／付款人；actor/payer 為名稱字串，非 member id），其餘重用 Category/Currency/Amount/Date panels。`formatChanges`、動作文案抽成 `activity-logs/format.ts`。 |
 | D49 | A16 地圖 | 薄包：`map/map-v2.tsx` 以 `dynamic(..., { ssr: false })` 載入**未修改**的 `components/map/expense-map.tsx`，只把周圍 chrome token 化；保留 v1 的 4 種地圖樣式與點擊→編輯。Leaflet 圖磚/attribution 非 token 化（已知、可接受）。 |
-| D50 | A23 匯出數學 | 在 `components/v2/export/export-data.ts`（純函式）重現 v1 演算法（換算→成員 paid/share/balance→greedy 結算→分類統計），檔案產生重用 `lib/export/{csv-generator,pdf-generator,types}`；`components/export/export-options-form.tsx` 不動。 |
+| D50 | A23 匯出數學 | 在 `components/v2/export/export-data.ts`（純函式）重現 v1 演算法（換算→成員 paid/share/balance→greedy 結算→分類統計），檔案產生重用 `lib/export/{csv-generator,pdf-generator,types}`；`components/export/export-options-form.tsx` 不動。成員配對以 **member id**（避免同名混淆）；成員 `paid`/`share`/`balance` 與 `participantShares` 四捨五入至小數 2 位（v1 未四捨五入，屬刻意偏差，見 §9）。 |
 | D51 | A25 燈箱 | 保留 v1 lightbox 功能（鍵盤左右／Esc、上/下一張、資訊列、`查看`→編輯），改為 v2 token 行內 overlay（`bg-v2-lightbox`，不用 Radix Portal）。 |
 | D52 | A15 換算 | 重用 `useProjectData`＋`useCurrencyConversion`（即時匯率、`getRate`/`convert`、`ratesTimestamp`、`usingFallback`）；歷史匯率 `?date=` 由 container 直接抓。相對時間與自訂匯率 diff 抽成 `currency/format.ts`。 |
 | D53 | 新 tokens | 新增 `--v2-gold-tint`、`--v2-lightbox`；若 A15 hero 的 opacity modifier 編譯不穩，才追加 `--v2-on-lake-soft`／`--v2-on-lake-line`（§4）。設計稿中無精確 token 者以最近 token 代替並記錄（§9）。 |
@@ -222,3 +222,5 @@ export default function NotesPage({ params }: { params: Promise<{ id: string }> 
 14. 覆蓋率閘門以 `components/v2/**` 與新增 v2 檔案為準；`All files` 因 baseline 過時而不設閘，抽取的 `components/v1/**` 新檔未測屬預期（§7）。
 15. 資料取得：A16／A23／A25 重用 `useProjectData`＋`useProjectExpenses`（`ProjectExpense` 已含 `image`／`latitude`／`longitude`／`participants[].shareAmount`）；A22 直接 `useAuthFetch` 抓 activity-logs；A24 直接 `useAuthFetch` 抓 memo。
 16. 覆蓋率實測：`components/v2` 整體（root）100%，所有既有 `components/v2/<folder>` 皆不低於 M6 baseline（多數提升）；共用 primitive／純函式 ≥90%；部分新 view／container（activity-logs、export、currency）低於 90%，比照既有專案 container 實務（§7）。
+17. A23 匯出：成員配對以 member id（避免同名成員混淆）；成員 `paid`/`share`/`balance` 與 `participantShares` 四捨五入至小數 2 位（v1 未四捨五入）——屬刻意、可接受的偏差。
+18. A15 轉換目標幣別由 `projectCurrency` 推導（使用者可覆寫），修正 v1 曾在非 TWD 專案把目標預設為 TWD 的問題；已加測試。

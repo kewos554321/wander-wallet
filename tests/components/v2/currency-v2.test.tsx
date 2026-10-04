@@ -123,4 +123,35 @@ describe("CurrencyV2 container", () => {
     render(<CurrencyV2 projectId="p1" />)
     expect(screen.getByRole("heading", { name: "匯率" })).toBeInTheDocument()
   })
+
+  it("defaults the target currency to the project currency, not TWD", () => {
+    let state = {
+      project: { name: "Trip", currency: "TWD", customRates: null, exchangeRatePrecision: 2 },
+      members: [],
+      loading: true,
+      projectCurrency: "TWD",
+      customRates: null,
+      precision: 2,
+    }
+    mockProjectData.mockImplementation(() => state)
+    mockCurrencyConversion.mockReturnValue({
+      getRate: () => 1,
+      exchangeRates: {},
+      ratesTimestamp: null,
+      usingFallback: false,
+      loading: false,
+      refetch: vi.fn(),
+    })
+    const { rerender } = render(<CurrencyV2 projectId="p1" />)
+    state = {
+      project: { name: "Japan", currency: "JPY", customRates: null, exchangeRatePrecision: 2 },
+      members: [],
+      loading: false,
+      projectCurrency: "JPY",
+      customRates: null,
+      precision: 2,
+    }
+    rerender(<CurrencyV2 projectId="p1" />)
+    expect(screen.getByText(/1 USD = 1 JPY/)).toBeInTheDocument()
+  })
 })

@@ -71,6 +71,7 @@ describe("MapV2View", () => {
     renderView({ expenses: [expenses[2]] })
     expect(screen.getByText("尚無位置資訊")).toBeInTheDocument()
     expect(screen.queryByTestId("expense-map-stub")).not.toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "新增消費" })).toHaveAttribute("href", "/projects/p1/expenses/new")
   })
 })
 

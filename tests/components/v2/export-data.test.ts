@@ -15,10 +15,10 @@ const expenses: ExportExpenseInput[] = [
     description: "拉麵",
     category: "food",
     expenseDate: "2026-10-18T00:00:00.000Z",
-    payer: { displayName: "志明" },
+    payer: { id: "m1", displayName: "志明" },
     participants: [
-      { shareAmount: 500, member: { displayName: "志明" } },
-      { shareAmount: 500, member: { displayName: "小美" } },
+      { shareAmount: 500, member: { id: "m1", displayName: "志明" } },
+      { shareAmount: 500, member: { id: "m2", displayName: "小美" } },
     ],
   },
   {
@@ -28,8 +28,8 @@ const expenses: ExportExpenseInput[] = [
     description: null,
     category: "accommodation",
     expenseDate: "2026-10-19T00:00:00.000Z",
-    payer: { displayName: "小美" },
-    participants: [{ shareAmount: 10000, member: { displayName: "小美" } }],
+    payer: { id: "m2", displayName: "小美" },
+    participants: [{ shareAmount: 10000, member: { id: "m2", displayName: "小美" } }],
   },
 ]
 
@@ -99,5 +99,21 @@ describe("buildExportData", () => {
   it("filters by date range", () => {
     const data = build({ dateRange: { start: new Date("2026-10-19T00:00:00.000Z"), end: null } })
     expect(data.expenses.map((e) => e.id)).toEqual(["e2"])
+  })
+
+  it("does not conflate two members with the same display name", () => {
+    const dupMembers = [
+      { id: "m1", displayName: "志明" },
+      { id: "m2", displayName: "志明" },
+    ]
+    const dupExpenses: ExportExpenseInput[] = [
+      { id: "d1", amount: 1000, currency: "TWD", description: null, category: "food", expenseDate: "2026-10-18T00:00:00.000Z", payer: { id: "m1", displayName: "志明" }, participants: [{ shareAmount: 1000, member: { id: "m1", displayName: "志明" } }] },
+      { id: "d2", amount: 2000, currency: "TWD", description: null, category: "food", expenseDate: "2026-10-18T00:00:00.000Z", payer: { id: "m2", displayName: "志明" }, participants: [{ shareAmount: 2000, member: { id: "m2", displayName: "志明" } }] },
+    ]
+    const data = buildExportData({ projectName: "Trip", projectCurrency: "TWD", members: dupMembers, expenses: dupExpenses, filters: {}, ctx })
+    expect(data.statistics.memberBreakdown).toEqual([
+      { name: "志明", paid: 1000, share: 1000, balance: 0 },
+      { name: "志明", paid: 2000, share: 2000, balance: 0 },
+    ])
   })
 })

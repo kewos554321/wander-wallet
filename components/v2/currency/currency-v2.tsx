@@ -24,8 +24,10 @@ export function CurrencyV2({ projectId }: { projectId: string }) {
     precision,
   })
 
-  const [fromCurrency, setFromCurrency] = useState(projectCurrency === "USD" ? "JPY" : "USD")
-  const [toCurrency, setToCurrency] = useState(projectCurrency)
+  const [fromOverride, setFromOverride] = useState<string | null>(null)
+  const [toOverride, setToOverride] = useState<string | null>(null)
+  const fromCurrency = fromOverride ?? (projectCurrency === "USD" ? "JPY" : "USD")
+  const toCurrency = toOverride ?? projectCurrency
   const [amount, setAmount] = useState("100")
   const [showRates, setShowRates] = useState(true)
   const [showHistorical, setShowHistorical] = useState(false)
@@ -78,8 +80,8 @@ export function CurrencyV2({ projectId }: { projectId: string }) {
   }, [authFetch, historicalDate, projectCurrency, rates])
 
   const swap = () => {
-    setFromCurrency(toCurrency)
-    setToCurrency(fromCurrency)
+    setFromOverride(toCurrency)
+    setToOverride(fromCurrency)
   }
 
   return (
@@ -104,8 +106,8 @@ export function CurrencyV2({ projectId }: { projectId: string }) {
           showRates={showRates}
           showHistorical={showHistorical}
           onAmount={setAmount}
-          onFrom={setFromCurrency}
-          onTo={setToCurrency}
+          onFrom={setFromOverride}
+          onTo={setToOverride}
           onSwap={swap}
           onToggleRates={() => setShowRates((v) => !v)}
           onToggleHistorical={() => setShowHistorical((v) => !v)}

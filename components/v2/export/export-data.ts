@@ -15,8 +15,8 @@ export interface ExportExpenseInput {
   description: string | null
   category: string | null
   expenseDate: string
-  payer: { displayName: string }
-  participants: { shareAmount: number; member: { displayName: string } }[]
+  payer: { id: string; displayName: string }
+  participants: { shareAmount: number; member: { id: string; displayName: string } }[]
 }
 
 export interface ExportContext {
@@ -121,9 +121,9 @@ export function buildExportData(input: BuildExportInput): ExportData {
     for (const expense of filtered) {
       const amount = convertToProjectCurrency(expense.amount, expense.currency, ctx)
       const ratio = expense.amount > 0 ? amount / expense.amount : 0
-      if (expense.payer.displayName === member.displayName) paid += amount
+      if (expense.payer.id === member.id) paid += amount
       for (const participant of expense.participants) {
-        if (participant.member.displayName === member.displayName) share += participant.shareAmount * ratio
+        if (participant.member.id === member.id) share += participant.shareAmount * ratio
       }
     }
     paid = round2(paid)
