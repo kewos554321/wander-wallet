@@ -3,6 +3,7 @@
 import { CheckCircle2, CornerRightDown, Pin, PinOff, Plus, UserMinus, X } from "lucide-react"
 import { formatAmount } from "@/lib/constants/currencies"
 import { toMoneyInput } from "@/lib/money-input"
+import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
 import { memberPillClass, memberTone } from "./payer-picker"
 import { SECTION_CARD, SECTION_TITLE } from "./section-card"
@@ -75,9 +76,12 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                   onClick={() => actions.togglePersonalMember(m.id)}
                   className={memberPillClass(on)}
                 >
-                  <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold ${tone(m.id)}`} aria-hidden="true">
-                    {m.displayName.charAt(0)}
-                  </span>
+                  <V2Avatar
+                    image={m.image ?? null}
+                    name={m.displayName}
+                    className="h-5 w-5 rounded-full"
+                    fallbackClassName={`text-[9px] font-bold ${tone(m.id)}`}
+                  />
                   <span className="text-xs font-semibold">{m.displayName}</span>
                 </button>
               )
@@ -95,9 +99,12 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
                 return (
                   <div key={id} className="border-b border-v2-line-soft bg-v2-lake-soft px-3.5 py-2 last:border-b-0">
                     <div className="flex items-center gap-2.5">
-                      <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${tone(id)}`} aria-hidden="true">
-                        {name(id).charAt(0)}
-                      </span>
+                      <V2Avatar
+                        image={members.find((m) => m.id === id)?.image ?? null}
+                        name={name(id)}
+                        className="h-6 w-6 rounded-full"
+                        fallbackClassName={`text-[10px] font-bold ${tone(id)}`}
+                      />
                       <span className="flex flex-1 items-center justify-between gap-2 text-[13px]">
                         <span className="font-semibold">{name(id)}</span>
                         <span className="font-bold">${num(sum)}</span>
@@ -165,9 +172,12 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
               onClick={() => actions.togglePool(m.id)}
               className={memberPillClass(on)}
             >
-              <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold ${tone(m.id)} ${on ? "" : "opacity-40"}`} aria-hidden="true">
-                {m.displayName.charAt(0)}
-              </span>
+              <V2Avatar
+                image={m.image ?? null}
+                name={m.displayName}
+                className={`h-5 w-5 rounded-full ${on ? "" : "opacity-40"}`}
+                fallbackClassName={`text-[9px] font-bold ${tone(m.id)}`}
+              />
               <span className="text-xs font-semibold">{m.displayName}</span>
             </button>
           )
@@ -185,9 +195,12 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
             const isCustom = custom !== undefined
             return (
               <div key={id} className="flex items-center gap-2.5 border-b border-v2-line-soft bg-v2-lake-soft px-3.5 py-3 last:border-b-0">
-                <span className={`flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold ${tone(id)}`} aria-hidden="true">
-                  {name(id).charAt(0)}
-                </span>
+                <V2Avatar
+                  image={members.find((m) => m.id === id)?.image ?? null}
+                  name={name(id)}
+                  className="h-7 w-7 rounded-full"
+                  fallbackClassName={`text-[11px] font-bold ${tone(id)}`}
+                />
                 <span className="flex-1 text-[13px] font-semibold">{name(id)}</span>
                 {isCustom ? (
                   // An emptied input keeps the pinned state; the draft treats "" as auto.

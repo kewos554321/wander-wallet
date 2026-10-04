@@ -177,4 +177,16 @@ describe("QuickItemCard", () => {
       image: { image: "https://cdn.example/receipt.jpg", pendingFile: null, preview: null },
     })
   })
+
+  it("renders the member image in the payer option when present", () => {
+    const withImage = [
+      { id: "a", displayName: "小雨", image: "https://cdn.example/xiaoyu.jpg" },
+      { id: "b", displayName: "志明", image: null },
+      { id: "c", displayName: "阿凱", image: null },
+    ]
+    render(<QuickItemCard item={item()} members={withImage} onChange={vi.fn()} />)
+    const payer = screen.getByRole("group", { name: "付款人" })
+    const radio = within(payer).getByRole("radio", { name: "小雨" })
+    expect(radio.closest("label")!.querySelector('img[src="https://cdn.example/xiaoyu.jpg"]')).toBeInTheDocument()
+  })
 })

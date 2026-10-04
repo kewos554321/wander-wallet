@@ -13,7 +13,12 @@ import { StatsV2View } from "./stats-v2-view"
 export function StatsV2({ projectId }: { projectId: string }) {
   const router = useRouter()
   const { project, loading, joinInfo, joining, joinProject, claimMember, summary, convert } = useProjectOverview(projectId)
-  const stats = useMemo(() => (project ? computeProjectStats(project, convert) : null), [project, convert])
+  const stats = useMemo(() => {
+    if (!project) return null
+    const base = computeProjectStats(project, convert)
+    const imageById = new Map(project.members.map((m) => [m.id, m.user?.image ?? null]))
+    return { ...base, members: base.members.map((m) => ({ ...m, image: imageById.get(m.id) ?? null })) }
+  }, [project, convert])
 
   let content: ReactNode
   if (loading) {

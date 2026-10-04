@@ -1,6 +1,7 @@
 "use client"
 
 import { formatAmount } from "@/lib/constants/currencies"
+import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
 import { memberTone } from "./payer-picker"
 
@@ -21,6 +22,7 @@ export function SplitSummary({ members, draft, currency }: { members: DraftMembe
     return {
       id: m.id,
       name: m.displayName,
+      image: m.image ?? null,
       tone: memberTone(index),
       personal,
       pool: Math.round((total - personal) * 100) / 100,
@@ -49,9 +51,12 @@ export function SplitSummary({ members, draft, currency }: { members: DraftMembe
           {visibleRows.map((r) => (
             <div key={r.id} role="row" className={`${cols} border-t border-v2-line-soft bg-v2-lake-soft py-2.5 first:border-t-0`}>
               <span role="rowheader" className="flex min-w-0 items-center gap-2 text-left text-[13px] font-semibold">
-                <span className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${r.tone}`} aria-hidden="true">
-                  {r.name.charAt(0)}
-                </span>
+                <V2Avatar
+                  image={r.image}
+                  name={r.name}
+                  className="h-[22px] w-[22px] shrink-0 rounded-full"
+                  fallbackClassName={`text-[9px] font-bold ${r.tone}`}
+                />
                 <span className="truncate">{r.name}</span>
               </span>
               <span role="cell" className={`${cell} ${r.personal ? "" : "text-v2-ink-subtle"}`}>{money(r.personal)}</span>

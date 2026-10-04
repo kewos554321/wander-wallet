@@ -1,6 +1,7 @@
 import { ArrowRight, Info, Share2 } from "lucide-react"
 import { formatCurrency } from "@/lib/constants/currencies"
 import type { SettleSettlement } from "@/lib/hooks/useSettlement"
+import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 
 const AVATAR_TONES = [
   "bg-v2-lake-tint text-v2-lake",
@@ -41,16 +42,15 @@ export function SettlementList({
       : AVATAR_TONES[Math.max(0, memberIds.indexOf(memberId)) % AVATAR_TONES.length]
   const name = (memberId: string, displayName: string) => (memberId === currentMemberId ? "我" : displayName)
 
-  const person = (memberId: string, displayName: string) => {
+  const person = (memberId: string, displayName: string, image: string | null) => {
     const label = name(memberId, displayName)
     return (
       <>
         <span
           data-testid={`settlement-avatar-${memberId}`}
-          className={`flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${tone(memberId)}`}
-          aria-hidden="true"
+          className={`flex h-[26px] w-[26px] shrink-0 items-center justify-center overflow-hidden rounded-full ${tone(memberId)}`}
         >
-          {label.charAt(0)}
+          <V2Avatar image={image} name={label} className="h-full w-full rounded-full" fallbackClassName="text-[11px] font-bold" />
         </span>
         <span data-testid={`settlement-name-${memberId}`} className="text-sm font-medium leading-5 tracking-[.1px]">
           {label}
@@ -86,9 +86,9 @@ export function SettlementList({
             className={`flex items-center justify-between gap-2.5 ${i < settlements.length - 1 ? "border-b border-v2-line-soft py-3" : "pt-3"}`}
           >
             <div className="flex min-w-0 items-center gap-1.5">
-              {person(s.from.memberId, s.from.displayName)}
+              {person(s.from.memberId, s.from.displayName, s.from.userImage)}
               <ArrowRight className="h-[13px] w-[13px] shrink-0 text-v2-ink-subtle" strokeWidth={2.2} aria-label="付給" />
-              {person(s.to.memberId, s.to.displayName)}
+              {person(s.to.memberId, s.to.displayName, s.to.userImage)}
             </div>
             <p className="m-0 shrink-0 font-v2-serif text-base font-bold leading-6 tracking-[.15px] tabular-nums">
               {formatCurrency(Math.round(toDisplay(s.amount)), currencyCode)}

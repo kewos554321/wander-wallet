@@ -12,8 +12,8 @@ interface ExpenseFilterBarProps {
   filters: ExpenseFilters
   currency: string
   maxAmount: number
-  payers: { id: string; displayName: string }[]
-  participants: { id: string; displayName: string }[]
+  payers: { id: string; displayName: string; image?: string | null }[]
+  participants: { id: string; displayName: string; image?: string | null }[]
   currencies: string[]
   hasActiveFilters: boolean
   currentMemberId?: string | null
@@ -43,8 +43,8 @@ export function ExpenseFilterBar(props: ExpenseFilterBarProps) {
   const [openId, setOpenId] = useState<string | null>(null)
   const amountActive = filters.amountRange[0] > 0 || filters.amountRange[1] > 0 ? 1 : 0
   const toggle = (id: string) => setOpenId((cur) => (cur === id ? null : id))
-  const members = (list: { id: string; displayName: string }[]) =>
-    list.map((m) => ({ id: m.id, displayName: m.id === props.currentMemberId ? "我" : m.displayName }))
+  const members = (list: { id: string; displayName: string; image?: string | null }[]) =>
+    list.map((m) => ({ id: m.id, displayName: m.id === props.currentMemberId ? "我" : m.displayName, image: m.image ?? null }))
 
   return (
     <>

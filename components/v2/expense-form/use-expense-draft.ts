@@ -17,6 +17,7 @@ export interface DraftItem {
 export interface DraftMember {
   id: string
   displayName: string
+  image?: string | null
 }
 
 export interface DraftInit {

@@ -17,15 +17,19 @@ import { CategoryPicker } from "@/components/v2/expense-form/category-picker"
 import { LocationPickerV2 } from "@/components/v2/expense-form/location-picker-v2"
 import { memberPillClass, memberTone, PayerPicker } from "@/components/v2/expense-form/payer-picker"
 import { SECTION_CARD, SECTION_TITLE } from "@/components/v2/expense-form/section-card"
+import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 
-type Member = { id: string; displayName: string }
+type Member = { id: string; displayName: string; image?: string | null }
 
 function MemberPill({ member, index, selected, onClick }: { member: Member; index: number; selected: boolean; onClick: () => void }) {
   return (
     <button type="button" aria-pressed={selected} onClick={onClick} className={memberPillClass(selected)}>
-      <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold ${memberTone(index)}`} aria-hidden="true">
-        {member.displayName.charAt(0)}
-      </span>
+      <V2Avatar
+        image={member.image ?? null}
+        name={member.displayName}
+        className="h-5 w-5 rounded-full"
+        fallbackClassName={`text-[9px] font-bold ${memberTone(index)}`}
+      />
       <span className="text-xs font-semibold">{member.displayName}</span>
     </button>
   )

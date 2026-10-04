@@ -6,7 +6,7 @@ import { formatCurrency } from "@/lib/constants/currencies"
 import { itemTotals, type QuickItem } from "@/lib/quick-expense/draft"
 import { QuickItemCard } from "./quick-item-card"
 
-type Member = { id: string; displayName: string }
+type Member = { id: string; displayName: string; image?: string | null }
 const SWIPE_THRESHOLD = 50
 
 export function ConfirmStep({ items, members, index, onIndexChange, onItemsChange, onReinput, onSubmit, onClose, canNotifyLine, notifyLine, onNotifyLineChange, error }: {

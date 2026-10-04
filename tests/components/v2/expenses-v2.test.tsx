@@ -154,6 +154,16 @@ describe("ExpensesV2View", () => {
     expect(within(card).getByText("共4人分攤")).toBeInTheDocument()
   })
 
+  it("renders the payer avatar image in the card when present", () => {
+    const withImage = expense({
+      id: "e7",
+      payer: { ...zhi, user: { id: "u2", name: "志明", email: "zhi@example.com", image: "https://cdn.example/zhi.jpg" } },
+    })
+    renderView({ expenses: [withImage], allCount: 1, summary: { total: 1280, count: 1, average: 1280 } })
+    const card = screen.getByRole("link", { name: /一蘭拉麵晚餐/ })
+    expect(card.querySelector('img[src="https://cdn.example/zhi.jpg"]')).toBeInTheDocument()
+  })
+
   it("shows the count line and wires delete and image", () => {
     const props = renderView()
     expect(screen.getByText(/顯示/).textContent).toBe("顯示 2 / 2 筆")

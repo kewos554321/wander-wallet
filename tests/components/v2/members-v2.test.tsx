@@ -93,6 +93,22 @@ describe("MembersV2View", () => {
     expect(props.onInvite).toHaveBeenCalled()
     expect(props.onAdd).toHaveBeenCalled()
   })
+
+  it("renders the member image when present, else the initial", () => {
+    const withImage = {
+      ...project,
+      members: [
+        { ...project.members[0], user: { ...project.members[0].user!, image: "https://cdn.example/emma.jpg" } },
+        project.members[1],
+        project.members[2],
+      ],
+    }
+    renderView({ project: withImage })
+    const emma = screen.getByTestId("member-m1")
+    expect(emma.querySelector('img[src="https://cdn.example/emma.jpg"]')).toBeInTheDocument()
+    const mei = screen.getByTestId("member-m2")
+    expect(within(mei).getByText("小")).toBeInTheDocument()
+  })
 })
 
 describe("MembersV2 container", () => {

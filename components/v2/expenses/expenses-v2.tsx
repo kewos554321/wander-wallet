@@ -69,6 +69,8 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
 
   const currentMemberId = members.find((m) => m.user?.id === user?.id)?.id ?? null
   const dateRange = project ? formatTripDateRange(project.startDate, project.endDate) : null
+  const memberImage = new Map(members.map((m) => [m.id, m.user?.image ?? null]))
+  const withImage = <T extends { id: string }>(list: T[]) => list.map((m) => ({ ...m, image: memberImage.get(m.id) ?? null }))
 
   async function confirmDelete() {
     if (!deleteTarget) return
@@ -99,8 +101,8 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
                 filters={f.filters}
                 currency={projectCurrency}
                 maxAmount={f.maxAmount}
-                payers={f.uniquePayers}
-                participants={f.uniqueParticipants}
+                payers={withImage(f.uniquePayers)}
+                participants={withImage(f.uniqueParticipants)}
                 currencies={f.uniqueCurrencies}
                 hasActiveFilters={f.hasActiveFilters}
                 currentMemberId={currentMemberId}

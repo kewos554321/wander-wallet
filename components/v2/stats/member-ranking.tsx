@@ -1,5 +1,6 @@
 import { formatCurrency } from "@/lib/constants/currencies"
 import type { MemberStat } from "@/lib/project-stats"
+import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 
 const AVATAR_TONES = [
   "bg-v2-lake-tint text-v2-lake",
@@ -9,7 +10,9 @@ const AVATAR_TONES = [
   "bg-v2-rose-soft text-v2-rose",
 ]
 
-export function MemberRanking({ members, currency, currentMemberId }: { members: MemberStat[]; currency: string; currentMemberId: string | null }) {
+type RankingMember = MemberStat & { image?: string | null }
+
+export function MemberRanking({ members, currency, currentMemberId }: { members: RankingMember[]; currency: string; currentMemberId: string | null }) {
   const ranked = [...members].sort((a, b) => b.share - a.share)
   const top = ranked[0]?.share ?? 0
 
@@ -24,9 +27,12 @@ export function MemberRanking({ members, currency, currentMemberId }: { members:
         const pct = Math.round((m.share / top) * 100)
         return (
           <li key={m.id} className="flex items-center gap-2.5">
-            <span className={`flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${AVATAR_TONES[i % AVATAR_TONES.length]}`}>
-              {label.charAt(0)}
-            </span>
+            <V2Avatar
+              image={m.image ?? null}
+              name={label}
+              className="h-[26px] w-[26px] shrink-0 rounded-full"
+              fallbackClassName={`text-[10px] font-bold ${AVATAR_TONES[i % AVATAR_TONES.length]}`}
+            />
             <span
               role="meter"
               aria-label={label}

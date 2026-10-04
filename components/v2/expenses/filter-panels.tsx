@@ -7,6 +7,7 @@ import { CATEGORY_LABELS, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
 import { formatAmount } from "@/lib/constants/currencies"
 import { currencySymbol } from "@/components/v2/ui/currency-field"
 import { CATEGORY_TONES } from "@/components/v2/category-style"
+import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 
 function PanelHeader({ title, onClear, showClear }: { title: string; onClear: () => void; showClear: boolean }) {
   return (
@@ -71,7 +72,7 @@ export function MemberPanel({
   round = false,
 }: {
   title: string
-  members: { id: string; displayName: string }[]
+  members: { id: string; displayName: string; image?: string | null }[]
   selected: Set<string>
   onToggle: (id: string) => void
   onClear: () => void
@@ -95,9 +96,12 @@ export function MemberPanel({
               className="flex w-full items-center gap-2 px-2.5 py-[7px] text-xs"
             >
               <CheckBox checked={selected.has(member.id)} round={round} />
-              <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-v2-lake-tint text-[8px] font-bold text-v2-lake" aria-hidden="true">
-                {member.displayName.charAt(0)}
-              </span>
+              <V2Avatar
+                image={member.image ?? null}
+                name={member.displayName}
+                className="h-[18px] w-[18px] shrink-0 rounded-full"
+                fallbackClassName="bg-v2-lake-tint text-[8px] font-bold text-v2-lake"
+              />
               <span className="text-left">{member.displayName}</span>
             </button>
           ))

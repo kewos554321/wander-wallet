@@ -63,8 +63,7 @@ export function ProjectOverviewV2({ projectId }: { projectId: string }) {
           members={project.members.map((m) => ({
             id: m.id,
             displayName: m.displayName,
-            userId: m.user?.id || null,
-            user: m.user,
+            image: m.user?.image ?? null,
           }))}
           currentUserMemberId={summary.currentMemberId || ""}
           currency={project.currency || DEFAULT_CURRENCY}

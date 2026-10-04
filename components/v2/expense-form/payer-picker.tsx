@@ -1,5 +1,6 @@
 import { CheckCircle2 } from "lucide-react"
 import { formatAmount } from "@/lib/constants/currencies"
+import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import type { DraftMember } from "./use-expense-draft"
 import { SECTION_CARD, SECTION_TITLE } from "./section-card"
 
@@ -53,9 +54,12 @@ export function PayerPicker({
                 onChange={() => onChange(m.id)}
                 aria-label={m.displayName}
               />
-              <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold ${memberTone(i)}`} aria-hidden="true">
-                {m.displayName.charAt(0)}
-              </span>
+              <V2Avatar
+                image={m.image ?? null}
+                name={m.displayName}
+                className="h-5 w-5 rounded-full"
+                fallbackClassName={`text-[9px] font-bold ${memberTone(i)}`}
+              />
               <span className="text-xs font-semibold">{m.displayName}</span>
             </label>
           )
@@ -65,14 +69,12 @@ export function PayerPicker({
       {value && (
         <div className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
           <div className="flex items-center gap-2.5 bg-v2-lake-soft px-3.5 py-3">
-            <span
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${memberTone(
-                members.findIndex((m) => m.id === value)
-              )}`}
-              aria-hidden="true"
-            >
-              {nameOf(value).charAt(0)}
-            </span>
+            <V2Avatar
+              image={paid[0]?.image ?? null}
+              name={nameOf(value)}
+              className="h-7 w-7 shrink-0 rounded-full"
+              fallbackClassName={`text-[11px] font-bold ${memberTone(members.findIndex((m) => m.id === value))}`}
+            />
             <span className="flex flex-1 items-center justify-between gap-2">
               <span className="text-[13px] font-semibold">{nameOf(value)}</span>
               <span className="rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-[13px] font-bold">

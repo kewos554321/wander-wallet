@@ -438,4 +438,30 @@ describe("ExpenseFormV2View", () => {
     rerender()
     expect(screen.getByRole("alert")).toHaveTextContent("分攤明細與分攤金額不一致")
   })
+
+  it("renders the member image in the payer options when present, else the initial", () => {
+    renderForm({
+      members: [
+        { id: "a", displayName: "小雨", image: "https://cdn.example/xiaoyu.jpg" },
+        { id: "b", displayName: "志明", image: null },
+      ],
+    })
+    const payer = screen.getByRole("group", { name: "付款人" })
+    expect(payer.querySelector('img[src="https://cdn.example/xiaoyu.jpg"]')).toBeInTheDocument()
+    expect(within(payer).getAllByText("志").length).toBeGreaterThan(0)
+  })
+
+  it("renders the member image in the split editor and summary rows", () => {
+    const { hook, rerender } = renderForm({
+      members: [
+        { id: "a", displayName: "小雨", image: "https://cdn.example/xiaoyu.jpg" },
+        { id: "b", displayName: "志明", image: null },
+      ],
+    })
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    expect(split.querySelector('img[src="https://cdn.example/xiaoyu.jpg"]')).toBeInTheDocument()
+    expect(within(split).getAllByText("志").length).toBeGreaterThan(0)
+  })
 })

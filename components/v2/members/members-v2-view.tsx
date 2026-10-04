@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Share2, UserMinus, UserPlus, User } from "lucide-react"
 import type { MembersProject } from "@/lib/hooks/useProjectMembers"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
+import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 
 const AVATAR_TONES = [
   "bg-v2-lake-tint text-v2-lake",
@@ -63,14 +64,21 @@ export function MembersV2View(props: MembersV2ViewProps) {
               data-testid={`member-${member.id}`}
               className={`flex items-center gap-3 ${i < project.members.length - 1 ? "border-b border-v2-line-soft py-3.5" : "pt-3.5"}`}
             >
-              <span
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                  isPlaceholder ? "bg-v2-sand text-v2-ink-subtle" : AVATAR_TONES[i % AVATAR_TONES.length]
-                }`}
-                aria-hidden="true"
-              >
-                {isPlaceholder ? <User className="h-[19px] w-[19px]" strokeWidth={1.7} /> : member.displayName.charAt(0)}
-              </span>
+              {isPlaceholder ? (
+                <span
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-v2-sand text-v2-ink-subtle"
+                  aria-hidden="true"
+                >
+                  <User className="h-[19px] w-[19px]" strokeWidth={1.7} />
+                </span>
+              ) : (
+                <V2Avatar
+                  image={member.user?.image ?? null}
+                  name={member.displayName}
+                  className="h-11 w-11 shrink-0 rounded-full"
+                  fallbackClassName={`text-sm font-bold ${AVATAR_TONES[i % AVATAR_TONES.length]}`}
+                />
+              )}
               <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-center gap-1.5">
                   <span className="text-[13px] font-bold">{member.displayName}</span>

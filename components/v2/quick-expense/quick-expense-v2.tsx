@@ -13,7 +13,7 @@ import { ConfirmStep } from "./confirm-step"
 import { QuickInputStep } from "./quick-input-step"
 
 type Step = "input" | "camera" | "parsing" | "confirm" | "saving"
-type Member = { id: string; displayName: string }
+type Member = { id: string; displayName: string; image?: string | null }
 
 type QuickExpenseV2Props = {
   open: boolean
@@ -139,7 +139,7 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
         {step === "confirm" && (
           <ConfirmStep
             items={items}
-            members={plainMembers}
+            members={members}
             index={Math.min(index, items.length - 1)}
             onIndexChange={setIndex}
             onItemsChange={handleItemsChange}
