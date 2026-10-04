@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { ChevronDown } from "lucide-react"
 import { useDismiss } from "@/components/v2/use-dismiss"
 
@@ -39,33 +39,40 @@ export function FilterPopover({
   // Position the panel with fixed coordinates measured against the trigger so it
   // never spills outside the viewport: flip upward when there is no room below,
   // and clamp horizontally. Fixed (not a Portal) keeps the v2 token scope.
+  const measure = useCallback(() => {
+    const trigger = ref.current
+    const panel = panelRef.current
+    if (!trigger || !panel) return
+    const r = trigger.getBoundingClientRect()
+    const pw = panel.offsetWidth
+    const ph = panel.offsetHeight
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const top = r.bottom + 4 + ph > vh ? Math.max(4, r.top - ph - 4) : r.bottom + 4
+    const preferred = align === "right" ? r.right - pw : r.left
+    const left = Math.min(Math.max(4, preferred), Math.max(4, vw - pw - 4))
+    setPos({ top, left })
+  }, [align])
+
+  // Measure when the panel mounts (ref callback commit) rather than in an
+  // effect, so the position is ready before paint.
+  const attachPanel = useCallback(
+    (node: HTMLDivElement | null) => {
+      panelRef.current = node
+      if (node) measure()
+    },
+    [measure]
+  )
+
   useEffect(() => {
-    if (!open) {
-      setPos(null)
-      return
-    }
-    const update = () => {
-      const trigger = ref.current
-      const panel = panelRef.current
-      if (!trigger || !panel) return
-      const r = trigger.getBoundingClientRect()
-      const pw = panel.offsetWidth
-      const ph = panel.offsetHeight
-      const vw = window.innerWidth
-      const vh = window.innerHeight
-      const top = r.bottom + 4 + ph > vh ? Math.max(4, r.top - ph - 4) : r.bottom + 4
-      const preferred = align === "right" ? r.right - pw : r.left
-      const left = Math.min(Math.max(4, preferred), Math.max(4, vw - pw - 4))
-      setPos({ top, left })
-    }
-    update()
-    window.addEventListener("scroll", update, true)
-    window.addEventListener("resize", update)
+    if (!open) return
+    window.addEventListener("scroll", measure, true)
+    window.addEventListener("resize", measure)
     return () => {
-      window.removeEventListener("scroll", update, true)
-      window.removeEventListener("resize", update)
+      window.removeEventListener("scroll", measure, true)
+      window.removeEventListener("resize", measure)
     }
-  }, [open, align])
+  }, [open, measure])
 
   const active = count > 0
   const stateClass = active
@@ -100,7 +107,7 @@ export function FilterPopover({
       </button>
       {open && (
         <div
-          ref={panelRef}
+          ref={attachPanel}
           data-testid="filter-panel"
           style={{ top: pos?.top, left: pos?.left, visibility: pos ? "visible" : "hidden" }}
           className={`fixed z-20 overflow-hidden ${panelRadiusClass} border border-v2-line bg-v2-surface shadow-[0_10px_28px_rgba(27,24,21,.18)] ${widthClass}`}
