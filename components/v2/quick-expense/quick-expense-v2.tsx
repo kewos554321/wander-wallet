@@ -45,6 +45,7 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
   const [index, setIndex] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [notifyLine, setNotifyLine] = useState(true)
+  const [inputImage, setInputImage] = useState<{ file: File; preview: string } | null>(null)
   const galleryInput = useRef<HTMLInputElement>(null)
 
   const close = () => onOpenChange(false)
@@ -57,28 +58,44 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
     setStep("confirm")
   }
 
+  const attachImage = (file: File) => {
+    setInputImage((prev) => {
+      if (prev) URL.revokeObjectURL(prev.preview)
+      return { file, preview: URL.createObjectURL(file) }
+    })
+    setError(null)
+    setStep("input")
+  }
+
+  const clearInputImage = () => {
+    setInputImage((prev) => {
+      if (prev) URL.revokeObjectURL(prev.preview)
+      return null
+    })
+  }
+
   const handleParse = async () => {
     setStep("parsing")
     setError(null)
     try {
-      const results = await parseText(authFetch, { transcript: text.trim(), members: plainMembers, currentUserMemberId, defaultCurrency: currency })
-      showItems(fromParsed(results))
+      if (inputImage) {
+        // An attached image wins over the text box: analyse the receipt only.
+        const result = await parseReceipt(authFetch, inputImage.file)
+        showItems([
+          receiptToItem(result, {
+            currency,
+            payerId: currentUserMemberId,
+            memberIds: plainMembers.map((m) => m.id),
+            file: inputImage.file,
+            preview: inputImage.preview,
+          }),
+        ])
+      } else {
+        const results = await parseText(authFetch, { transcript: text.trim(), members: plainMembers, currentUserMemberId, defaultCurrency: currency })
+        showItems(fromParsed(results))
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "解析失敗，請重試")
-      setStep("input")
-    }
-  }
-
-  const handleImage = async (file: File) => {
-    setStep("parsing")
-    setError(null)
-    try {
-      const result = await parseReceipt(authFetch, file)
-      showItems([
-        receiptToItem(result, { currency, payerId: currentUserMemberId, memberIds: plainMembers.map((m) => m.id), file, preview: URL.createObjectURL(file) }),
-      ])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "收據辨識失敗")
+      setError(err instanceof Error ? err.message : inputImage ? "收據辨識失敗" : "解析失敗，請重試")
       setStep("input")
     }
   }
@@ -86,7 +103,7 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
   const pickGallery = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ""
-    if (file) void handleImage(file)
+    if (file) attachImage(file)
   }
 
   const handleItemsChange = (next: QuickItem[]) => {
@@ -127,9 +144,9 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
       <div className="mx-auto min-h-full max-w-md">
         <input ref={galleryInput} data-testid="quick-gallery-input" type="file" accept="image/*" className="hidden" onChange={pickGallery} />
         {step === "input" && (
-          <QuickInputStep text={text} onTextChange={setText} onParse={handleParse} onCamera={() => { setError(null); setStep("camera") }} onGallery={() => galleryInput.current?.click()} onClose={close} error={error} />
+          <QuickInputStep text={text} onTextChange={setText} onParse={handleParse} onCamera={() => { setError(null); setStep("camera") }} onGallery={() => galleryInput.current?.click()} onClose={close} error={error} image={inputImage?.preview ?? null} onImageRemove={clearInputImage} />
         )}
-        {step === "camera" && <CameraStep onImage={handleImage} onClose={() => setStep("input")} />}
+        {step === "camera" && <CameraStep onImage={attachImage} onClose={() => setStep("input")} />}
         {(step === "parsing" || step === "saving") && (
           <div role="status" className="flex min-h-screen flex-col items-center justify-center gap-3 text-sm text-v2-ink-muted">
             <Loader2 className="h-8 w-8 animate-spin text-v2-lake" aria-hidden="true" />
@@ -143,7 +160,7 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
             index={Math.min(index, items.length - 1)}
             onIndexChange={setIndex}
             onItemsChange={handleItemsChange}
-            onReinput={() => { setItems([]); setError(null); setStep("input") }}
+            onReinput={() => { setItems([]); setError(null); setStep("input"); clearInputImage() }}
             onSubmit={handleSubmit}
             onClose={close}
             canNotifyLine={canNotifyLine}

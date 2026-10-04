@@ -15,9 +15,9 @@ vi.mock("@/lib/quick-expense/speech-input", () => ({
 import { QuickInputStep } from "@/components/v2/quick-expense/quick-input-step"
 
 let currentUnmount: (() => void) | null = null
-const setup = (text = "", error: string | null = null) => {
+const setup = (text = "", error: string | null = null, image: string | null = null) => {
   if (currentUnmount) currentUnmount()
-  const p = { text, onTextChange: vi.fn(), onParse: vi.fn(), onCamera: vi.fn(), onGallery: vi.fn(), onClose: vi.fn(), error }
+  const p = { text, onTextChange: vi.fn(), onParse: vi.fn(), onCamera: vi.fn(), onGallery: vi.fn(), onClose: vi.fn(), error, image, onImageRemove: vi.fn() }
   const { unmount } = render(<QuickInputStep {...p} />)
   currentUnmount = unmount
   return p
@@ -61,6 +61,14 @@ describe("QuickInputStep", () => {
     expect(screen.getByText("AI 快速記帳")).toBeInTheDocument()
     expect(screen.getByText("收據/消費圖片")).toBeInTheDocument()
     expect(screen.getByText("AI 自動辨識金額與品項")).toBeInTheDocument()
+  })
+  it("shows the attached image with a remove button instead of the tiles", () => {
+    const p = setup("早餐 100", null, "blob:preview")
+    expect(screen.getByAltText("圖片預覽")).toHaveAttribute("src", "blob:preview")
+    expect(screen.queryByRole("button", { name: "拍照" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "選擇圖片" })).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "移除圖片" }))
+    expect(p.onImageRemove).toHaveBeenCalled()
   })
   it("shows the refreshed examples and the guidance under the section title", () => {
     setup("")

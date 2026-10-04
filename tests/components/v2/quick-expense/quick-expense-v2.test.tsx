@@ -41,11 +41,13 @@ const typeAndParse = (text = "早餐 100") => {
 }
 
 const originalCreateObjectURL = globalThis.URL.createObjectURL
+const originalRevokeObjectURL = globalThis.URL.revokeObjectURL
 
 beforeEach(() => {
   parseText.mockReset(); parseReceipt.mockReset(); save.mockReset()
   canNotifyLine = false
   globalThis.URL.createObjectURL = vi.fn(() => "blob:1")
+  globalThis.URL.revokeObjectURL = vi.fn()
 })
 
 afterEach(() => {
@@ -53,6 +55,11 @@ afterEach(() => {
     globalThis.URL.createObjectURL = originalCreateObjectURL
   } else {
     delete (globalThis.URL as { createObjectURL?: unknown }).createObjectURL
+  }
+  if (originalRevokeObjectURL) {
+    globalThis.URL.revokeObjectURL = originalRevokeObjectURL
+  } else {
+    delete (globalThis.URL as { revokeObjectURL?: unknown }).revokeObjectURL
   }
 })
 
@@ -93,23 +100,55 @@ describe("QuickExpenseV2", () => {
     expect(screen.getByLabelText("消費內容")).toBeInTheDocument()
   })
 
-  it("turns a receipt photo into one item", async () => {
+  it("attaches a receipt photo and only parses it on AI 解析", async () => {
     parseReceipt.mockResolvedValue({ amount: 880, description: "超商", category: "shopping", date: null, confidence: 1 })
     setup()
     fireEvent.click(screen.getByRole("button", { name: "拍照" }))
     fireEvent.click(screen.getByText("fake-shot"))
+    // Back on the input with a thumbnail; parsing is deferred.
+    expect(screen.getByLabelText("消費內容")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "移除圖片" })).toBeInTheDocument()
+    expect(parseReceipt).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "AI 解析" }))
     await screen.findByText("1 / 1")
+    expect(parseReceipt).toHaveBeenCalled()
     expect(screen.getByLabelText("金額")).toHaveValue("880")
   })
 
-  it("turns a chosen gallery image into one item", async () => {
+  it("attaches a chosen gallery image and parses it on AI 解析", async () => {
     parseReceipt.mockResolvedValue({ amount: 880, description: "超商", category: "shopping", date: null, confidence: 1 })
     setup()
     fireEvent.click(screen.getByRole("button", { name: "選擇圖片" }))
     fireEvent.change(screen.getByTestId("quick-gallery-input"), { target: { files: [new File(["a"], "g.jpg")] } })
+    expect(screen.getByRole("button", { name: "移除圖片" })).toBeInTheDocument()
+    expect(parseReceipt).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "AI 解析" }))
     await screen.findByText("1 / 1")
     expect(parseReceipt).toHaveBeenCalled()
     expect(screen.getByLabelText("金額")).toHaveValue("880")
+  })
+
+  it("replaces the tiles with the image and restores them on remove", () => {
+    setup()
+    fireEvent.click(screen.getByRole("button", { name: "拍照" }))
+    fireEvent.click(screen.getByText("fake-shot"))
+    expect(screen.queryByRole("button", { name: "拍照" })).toBeNull()
+    expect(screen.getByRole("button", { name: "移除圖片" })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "移除圖片" }))
+    expect(screen.getByRole("button", { name: "拍照" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "選擇圖片" })).toBeInTheDocument()
+  })
+
+  it("uses the image and ignores the text when both are present", async () => {
+    parseReceipt.mockResolvedValue({ amount: 880, description: "超商", category: "shopping", date: null, confidence: 1 })
+    setup()
+    fireEvent.change(screen.getByLabelText("消費內容"), { target: { value: "早餐 100" } })
+    fireEvent.click(screen.getByRole("button", { name: "拍照" }))
+    fireEvent.click(screen.getByText("fake-shot"))
+    fireEvent.click(screen.getByRole("button", { name: "AI 解析" }))
+    await screen.findByText("1 / 1")
+    expect(parseReceipt).toHaveBeenCalled()
+    expect(parseText).not.toHaveBeenCalled()
   })
 
   it("returns to input when a receipt parse fails", async () => {
@@ -117,8 +156,10 @@ describe("QuickExpenseV2", () => {
     setup()
     fireEvent.click(screen.getByRole("button", { name: "拍照" }))
     fireEvent.click(screen.getByText("fake-shot"))
+    fireEvent.click(screen.getByRole("button", { name: "AI 解析" }))
     expect(await screen.findByRole("alert")).toHaveTextContent("收據辨識失敗")
     expect(screen.getByLabelText("消費內容")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "移除圖片" })).toBeInTheDocument()
   })
 
   it("jumps to the first invalid item instead of saving", async () => {

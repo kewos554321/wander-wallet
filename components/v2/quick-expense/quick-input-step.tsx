@@ -6,7 +6,7 @@ import { SECTION_CARD } from "@/components/v2/expense-form/section-card"
 
 export const EXAMPLES = ["早餐 100 我付", "晚餐 600 大家分", "計程車 250 小明付", "超市 1280 我付 800、小明 480"]
 
-export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGallery, onClose, error }: {
+export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGallery, onClose, error, image, onImageRemove }: {
   text: string
   onTextChange: (text: string) => void
   onParse: () => void
@@ -14,6 +14,8 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
   onGallery: () => void
   onClose: () => void
   error: string | null
+  image: string | null
+  onImageRemove: () => void
 }) {
   const append = (extra: string) => {
     const current = text.trim()
@@ -70,28 +72,43 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
 
       <div className={`${SECTION_CARD} mt-5`}>
         <p className="mb-2 text-[13px] font-bold text-v2-lake">收據/消費圖片</p>
-        <div className="flex gap-2.5">
-          <button
-            type="button"
-            onClick={onCamera}
-            className="flex flex-1 flex-col items-center justify-center gap-1.5 rounded-[14px] border-[1.5px] border-dashed border-v2-check bg-v2-paper px-2.5 py-4 text-v2-ink-muted"
-          >
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-v2-coral-soft text-v2-coral" aria-hidden="true">
-              <Camera className="h-[15px] w-[15px]" />
-            </span>
-            <span className="text-xs font-semibold">拍照</span>
-          </button>
-          <button
-            type="button"
-            onClick={onGallery}
-            className="flex flex-1 flex-col items-center justify-center gap-1.5 rounded-[14px] border-[1.5px] border-dashed border-v2-check bg-v2-paper px-2.5 py-4 text-v2-ink-muted"
-          >
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-v2-lake-soft text-v2-lake" aria-hidden="true">
-              <ImageIcon className="h-[15px] w-[15px]" />
-            </span>
-            <span className="text-xs font-semibold">選擇圖片</span>
-          </button>
-        </div>
+        {image ? (
+          <div className="relative overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={image} alt="圖片預覽" className="max-h-48 w-full object-contain" />
+            <button
+              type="button"
+              aria-label="移除圖片"
+              onClick={onImageRemove}
+              className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-v2-ink/60 text-v2-paper"
+            >
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2.5">
+            <button
+              type="button"
+              onClick={onCamera}
+              className="flex flex-1 flex-col items-center justify-center gap-1.5 rounded-[14px] border-[1.5px] border-dashed border-v2-check bg-v2-paper px-2.5 py-4 text-v2-ink-muted"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-v2-coral-soft text-v2-coral" aria-hidden="true">
+                <Camera className="h-[15px] w-[15px]" />
+              </span>
+              <span className="text-xs font-semibold">拍照</span>
+            </button>
+            <button
+              type="button"
+              onClick={onGallery}
+              className="flex flex-1 flex-col items-center justify-center gap-1.5 rounded-[14px] border-[1.5px] border-dashed border-v2-check bg-v2-paper px-2.5 py-4 text-v2-ink-muted"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-v2-lake-soft text-v2-lake" aria-hidden="true">
+                <ImageIcon className="h-[15px] w-[15px]" />
+              </span>
+              <span className="text-xs font-semibold">選擇圖片</span>
+            </button>
+          </div>
+        )}
         <p className="mt-2 text-xs text-v2-ink-subtle">AI 自動辨識金額與品項</p>
       </div>
 
@@ -103,7 +120,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
         )}
         <button
           type="button"
-          disabled={!text.trim() || busy}
+          disabled={(!text.trim() && !image) || busy}
           onClick={onParse}
           className="flex w-full items-center justify-center gap-1.5 rounded-[14px] bg-v2-lake py-[15px] text-[15px] font-bold text-v2-on-lake disabled:opacity-40"
         >
