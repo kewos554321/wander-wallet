@@ -296,4 +296,35 @@ describe("ExpenseFilterBar panels", () => {
     fireEvent.click(screen.getByRole("radio", { name: "志明" }))
     expect(props.onSetPayers).toHaveBeenCalledWith(new Set())
   })
+
+  it("keeps the date panel inside the viewport (fixed, flips up)", () => {
+    const rect = {
+      top: 700,
+      bottom: 730,
+      left: 320,
+      right: 400,
+      width: 80,
+      height: 30,
+      x: 320,
+      y: 700,
+      toJSON: () => ({}),
+    } as DOMRect
+    const rectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue(rect)
+    const ow = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetWidth")
+    const oh = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetHeight")
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", { configurable: true, get: () => 236 })
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", { configurable: true, get: () => 260 })
+
+    renderBar()
+    fireEvent.click(screen.getByRole("button", { name: /付款日期/ }))
+    const panel = screen.getByTestId("filter-panel")
+    expect(panel.className).toContain("fixed")
+    // bottom 730 + 4 + 260 exceeds the jsdom viewport height → the panel opens upward.
+    expect(parseFloat(panel.style.top)).toBeLessThan(700)
+    expect(parseFloat(panel.style.left)).toBeGreaterThanOrEqual(4)
+
+    rectSpy.mockRestore()
+    if (ow) Object.defineProperty(HTMLElement.prototype, "offsetWidth", ow)
+    if (oh) Object.defineProperty(HTMLElement.prototype, "offsetHeight", oh)
+  })
 })

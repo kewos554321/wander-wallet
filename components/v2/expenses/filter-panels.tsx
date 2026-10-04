@@ -249,7 +249,7 @@ export function DatePanel({ range, onChange }: { range: DateRange | undefined; o
   }
 
   return (
-    <>
+    <div className="max-h-[calc(100vh-160px)] overflow-y-auto">
       <div className="flex items-center justify-between border-b border-v2-line px-2.5 py-[7px]">
         <span className="text-[11px] font-semibold text-v2-ink">付款日期</span>
         {!!(range?.from || range?.to) && (
@@ -318,6 +318,6 @@ export function DatePanel({ range, onChange }: { range: DateRange | undefined; o
           })}
         </div>
       </div>
-    </>
+    </div>
   )
 }
