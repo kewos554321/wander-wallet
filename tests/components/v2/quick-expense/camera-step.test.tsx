@@ -27,6 +27,14 @@ describe("isIOSDevice", () => {
     expect(isIOSDevice("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)")).toBe(true)
     expect(isIOSDevice("Mozilla/5.0 (Linux; Android 14)")).toBe(false)
   })
+
+  it("detects iPadOS desktop-mode user agents via touch support", () => {
+    const touch = (n: number) => Object.defineProperty(navigator, "maxTouchPoints", { configurable: true, value: n })
+    touch(5)
+    expect(isIOSDevice("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)")).toBe(true)
+    touch(0)
+    expect(isIOSDevice("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)")).toBe(false)
+  })
 })
 
 describe("CameraStep", () => {
@@ -52,10 +60,31 @@ describe("CameraStep", () => {
     expect(screen.getByRole("button", { name: "從相簿選擇" })).toBeInTheDocument()
   })
 
-  it("falls back when permission is denied", async () => {
-    setMedia(vi.fn().mockRejectedValue(new Error("denied")))
+  it("falls back when the camera fails for a non-permission reason", async () => {
+    setMedia(vi.fn().mockRejectedValue(new Error("camera busy")))
     render(<CameraStep {...props()} />)
     await waitFor(() => expect(screen.getByRole("button", { name: "開啟相機" })).toBeInTheDocument())
+  })
+
+  it("shows a permission message with retry when access is denied", async () => {
+    const denied = Object.assign(new Error("Permission denied"), { name: "NotAllowedError" })
+    const getUserMedia = vi.fn().mockRejectedValue(denied)
+    setMedia(getUserMedia)
+    render(<CameraStep {...props()} />)
+    expect(await screen.findByText("請允許相機權限")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "重新嘗試" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "從相簿選擇" })).toBeInTheDocument()
+    const calls = getUserMedia.mock.calls.length
+    fireEvent.click(screen.getByRole("button", { name: "重新嘗試" }))
+    await waitFor(() => expect(getUserMedia.mock.calls.length).toBeGreaterThan(calls))
+  })
+
+  it("retries with any camera when the environment camera is unavailable", async () => {
+    const getUserMedia = vi.fn().mockRejectedValueOnce(new Error("OverconstrainedError")).mockResolvedValueOnce({ getTracks: () => [] })
+    setMedia(getUserMedia)
+    render(<CameraStep {...props()} />)
+    await waitFor(() => expect(screen.getByRole("button", { name: "拍照" })).toBeInTheDocument())
+    expect(getUserMedia).toHaveBeenCalledTimes(2)
   })
 
   it("opens the hidden native camera and gallery inputs from the fallback buttons", async () => {
