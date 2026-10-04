@@ -27,6 +27,27 @@ vi.mock("@/components/ui/currency-select", () => ({
 
 import { NewProjectV2 } from "@/components/v2/new-project/new-project-v2"
 
+// tests/setup.ts stubs ResizeObserver with a bare vi.fn() whose implementation
+// is not a constructor, so Radix popper crashes when the date-range popover
+// opens. Provide a constructable stub so the calendar can mount.
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver
+
+// data-day attributes use toLocaleDateString() (e.g. "2026/10/7"); convert to
+// the zero-padded yyyy/MM/dd form the v2 date display renders.
+function slashDay(dayAttribute: string): string {
+  const [year, month, day] = dayAttribute.split("/").map(Number)
+  return `${year}/${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}`
+}
+
+function dayButtons(): HTMLButtonElement[] {
+  return Array.from(document.querySelectorAll<HTMLButtonElement>("button[data-day]"))
+}
+
 describe("NewProjectV2", () => {
   beforeEach(() => {
     mockPush.mockReset()
@@ -94,5 +115,67 @@ describe("NewProjectV2", () => {
     fireEvent.click(screen.getByRole("button", { name: "建立旅程" }))
     expect(await screen.findByRole("alert")).toHaveTextContent("專案名稱必填")
     expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it("updates the preview and trigger when a date range is picked from the calendar", () => {
+    render(<NewProjectV2 />)
+    fireEvent.click(screen.getByRole("button", { name: "選擇日期" }))
+
+    const first = dayButtons()[10]
+    const startLabel = slashDay(first.getAttribute("data-day")!)
+    fireEvent.click(first)
+
+    const second = dayButtons()[14]
+    const endLabel = slashDay(second.getAttribute("data-day")!)
+    fireEvent.click(second)
+
+    const dayCount =
+      Math.round((new Date(endLabel).getTime() - new Date(startLabel).getTime()) / 86400000) + 1
+    expect(screen.getByText(`${startLabel} – ${endLabel} · 尚未邀請旅伴`)).toBeInTheDocument()
+    expect(screen.getByText(`${dayCount} 天`)).toBeInTheDocument()
+    // The trigger shows the same range once both ends are chosen.
+    expect(screen.getByRole("button", { name: `${startLabel} – ${endLabel}` })).toBeInTheDocument()
+    expect(screen.queryByText("選擇日期")).not.toBeInTheDocument()
+  })
+
+  it("sends the description and changed currency in the create payload", async () => {
+    mockAuthFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ id: "new-id" }) })
+    render(<NewProjectV2 />)
+    fireEvent.change(screen.getByLabelText("旅程名稱"), { target: { value: "京都" } })
+    fireEvent.change(screen.getByLabelText("描述"), { target: { value: "賞楓五日" } })
+    fireEvent.change(screen.getByLabelText("結算幣別"), { target: { value: "TWD" } })
+
+    expect(screen.getByText("TWD 台幣")).toBeInTheDocument()
+    expect(screen.getByText("NT$")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "建立旅程" }))
+    await waitFor(() => expect(mockAuthFetch).toHaveBeenCalled())
+    const body = JSON.parse(mockAuthFetch.mock.calls[0][1].body)
+    expect(body.description).toBe("賞楓五日")
+    expect(body.currency).toBe("TWD")
+  })
+
+  it("falls back to the generic create error when the error body is not JSON", async () => {
+    mockAuthFetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => {
+        throw new Error("not json")
+      },
+    })
+    render(<NewProjectV2 />)
+    fireEvent.change(screen.getByLabelText("旅程名稱"), { target: { value: "京都" } })
+    fireEvent.click(screen.getByRole("button", { name: "建立旅程" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("建立失敗，請重試")
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it("shows the generic create error and re-enables the button when the request rejects", async () => {
+    mockAuthFetch.mockRejectedValueOnce(new Error("network"))
+    render(<NewProjectV2 />)
+    fireEvent.change(screen.getByLabelText("旅程名稱"), { target: { value: "京都" } })
+    fireEvent.click(screen.getByRole("button", { name: "建立旅程" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("建立失敗，請重試")
+    expect(mockPush).not.toHaveBeenCalled()
+    await waitFor(() => expect(screen.getByRole("button", { name: "建立旅程" })).toBeEnabled())
   })
 })

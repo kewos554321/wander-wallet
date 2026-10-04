@@ -122,4 +122,36 @@ describe("ConfirmStep", () => {
     expect(screen.queryByRole("checkbox", { name: /通知 LINE 群組/ })).toBeNull()
     expect(screen.getByText("TWD 60 · JPY 500")).toBeInTheDocument()
   })
+
+  it("returns null when the index no longer points at an item", () => {
+    const p = { items, members, index: 9, onIndexChange: vi.fn(), onItemsChange: vi.fn(), onReinput: vi.fn(), onSubmit: vi.fn(), onClose: vi.fn(), canNotifyLine: false, notifyLine: false, onNotifyLineChange: vi.fn(), error: null }
+    const { container } = render(<ConfirmStep {...p} />)
+    expect(container).toBeEmptyDOMElement()
+  })
+
+  it("swipes left to the next card", () => {
+    const p = setup({ index: 0 })
+    const surface = screen.getByLabelText("金額").closest("div.mt-2")!
+    fireEvent.touchStart(surface, { touches: [{ clientX: 200 }] })
+    fireEvent.touchEnd(surface, { changedTouches: [{ clientX: 100 }] })
+    expect(p.onIndexChange).toHaveBeenLastCalledWith(1)
+  })
+
+  it("swipes right to the previous card", () => {
+    const p = setup({ index: 1 })
+    const surface = screen.getByLabelText("金額").closest("div.mt-2")!
+    fireEvent.touchStart(surface, { touches: [{ clientX: 100 }] })
+    fireEvent.touchEnd(surface, { changedTouches: [{ clientX: 200 }] })
+    expect(p.onIndexChange).toHaveBeenLastCalledWith(0)
+  })
+
+  it("ignores short drags and touch-end without a matching touch-start", () => {
+    const p = setup({ index: 0 })
+    const surface = screen.getByLabelText("金額").closest("div.mt-2")!
+    fireEvent.touchStart(surface, { touches: [{ clientX: 100 }] })
+    fireEvent.touchEnd(surface, { changedTouches: [{ clientX: 130 }] })
+    expect(p.onIndexChange).not.toHaveBeenCalled()
+    fireEvent.touchEnd(surface, { changedTouches: [{ clientX: 10 }] })
+    expect(p.onIndexChange).not.toHaveBeenCalled()
+  })
 })

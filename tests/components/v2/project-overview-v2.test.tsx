@@ -6,12 +6,30 @@ vi.mock("next/font/google", () => ({
   Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
   Noto_Sans_TC: () => ({ variable: "font-var-sans" }),
 }))
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }))
+const routerPush = vi.hoisted(() => vi.fn())
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: routerPush }) }))
 vi.mock("@/components/auth/liff-provider", () => ({
   useLiff: () => ({ user: { id: "u1" } }),
   useAuthFetch: () => vi.fn(),
 }))
-vi.mock("@/components/v2/quick-expense/quick-expense-v2", () => ({ QuickExpenseV2: () => null }))
+const quickExpenseProps = vi.hoisted(() => ({ current: null as Record<string, unknown> | null }))
+vi.mock("@/components/v2/quick-expense/quick-expense-v2", () => ({
+  QuickExpenseV2: (props: Record<string, unknown>) => {
+    quickExpenseProps.current = props
+    return (
+      <div data-testid="quick-expense-stub">
+        <span data-testid="qe-open">{String(props.open)}</span>
+        <span data-testid="qe-initial-step">{String(props.initialStep)}</span>
+        <button type="button" onClick={() => (props.onOpenChange as (open: boolean) => void)(false)}>
+          stub-qe-close
+        </button>
+        <button type="button" onClick={() => (props.onSuccess as () => void)?.()}>
+          stub-qe-success
+        </button>
+      </div>
+    )
+  },
+}))
 
 const mockOverview = vi.fn()
 vi.mock("@/lib/hooks/useProjectOverview", () => ({ useProjectOverview: () => mockOverview() }))
@@ -321,5 +339,65 @@ describe("ProjectOverviewV2 container", () => {
     expect(screen.getByText("TWD 48,600")).toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "分享" }))
     expect(screen.getByText("邀請成員加入")).toBeInTheDocument()
+  })
+
+  it("opens the quick-expense overlay from the voice action and closes it without refetching", () => {
+    const refetch = vi.fn()
+    mockOverview.mockReturnValue({
+      project,
+      loading: false,
+      joinInfo: null,
+      joining: false,
+      joinProject: vi.fn(),
+      claimMember: vi.fn(),
+      refetch,
+      summary,
+    })
+    render(<ProjectOverviewV2 projectId="p1" />)
+
+    expect(screen.getByTestId("qe-open")).toHaveTextContent("false")
+
+    fireEvent.click(screen.getByRole("button", { name: /AI 快速記帳/ }))
+    expect(screen.getByTestId("qe-open")).toHaveTextContent("true")
+    expect(screen.getByTestId("qe-initial-step")).toHaveTextContent("input")
+    expect(quickExpenseProps.current?.projectName).toBe("東京賞楓 5 日")
+
+    fireEvent.click(screen.getByRole("button", { name: "stub-qe-close" }))
+    expect(screen.getByTestId("qe-open")).toHaveTextContent("false")
+    expect(refetch).not.toHaveBeenCalled()
+  })
+
+  it("refetches the overview after a successful quick expense", () => {
+    const refetch = vi.fn()
+    mockOverview.mockReturnValue({
+      project,
+      loading: false,
+      joinInfo: null,
+      joining: false,
+      joinProject: vi.fn(),
+      claimMember: vi.fn(),
+      refetch,
+      summary,
+    })
+    render(<ProjectOverviewV2 projectId="p1" />)
+    fireEvent.click(screen.getByRole("button", { name: "stub-qe-success" }))
+    expect(refetch).toHaveBeenCalledTimes(1)
+  })
+
+  it("returns to the project list when the join dialog is cancelled", () => {
+    routerPush.mockClear()
+    mockOverview.mockReturnValue({
+      project: null,
+      loading: false,
+      joinInfo: { name: "東京", description: null, joinMode: "create_only", unclaimedMembers: [] },
+      joining: false,
+      joinProject: vi.fn(),
+      claimMember: vi.fn(),
+      refetch: vi.fn(),
+      summary: null,
+    })
+    render(<ProjectOverviewV2 projectId="p1" />)
+    fireEvent.click(screen.getByRole("button", { name: "取消" }))
+    expect(routerPush).toHaveBeenCalledWith("/projects")
   })
 })

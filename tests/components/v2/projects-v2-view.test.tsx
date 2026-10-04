@@ -1,7 +1,32 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent, within } from "@testing-library/react"
 import { ProjectsV2View } from "@/components/v2/projects/projects-v2-view"
 import type { ProjectListItem } from "@/lib/hooks/useProjects"
+
+vi.mock("next/font/google", () => ({
+  Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
+  Noto_Sans_TC: () => ({ variable: "font-var-sans" }),
+}))
+
+const mocks = vi.hoisted(() => ({
+  useLiff: vi.fn(),
+  useProjects: vi.fn(),
+}))
+
+vi.mock("@/components/auth/liff-provider", () => ({
+  useLiff: () => mocks.useLiff(),
+  useAuthFetch: () => vi.fn(),
+}))
+
+vi.mock("@/components/ads/ad-container", () => ({
+  AdContainer: ({ placement, variant }: { placement: string; variant?: string }) => (
+    <div data-testid="ad-container" data-placement={placement} data-variant={variant} />
+  ),
+}))
+
+vi.mock("@/lib/hooks/useProjects", () => ({ useProjects: () => mocks.useProjects() }))
+
+import { ProjectsV2 } from "@/components/v2/projects/projects-v2"
 
 const local = (y: number, m: number, d: number) => new Date(y, m - 1, d, 12).toISOString()
 const now = new Date(2026, 10, 14, 9) // 2026-11-14 09:00
@@ -114,5 +139,64 @@ describe("ProjectsV2View", () => {
     expect(mark).toHaveClass("shadow-[0_2px_6px_rgba(27,88,71,.35)]")
     expect(mark).not.toHaveClass("rounded-full")
     expect(screen.getByText("Wander Wallet")).toBeInTheDocument()
+  })
+})
+
+describe("ProjectsV2 container", () => {
+  beforeEach(() => {
+    mocks.useLiff.mockReset()
+    mocks.useProjects.mockReset()
+  })
+
+  it("renders the view with hook projects and the signed-in user's name", () => {
+    mocks.useLiff.mockReturnValue({ user: { name: "Emma" } })
+    mocks.useProjects.mockReturnValue({ projects, loading: false })
+
+    render(<ProjectsV2 />)
+
+    expect(screen.getByRole("heading", { name: "你的旅程" })).toBeInTheDocument()
+    expect(screen.getByText(/，Emma$/)).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /東京賞楓 5 日/ })).toHaveAttribute("href", "/projects/tokyo")
+  })
+
+  it("falls back to the anonymous greeting and empty state without a user", () => {
+    mocks.useLiff.mockReturnValue({ user: null })
+    mocks.useProjects.mockReturnValue({ projects: [], loading: false })
+
+    render(<ProjectsV2 />)
+
+    expect(screen.getByText("你好")).toBeInTheDocument()
+    expect(screen.getByText("還沒有旅程")).toBeInTheDocument()
+    expect(screen.queryByText("Emma")).not.toBeInTheDocument()
+  })
+
+  it("renders skeletons while the hook is loading", () => {
+    mocks.useLiff.mockReturnValue({ user: { name: "Emma" } })
+    mocks.useProjects.mockReturnValue({ projects: [], loading: true })
+
+    render(<ProjectsV2 />)
+
+    expect(screen.getAllByTestId("v2-project-skeleton")).toHaveLength(3)
+    expect(screen.queryByText("還沒有旅程")).not.toBeInTheDocument()
+  })
+
+  it("mounts the ad container with the project-list banner placement", () => {
+    mocks.useLiff.mockReturnValue({ user: { name: "Emma" } })
+    mocks.useProjects.mockReturnValue({ projects, loading: false })
+
+    render(<ProjectsV2 />)
+
+    const ad = screen.getByTestId("ad-container")
+    expect(ad).toHaveAttribute("data-placement", "project-list")
+    expect(ad).toHaveAttribute("data-variant", "banner")
+  })
+
+  it("wraps the content in the v2 scope", () => {
+    mocks.useLiff.mockReturnValue({ user: null })
+    mocks.useProjects.mockReturnValue({ projects: [], loading: false })
+
+    render(<ProjectsV2 />)
+
+    expect(document.querySelector('[data-ui="v2"]')).not.toBeNull()
   })
 })
