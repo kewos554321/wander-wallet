@@ -89,7 +89,7 @@ describe("ConfirmStep", () => {
 
   it("changes payer and participants", () => {
     const p = setup()
-    fireEvent.click(within(screen.getByRole("group", { name: "付款人" })).getByRole("radio", { name: "志明" }))
+    fireEvent.click(within(screen.getByRole("group", { name: "付款成員" })).getByRole("radio", { name: "志明" }))
     expect(p.onItemsChange).toHaveBeenLastCalledWith([{ ...items[0], payerId: "b" }, items[1]])
     fireEvent.click(within(screen.getByRole("group", { name: "分攤成員" })).getByRole("button", { name: "阿凱" }))
     expect(p.onItemsChange).toHaveBeenLastCalledWith([{ ...items[0], participantIds: ["a", "b"] }, items[1]])

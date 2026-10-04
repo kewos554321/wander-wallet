@@ -86,10 +86,10 @@ describe("ExpenseFilterBar panels", () => {
 
   it("shows the chevron for an inactive trigger and the count badge once a filter is active", () => {
     const first = renderBar()
-    expect(within(screen.getByRole("button", { name: /付款人/ })).getByTestId("filter-chevron")).toBeInTheDocument()
+    expect(within(screen.getByRole("button", { name: /付款成員/ })).getByTestId("filter-chevron")).toBeInTheDocument()
     first.unmount()
     renderBar({ filters: { ...baseFilters, selectedPayers: new Set(["chi"]) } })
-    const active = screen.getByRole("button", { name: /付款人/ })
+    const active = screen.getByRole("button", { name: /付款成員/ })
     expect(within(active).getByText("1")).toBeInTheDocument()
     expect(within(active).queryByTestId("filter-chevron")).not.toBeInTheDocument()
   })
@@ -139,21 +139,21 @@ describe("ExpenseFilterBar panels", () => {
 
   it("single-selects a payer", () => {
     const props = renderBar()
-    fireEvent.click(screen.getByRole("button", { name: /付款人/ }))
+    fireEvent.click(screen.getByRole("button", { name: /付款成員/ }))
     fireEvent.click(screen.getByRole("radio", { name: "志明" }))
     expect(props.onSetPayers).toHaveBeenCalledWith(new Set(["chi"]))
   })
 
   it("clears the selected payer", () => {
     const props = renderBar({ filters: { ...baseFilters, selectedPayers: new Set(["chi"]) } })
-    fireEvent.click(screen.getByRole("button", { name: /付款人/ }))
+    fireEvent.click(screen.getByRole("button", { name: /付款成員/ }))
     fireEvent.click(screen.getByRole("button", { name: "清除" }))
     expect(props.onClearPayers).toHaveBeenCalled()
   })
 
   it("shows the empty state when there are no payers", () => {
     renderBar({ payers: [] })
-    fireEvent.click(screen.getByRole("button", { name: /付款人/ }))
+    fireEvent.click(screen.getByRole("button", { name: /付款成員/ }))
     expect(screen.getByText("沒有資料")).toBeInTheDocument()
   })
 
@@ -242,9 +242,9 @@ describe("ExpenseFilterBar panels", () => {
   it("keeps only one panel open at a time", () => {
     renderBar()
     fireEvent.click(screen.getByRole("button", { name: /類別/ }))
-    fireEvent.click(screen.getByRole("button", { name: /付款人/ }))
+    fireEvent.click(screen.getByRole("button", { name: /付款成員/ }))
     expect(screen.getByRole("button", { name: /類別/ })).toHaveAttribute("aria-expanded", "false")
-    expect(screen.getByRole("button", { name: /付款人/ })).toHaveAttribute("aria-expanded", "true")
+    expect(screen.getByRole("button", { name: /付款成員/ })).toHaveAttribute("aria-expanded", "true")
   })
 
   it("renders checked controls for preselected filters", () => {
@@ -261,7 +261,7 @@ describe("ExpenseFilterBar panels", () => {
     fireEvent.click(screen.getByRole("button", { name: /類別/ }))
     expect(screen.getByRole("checkbox", { name: "餐飲" })).toHaveAttribute("aria-checked", "true")
     fireEvent.mouseDown(document.body)
-    fireEvent.click(screen.getByRole("button", { name: /付款人/ }))
+    fireEvent.click(screen.getByRole("button", { name: /付款成員/ }))
     expect(screen.getByRole("radio", { name: "志明" })).toHaveAttribute("aria-checked", "true")
     fireEvent.mouseDown(document.body)
     fireEvent.click(screen.getByRole("button", { name: /參與者/ }))
@@ -292,7 +292,7 @@ describe("ExpenseFilterBar panels", () => {
 
   it("clears the payer when the selected payer is toggled again", () => {
     const props = renderBar({ filters: { ...baseFilters, selectedPayers: new Set(["chi"]) } })
-    fireEvent.click(screen.getByRole("button", { name: /付款人/ }))
+    fireEvent.click(screen.getByRole("button", { name: /付款成員/ }))
     fireEvent.click(screen.getByRole("radio", { name: "志明" }))
     expect(props.onSetPayers).toHaveBeenCalledWith(new Set())
   })

@@ -416,7 +416,7 @@ describe("ExpensesV2 container", () => {
     fireEvent.click(screen.getByRole("button", { name: "清除" }))
     expect(f.setCategories).toHaveBeenCalledWith(new Set())
 
-    fireEvent.click(screen.getByRole("button", { name: /付款人/ }))
+    fireEvent.click(screen.getByRole("button", { name: /付款成員/ }))
     fireEvent.click(screen.getByRole("button", { name: "清除" }))
     expect(f.setPayers).toHaveBeenCalledWith(new Set())
 

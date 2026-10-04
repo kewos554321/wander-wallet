@@ -85,7 +85,7 @@ describe("ExpenseFormV2View", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("1280"))
     rerender()
-    const payer = screen.getByRole("group", { name: "付款人" })
+    const payer = screen.getByRole("group", { name: "付款成員" })
     expect(within(payer).getByText("付款明細")).toBeInTheDocument()
     expect(within(payer).queryByText("全選")).not.toBeInTheDocument()
     expect(within(payer).getAllByText("小雨")).toHaveLength(2)
@@ -93,6 +93,15 @@ describe("ExpenseFormV2View", () => {
     expect(within(payer).getByText("已選 1 人")).toBeInTheDocument()
     expect(within(payer).getByText("金額相符")).toBeInTheDocument()
     expect(within(payer).getByText("$1,280 = $1,280 / $1,280")).toBeInTheDocument()
+  })
+
+  it("truncates the selected payer name and keeps the amount from shrinking", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("1280"))
+    rerender()
+    const payer = screen.getByRole("group", { name: "付款成員" })
+    expect(within(payer).getByText("小雨", { selector: "span.truncate" })).toBeInTheDocument()
+    expect(within(payer).getByText("$1,280")).toHaveClass("shrink-0")
   })
 
   it("shows the split summary and matched state", () => {
@@ -446,7 +455,7 @@ describe("ExpenseFormV2View", () => {
         { id: "b", displayName: "志明", image: null },
       ],
     })
-    const payer = screen.getByRole("group", { name: "付款人" })
+    const payer = screen.getByRole("group", { name: "付款成員" })
     expect(payer.querySelector('img[src="https://cdn.example/xiaoyu.jpg"]')).toBeInTheDocument()
     expect(within(payer).getAllByText("志").length).toBeGreaterThan(0)
   })

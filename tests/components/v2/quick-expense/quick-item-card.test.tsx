@@ -129,7 +129,7 @@ describe("QuickItemCard", () => {
 
   it("changes the payer", () => {
     const p = setup()
-    fireEvent.click(within(screen.getByRole("group", { name: "付款人" })).getByRole("radio", { name: "志明" }))
+    fireEvent.click(within(screen.getByRole("group", { name: "付款成員" })).getByRole("radio", { name: "志明" }))
     expect(p.onChange).toHaveBeenLastCalledWith({ payerId: "b" })
   })
 
@@ -185,7 +185,7 @@ describe("QuickItemCard", () => {
       { id: "c", displayName: "阿凱", image: null },
     ]
     render(<QuickItemCard item={item()} members={withImage} onChange={vi.fn()} />)
-    const payer = screen.getByRole("group", { name: "付款人" })
+    const payer = screen.getByRole("group", { name: "付款成員" })
     const radio = within(payer).getByRole("radio", { name: "小雨" })
     expect(radio.closest("label")!.querySelector('img[src="https://cdn.example/xiaoyu.jpg"]')).toBeInTheDocument()
   })

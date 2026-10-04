@@ -36,7 +36,7 @@ export function PayerPicker({
 
   return (
     <fieldset className={SECTION_CARD}>
-      <legend className={`${SECTION_TITLE} mb-2.5`}>付款人</legend>
+      <legend className={`${SECTION_TITLE} mb-2.5`}>付款成員</legend>
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="m-0 text-xs font-semibold text-v2-ink-muted">付款明細</p>
       </div>
@@ -76,8 +76,8 @@ export function PayerPicker({
               fallbackClassName={`text-[11px] font-bold ${memberTone(members.findIndex((m) => m.id === value))}`}
             />
             <span className="flex flex-1 items-center justify-between gap-2">
-              <span className="text-[13px] font-semibold">{nameOf(value)}</span>
-              <span className="rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-[13px] font-bold">
+              <span className="min-w-0 truncate text-[13px] font-semibold">{nameOf(value)}</span>
+              <span className="shrink-0 rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-[13px] font-bold">
                 {money(amount)}
               </span>
             </span>

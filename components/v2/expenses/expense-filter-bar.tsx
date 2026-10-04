@@ -64,9 +64,9 @@ export function ExpenseFilterBar(props: ExpenseFilterBarProps) {
           <CategoryPanel selected={filters.selectedCategories} onToggle={props.onToggleCategory} onClear={props.onClearCategories} />
         </FilterPopover>
 
-        <FilterPopover label="付款人" icon={<User className={icon} />} count={filters.selectedPayers.size} open={openId === "payer"} onToggle={() => toggle("payer")} widthClass="w-[184px]">
+        <FilterPopover label="付款成員" icon={<User className={icon} />} count={filters.selectedPayers.size} open={openId === "payer"} onToggle={() => toggle("payer")} widthClass="w-[184px]">
           <MemberPanel
-            title="選擇付款人"
+            title="選擇付款成員"
             members={members(props.payers)}
             selected={filters.selectedPayers}
             onToggle={(id) => props.onSetPayers(filters.selectedPayers.has(id) ? new Set() : new Set([id]))}

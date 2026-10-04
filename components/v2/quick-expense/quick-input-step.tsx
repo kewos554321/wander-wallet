@@ -57,7 +57,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
             </button>
           )}
         </div>
-        <p className="mt-1.5 text-xs text-v2-ink-subtle">支援一次多筆、不同付款人 · 點麥克風可語音輸入</p>
+        <p className="mt-1.5 text-xs text-v2-ink-subtle">支援一次多筆、不同付款成員 · 點麥克風可語音輸入</p>
       </div>
 
       <div className="mx-4 mt-3 flex gap-1.5 overflow-x-auto">
