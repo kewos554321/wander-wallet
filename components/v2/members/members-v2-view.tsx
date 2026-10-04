@@ -22,8 +22,8 @@ export interface MembersV2ViewProps {
 }
 
 const pillButton =
-  "inline-flex h-8 items-center gap-[5px] rounded-lg border border-v2-lake-edge bg-v2-lake-soft px-2.5 text-xs font-semibold text-v2-lake"
-const badge = "rounded-full px-[7px] py-0.5 text-xs font-bold"
+  "inline-flex h-8 items-center gap-[5px] rounded-[8px] border border-v2-lake-edge bg-v2-lake-soft px-2.5 text-xs font-semibold text-v2-lake"
+const badge = "rounded-full px-[7px] text-xs font-bold"
 
 export function MembersV2View(props: MembersV2ViewProps) {
   const { project } = props
@@ -74,9 +74,9 @@ export function MembersV2View(props: MembersV2ViewProps) {
               <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-center gap-1.5">
                   <span className="text-[13px] font-bold">{member.displayName}</span>
-                  {isCreator && <span className={`${badge} bg-v2-lake-soft text-v2-lake`}>建立者</span>}
+                  {isCreator && <span className={`${badge} bg-v2-lake-soft py-0.5 text-v2-lake`}>建立者</span>}
                   {isMe && <span className={`${badge} border border-v2-lake-border bg-v2-surface py-px text-v2-lake`}>你</span>}
-                  {isPlaceholder && <span className={`${badge} bg-v2-sand text-v2-ink-muted`}>佔位成員</span>}
+                  {isPlaceholder && <span className={`${badge} bg-v2-sand py-0.5 text-v2-ink-muted`}>佔位成員</span>}
                 </span>
                 <span className={`mt-0.5 block text-xs ${isPlaceholder ? "text-v2-ink-subtle" : "text-v2-ink-muted"}`}>
                   {isPlaceholder ? "尚未加入" : member.user?.email}

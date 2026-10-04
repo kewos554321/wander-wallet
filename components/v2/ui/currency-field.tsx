@@ -36,7 +36,7 @@ export function V2CurrencyField({
     <div className="relative">
       <div
         aria-hidden="true"
-        className="flex w-full items-center justify-between rounded-xl border border-v2-line bg-v2-paper px-3.5 py-3 text-[13px] text-v2-ink"
+        className="flex w-full items-center justify-between rounded-[12px] border border-v2-line bg-v2-paper px-3.5 py-3 text-[13px] text-v2-ink"
       >
         <span className={short ? "font-bold" : "font-semibold"}>{currencyLabel(value, short)}</span>
         <ChevronDown className="h-3.5 w-3.5 text-v2-ink-subtle" />

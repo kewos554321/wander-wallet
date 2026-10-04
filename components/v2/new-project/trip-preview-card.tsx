@@ -26,11 +26,11 @@ export function TripPreviewCard({
 
   return (
     <div className="flex items-start gap-3 rounded-2xl border border-v2-line bg-v2-surface p-3 shadow-[0_2px_8px_rgba(27,24,21,.05)]">
-      <CoverArt cover={cover} className="h-16 w-16 rounded-xl" />
+      <CoverArt cover={cover} className="h-16 w-16 rounded-[12px]" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <h3 className={`m-0 truncate font-v2-serif text-base font-medium ${name ? "text-v2-ink" : "text-v2-ink-subtle"}`}>{name || "峇里島放鬆之旅"}</h3>
-          <span className="shrink-0 rounded-full bg-v2-line px-2.5 py-[3px] text-xs font-bold leading-4 text-v2-ink-muted">
+          <span className="shrink-0 rounded-full bg-v2-line px-2.5 py-[3px] text-xs font-bold leading-4 tracking-[.5px] text-v2-ink-muted">
             {dayCount !== null ? `${dayCount} 天` : "— 天"}
           </span>
         </div>

@@ -29,7 +29,7 @@ export function JoinModePicker({
             <label
               key={option.value}
               className={`flex cursor-pointer items-start gap-2.5 border px-3.5 py-3 ${
-                settings ? "rounded-[14px]" : "rounded-xl"
+                settings ? "rounded-[14px]" : "rounded-[12px]"
               } ${
                 checked
                   ? settings

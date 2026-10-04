@@ -56,7 +56,7 @@ export function NewProjectV2() {
     <UiV2Scope>
       <div className="mx-auto max-w-md">
         <V2TopBar title="建立旅程" backHref="/projects" />
-        <div className="flex flex-col gap-4 px-4 pb-32 pt-4">
+        <div className="flex flex-col gap-4 px-4 pb-[100px] pt-4">
           <div className={cardClass}>
             <p className={titleClass}>卡片預覽</p>
             <TripPreviewCard cover={values.cover} name={values.name} startDate={values.startDate} endDate={values.endDate} />
@@ -80,7 +80,7 @@ export function NewProjectV2() {
                 onChange={(e) => set("name", e.target.value)}
                 disabled={submitting}
                 placeholder="例如：日本關西 5 天、歐洲自由行"
-                className="w-full rounded-xl border border-v2-line bg-v2-paper px-3.5 py-[13px] text-[15px] font-bold tracking-[.3px] outline-none"
+                className="w-full rounded-[12px] border border-v2-line bg-v2-paper px-3.5 py-[13px] text-[15px] font-bold tracking-[.3px] outline-none"
               />
             </div>
 
@@ -105,7 +105,7 @@ export function NewProjectV2() {
                 <label htmlFor="v2-budget" className={labelClass}>
                   預算（選填）
                 </label>
-                <div className="flex items-center gap-1.5 rounded-xl border border-v2-line bg-v2-paper px-3.5 py-[13px]">
+                <div className="flex items-center gap-1.5 rounded-[12px] border border-v2-line bg-v2-paper px-3.5 py-[13px]">
                   <span className="text-[13px] text-v2-ink-subtle">{currencySymbol(values.currency)}</span>
                   <input
                     id="v2-budget"
@@ -132,7 +132,7 @@ export function NewProjectV2() {
               disabled={submitting}
               placeholder="記錄這次旅行的目的地、日期等資訊……"
               rows={4}
-              className="min-h-16 w-full rounded-xl border border-v2-line bg-v2-paper px-3.5 py-[13px] text-xs outline-none"
+              className="min-h-16 w-full rounded-[12px] border border-v2-line bg-v2-paper px-3.5 py-[13px] text-xs outline-none"
             />
           </div>
 
@@ -152,7 +152,7 @@ export function NewProjectV2() {
               type="button"
               onClick={handleCreate}
               disabled={submitting}
-              className="w-full rounded-[14px] bg-v2-lake py-[15px] text-base font-bold text-v2-on-lake disabled:opacity-40"
+              className="w-full rounded-[14px] bg-v2-lake py-[15px] text-base font-bold tracking-[.15px] text-v2-on-lake disabled:opacity-40"
             >
               {submitting ? "建立中…" : "建立旅程"}
             </button>

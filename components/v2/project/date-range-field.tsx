@@ -40,7 +40,7 @@ export function DateRangeField({
           <button
             type="button"
             disabled={disabled}
-            className={`flex w-full items-center gap-2 rounded-xl border border-v2-line bg-v2-paper px-3.5 py-3 text-left text-[13px] ${triggerClassName ?? ""}`}
+            className={`flex w-full items-center gap-2 rounded-[12px] border border-v2-line bg-v2-paper px-3.5 py-3 text-left text-[13px] ${triggerClassName ?? ""}`}
           >
             <CalendarIcon className="h-[15px] w-[15px] shrink-0 text-v2-ink-muted" aria-hidden="true" />
             <span className={startDate ? "text-v2-ink" : "text-v2-ink-subtle"}>{display}</span>
