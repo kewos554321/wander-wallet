@@ -84,6 +84,14 @@ describe("ExpenseFilterBar panels", () => {
     expect(within(trigger).getByText("11/12~11/16")).toBeInTheDocument()
   })
 
+  it("styles the date panel's clear control like the other panels", () => {
+    renderBar({ filters: { ...baseFilters, expenseDateRange: { from: new Date(2026, 10, 12) } } })
+    fireEvent.click(screen.getByRole("button", { name: /付款日期/ }))
+    const clear = screen.getByRole("button", { name: "清除" })
+    expect(clear.className).toContain("text-v2-danger")
+    expect(clear.querySelector("svg")).toBeInTheDocument()
+  })
+
   it("shows the chevron for an inactive trigger and the count badge once a filter is active", () => {
     const first = renderBar()
     expect(within(screen.getByRole("button", { name: /付款成員/ })).getByTestId("filter-chevron")).toBeInTheDocument()
