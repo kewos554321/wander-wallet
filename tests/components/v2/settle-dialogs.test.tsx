@@ -162,6 +162,18 @@ describe("SettlementCalcDialog (A26)", () => {
     expect(split.textContent).toContain("TWD 320")
   })
 
+  it("does not render a negative custom amount from a rounding remainder", () => {
+    const data = equalSplitData()
+    data.expenseDetails[0].participants = [
+      { memberId: "a", displayName: "志明", shareAmount: 100, convertedShareAmount: 100, personalItems: [], sharedAmount: 0, customAmount: -0.01 },
+      { memberId: "b", displayName: "小美", shareAmount: 220, convertedShareAmount: 220, personalItems: [{ name: "紀念品", amount: 220, convertedAmount: 220 }], sharedAmount: 0 },
+    ]
+    renderDialog(data)
+    const split = screen.getByTestId("split-line")
+    expect(split.textContent).not.toContain("指定")
+    expect(split.textContent).toContain("紀念品")
+  })
+
   it("renders a placeholder split for an expense with no participants", () => {
     const data = equalSplitData()
     data.expenseDetails = [{ ...data.expenseDetails[0], id: "e2", participants: [], convertedAmount: 0 }]

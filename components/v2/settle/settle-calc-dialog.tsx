@@ -48,7 +48,7 @@ function splitLine(expense: SettleExpenseDetail, currency: string): string {
           .join("、")
         parts.push(items.length > 2 ? `個人 ${shown} +${items.length - 2} 項` : `個人 ${shown}`)
       }
-      if (p.customAmount != null) parts.push(`指定 ${formatCurrency(p.customAmount, currency)}`)
+      if ((p.customAmount ?? 0) > 0.005) parts.push(`指定 ${formatCurrency(p.customAmount as number, currency)}`)
       else if ((p.sharedAmount ?? 0) > 0.005) parts.push(`共同 ${formatCurrency(p.sharedAmount as number, currency)}`)
       return `${p.displayName} ${parts.join(" + ")}`
     })
