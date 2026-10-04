@@ -12,9 +12,11 @@ export const CATEGORY_TONES: Record<ExpenseCategory, string> = {
 }
 
 /**
- * Picker-scoped identity palette: bg + text are the category's fixed identity
- * colour, used by `CategoryPicker` when a category is checked. `CATEGORY_TONES`
- * stays untouched because A2/A6b list & filter chips rely on its 餐飲 colour.
+ * Picker-scoped identity palette: `tone` (bg + text) is the category's fixed
+ * identity colour and is applied in BOTH checked and unchecked states; only the
+ * border (`border` vs `border-v2-line`) and font weight (bold vs semibold) change.
+ * `CATEGORY_TONES` stays untouched because A2/A6b list & filter chips rely on its
+ * 餐飲 colour.
  */
 export const CATEGORY_PICKER_TONES: Record<ExpenseCategory, { tone: string; border: string }> = {
   food: { tone: "bg-v2-coral-soft text-v2-coral-deep", border: "border-v2-coral-deep" },

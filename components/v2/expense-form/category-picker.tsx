@@ -1,5 +1,5 @@
 import { CATEGORY_ICONS, CATEGORY_LABELS, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
-import { CATEGORY_PICKER_TONES, CATEGORY_TONES } from "@/components/v2/category-style"
+import { CATEGORY_PICKER_TONES } from "@/components/v2/category-style"
 import { SECTION_CARD, SECTION_TITLE } from "./section-card"
 
 export function CategoryPicker({ value, onChange }: { value: string; onChange: (category: string) => void }) {
@@ -19,7 +19,7 @@ export function CategoryPicker({ value, onChange }: { value: string; onChange: (
               className={`flex items-center justify-center gap-[5px] rounded-[14px] px-1 py-2 text-xs ${
                 active
                   ? `border-[1.5px] ${CATEGORY_PICKER_TONES[key].border} ${CATEGORY_PICKER_TONES[key].tone} font-bold`
-                  : `border-[1.5px] border-v2-line font-semibold ${CATEGORY_TONES[key]}`
+                  : `border-[1.5px] border-v2-line font-semibold ${CATEGORY_PICKER_TONES[key].tone}`
               }`}
             >
               <Icon className="h-4 w-4" aria-hidden="true" />
