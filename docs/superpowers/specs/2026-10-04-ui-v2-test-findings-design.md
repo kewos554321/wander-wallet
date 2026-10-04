@@ -16,7 +16,7 @@
 | # | 題目 | 決定 |
 |---|---|---|
 | D1 | 未開發 v2 的 6 個頁面（匯率／歷史紀錄／匯出／筆記／消費地圖／照片牆） | **不納入本次**（使用者自行處理）。本次只記錄為已知現況。 |
-| D2 | 頭像顯示範圍 | **全部**：目前使用者出現處 + 所有成員 chip 都改用頭像（無頭像則 fallback 首字）。 |
+| D2 | 頭像顯示範圍 | **全部**：目前使用者出現處 + 所有成員 chip 都改用頭像（無頭像則 fallback 首字）。來源為 `User.image`（實務上即 LINE 頭像）。 |
 | D3 | `付款人` → `付款成員` 改名範圍 | **只改 v2**（v1、活動紀錄、匯出等不動）。 |
 | D4 | 分攤明細 vs 文字總結 | 出現「分攤明細」表時，**隱藏**「共同分攤」下方那行方程式。 |
 | D5 | 快速記帳結果頁滑動 | **方案 A**：手勢擴大到整頁內容、加拖曳位移回饋、加上一筆／下一筆按鈕；保留 dots 與計數。 |
@@ -28,6 +28,9 @@
 | D11 | 收費／消費圖片 | **是**：新增 v2 版圖片選擇器，取代 v1 `ImagePicker`，並與 `CameraStep` 統一（需設計稿）。 |
 | D12 | 結算頁 banner | 廣告 banner 移到**頁面最上方**（計算總覽之上）；支持贊助區塊**縮小**。 |
 | D13 | 結算計算過程支出明細 | 需顯示**付款成員**＋**分攤成員（個人項目／共同分攤）**，數字**總結化**。需擴充 settle API／型別。 |
+| D14 | 自訂頭像存續（登入覆蓋 `User.image`） | **本次不處理**：v2 只認 LINE 頭像，`V2Avatar` 仍支援三態（自訂字串／URL／首字）。覆蓋問題留待 v2 個人資料頁（A14b）另案。 |
+| D15 | AI 快速記帳結果頁標題 | 改為「**AI 辨識結果**」（輸入頁維持「AI 快速記帳」）。 |
+| D16 | AI 快速記帳輸入頁範例文案 | 換成：`早餐 100 我付`／`晚餐 600 大家分`／`計程車 250 小明付`／`超市 1280 我付 800、小明 480`；placeholder `例如：晚餐 600 大家分、我付 800 小明 480`。 |
 
 ## 1. 範圍（Edit scope）
 
@@ -39,7 +42,8 @@
 - `lib/hooks/useSettlement.ts`（型別新增，additive）
 - `lib/quick-expense/**`（v2 專用：文案／型別）
 - `components/v2/quick-expense` 相關型別（成員頭像）
-- **（需你於 spec 審閱時確認）** `app/api/auth/liff/route.ts`：修正「登入時以 LINE 圖覆蓋自訂頭像」的問題（見 §3 E1b）。
+
+> 依 D14，**不修改** `app/api/auth/liff/route.ts`；自訂頭像存續問題本次不處理。
 
 **不得修改**
 - `components/v1/**`、`components/ui/**`、`components/expense/**`、`components/location-picker.tsx`
@@ -78,7 +82,7 @@
   - `components/v2/quick-expense/quick-expense-v2.tsx:16`、`confirm-step.tsx:9`、`quick-item-card.tsx:21`（`Member`）
   - `components/v2/expenses/expense-filter-bar.tsx:15-16,46`、`filter-panels.tsx:74`
   - project-overview-v2 已傳 `user`（`project-overview-v2.tsx:59-64`），僅需收斂型別。
-- **E1b（需確認）**：`app/api/auth/liff/route.ts:63-69` 每次登入都以 `profile.pictureUrl` 覆蓋 `image`，導致自訂頭像被洗掉。建議改為「僅在 `image` 為空或原本是 LINE URL 時才更新」。若你不同意動 `app/api`，則維持現況並記錄。
+- **自訂頭像（D14，本次不處理）**：`app/api/auth/liff/route.ts:63-69` 每次登入都以 LINE 圖覆蓋 `image`，自訂頭像會被洗掉。依 D14，本次只認 LINE 頭像、不動 API；`V2Avatar` 仍實作三態，成本極低且向後相容。此問題留待 v2 個人資料頁（A14b）另案決定是否給自訂頭像獨立欄位。
 
 ### L1 — 全部支出：付款日期下拉溢出（D 未列，直接修）
 
@@ -195,7 +199,7 @@
 
 ### A1〜A5 — AI 快速記帳（D9/D10）
 
-- **A5 標題重複**：輸入頁 `quick-input-step.tsx:32` 與結果頁 `confirm-step.tsx:43` 都叫「AI 快速記帳」。結果頁改為不同標題（建議「確認支出」；文案由 Claude Design 定案）。
+- **A5 標題重複**：輸入頁 `quick-input-step.tsx:32` 與結果頁 `confirm-step.tsx:43` 都叫「AI 快速記帳」。依 D15，**結果頁改為「AI 辨識結果」**，輸入頁不變。
 - **A4 說明位置**：把 `quick-input-step.tsx:60` 的說明移到 section title（`:37`）下方，並**精簡用字**（D10）；範例 chips（`:7,63-69`）保留但控制版面。
 - **A3 相機流程**：
   - `camera-step.tsx:24-26` 的 `X` 改為**回上一個 AI 快速記帳畫面**（`quick-expense-v2.tsx:132` 傳 `onClose={() => setStep("input")}`，而非關閉整個流程）。
@@ -203,7 +207,9 @@
   - 移除「改用手動輸入」（`:77-79`）。
   - 進入即自動啟動相機：`use-camera.ts:13-46` 已在支援的裝置自動 `getUserMedia`；**iOS LIFF 無 `getUserMedia` 會走 fallback**，`capture="environment"` 的檔案輸入需使用者手勢觸發（瀏覽器限制）。fallback 時保留單一「開啟相機」按鈕，其餘 UI 簡化。
 - **A1 麥克風權限**：`lib/quick-expense/speech-input.ts` 為 v2 wrapper；在**使用者首次按麥克風時**主動做權限請求／`getUserMedia`，被拒時顯示明確引導（例如「請允許麥克風權限」與開啟方式）。**不改**共用 `lib/speech.ts`、`lib/media-recorder-speech.ts`，以避免影響 v1。
-- **A2 內容模板**：依 D10 優化輸入頁引導文案（精簡）。若指的是 AI 解析結果卡的內容，另行討論（見 §8 待回報）。
+- **A2 內容模板（D16）**：即輸入頁的 placeholder 與範例 chips（`quick-input-step.tsx:7,44,63-69`）。換成下列短句，涵蓋「單筆／均分／指定人／自訂分攤」，維持精簡不佔版面：
+  - 範例 chips：`早餐 100 我付`、`晚餐 600 大家分`、`計程車 250 小明付`、`超市 1280 我付 800、小明 480`
+  - placeholder：`例如：晚餐 600 大家分、我付 800 小明 480`
 
 ### C1/C2 — 通用設定（D8/D9）
 
@@ -245,25 +251,24 @@
 |---|---|
 | `app/api/projects/[id]/settle/route.ts` `ExpenseDetail` | payer 加 `userImage`；participants 加 `userImage`、`personalItems`、`sharedAmount`（＋自訂分攤標示）。讀取 `expense.splitDetail`。 |
 | `lib/hooks/useSettlement.ts` | 對應型別新增（additive） |
-| （E1b，待確認）`app/api/auth/liff/route.ts` | 自訂頭像不被登入覆蓋 |
 | `components/v2`／`lib/quick-expense` 型別 | `Member` 帶 `image`；不足以影響 API |
 
 ## 7. v1 回歸風險
 
 - rename 只改 v2 文案；common 元件（`image-picker.tsx`、`avatar-picker.tsx`、共用 speech hooks）**不修改**。
 - settle API additive；需確認 v1 消費者忽略新欄位仍正常。
-- 若核准 E1b，`/api/auth/liff` 需確認 v1 登入流程不受影響（僅條件式更新 `image`）。
+- `/api/auth/liff` **不在本次修改範圍**（D14）。
 - `components/v2/no-hardcoded-colors.test.ts` 對新元件維持綠。
 - v1 保護 diff 指令（基準 `d2eb7e2`）輸出須為空：
   `git diff --name-only d2eb7e2 -- components/v1 components/ui components/expense components/location-picker.tsx prisma`
 
-## 8. 待你於審閱時確認 / 待回報
+## 8. 已收斂決策與已知限制
 
-1. **E1b**：是否核准修改 `app/api/auth/liff/route.ts` 以保留自訂頭像？（不動則自訂頭像每次登入被 LINE 圖覆蓋。）
-2. **A2「內容模板」**：若指 AI 解析**結果卡**要更豐富（分類／商家／品項／備註），屬較大範圍，需另立項目；本 spec 先只做輸入頁引導文案精簡。
-3. **A5 結果頁標題**：建議「確認支出」，最終文案待 Claude Design 定案。
-4. **C2 重看導覽**：本次為已知限制（v2 無導覽），未來若要補，另立里程碑。
-5. **D1**：6 個未開發 v2 頁面由你另行處理，本 spec 不動。
+1. **自訂頭像（D14）**：本次只認 LINE 頭像，不動 `app/api/auth/liff`；`V2Avatar` 仍支援三態。存續問題留待 A14b 另案。
+2. **A2 內容模板（D16）**：採 §3 的範例字組（輸入頁 placeholder 與 chips）。
+3. **A5 結果頁標題（D15）**：「AI 辨識結果」。
+4. **C2 重看導覽**：已知限制（v2 無導覽），本次不改；未來若要補導覽，另立里程碑。
+5. **D1**：6 個未開發 v2 頁面（匯率／歷史紀錄／匯出／筆記／消費地圖／照片牆）由你另行處理，本 spec 不動。
 
 ## 9. 給 Claude Design 的同步項目
 
