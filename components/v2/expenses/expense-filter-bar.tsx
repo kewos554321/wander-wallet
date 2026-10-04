@@ -89,7 +89,7 @@ export function ExpenseFilterBar(props: ExpenseFilterBarProps) {
           <AmountPanel range={filters.amountRange} max={props.maxAmount} currency={props.currency} onChange={props.onAmountRange} onClear={() => props.onAmountRange([0, 0])} />
         </FilterPopover>
 
-        <FilterPopover label={rangeLabel(filters.expenseDateRange, "付款日期")} ariaLabel="付款日期" icon={<CalendarDays className={icon} />} count={filters.expenseDateRange?.from ? 1 : 0} open={openId === "date"} onToggle={() => toggle("date")} align="right" widthClass="w-[236px]">
+        <FilterPopover label={rangeLabel(filters.expenseDateRange, "付款日期")} ariaLabel="付款日期" icon={<CalendarDays className={icon} />} count={filters.expenseDateRange?.from ? 1 : 0} open={openId === "date"} onToggle={() => toggle("date")} align="right" widthClass="w-[236px]" panelRadiusClass="rounded-[10px]">
           <DatePanel range={filters.expenseDateRange} onChange={props.onExpenseRange} />
         </FilterPopover>
 

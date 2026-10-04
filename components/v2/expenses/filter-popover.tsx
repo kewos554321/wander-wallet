@@ -12,12 +12,25 @@ interface FilterPopoverProps {
   onToggle: () => void
   align?: "left" | "right"
   widthClass: string
+  /** Panel corner radius; defaults to the 12px filter-panel shell. */
+  panelRadiusClass?: string
   /** Persistent accessible name when the visible label changes (e.g. a date range). */
   ariaLabel?: string
   children: ReactNode
 }
 
-export function FilterPopover({ label, icon, count, open, onToggle, align = "left", widthClass, ariaLabel, children }: FilterPopoverProps) {
+export function FilterPopover({
+  label,
+  icon,
+  count,
+  open,
+  onToggle,
+  align = "left",
+  widthClass,
+  panelRadiusClass = "rounded-[12px]",
+  ariaLabel,
+  children,
+}: FilterPopoverProps) {
   const ref = useRef<HTMLDivElement>(null)
   useDismiss(ref, onToggle, open)
   const active = count > 0
@@ -44,12 +57,17 @@ export function FilterPopover({ label, icon, count, open, onToggle, align = "lef
             {count}
           </span>
         ) : (
-          <ChevronDown className={`h-3 w-3 shrink-0 ${open ? "text-v2-ink" : "text-v2-ink-subtle"}`} aria-hidden="true" />
+          <ChevronDown
+            data-testid="filter-chevron"
+            className={`h-3 w-3 shrink-0 transition-transform ${open ? "rotate-180 text-v2-ink" : "text-v2-ink-subtle"}`}
+            aria-hidden="true"
+          />
         )}
       </button>
       {open && (
         <div
-          className={`absolute top-[calc(100%+4px)] z-20 overflow-hidden rounded-xl border border-v2-line bg-v2-surface shadow-[0_10px_28px_rgba(27,24,21,.18)] ${
+          data-testid="filter-panel"
+          className={`absolute top-[calc(100%+4px)] z-20 overflow-hidden ${panelRadiusClass} border border-v2-line bg-v2-surface shadow-[0_10px_28px_rgba(27,24,21,.18)] ${
             align === "right" ? "right-0" : "left-0"
           } ${widthClass}`}
         >

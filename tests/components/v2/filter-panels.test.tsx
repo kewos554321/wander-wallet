@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest"
-import { render, screen, fireEvent } from "@testing-library/react"
+import { render, screen, fireEvent, within } from "@testing-library/react"
 import { ExpenseFilterBar } from "@/components/v2/expenses/expense-filter-bar"
 import type { ExpenseFilters } from "@/lib/hooks/useExpenseFilters"
 
@@ -59,6 +59,33 @@ describe("ExpenseFilterBar panels", () => {
     renderBar()
     fireEvent.click(screen.getByRole("button", { name: /類別/ }))
     expect(screen.getAllByRole("checkbox")).toHaveLength(8)
+  })
+
+  it("uses a 12px panel radius by default", () => {
+    renderBar()
+    fireEvent.click(screen.getByRole("button", { name: /類別/ }))
+    expect(screen.getByTestId("filter-panel")).toHaveClass("rounded-[12px]")
+  })
+
+  it("uses a 10px radius for the date panel", () => {
+    renderBar()
+    fireEvent.click(screen.getByRole("button", { name: /付款日期/ }))
+    expect(screen.getByTestId("filter-panel")).toHaveClass("rounded-[10px]")
+  })
+
+  it("rotates the chevron when open", () => {
+    renderBar()
+    const trigger = screen.getByRole("button", { name: /付款人/ })
+    fireEvent.click(trigger)
+    expect(within(trigger).getByTestId("filter-chevron")).toHaveClass("rotate-180")
+  })
+
+  it("shows the badge and not the chevron when an active chip is open", () => {
+    renderBar({ filters: { ...baseFilters, selectedCategories: new Set(["food"]) } })
+    const trigger = screen.getByRole("button", { name: /類別/ })
+    fireEvent.click(trigger)
+    expect(within(trigger).getByText("1")).toBeInTheDocument()
+    expect(within(trigger).queryByTestId("filter-chevron")).not.toBeInTheDocument()
   })
 
   it("hides the panel clear action when nothing is selected", () => {
