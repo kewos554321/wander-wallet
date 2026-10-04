@@ -114,6 +114,18 @@ describe("ExpensesV2View", () => {
     expect(screen.getByText("TWD 3,840")).toBeInTheDocument()
   })
 
+  it("renders both summary stat icons as lake-tinted circles", () => {
+    renderView()
+    const icons = [screen.getByTestId("summary-count-icon"), screen.getByTestId("summary-average-icon")]
+    for (const icon of icons) {
+      expect(icon).toHaveClass("rounded-full")
+      expect(icon).toHaveClass("bg-v2-lake-tint")
+      expect(icon).toHaveClass("text-v2-lake")
+      expect(icon).not.toHaveClass("bg-v2-surface")
+      expect(icon).not.toHaveClass("text-v2-coral")
+    }
+  })
+
   it("groups by payment day and renders card details", () => {
     renderView()
     expect(screen.getByText("11/16（今天）")).toBeInTheDocument()
