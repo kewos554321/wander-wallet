@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Share2, UserMinus, UserPlus, User } from "lucide-react"
+import { ChevronRight, Settings2, Share2, UserMinus, UserPlus, User } from "lucide-react"
 import type { MembersProject } from "@/lib/hooks/useProjectMembers"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
@@ -46,11 +46,8 @@ export function MembersV2View(props: MembersV2ViewProps) {
             </button>
           </div>
         </div>
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3">
           <span className="text-xs text-v2-ink-muted">成員組成 · {project.members.length} 位旅伴</span>
-          <Link href={`/projects/${project.id}/settings`} className="text-xs font-medium text-v2-link">
-            前往專案設定修改加入方式
-          </Link>
         </div>
 
         {project.members.map((member, i) => {
@@ -104,6 +101,22 @@ export function MembersV2View(props: MembersV2ViewProps) {
             </div>
           )
         })}
+      </div>
+      <div className="mx-4 mb-4 rounded-2xl border border-v2-line bg-v2-surface">
+        <Link
+          href={`/projects/${project.id}/settings`}
+          aria-label="前往專案設定修改加入方式"
+          className="flex items-center gap-3 px-4 py-3.5"
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-v2-lake-soft text-v2-lake" aria-hidden="true">
+            <Settings2 className="h-4 w-4" strokeWidth={1.8} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] font-semibold">前往專案設定修改加入方式</span>
+            <span className="mt-0.5 block text-xs text-v2-ink-muted">調整成員如何加入這趟旅程</span>
+          </span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-v2-ink-subtle" aria-hidden="true" />
+        </Link>
       </div>
     </>
   )

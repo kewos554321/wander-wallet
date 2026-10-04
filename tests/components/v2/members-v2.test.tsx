@@ -68,6 +68,13 @@ describe("MembersV2View", () => {
     expect(within(kai).getByText("尚未加入")).toBeInTheDocument()
   })
 
+  it("moves the join-method link into its own row outside the members card", () => {
+    renderView()
+    const link = screen.getByRole("link", { name: /前往專案設定修改加入方式/ })
+    const card = screen.getByText("成員列表").closest("div.rounded-2xl")!
+    expect(card.contains(link)).toBe(false)
+  })
+
   it("renders the labelled share and add buttons", () => {
     renderView()
     expect(screen.getByRole("button", { name: "邀請成員" })).toHaveTextContent("分享")
