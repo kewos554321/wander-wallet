@@ -13,28 +13,28 @@ export function V2Avatar({ image, name, className = "", fallbackClassName = "", 
 
   if (parsed) {
     return (
-      <div
+      <span
         aria-hidden="true"
         className={`inline-flex items-center justify-center ${className}`}
         style={{ backgroundColor: getAvatarColor(parsed.colorId) }}
       >
         <AvatarIcon iconId={parsed.iconId} className={`text-v2-on-dark ${iconClassName ?? ""}`} />
-      </div>
+      </span>
     )
   }
 
   if (image) {
     return (
-      <div aria-hidden="true" className={`inline-flex overflow-hidden ${className}`}>
+      <span aria-hidden="true" className={`inline-flex overflow-hidden ${className}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={image} alt="" className="h-full w-full object-cover" />
-      </div>
+      </span>
     )
   }
 
   return (
-    <div aria-hidden="true" className={`inline-flex items-center justify-center ${className} ${fallbackClassName}`}>
+    <span aria-hidden="true" className={`inline-flex items-center justify-center ${className} ${fallbackClassName}`}>
       {name?.trim().charAt(0).toUpperCase() || "?"}
-    </div>
+    </span>
   )
 }

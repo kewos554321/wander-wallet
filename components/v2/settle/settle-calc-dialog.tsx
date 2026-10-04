@@ -4,6 +4,7 @@ import { useEffect, useId, useRef } from "react"
 import { ArrowRight, CheckCircle2, ReceiptText, X } from "lucide-react"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import type { SettleData, SettleExpenseDetail } from "@/lib/hooks/useSettlement"
+import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import { useDismiss } from "@/components/v2/use-dismiss"
 
 interface SettlementCalcDialogProps {
@@ -25,14 +26,33 @@ function StepBadge({ n }: { n: number }) {
 function splitLine(expense: SettleExpenseDetail, currency: string): string {
   const participants = expense.participants ?? []
   if (participants.length === 0) return "—"
-  const first = participants[0].convertedShareAmount
-  const allEqual = participants.every((p) => Math.abs(p.convertedShareAmount - first) < 0.005)
-  if (allEqual) {
-    return `${formatCurrency(first, currency)}（${expense.convertedAmount} ÷ ${participants.length}）`
+  const hasStructure = participants.some((p) => (p.personalItems?.length ?? 0) > 0 || p.customAmount != null)
+  if (!hasStructure) {
+    const first = participants[0].convertedShareAmount
+    const allEqual = participants.every((p) => Math.abs(p.convertedShareAmount - first) < 0.005)
+    if (allEqual) {
+      return `${formatCurrency(first, currency)}（${expense.convertedAmount} ÷ ${participants.length}）`
+    }
+    return participants
+      .map((p) => `${p.displayName} ${formatCurrency(p.convertedShareAmount, currency)}`)
+      .join("、")
   }
   return participants
-    .map((p) => `${p.displayName} ${formatCurrency(p.convertedShareAmount, currency)}`)
-    .join("、")
+    .map((p) => {
+      const parts: string[] = []
+      const items = p.personalItems ?? []
+      if (items.length > 0) {
+        const shown = items
+          .slice(0, 2)
+          .map((i) => `${i.name} ${formatCurrency(i.convertedAmount, currency)}`)
+          .join("、")
+        parts.push(items.length > 2 ? `個人 ${shown} +${items.length - 2} 項` : `個人 ${shown}`)
+      }
+      if (p.customAmount != null) parts.push(`指定 ${formatCurrency(p.customAmount, currency)}`)
+      else if ((p.sharedAmount ?? 0) > 0.005) parts.push(`共同 ${formatCurrency(p.sharedAmount as number, currency)}`)
+      return `${p.displayName} ${parts.join(" + ")}`
+    })
+    .join("；")
 }
 
 // "計算過程" dialog, ported from the shared v1 dialog so it can be rendered
@@ -97,7 +117,10 @@ export function SettlementCalcDialog({ open, onOpenChange, data }: SettlementCal
                     : ""}
                   {formatCurrency(expense.convertedAmount, currency)}
                 </p>
-                <p className="m-0 text-[11px] text-v2-lake">付款：{expense.payer.displayName}</p>
+                <p className="m-0 flex items-center gap-1.5 text-[11px] text-v2-lake">
+                  <V2Avatar image={expense.payer.userImage ?? null} name={expense.payer.displayName} className="h-4 w-4 rounded-full" />
+                  <span>付款：{expense.payer.displayName}</span>
+                </p>
                 <p data-testid="split-line" className="m-0 text-[11px] text-v2-gold">
                   {`分攤：${splitLine(expense, currency)}`}
                 </p>

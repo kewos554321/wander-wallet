@@ -145,6 +145,23 @@ describe("SettlementCalcDialog (A26)", () => {
     expect(screen.queryByText(/共需/)).not.toBeInTheDocument()
   })
 
+  it("summarizes personal items, the shared remainder and the payer avatar", () => {
+    const data = equalSplitData()
+    data.expenseDetails[0].payer.userImage = "https://cdn.example/zhiming.jpg"
+    data.expenseDetails[0].participants = [
+      { memberId: "a", displayName: "志明", userImage: "https://cdn.example/zhiming.jpg", shareAmount: 980, convertedShareAmount: 980, personalItems: [{ name: "溫泉", amount: 660, convertedAmount: 660 }], sharedAmount: 320 },
+      { memberId: "b", displayName: "小美", userImage: null, shareAmount: 300, convertedShareAmount: 300, personalItems: [{ name: "紀念品", amount: 300, convertedAmount: 300 }], sharedAmount: 0 },
+    ]
+    renderDialog(data)
+    const payer = screen.getByText(/付款：志明/).closest("p")!
+    expect(payer.querySelector('img[src="https://cdn.example/zhiming.jpg"]')).toBeInTheDocument()
+    const split = screen.getByTestId("split-line")
+    expect(split.textContent).toContain("個人")
+    expect(split.textContent).toContain("溫泉")
+    expect(split.textContent).toContain("共同")
+    expect(split.textContent).toContain("TWD 320")
+  })
+
   it("renders a placeholder split for an expense with no participants", () => {
     const data = equalSplitData()
     data.expenseDetails = [{ ...data.expenseDetails[0], id: "e2", participants: [], convertedAmount: 0 }]

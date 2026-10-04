@@ -19,14 +19,34 @@ export interface SettleSettlement {
   amount: number
 }
 
+export interface SettlePersonalItem {
+  name: string
+  amount: number
+  convertedAmount: number
+}
+
+export interface SettleExpenseParticipant {
+  memberId: string
+  displayName: string
+  userImage?: string | null
+  shareAmount: number
+  convertedShareAmount: number
+  /** Personal ("個人項目") items, converted to the project currency. */
+  personalItems?: SettlePersonalItem[]
+  /** Shared ("共同分攤") remainder for non-custom members, project currency. */
+  sharedAmount?: number
+  /** Assigned ("指定") remainder for members with a custom share, project currency. */
+  customAmount?: number
+}
+
 export interface SettleExpenseDetail {
   id: string
   description: string
   amount: number
   currency: string
   convertedAmount: number
-  payer: { memberId: string; displayName: string }
-  participants: { memberId: string; displayName: string; shareAmount: number; convertedShareAmount: number }[]
+  payer: { memberId: string; displayName: string; userImage?: string | null }
+  participants: SettleExpenseParticipant[]
 }
 
 export interface SettleData {

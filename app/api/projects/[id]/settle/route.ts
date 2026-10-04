@@ -22,13 +22,23 @@ interface ExpenseDetail {
   payer: {
     memberId: string
     displayName: string
+    userImage: string | null
   }
   participants: {
     memberId: string
     displayName: string
+    userImage: string | null
     shareAmount: number
     convertedShareAmount: number
+    personalItems: { name: string; amount: number; convertedAmount: number }[]
+    sharedAmount: number
+    customAmount?: number
   }[]
+}
+
+interface RawSplitDetail {
+  personalItems?: Record<string, { name: string; amount: number }[]>
+  customShares?: Record<string, number>
 }
 
 interface Settlement {
@@ -257,9 +267,12 @@ export async function GET(
         payer: {
           memberId: expense.paidByMemberId,
           displayName: expense.payer.displayName,
+          userImage: expense.payer.user?.image ?? null,
         },
         participants: [],
       }
+
+      const split = (expense.splitDetail as RawSplitDetail | null) ?? null
 
       // 扣除每個參與者應該分擔的金額
       expense.participants.forEach((participant) => {
@@ -271,11 +284,24 @@ export async function GET(
           participantBalance.totalShare += shareAmount // 記錄總分攤
         }
 
+        const personalItems = (split?.personalItems?.[participant.memberId] ?? []).map((item) => ({
+          name: item.name,
+          amount: item.amount,
+          convertedAmount: roundToPrecision(item.amount * rate, precision),
+        }))
+        const itemsTotal = personalItems.reduce((sum, item) => sum + item.convertedAmount, 0)
+        const hasCustom = !!split?.customShares && Object.prototype.hasOwnProperty.call(split.customShares, participant.memberId)
+        const remainder = roundToPrecision(shareAmount - itemsTotal, precision)
+
         expenseDetail.participants.push({
           memberId: participant.memberId,
           displayName: participant.member.displayName,
+          userImage: participant.member.user?.image ?? null,
           shareAmount: Number(participant.shareAmount),
           convertedShareAmount: shareAmount,
+          personalItems,
+          sharedAmount: hasCustom ? 0 : remainder,
+          customAmount: hasCustom ? remainder : undefined,
         })
       })
 
