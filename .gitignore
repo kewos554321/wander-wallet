@@ -73,3 +73,6 @@ next-env.d.ts
 
 # OpenCode / Impeccable install (temporary - ignore for now)
 /.opencode/
+
+# git worktrees
+.worktrees/
