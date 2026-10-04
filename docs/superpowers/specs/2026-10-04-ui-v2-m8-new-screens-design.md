@@ -181,7 +181,10 @@ export default function NotesPage({ params }: { params: Promise<{ id: string }> 
 ## 7. 測試與覆蓋率要求
 
 - baseline：`docs/superpowers/specs/2026-10-03-ui-v2-milestone-6/coverage-baseline.txt`（vitest v8，無門檻）。
-- 規則：每個 `components/v2/<資料夾>` 的 Lines% 不得低於 baseline；**新增檔案** Lines% ≥ 90%（含 `export-data.ts`、`currency/format.ts`、`activity-logs/format.ts`、各 view）。
+- **baseline 現實校正**：M6 baseline 的 `All files`（86.12）已與現況不符（本 worktree 實測 main 為 75.14，因 `components/v1/**` 多數未測且被計入）。因此本里程碑**不以 `All files` 為閘**；閘門為：
+  1. 每個 `components/v2/<資料夾>` 的 Lines% 不得低於 M6 baseline 對應值（目前 `components/v2` 整體為 100）。
+  2. **新增的 v2 檔案** Lines% ≥ 90%（含 `export-data.ts`、`currency/format.ts`、`activity-logs/format.ts`、各 view／container）。
+  3. 由 route 抽取而**新增的 `components/v1/**` 檔案不列入 ≥90%**（沿用既有 `components/v1/**` 慣例，多數未測）；其覆蓋率下滑屬預期、可接受。
 - 測試：
   - 每個 `-view` 以 `renderView(overrides)` 直測（props 驅動），斷言 `data-testid` 與 token class。
   - container：mock `useAuthFetch`／`useProjectData`／`useProjectExpenses`／`useCurrencyConversion`，測接線與狀態（loading/empty/error/儲存）。
@@ -216,3 +219,5 @@ export default function NotesPage({ params }: { params: Promise<{ id: string }> 
 11. A25 lightbox 保留 v1 功能（含 `查看`→編輯），設計稿只畫 grid。
 12. 本里程碑不含 A17 里程、A18 登入、A19 加入旅程、A20 邀請分享、A14b 個人資料。
 13. 執行於 worktree `.worktrees/ui-v2-m8`、分支 `feat/ui-v2-m8`（自 `main` @ `3e0748a`）。
+14. 覆蓋率閘門以 `components/v2/**` 與新增 v2 檔案為準；`All files` 因 baseline 過時而不設閘，抽取的 `components/v1/**` 新檔未測屬預期（§7）。
+15. 資料取得：A16／A23／A25 重用 `useProjectData`＋`useProjectExpenses`（`ProjectExpense` 已含 `image`／`latitude`／`longitude`／`participants[].shareAmount`）；A22 直接 `useAuthFetch` 抓 activity-logs；A24 直接 `useAuthFetch` 抓 memo。
