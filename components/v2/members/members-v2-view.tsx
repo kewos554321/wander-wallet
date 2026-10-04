@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ChevronRight, Settings2, Share2, UserMinus, UserPlus, User } from "lucide-react"
 import type { MembersProject } from "@/lib/hooks/useProjectMembers"
+import { JOIN_MODE_OPTIONS } from "@/lib/hooks/use-project-form"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 
@@ -28,6 +29,7 @@ const badge = "rounded-full px-[7px] text-xs font-bold"
 
 export function MembersV2View(props: MembersV2ViewProps) {
   const { project } = props
+  const joinModeOption = JOIN_MODE_OPTIONS.find((option) => option.value === project.joinMode) ?? JOIN_MODE_OPTIONS[0]
 
   return (
     <>
@@ -105,15 +107,20 @@ export function MembersV2View(props: MembersV2ViewProps) {
       <div className="mx-4 mb-4 rounded-2xl border border-v2-line bg-v2-surface">
         <Link
           href={`/projects/${project.id}/settings`}
-          aria-label="前往專案設定修改加入方式"
+          aria-label={`成員加入方式，目前為${joinModeOption.label}，前往專案設定修改`}
           className="flex items-center gap-3 px-4 py-3.5"
         >
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-v2-lake-soft text-v2-lake" aria-hidden="true">
             <Settings2 className="h-4 w-4" strokeWidth={1.8} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-semibold">前往專案設定修改加入方式</span>
-            <span className="mt-0.5 block text-xs text-v2-ink-muted">調整成員如何加入這趟旅程</span>
+            <span className="flex items-center justify-between gap-2">
+              <span className="text-[13px] font-semibold">成員加入方式</span>
+              <span className="shrink-0 rounded-full bg-v2-lake-soft px-2 py-0.5 text-[11px] font-bold text-v2-lake">
+                {joinModeOption.label}
+              </span>
+            </span>
+            <span className="mt-0.5 block text-xs text-v2-ink-muted">{joinModeOption.description}</span>
           </span>
           <ChevronRight className="h-4 w-4 shrink-0 text-v2-ink-subtle" aria-hidden="true" />
         </Link>

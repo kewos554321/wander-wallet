@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
+import type { JoinMode } from "@/lib/hooks/use-project-form"
 
 export interface ManagedMember {
   id: string
@@ -19,6 +20,7 @@ export interface MembersProject {
   createdBy: string
   creator: { id: string; name: string | null; email: string }
   members: ManagedMember[]
+  joinMode: JoinMode
 }
 
 export function useProjectMembers(projectId: string) {

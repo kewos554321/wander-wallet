@@ -31,6 +31,7 @@ const project: MembersProject = {
   name: "東京",
   createdBy: "u1",
   creator: { id: "u1", name: "Emma", email: "emma@example.com" },
+  joinMode: "both",
   members: [
     { id: "m1", userId: "u1", role: "owner", displayName: "Emma", claimedAt: null, user: { id: "u1", name: "Emma", email: "emma@example.com", image: null } },
     { id: "m2", userId: "u2", role: "member", displayName: "小美", claimedAt: null, user: { id: "u2", name: "小美", email: "meimei@example.com", image: null } },
@@ -58,7 +59,7 @@ describe("MembersV2View", () => {
     renderView()
     expect(screen.getByText("成員列表")).toBeInTheDocument()
     expect(screen.getByText("成員組成 · 3 位旅伴")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "前往專案設定修改加入方式" })).toHaveAttribute("href", "/projects/p1/settings")
+    expect(screen.getByRole("link", { name: /成員加入方式/ })).toHaveAttribute("href", "/projects/p1/settings")
     const me = screen.getByTestId("member-m1")
     expect(within(me).getByText("建立者")).toBeInTheDocument()
     expect(within(me).getByText("你")).toBeInTheDocument()
@@ -70,9 +71,22 @@ describe("MembersV2View", () => {
 
   it("moves the join-method link into its own row outside the members card", () => {
     renderView()
-    const link = screen.getByRole("link", { name: /前往專案設定修改加入方式/ })
+    const link = screen.getByRole("link", { name: /成員加入方式/ })
     const card = screen.getByText("成員列表").closest("div.rounded-2xl")!
     expect(card.contains(link)).toBe(false)
+  })
+
+  it("shows the current join method and its description", () => {
+    renderView()
+    const link = screen.getByRole("link", { name: /成員加入方式/ })
+    expect(within(link).getByText("兩者皆可")).toBeInTheDocument()
+    expect(within(link).getByText("新成員可選擇建立新身份或取代佔位成員")).toBeInTheDocument()
+  })
+
+  it("reflects a different join mode", () => {
+    renderView({ project: { ...project, joinMode: "claim_only" } })
+    const link = screen.getByRole("link", { name: /成員加入方式/ })
+    expect(within(link).getByText("僅取代佔位成員")).toBeInTheDocument()
   })
 
   it("renders the labelled share and add buttons", () => {

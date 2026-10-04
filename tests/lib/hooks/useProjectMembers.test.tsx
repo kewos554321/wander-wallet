@@ -16,6 +16,7 @@ const project: MembersProject = {
   name: "東京",
   createdBy: "u1",
   creator: { id: "u1", name: "Emma", email: "e@x.com" },
+  joinMode: "both",
   members: [
     { id: "m1", userId: "u1", role: "owner", displayName: "Emma", claimedAt: null, user: { id: "u1", name: "Emma", email: "e@x.com", image: null } },
     { id: "m2", userId: null, role: "member", displayName: "阿凱", claimedAt: null, user: null },
