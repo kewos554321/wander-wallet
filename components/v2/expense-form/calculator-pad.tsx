@@ -6,8 +6,6 @@ interface CalculatorPadProps {
   initialValue: string | number
   onApply: (value: number) => void
   onClose: () => void
-  /** Currency code shown next to the evaluated result (optional). */
-  currency?: string
 }
 
 const OPERATORS = ["+", "−", "×", "÷"] as const
@@ -157,7 +155,7 @@ function keyClass(kind: Key["kind"]): string {
   }
 }
 
-export function CalculatorPad({ initialValue, onApply, onClose, currency }: CalculatorPadProps) {
+export function CalculatorPad({ initialValue, onApply, onClose }: CalculatorPadProps) {
   const [expression, setExpression] = useState<string>(String(initialValue))
   const result = evaluateExpression(expression)
 
@@ -205,7 +203,7 @@ export function CalculatorPad({ initialValue, onApply, onClose, currency }: Calc
           data-testid="calc-result"
           className="text-right font-v2-serif text-[26px] font-bold text-v2-lake tabular-nums"
         >
-          {result !== null ? `= ${result.toLocaleString("zh-TW")}${currency ? ` ${currency}` : ""}` : ""}
+          {result !== null ? `= ${result.toLocaleString("zh-TW")}` : ""}
         </p>
       </div>
       <div className="grid grid-cols-4 gap-[7px]">

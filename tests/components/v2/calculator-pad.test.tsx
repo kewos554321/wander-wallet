@@ -50,14 +50,6 @@ describe("CalculatorPad", () => {
     expect(result()).toBe("= 15")
   })
 
-  it("shows the currency in the result line when provided", () => {
-    const { result } = setup({ currency: "TWD" })
-    press("7")
-    press("+")
-    press("8")
-    expect(result()).toBe("= 15 TWD")
-  })
-
   it("does not allow two operators in a row", () => {
     const { expression } = setup()
     press("7")

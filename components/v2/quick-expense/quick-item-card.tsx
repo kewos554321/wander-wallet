@@ -85,7 +85,6 @@ export function QuickItemCard({ item, members, onChange }: { item: QuickItem; me
         calculator={
           <CalculatorPad
             initialValue={item.amount}
-            currency={item.currency}
             onApply={(value: number) => {
               onChange({ amount: String(value) })
               setShowCalculator(false)
