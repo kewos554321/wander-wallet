@@ -64,5 +64,15 @@ describe("AmountCard states + calculator slot", () => {
     const label = screen.getByText("輸入金額")
     expect(label.className).toContain("text-v2-paper")
     expect(label.className).toContain("opacity-85")
+    expect(label.tagName).toBe("SPAN")
+    expect(label).not.toHaveAttribute("for")
+  })
+
+  it("labels the calculator toggle by state", () => {
+    const { unmount } = setup()
+    expect(screen.getByRole("button", { name: "開啟計算機" })).toBeInTheDocument()
+    unmount()
+    setup({ calculatorOpen: true, calculator: <div data-testid="calculator" /> })
+    expect(screen.getByRole("button", { name: "關閉計算機" })).toBeInTheDocument()
   })
 })

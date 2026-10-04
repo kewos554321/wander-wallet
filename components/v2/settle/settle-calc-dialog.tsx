@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useId, useRef, type ReactNode } from "react"
+import { useEffect, useId, useRef } from "react"
 import { ArrowRight, CheckCircle2, ReceiptText, X } from "lucide-react"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import type { SettleData, SettleExpenseDetail } from "@/lib/hooks/useSettlement"
@@ -10,7 +10,6 @@ interface SettlementCalcDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   data: SettleData
-  trigger?: ReactNode
 }
 
 const STEP_BADGE =
@@ -92,7 +91,11 @@ export function SettlementCalcDialog({ open, onOpenChange, data }: SettlementCal
             data.expenseDetails.map((expense) => (
               <div key={expense.id} className="rounded-[10px] bg-v2-paper px-3 py-[9px]">
                 <p className="mb-[3px] mt-0 text-[13px] font-semibold">
-                  {expense.description} · {formatCurrency(expense.convertedAmount, currency)}
+                  {expense.description} ·{" "}
+                  {expense.currency !== currency
+                    ? `${formatCurrency(expense.amount, expense.currency)} → `
+                    : ""}
+                  {formatCurrency(expense.convertedAmount, currency)}
                 </p>
                 <p className="m-0 text-[11px] text-v2-lake">付款：{expense.payer.displayName}</p>
                 <p data-testid="split-line" className="m-0 text-[11px] text-v2-gold">

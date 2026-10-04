@@ -162,54 +162,52 @@ export function AmountPanel({
   const hiPct = upper > 0 ? (hiValue / upper) * 100 : 100
   const label = (n: number) => `${currencySymbol(currency)}${formatAmount(n, currency)}`
   return (
-    <>
-      <div className="px-3 pt-2.5 pb-3.5">
-        <div className="mb-2 flex items-center justify-between">
-          <p className="m-0 text-[10px] font-bold text-v2-ink-subtle">設定金額區間</p>
-          {(lo > 0 || hi > 0) && (
-            <button
-              type="button"
-              onClick={onClear}
-              className="flex items-center gap-[3px] rounded-md px-1 py-0.5 text-[10px] font-bold text-v2-danger"
-            >
-              <CircleX className="h-[11px] w-[11px]" strokeWidth={2.4} aria-hidden="true" />
-              清除
-            </button>
-          )}
-        </div>
-        <div className="mb-2 flex items-center justify-between text-xs font-bold text-v2-ink">
-          <span>{label(lo)}</span>
-          <span>{label(hiValue)}</span>
-        </div>
-        <div className="relative flex h-3.5 items-center">
-          <span className="absolute inset-x-0 h-1 rounded-full bg-v2-line-soft" />
-          <span className="absolute h-1 rounded-full bg-v2-lake" style={{ left: `${loPct}%`, right: `${100 - hiPct}%` }} />
-          <input
-            type="range"
-            min={0}
-            max={upper}
-            step={step}
-            value={lo}
-            aria-label="最低金額"
-            onChange={(e) => onChange([Math.min(Number(e.target.value), hiValue), hi])}
-            className="v2-range absolute inset-x-0 h-3.5 w-full"
-          />
-          <input
-            type="range"
-            min={0}
-            max={upper}
-            step={step}
-            value={hiValue}
-            aria-label="最高金額"
-            onChange={(e) => {
-              const v = Number(e.target.value)
-              onChange([lo, v >= upper ? 0 : Math.max(lo, v)])
-            }}
-            className="v2-range absolute inset-x-0 h-3.5 w-full"
-          />
-        </div>
+    <div className="px-3 pt-2.5 pb-3.5">
+      <div className="mb-2 flex items-center justify-between">
+        <p className="m-0 text-[10px] font-bold text-v2-ink-subtle">設定金額區間</p>
+        {(lo > 0 || hi > 0) && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="flex items-center gap-[3px] rounded-md px-1 py-0.5 text-[10px] font-bold text-v2-danger"
+          >
+            <CircleX className="h-[11px] w-[11px]" strokeWidth={2.4} aria-hidden="true" />
+            清除
+          </button>
+        )}
       </div>
-    </>
+      <div className="mb-2 flex items-center justify-between text-xs font-bold text-v2-ink">
+        <span>{label(lo)}</span>
+        <span>{label(hiValue)}</span>
+      </div>
+      <div className="relative flex h-3.5 items-center">
+        <span className="absolute inset-x-0 h-1 rounded-full bg-v2-line-soft" />
+        <span className="absolute h-1 rounded-full bg-v2-lake" style={{ left: `${loPct}%`, right: `${100 - hiPct}%` }} />
+        <input
+          type="range"
+          min={0}
+          max={upper}
+          step={step}
+          value={lo}
+          aria-label="最低金額"
+          onChange={(e) => onChange([Math.min(Number(e.target.value), hiValue), hi])}
+          className="v2-range absolute inset-x-0 h-3.5 w-full"
+        />
+        <input
+          type="range"
+          min={0}
+          max={upper}
+          step={step}
+          value={hiValue}
+          aria-label="最高金額"
+          onChange={(e) => {
+            const v = Number(e.target.value)
+            onChange([lo, v >= upper ? 0 : Math.max(lo, v)])
+          }}
+          className="v2-range absolute inset-x-0 h-3.5 w-full"
+        />
+      </div>
+    </div>
   )
 }
 

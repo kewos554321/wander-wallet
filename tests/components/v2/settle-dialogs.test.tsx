@@ -72,7 +72,21 @@ describe("SettlementCalcDialog (A26)", () => {
     renderDialog(equalSplitData())
     expect(screen.getByText("支出明細（共 1 筆）")).toBeInTheDocument()
     expect(screen.getByText(/付款：志明/)).toBeInTheDocument()
-    expect(screen.getByText(/一蘭拉麵晚餐 · TWD 1,280/)).toBeInTheDocument()
+    const detail = screen.getByText(/一蘭拉麵晚餐 · TWD 1,280/)
+    expect(detail).toBeInTheDocument()
+    expect(detail.textContent).not.toContain("→")
+  })
+
+  it("shows the original amount before the converted amount for multi-currency expenses", () => {
+    const data = equalSplitData()
+    data.expenseDetails[0].currency = "JPY"
+    data.expenseDetails[0].amount = 5000
+    data.expenseDetails[0].convertedAmount = 1100
+    renderDialog(data)
+    const detail = screen.getByText(/一蘭拉麵晚餐/)
+    expect(detail.textContent).toContain("JPY 5,000")
+    expect(detail.textContent).toContain("TWD 1,100")
+    expect(detail.textContent).toContain("→")
   })
 
   it("renders the member balance table headers", () => {

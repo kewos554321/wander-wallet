@@ -35,16 +35,17 @@ export function AmountCard({
       }`}
     >
       <div className="mb-3 flex items-center justify-between">
-        <label
-          htmlFor={open ? undefined : "v2-amount"}
-          className={open ? "text-[13px] font-bold text-v2-paper opacity-85" : SECTION_TITLE}
-        >
-          輸入金額
-        </label>
+        {open ? (
+          <span className="text-[13px] font-bold text-v2-paper opacity-85">輸入金額</span>
+        ) : (
+          <label htmlFor="v2-amount" className={SECTION_TITLE}>
+            輸入金額
+          </label>
+        )}
         <button
           type="button"
           onClick={onToggleCalculator}
-          aria-label="開啟計算機"
+          aria-label={open ? "關閉計算機" : "開啟計算機"}
           className="inline-flex items-center gap-1 rounded-full bg-v2-paper px-3.5 py-1.5 text-xs font-bold text-v2-lake shadow-[0_1px_2px_rgba(27,24,21,.06)]"
         >
           <CalculatorIcon className="h-3.5 w-3.5" aria-hidden="true" />

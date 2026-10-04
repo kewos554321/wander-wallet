@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef } from "react"
-import { Camera, Images, X, Zap } from "lucide-react"
+import { Camera, Images, Sparkles, X } from "lucide-react"
 import { useCamera } from "./use-camera"
 
 export function CameraStep({ onImage, onManual, onClose }: { onImage: (file: File) => void; onManual: () => void; onClose: () => void }) {
@@ -26,7 +26,7 @@ export function CameraStep({ onImage, onManual, onClose }: { onImage: (file: Fil
         </button>
         <p className="m-0 text-[13px] font-semibold">拍照記帳</p>
         <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(255,255,255,.12)]">
-          <Zap className="h-[17px] w-[17px]" />
+          <Sparkles className="h-[17px] w-[17px]" />
         </span>
       </div>
 

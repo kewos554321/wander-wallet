@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useId, useRef, useState, type ReactNode } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import { Check, Copy, X } from "lucide-react"
 import { useDismiss } from "@/components/v2/use-dismiss"
 
@@ -8,7 +8,6 @@ interface SettleShareDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   shareText: string
-  trigger?: ReactNode
 }
 
 // "分享結算結果" dialog, ported from the shared v1 dialog so it can be rendered
@@ -16,6 +15,7 @@ interface SettleShareDialogProps {
 export function SettleShareDialog({ open, onOpenChange, shareText }: SettleShareDialogProps) {
   const [copied, setCopied] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const titleId = useId()
   useDismiss(cardRef, () => onOpenChange(false), open)
 
@@ -23,11 +23,18 @@ export function SettleShareDialog({ open, onOpenChange, shareText }: SettleShare
     if (open) cardRef.current?.focus()
   }, [open])
 
+  useEffect(() => {
+    return () => {
+      if (copyTimer.current) clearTimeout(copyTimer.current)
+    }
+  }, [])
+
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(shareText)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      if (copyTimer.current) clearTimeout(copyTimer.current)
+      copyTimer.current = setTimeout(() => setCopied(false), 2000)
     } catch (err) {
       console.error("複製失敗:", err)
     }
