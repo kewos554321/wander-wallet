@@ -11,21 +11,49 @@ describe("fromParsed", () => {
     expect(q.amount).toBe("100")
     expect(q.expenseDate).toEqual(today)
     expect(q.expenseDate).not.toBe(today)
-    expect(q).toMatchObject({ location: null, latitude: null, longitude: null, image: { image: null, pendingFile: null, preview: null } })
+    expect(q).toMatchObject({
+      location: null,
+      latitude: null,
+      longitude: null,
+      image: { image: null, pendingFile: null, preview: null },
+      personalMode: false,
+      personalItems: {},
+      personalMembers: [],
+      customShares: {},
+    })
     expect("selected" in q).toBe(false)
   })
 })
 
+const members = [
+  { id: "a", displayName: "小雨" },
+  { id: "b", displayName: "志明" },
+]
+
 describe("validateItems", () => {
-  it("returns null when valid", () => expect(validateItems([item()])).toBeNull())
+  it("returns null when valid", () => expect(validateItems([item()], members)).toBeNull())
   it("checks amount first", () => {
     for (const amount of ["", "0", "abc"]) {
-      expect(validateItems([item(), item({ amount, payerId: "" })])).toEqual({ index: 1, message: "第 2 筆請輸入有效金額" })
+      expect(validateItems([item(), item({ amount, payerId: "" })], members)).toEqual({ index: 1, message: "第 2 筆請輸入有效金額" })
     }
   })
   it("checks payer then participants", () => {
-    expect(validateItems([item({ payerId: "" })])).toEqual({ index: 0, message: "第 1 筆請選擇付款成員" })
-    expect(validateItems([item({ participantIds: [] })])).toEqual({ index: 0, message: "第 1 筆請選擇至少一位分攤成員" })
+    expect(validateItems([item({ payerId: "" })], members)).toEqual({ index: 0, message: "第 1 筆請選擇付款成員" })
+    expect(validateItems([item({ participantIds: [] })], members)).toEqual({ index: 0, message: "第 1 筆請選擇至少一位分攤成員" })
+  })
+  it("validates the editable split like the expense form", () => {
+    // A custom share that doesn't add up to the amount is rejected.
+    expect(validateItems([item({ participantIds: ["a"], customShares: { a: "10" } })], members)).toEqual({
+      index: 0,
+      message: "第 1 筆分攤金額與支出金額不符",
+    })
+    // Personal items must be named.
+    const withItem = item({
+      personalMode: true,
+      personalMembers: ["a"],
+      personalItems: { a: [{ id: "i1", name: "", amount: "10" }] },
+    })
+    expect(validateItems([withItem], members)).toEqual({ index: 0, message: "第 1 筆：小雨 有個人項目未填寫名稱" })
   })
 })
 

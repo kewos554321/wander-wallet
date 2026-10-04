@@ -1,15 +1,14 @@
 "use client"
 
-import { CheckCircle2, CornerRightDown, Pin, PinOff, Plus, UserMinus, X } from "lucide-react"
+import { CornerRightDown, Pin, PinOff, Plus, UserMinus, X } from "lucide-react"
 import { formatAmount } from "@/lib/constants/currencies"
 import { toMoneyInput } from "@/lib/money-input"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
-import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
+import type { DraftMember } from "./use-expense-draft"
 import { memberPillClass, memberTone } from "./payer-picker"
 import { SECTION_CARD, SECTION_TITLE } from "./section-card"
-import { SplitSummary } from "./split-summary"
-
-type Draft = ReturnType<typeof useExpenseDraft>
+import { MatchBadge, SplitEquation, SplitSummary, shouldShowBreakdown } from "./split-summary"
+import type { SplitDraft } from "@/lib/split-draft"
 
 // Must match the server-enforced splitDetail limit (lib/expense-split.ts).
 const MAX_PERSONAL_ITEM_NAME = 30
@@ -17,7 +16,7 @@ const MAX_PERSONAL_ITEM_NAME = 30
 const smallButton = "flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
 const itemInput = "min-w-0 rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-xs outline-none"
 
-export function SplitEditor({ members, draft, currency }: { members: DraftMember[]; draft: Draft; currency: string }) {
+export function SplitEditor({ members, draft, currency }: { members: DraftMember[]; draft: SplitDraft; currency: string }) {
   const { state, actions, derived } = draft
   // Currency code only on totals; per-member amounts show the number alone.
   const num = (n: number) => formatAmount(Math.round(n * 100) / 100, currency)
@@ -27,14 +26,11 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
   const personalOf = (id: string) => derived.splitInput.personalItems[id]?.reduce((s, i) => s + i.amount, 0) ?? 0
   const poolShareOf = (id: string) =>
     Math.round(((derived.shares.find((s) => s.memberId === id)?.shareAmount ?? 0) - personalOf(id)) * 100) / 100
-  const sharedTotal = Math.round((derived.splitInput.amount - derived.personalTotal) * 100) / 100
   const allInPool = members.every((m) => state.pool.includes(m.id))
   const allPersonal = members.every((m) => state.personalMembers.includes(m.id))
-  const poolCount = state.pool.length
-  // A split-detail table renders rows when personal items or custom shares
-  // exist; in that case the compact inline equation is redundant and hidden.
-  const hasDetail =
-    Object.keys(derived.splitInput.personalItems).length > 0 || Object.keys(derived.splitInput.customShares).length > 0
+  // The breakdown table is shown only when personal items make its 個人項目
+  // column meaningful; otherwise the header text summary stands alone.
+  const showBreakdown = shouldShowBreakdown(members, draft)
 
   return (
     <section aria-label="分攤成員" className={SECTION_CARD}>
@@ -248,26 +244,17 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
         </div>
       )}
 
-      <div className="mt-2">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs text-v2-ink-muted">已選 {derived.splitInput.participantIds.length} 人</span>
-          {derived.matches ? (
-            <span className="flex items-center gap-1 text-xs font-bold text-v2-link">
-              <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-              金額相符
-            </span>
-          ) : (
-            <span className="text-xs font-bold text-v2-danger">金額不符</span>
-          )}
+      {!showBreakdown && (
+        <div className="mt-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs text-v2-ink-muted">已選 {derived.splitInput.participantIds.length} 人</span>
+            <MatchBadge matches={derived.matches} />
+          </div>
+          <SplitEquation draft={draft} currency={currency} />
         </div>
-        {!hasDetail && (
-          <p className="mt-[3px] break-words text-xs leading-normal text-v2-ink-muted">
-            個人項目 ${num(derived.personalTotal)}（{derived.itemCount} 項）＋ 共同分攤 ${num(sharedTotal)}（{poolCount} 人）= ${num(derived.shares.reduce((s, x) => s + x.shareAmount, 0))} / ${num(derived.splitInput.amount)}
-          </p>
-        )}
-      </div>
+      )}
 
-      <SplitSummary members={members} draft={draft} currency={currency} />
+      {showBreakdown && <SplitSummary members={members} draft={draft} currency={currency} />}
     </section>
   )
 }

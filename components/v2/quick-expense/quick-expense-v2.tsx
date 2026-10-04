@@ -100,7 +100,7 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
   }
 
   const handleSubmit = async (shouldNotifyLine: boolean) => {
-    const invalid = validateItems(items)
+    const invalid = validateItems(items, plainMembers)
     if (invalid) {
       setIndex(invalid.index)
       setError(invalid.message)

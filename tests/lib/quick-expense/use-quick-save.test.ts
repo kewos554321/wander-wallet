@@ -37,7 +37,7 @@ describe("useQuickSave", () => {
     expect(authFetch.mock.calls[0][0]).toBe("/api/projects/p1/expenses")
     expect(body.participants.map((p: { shareAmount: number }) => p.shareAmount)).toEqual([33.34, 33.33, 33.33])
     expect(body).toMatchObject({ paidByMemberId: "a", amount: 100, currency: "TWD", image: null })
-    expect(body.splitDetail).toBeUndefined()
+    expect(body.splitDetail).toBeNull()
     expect(single).toHaveBeenCalledWith(expect.objectContaining({ operationType: "create", payerName: "小雨", participantCount: 3 }))
     expect(batch).not.toHaveBeenCalled()
   })

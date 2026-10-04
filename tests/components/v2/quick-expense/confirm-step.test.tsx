@@ -45,7 +45,7 @@ describe("ConfirmStep", () => {
     expect(screen.getByRole("button", { name: "第 1 筆" })).toHaveClass("w-6", "bg-v2-lake")
     expect(screen.getByRole("button", { name: "第 1 筆" })).toHaveAttribute("aria-current", "true")
     expect(screen.getByRole("button", { name: "第 2 筆" })).toHaveClass("w-2", "bg-v2-line")
-    expect(screen.getByText("幫誰付？（3 人均分 · 每人 20）")).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "分攤成員" })).getByText("已選 3 人")).toBeInTheDocument()
     expect(screen.getByText("共 2 筆")).toBeInTheDocument()
     expect(screen.getByText("TWD 210")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "新增 2 筆" })).toBeInTheDocument()
@@ -96,10 +96,10 @@ describe("ConfirmStep", () => {
     const p = setup()
     fireEvent.click(within(screen.getByRole("group", { name: "付款成員" })).getByRole("radio", { name: "志明" }))
     expect(p.onItemsChange).toHaveBeenLastCalledWith([{ ...items[0], payerId: "b" }, items[1]])
-    fireEvent.click(within(screen.getByRole("group", { name: "分攤成員" })).getByRole("button", { name: "阿凱" }))
-    expect(p.onItemsChange).toHaveBeenLastCalledWith([{ ...items[0], participantIds: ["a", "b"] }, items[1]])
+    fireEvent.click(within(screen.getByRole("region", { name: "分攤成員" })).getByRole("button", { name: "阿凱" }))
+    expect(p.onItemsChange).toHaveBeenLastCalledWith([expect.objectContaining({ participantIds: ["a", "b"] }), items[1]])
     fireEvent.click(screen.getByRole("button", { name: "取消全選" }))
-    expect(p.onItemsChange).toHaveBeenLastCalledWith([{ ...items[0], participantIds: [] }, items[1]])
+    expect(p.onItemsChange).toHaveBeenLastCalledWith([expect.objectContaining({ participantIds: [] }), items[1]])
   })
 
   it("removes the current item from the top-right pill and moves the index back when needed", () => {

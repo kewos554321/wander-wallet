@@ -2,7 +2,8 @@
 
 import { useCallback, useState } from "react"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
-import { computeShares } from "@/lib/expense-split"
+import { buildSplitDetail } from "@/lib/expense-split"
+import { deriveSplit, type SplitState } from "@/lib/split-draft"
 import { uploadImageToR2 } from "@/lib/image-utils"
 import { sendBatchExpenseNotificationToChat, sendExpenseNotificationToChat } from "@/lib/liff"
 import { mergePreferences } from "@/types/user-preferences"
@@ -40,7 +41,14 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
             }
           }
           const amount = Number(item.amount)
-          const participants = computeShares({ amount, participantIds: item.participantIds, personalItems: {}, customShares: {} })
+          const splitState: SplitState = {
+            pool: item.participantIds,
+            personalMode: item.personalMode,
+            personalItems: item.personalItems,
+            personalMembers: item.personalMembers,
+            customShares: item.customShares,
+          }
+          const derived = deriveSplit(amount, members.map((m) => m.id), splitState)
           const res = await authFetch(`/api/projects/${projectId}/expenses`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -55,7 +63,8 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
               latitude: item.latitude,
               longitude: item.longitude,
               expenseDate: item.expenseDate.toISOString(),
-              participants,
+              participants: derived.shares,
+              splitDetail: buildSplitDetail(derived.splitInput),
             }),
           })
           if (!res.ok) {
@@ -71,13 +80,23 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
       setProgress(null)
 
       if (saved.length > 0 && notifyLine && canNotifyLine && mergePreferences(user?.preferences).notifications.expenseCreated) {
-        const summary = (e: QuickItem) => ({
-          amount: Number(e.amount),
-          description: e.description || undefined,
-          category: e.category || undefined,
-          payerName: payerName(e.payerId),
-          participantCount: e.participantIds.length,
-        })
+        const summary = (e: QuickItem) => {
+          const state: SplitState = {
+            pool: e.participantIds,
+            personalMode: e.personalMode,
+            personalItems: e.personalItems,
+            personalMembers: e.personalMembers,
+            customShares: e.customShares,
+          }
+          const derived = deriveSplit(Number(e.amount), members.map((m) => m.id), state)
+          return {
+            amount: Number(e.amount),
+            description: e.description || undefined,
+            category: e.category || undefined,
+            payerName: payerName(e.payerId),
+            participantCount: derived.shares.length,
+          }
+        }
         const send =
           saved.length === 1
             ? sendExpenseNotificationToChat({ operationType: "create", projectName, projectId, ...summary(saved[0]) })
@@ -88,7 +107,7 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
       }
       return { savedIds: saved.map((s) => s.id), failed }
     },
-    [authFetch, canNotifyLine, payerName, projectId, projectName, user?.preferences]
+    [authFetch, canNotifyLine, payerName, projectId, projectName, members, user?.preferences]
   )
 
   return { save, progress, canNotifyLine }

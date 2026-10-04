@@ -6,49 +6,69 @@ import { zhTW } from "date-fns/locale"
 import { CalendarIcon } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { formatAmount } from "@/lib/constants/currencies"
-import { computeShares } from "@/lib/expense-split"
 import { toMoneyInput } from "@/lib/money-input"
+import {
+  deriveSplit,
+  withAddedItem,
+  withClearedCustomShare,
+  withCustomShare,
+  withPersonalAll,
+  withPersonalMode,
+  withPoolAll,
+  withRemovedItem,
+  withToggledPersonalMember,
+  withToggledPool,
+  withUpdatedItem,
+  type SplitActions,
+  type SplitDraft,
+  type SplitState,
+} from "@/lib/split-draft"
 import type { QuickItem } from "@/lib/quick-expense/draft"
 import { AmountCard } from "@/components/v2/expense-form/amount-card"
 import { CalculatorPad } from "@/components/v2/expense-form/calculator-pad"
 import { CategoryPicker } from "@/components/v2/expense-form/category-picker"
 import { LocationPickerV2 } from "@/components/v2/expense-form/location-picker-v2"
-import { memberPillClass, memberTone, PayerPicker } from "@/components/v2/expense-form/payer-picker"
+import { PayerPicker } from "@/components/v2/expense-form/payer-picker"
 import { SECTION_CARD, SECTION_TITLE } from "@/components/v2/expense-form/section-card"
+import { SplitEditor } from "@/components/v2/expense-form/split-editor"
 import { V2ImagePicker } from "@/components/v2/expense-form/v2-image-picker"
-import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 
 type Member = { id: string; displayName: string; image?: string | null }
-
-function MemberPill({ member, index, selected, onClick }: { member: Member; index: number; selected: boolean; onClick: () => void }) {
-  return (
-    <button type="button" aria-pressed={selected} onClick={onClick} className={memberPillClass(selected)}>
-      <V2Avatar
-        image={member.image ?? null}
-        name={member.displayName}
-        className="h-5 w-5 rounded-full"
-        fallbackClassName={`text-[9px] font-bold ${memberTone(index)}`}
-      />
-      <span className="text-xs font-semibold">{member.displayName}</span>
-    </button>
-  )
-}
-
-// Rebuilt on the shared A3 cards: the amount uses AmountCard (+ CalculatorPad),
-// the category uses CategoryPicker and the payer uses PayerPicker. Split stays
-// equal-split pills only because QuickItem carries just `participantIds`.
 export function QuickItemCard({ item, members, onChange }: { item: QuickItem; members: Member[]; onChange: (patch: Partial<QuickItem>) => void }) {
   const [showCalculator, setShowCalculator] = useState(false)
   const amount = Number(item.amount) || 0
-  const perHead = computeShares({ amount, participantIds: item.participantIds, personalItems: {}, customShares: {} }).at(-1)?.shareAmount ?? 0
-  const allSelected = members.every((m) => item.participantIds.includes(m.id))
-  const toggleParticipant = (id: string) =>
+
+  // Drive the shared SplitEditor from the item's own split state so the AI
+  // result card matches the expense form exactly.
+  const memberIds = members.map((m) => m.id)
+  const splitState: SplitState = {
+    pool: item.participantIds,
+    personalMode: item.personalMode,
+    personalItems: item.personalItems,
+    personalMembers: item.personalMembers,
+    customShares: item.customShares,
+  }
+  const applySplit = (next: SplitState) =>
     onChange({
-      participantIds: item.participantIds.includes(id)
-        ? item.participantIds.filter((x) => x !== id)
-        : members.map((m) => m.id).filter((m) => m === id || item.participantIds.includes(m)),
+      participantIds: next.pool,
+      personalMode: next.personalMode,
+      personalItems: next.personalItems,
+      personalMembers: next.personalMembers,
+      customShares: next.customShares,
     })
+  const splitActions: SplitActions = {
+    setPersonalMode: (v) => applySplit(withPersonalMode(splitState, v)),
+    togglePersonalMember: (id) => applySplit(withToggledPersonalMember(splitState, id)),
+    setPersonalAll: (v) => applySplit(withPersonalAll(splitState, memberIds, v)),
+    addItem: (id) => applySplit(withAddedItem(splitState, id)),
+    updateItem: (id, itemId, field, value) => applySplit(withUpdatedItem(splitState, id, itemId, field, value)),
+    removeItem: (id, itemId) => applySplit(withRemovedItem(splitState, id, itemId)),
+    togglePool: (id) => applySplit(withToggledPool(splitState, id)),
+    setPoolAll: (v) => applySplit(withPoolAll(splitState, memberIds, v)),
+    setCustomShare: (id, value) => applySplit(withCustomShare(splitState, id, value)),
+    clearCustomShare: (id) => applySplit(withClearedCustomShare(splitState, id)),
+  }
+  const splitDraft: SplitDraft = { state: splitState, actions: splitActions, derived: deriveSplit(amount, memberIds, splitState) }
 
   return (
     <div>
@@ -92,21 +112,7 @@ export function QuickItemCard({ item, members, onChange }: { item: QuickItem; me
 
       <PayerPicker members={members} value={item.payerId} onChange={(id) => onChange({ payerId: id })} amount={amount} currency={item.currency} />
 
-      <div className={SECTION_CARD}>
-        <div className="mb-2.5 flex items-center justify-between gap-2">
-          <p className={`m-0 ${SECTION_TITLE}`}>
-            {`幫誰付？（${item.participantIds.length} 人均分 · 每人 ${formatAmount(perHead, item.currency)}）`}
-          </p>
-          <button type="button" onClick={() => onChange({ participantIds: allSelected ? [] : members.map((m) => m.id) })} className="shrink-0 text-xs font-bold text-v2-lake">
-            {allSelected ? "取消全選" : "全選"}
-          </button>
-        </div>
-        <div role="group" aria-label="分攤成員" className="flex flex-wrap gap-2">
-          {members.map((m, i) => (
-            <MemberPill key={m.id} member={m} index={i} selected={item.participantIds.includes(m.id)} onClick={() => toggleParticipant(m.id)} />
-          ))}
-        </div>
-      </div>
+      <SplitEditor members={members} currency={item.currency} draft={splitDraft} />
 
       <div className={SECTION_CARD}>
         <p className={`mb-2 ${SECTION_TITLE}`}>支出日期</p>

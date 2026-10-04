@@ -1,22 +1,30 @@
 "use client"
 
+import { CheckCircle2 } from "lucide-react"
 import { formatAmount } from "@/lib/constants/currencies"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
-import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
+import type { SplitDraft } from "@/lib/split-draft"
+import type { DraftMember } from "./use-expense-draft"
 import { memberTone } from "./payer-picker"
 
-type Draft = ReturnType<typeof useExpenseDraft>
+export interface SummaryRow {
+  id: string
+  name: string
+  image: string | null
+  tone: string
+  personal: number
+  pool: number
+  total: number
+}
 
-// Per-member breakdown (design A3d, deliberately deviating): members whose
-// subtotal is 0 are hidden instead of rendering as 0/0 rows.
-export function SplitSummary({ members, draft, currency }: { members: DraftMember[]; draft: Draft; currency: string }) {
+// Per-member breakdown math. Exported so the split editor can tell whether the
+// table will render at all, keeping the inline equation and the table in
+// agreement about which one is shown.
+export function buildSummaryRows(members: DraftMember[], draft: SplitDraft): SummaryRow[] {
   const { derived } = draft
-  if (derived.shares.length === 0) return null
-
-  const money = (n: number) => `$${formatAmount(Math.round(n * 100) / 100, currency)}`
   const shareOf = (id: string) => derived.shares.find((s) => s.memberId === id)?.shareAmount ?? 0
   const personalOf = (id: string) => derived.splitInput.personalItems[id]?.reduce((sum, i) => sum + i.amount, 0) ?? 0
-  const rows = members.map((m, index) => {
+  return members.map((m, index) => {
     const personal = personalOf(m.id)
     const total = shareOf(m.id)
     return {
@@ -29,6 +37,54 @@ export function SplitSummary({ members, draft, currency }: { members: DraftMembe
       total,
     }
   })
+}
+
+// The breakdown table takes over as soon as the personal-items switch is on,
+// before any member or item is chosen, and as long as at least one member still
+// has a non-zero share. Plain equal splits and custom shares fall back to the
+// text summary instead.
+export function shouldShowBreakdown(members: DraftMember[], draft: SplitDraft): boolean {
+  return draft.state.personalMode && buildSummaryRows(members, draft).some((r) => r.total !== 0)
+}
+
+// Match status for the split. Rendered below the breakdown table when it is
+// visible, otherwise next to the participant count.
+export function MatchBadge({ matches }: { matches: boolean }) {
+  if (matches) {
+    return (
+      <span className="flex items-center gap-1 text-xs font-bold text-v2-link">
+        <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+        金額相符
+      </span>
+    )
+  }
+  return <span className="text-xs font-bold text-v2-danger">金額不符</span>
+}
+
+// Textual summary of the two pools (personal items + shared) and the
+// reconciliation against the expense amount. The personal-items part only
+// applies once the switch turns that pool on.
+export function SplitEquation({ draft, currency }: { draft: SplitDraft; currency: string }) {
+  const { state, derived } = draft
+  const num = (n: number) => formatAmount(Math.round(n * 100) / 100, currency)
+  const sharedTotal = Math.round((derived.splitInput.amount - derived.personalTotal) * 100) / 100
+  const sharesSum = derived.shares.reduce((s, x) => s + x.shareAmount, 0)
+  const personalPart = state.personalMode ? `個人項目 $${num(derived.personalTotal)}（${derived.itemCount} 項）＋ ` : ""
+  return (
+    <p className="mt-2 break-words text-xs leading-normal text-v2-ink-muted">
+      {personalPart}共同分攤 ${num(sharedTotal)}（{state.pool.length} 人）= ${num(sharesSum)} / ${num(derived.splitInput.amount)}
+    </p>
+  )
+}
+
+// Per-member breakdown (design A3d, deliberately deviating): members whose
+// subtotal is 0 are hidden instead of rendering as 0/0 rows.
+export function SplitSummary({ members, draft, currency }: { members: DraftMember[]; draft: SplitDraft; currency: string }) {
+  const { derived } = draft
+  if (derived.shares.length === 0) return null
+
+  const money = (n: number) => `$${formatAmount(Math.round(n * 100) / 100, currency)}`
+  const rows = buildSummaryRows(members, draft)
   const visibleRows = rows.filter((r) => r.total !== 0)
   if (visibleRows.length === 0) return null
   const sum = (key: "personal" | "pool" | "total") => rows.reduce((s, r) => s + r[key], 0)
@@ -71,6 +127,10 @@ export function SplitSummary({ members, draft, currency }: { members: DraftMembe
             <span role="cell" className={`${cell} text-v2-lake`}>{money(sum("total"))}</span>
           </div>
         </div>
+      </div>
+      <SplitEquation draft={draft} currency={currency} />
+      <div className="mt-2 flex justify-end">
+        <MatchBadge matches={derived.matches} />
       </div>
     </section>
   )

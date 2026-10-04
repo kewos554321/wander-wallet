@@ -86,11 +86,14 @@ const setup = (over: Partial<QuickItem> = {}) => {
 }
 
 describe("QuickItemCard", () => {
-  it("shows the per-head split and the participant pills", () => {
+  it("shows the shared split and the participant pills", () => {
     setup({ amount: "60" })
-    expect(screen.getByText("幫誰付？（3 人均分 · 每人 20）")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "小雨" })).toHaveAttribute("aria-pressed", "true")
-    expect(screen.getByRole("button", { name: "取消全選" })).toBeInTheDocument()
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    expect(within(split).getByText(/剩餘應攤分金額/)).toBeInTheDocument()
+    expect(within(split).getByText("已選 3 人")).toBeInTheDocument()
+    expect(within(split).getByText("金額相符")).toBeInTheDocument()
+    expect(within(split).getByRole("button", { name: "小雨" })).toHaveAttribute("aria-pressed", "true")
+    expect(within(split).getByRole("button", { name: "取消全選" })).toBeInTheDocument()
   })
 
   it("edits the description and currency", () => {
@@ -135,24 +138,33 @@ describe("QuickItemCard", () => {
 
   it("adds and removes individual participants", () => {
     const p = setup({ participantIds: ["a"] })
-    fireEvent.click(screen.getByRole("button", { name: "志明" }))
-    expect(p.onChange).toHaveBeenLastCalledWith({ participantIds: ["a", "b"] })
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    fireEvent.click(within(split).getByRole("button", { name: "志明" }))
+    expect(p.onChange).toHaveBeenLastCalledWith(expect.objectContaining({ participantIds: ["a", "b"] }))
     vi.mocked(p.onChange).mockClear()
-    fireEvent.click(screen.getByRole("button", { name: "小雨" }))
-    expect(p.onChange).toHaveBeenLastCalledWith({ participantIds: [] })
+    fireEvent.click(within(split).getByRole("button", { name: "小雨" }))
+    expect(p.onChange).toHaveBeenLastCalledWith(expect.objectContaining({ participantIds: [] }))
+  })
+
+  it("edits the split with the personal-items switch like the expense form", () => {
+    const p = setup({ participantIds: ["a", "b"] })
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    fireEvent.click(within(split).getByRole("switch", { name: "先扣個人項目" }))
+    expect(p.onChange).toHaveBeenLastCalledWith(expect.objectContaining({ personalMode: true }))
   })
 
   it("selects all participants when not everyone is selected", () => {
     const p = setup({ participantIds: ["a"] })
-    expect(screen.getByRole("button", { name: "全選" })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole("button", { name: "全選" }))
-    expect(p.onChange).toHaveBeenLastCalledWith({ participantIds: ["a", "b", "c"] })
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    fireEvent.click(within(split).getByRole("button", { name: "全選" }))
+    expect(p.onChange).toHaveBeenLastCalledWith(expect.objectContaining({ participantIds: ["a", "b", "c"] }))
   })
 
   it("clears the selection when everyone is selected", () => {
     const p = setup()
-    fireEvent.click(screen.getByRole("button", { name: "取消全選" }))
-    expect(p.onChange).toHaveBeenLastCalledWith({ participantIds: [] })
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    fireEvent.click(within(split).getByRole("button", { name: "取消全選" }))
+    expect(p.onChange).toHaveBeenLastCalledWith(expect.objectContaining({ participantIds: [] }))
   })
 
   it("writes the picked expense date back", () => {

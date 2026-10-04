@@ -1,18 +1,23 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { buildSplitDetail, computeShares, type SplitDetail } from "@/lib/expense-split"
 import {
-  buildSplitDetail,
-  computeShares,
-  type SplitDetail,
-  type SplitInput,
-} from "@/lib/expense-split"
+  deriveSplit,
+  newSplitItem,
+  withAddedItem,
+  withClearedCustomShare,
+  withCustomShare,
+  withPersonalAll,
+  withPoolAll,
+  withRemovedItem,
+  withToggledPersonalMember,
+  withToggledPool,
+  withUpdatedItem,
+  type SplitDraftItem,
+} from "@/lib/split-draft"
 
-export interface DraftItem {
-  id: string
-  name: string
-  amount: string
-}
+export type DraftItem = SplitDraftItem
 
 export interface DraftMember {
   id: string
@@ -40,9 +45,8 @@ export interface DraftInit {
   }
 }
 
-// Sequential id generator for locally-created draft items (not persisted).
-let itemSeq = 0
-const newItem = (name = "", amount = ""): DraftItem => ({ id: `draft-item-${++itemSeq}`, name, amount })
+// Sequential ids for locally-created draft items come from lib/split-draft so
+// the AI quick-expense flow shares the same generator.
 
 function initialState(init: DraftInit) {
   const e = init.expense
@@ -106,7 +110,7 @@ function initialState(init: DraftInit) {
   )
   const personalItems: Record<string, DraftItem[]> = {}
   for (const [id, items] of Object.entries(detail?.personalItems ?? {})) {
-    personalItems[id] = items.map((i) => newItem(i.name, String(i.amount)))
+    personalItems[id] = items.map((i) => newSplitItem(i.name, String(i.amount)))
   }
   const customShares: Record<string, string> = {}
   for (const [id, v] of Object.entries(detail?.customShares ?? {})) {
@@ -146,70 +150,17 @@ export function useExpenseDraft(init: DraftInit) {
     setImage: set("image"),
     setNotifyLine: set("notifyLine"),
     setPersonalMode: set("personalMode"),
-    togglePool: (id: string) =>
-      setState((s) => {
-        const next = s.pool.includes(id) ? s.pool.filter((x) => x !== id) : [...s.pool, id]
-        const customShares = { ...s.customShares }
-        if (!next.includes(id)) delete customShares[id]
-        return { ...s, pool: next, customShares }
-      }),
-    setPoolAll: (selectAll: boolean) =>
-      setState((s) => ({
-        ...s,
-        pool: selectAll ? init.members.map((m) => m.id) : [],
-        customShares: selectAll ? s.customShares : {},
-      })),
-    togglePersonalMember: (id: string) =>
-      setState((s) => {
-        if (s.personalMembers.includes(id)) {
-          const personalItems = { ...s.personalItems }
-          delete personalItems[id]
-          return { ...s, personalMembers: s.personalMembers.filter((x) => x !== id), personalItems }
-        }
-        return {
-          ...s,
-          personalMembers: [...s.personalMembers, id],
-          personalItems: { ...s.personalItems, [id]: [newItem()] },
-        }
-      }),
-    // Select all keeps existing items and gives newly added members one empty item;
-    // deselect all drops every member's items.
+    togglePool: (id: string) => setState((s) => ({ ...s, ...withToggledPool(s, id) })),
+    setPoolAll: (selectAll: boolean) => setState((s) => ({ ...s, ...withPoolAll(s, init.members.map((m) => m.id), selectAll) })),
+    togglePersonalMember: (id: string) => setState((s) => ({ ...s, ...withToggledPersonalMember(s, id) })),
     setPersonalAll: (selectAll: boolean) =>
-      setState((s) => {
-        if (!selectAll) return { ...s, personalMembers: [], personalItems: {} }
-        const personalItems = { ...s.personalItems }
-        for (const m of init.members) {
-          if (!s.personalMembers.includes(m.id)) personalItems[m.id] = [newItem()]
-        }
-        return { ...s, personalMembers: init.members.map((m) => m.id), personalItems }
-      }),
-    addItem: (memberId: string) =>
-      setState((s) => {
-        const current = s.personalItems[memberId] ?? []
-        if (current.length >= 20) return s
-        return { ...s, personalItems: { ...s.personalItems, [memberId]: [...current, newItem()] } }
-      }),
+      setState((s) => ({ ...s, ...withPersonalAll(s, init.members.map((m) => m.id), selectAll) })),
+    addItem: (memberId: string) => setState((s) => ({ ...s, ...withAddedItem(s, memberId) })),
     updateItem: (memberId: string, itemId: string, field: "name" | "amount", value: string) =>
-      setState((s) => ({
-        ...s,
-        personalItems: {
-          ...s.personalItems,
-          [memberId]: (s.personalItems[memberId] ?? []).map((i) => (i.id === itemId ? { ...i, [field]: value } : i)),
-        },
-      })),
-    removeItem: (memberId: string, itemId: string) =>
-      setState((s) => ({
-        ...s,
-        personalItems: { ...s.personalItems, [memberId]: (s.personalItems[memberId] ?? []).filter((i) => i.id !== itemId) },
-      })),
-    setCustomShare: (memberId: string, value: string) =>
-      setState((s) => ({ ...s, customShares: { ...s.customShares, [memberId]: value } })),
-    clearCustomShare: (memberId: string) =>
-      setState((s) => {
-        const customShares = { ...s.customShares }
-        delete customShares[memberId]
-        return { ...s, customShares }
-      }),
+      setState((s) => ({ ...s, ...withUpdatedItem(s, memberId, itemId, field, value) })),
+    removeItem: (memberId: string, itemId: string) => setState((s) => ({ ...s, ...withRemovedItem(s, memberId, itemId) })),
+    setCustomShare: (memberId: string, value: string) => setState((s) => ({ ...s, ...withCustomShare(s, memberId, value) })),
+    clearCustomShare: (memberId: string) => setState((s) => ({ ...s, ...withClearedCustomShare(s, memberId) })),
   }
 
   // In edit mode, order participants the way the expense was originally
@@ -227,59 +178,20 @@ export function useExpenseDraft(init: DraftInit) {
 
   const derived = useMemo(() => {
     const amountNum = Number(state.amount)
-    const withItems = (id: string) =>
-      state.personalMode && state.personalMembers.includes(id) && (state.personalItems[id]?.length ?? 0) > 0
-    const participantIds = participantOrder.filter((id) => state.pool.includes(id) || withItems(id))
-
-    const personalItems: SplitInput["personalItems"] = {}
-    if (state.personalMode) {
-      for (const id of participantIds) {
-        const items = state.personalItems[id] ?? []
-        if (items.length > 0) personalItems[id] = items.map((i) => ({ name: i.name.trim(), amount: Number(i.amount) || 0 }))
-      }
-    }
-    const customShares: SplitInput["customShares"] = {}
-    for (const id of participantIds) {
-      if (!state.pool.includes(id)) customShares[id] = 0
-      else if ((state.customShares[id] ?? "").trim() !== "") customShares[id] = Number(state.customShares[id]) || 0
-    }
-
-    const splitInput: SplitInput = {
-      amount: Number.isFinite(amountNum) ? amountNum : 0,
-      participantIds,
-      personalItems,
-      customShares,
-    }
-    const shares = computeShares(splitInput)
-    const personalTotal = Object.values(personalItems).flat().reduce((s, i) => s + i.amount, 0)
-    const itemCount = Object.values(personalItems).flat().length
-    const customTotal = Object.values(customShares).reduce((s, v) => s + v, 0)
-    const autoRemaining = Math.round((splitInput.amount - personalTotal - customTotal) * 100) / 100
-    const shareTotal = shares.reduce((s, x) => s + x.shareAmount, 0)
-    const matches =
-      shares.length > 0 && Math.abs(shareTotal - splitInput.amount) <= 0.01 && shares.every((s) => s.shareAmount >= 0)
+    const base = deriveSplit(amountNum, participantOrder, state)
 
     let error: string | null = null
-    const unnamed = participantIds.find((id) =>
+    const unnamed = base.splitInput.participantIds.find((id) =>
       (state.personalMode ? state.personalItems[id] ?? [] : []).some((i) => !i.name.trim())
     )
     if (state.amount.trim() === "" || !Number.isFinite(amountNum) || amountNum < 0) error = "請輸入有效金額"
     else if (!state.paidBy) error = "請選擇付款成員"
-    else if (participantIds.length === 0) error = "請選擇至少一位分擔者"
+    else if (base.splitInput.participantIds.length === 0) error = "請選擇至少一位分擔者"
     else if (unnamed) error = `${init.members.find((m) => m.id === unnamed)?.displayName} 有個人項目未填寫名稱`
-    else if (personalTotal > splitInput.amount) error = "個人項目總額不可超過支出總額"
-    else if (!matches) error = "分攤金額與支出金額不符"
+    else if (base.personalTotal > base.splitInput.amount) error = "個人項目總額不可超過支出總額"
+    else if (!base.matches) error = "分攤金額與支出金額不符"
 
-    return {
-      splitInput,
-      shares,
-      splitDetail: buildSplitDetail(splitInput),
-      personalTotal,
-      itemCount,
-      autoRemaining,
-      matches,
-      error,
-    }
+    return { ...base, splitDetail: buildSplitDetail(base.splitInput), error }
   }, [state, init.members, participantOrder])
 
   return { state, actions, derived }

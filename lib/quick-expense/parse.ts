@@ -61,5 +61,9 @@ export function receiptToItem(
     latitude: null,
     longitude: null,
     image: { image: null, pendingFile: o.file, preview: o.preview },
+    personalMode: false,
+    personalItems: {},
+    personalMembers: [],
+    customShares: {},
   }
 }

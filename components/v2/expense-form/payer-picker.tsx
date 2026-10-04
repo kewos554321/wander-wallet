@@ -35,8 +35,8 @@ export function PayerPicker({
   const nameOf = (id: string) => members.find((m) => m.id === id)?.displayName ?? ""
 
   return (
-    <fieldset className={SECTION_CARD}>
-      <legend className={`${SECTION_TITLE} mb-2.5`}>付款成員</legend>
+    <div role="group" aria-label="付款成員" className={SECTION_CARD}>
+      <p className={`mb-2.5 ${SECTION_TITLE}`}>付款成員</p>
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="m-0 text-xs font-semibold text-v2-ink-muted">付款明細</p>
       </div>
@@ -97,6 +97,6 @@ export function PayerPicker({
           {money(amount)} = {money(amount)} / {money(amount)}
         </p>
       </div>
-    </fieldset>
+    </div>
   )
 }
