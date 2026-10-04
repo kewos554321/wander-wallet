@@ -23,29 +23,34 @@ describe("V2ImagePicker", () => {
     vi.restoreAllMocks()
   })
 
-  it("renders a v2-token card with the label and an add trigger", () => {
+  it("renders a v2-token card with the label and two tiles", () => {
     const { container } = setup()
     expect(screen.getByText("收據/消費圖片")).toBeInTheDocument()
     const card = container.firstElementChild as HTMLElement
     expect(card.className).toContain("bg-v2-surface")
-    expect(screen.getByRole("button", { name: "新增圖片" })).toHaveAttribute("aria-expanded", "false")
+    expect(screen.getByRole("button", { name: "拍照" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "選擇圖片" })).toBeInTheDocument()
+  })
+
+  it("wraps each tile icon in a colored badge", () => {
+    setup()
+    expect(screen.getByRole("button", { name: "拍照" }).querySelector(".bg-v2-coral-soft")).not.toBeNull()
+    expect(screen.getByRole("button", { name: "選擇圖片" }).querySelector(".bg-v2-lake-soft")).not.toBeNull()
   })
 
   it("opens the camera input (capture=environment) from 拍照", () => {
     const { container } = setup()
-    fireEvent.click(screen.getByRole("button", { name: "新增圖片" }))
     const { camera } = fileInputs(container)
     const spy = vi.spyOn(camera, "click")
     fireEvent.click(screen.getByRole("button", { name: "拍照" }))
     expect(spy).toHaveBeenCalled()
   })
 
-  it("opens the gallery input from 從相簿選擇", () => {
+  it("opens the gallery input from 選擇圖片", () => {
     const { container } = setup()
-    fireEvent.click(screen.getByRole("button", { name: "新增圖片" }))
     const { gallery } = fileInputs(container)
     const spy = vi.spyOn(gallery, "click")
-    fireEvent.click(screen.getByRole("button", { name: "從相簿選擇" }))
+    fireEvent.click(screen.getByRole("button", { name: "選擇圖片" }))
     expect(spy).toHaveBeenCalled()
   })
 
@@ -78,5 +83,12 @@ describe("V2ImagePicker", () => {
   it("renders the preview image when a value is present", () => {
     setup({ value: "https://cdn.example/r.jpg" })
     expect(screen.getByAltText("圖片預覽")).toHaveAttribute("src", "https://cdn.example/r.jpg")
+  })
+
+  it("removes the preview through the remove button", () => {
+    const onRemove = vi.fn()
+    setup({ value: "https://cdn.example/r.jpg", onRemove })
+    fireEvent.click(screen.getByRole("button", { name: "移除圖片" }))
+    expect(onRemove).toHaveBeenCalledTimes(1)
   })
 })

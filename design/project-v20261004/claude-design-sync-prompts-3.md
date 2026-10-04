@@ -53,13 +53,12 @@
 
 ---
 
-## 1d — 收據／消費圖片：單一按鈕 + 底部彈出
+## 1d — 收據／消費圖片（已還原，設計稿無需修改）
 
 **目標檔案**：`AddExpense-ngs7-sections.dc.html`、`AddExpense-section-demo.dc.html`、`EditExpense-ngs7-sections.dc.html`、`EditExpense-section-demo.dc.html`、`VoiceExpense-ngs7.dc.html`
 
 ```text
-把「收據/消費圖片」的兩個虛線磚（拍照／選擇圖片）改成與程式一致：
-一個整寬的「新增圖片」按鈕；點擊後在卡片內展開一個選單，含「拍照」與「從相簿選擇」兩個選項（v2 token 樣式）。
+此項作廢：收據／消費圖片已還原為設計稿原本的兩個虛線磚（拍照／選擇圖片）；有圖片時顯示預覽 + 右上 X 移除。請維持 board 現狀，不要改成單一「新增圖片」按鈕＋展開選單。
 ```
 
 ---

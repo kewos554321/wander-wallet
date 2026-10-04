@@ -128,6 +128,10 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
           if (state.image.preview) URL.revokeObjectURL(state.image.preview)
           actions.setImage({ image: null, pendingFile: file, preview: URL.createObjectURL(file) })
         }}
+        onRemove={() => {
+          if (state.image.preview) URL.revokeObjectURL(state.image.preview)
+          actions.setImage({ image: null, pendingFile: null, preview: null })
+        }}
       />
 
       {props.canNotifyLine && (

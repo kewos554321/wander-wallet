@@ -143,6 +143,10 @@ export function QuickItemCard({ item, members, onChange }: { item: QuickItem; me
           if (item.image.preview) URL.revokeObjectURL(item.image.preview)
           onChange({ image: { image: null, pendingFile: file, preview: URL.createObjectURL(file) } })
         }}
+        onRemove={() => {
+          if (item.image.preview) URL.revokeObjectURL(item.image.preview)
+          onChange({ image: { image: null, pendingFile: null, preview: null } })
+        }}
       />
     </div>
   )
