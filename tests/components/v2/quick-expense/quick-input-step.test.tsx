@@ -62,6 +62,12 @@ describe("QuickInputStep", () => {
     expect(screen.getByText("收據/消費圖片")).toBeInTheDocument()
     expect(screen.getByText("AI 自動辨識金額與品項")).toBeInTheDocument()
   })
+  it("shows the refreshed examples and the guidance under the section title", () => {
+    setup("")
+    expect(screen.getByRole("button", { name: "超市 1280 我付 800、小明 480" })).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/我付 800 小明 480/)).toBeInTheDocument()
+    expect(screen.getByText(/點麥克風可語音輸入/)).toBeInTheDocument()
+  })
   it("disables parse while recording and hides mic when unsupported", () => {
     speech.recording = true
     setup("早餐 100")

@@ -61,7 +61,7 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
         <button type="button" aria-label="關閉" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-v2-sand">
           <X className="h-4 w-4" />
         </button>
-        <h1 className="m-0 font-v2-serif text-[17px] font-semibold">AI 快速記帳</h1>
+        <h1 className="m-0 font-v2-serif text-[17px] font-semibold">AI 辨識結果</h1>
         <span className="h-8 w-8" aria-hidden="true" />
       </div>
 

@@ -4,7 +4,7 @@ import { Camera, Image as ImageIcon, Loader2, Mic, Sparkles, Square, X } from "l
 import { useSpeechInput } from "@/lib/quick-expense/speech-input"
 import { SECTION_CARD } from "@/components/v2/expense-form/section-card"
 
-export const EXAMPLES = ["早餐 100 我付", "晚餐 600 大家分", "計程車 250 小明付"]
+export const EXAMPLES = ["早餐 100 我付", "晚餐 600 大家分", "計程車 250 小明付", "超市 1280 我付 800、小明 480"]
 
 export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGallery, onClose, error }: {
   text: string
@@ -34,14 +34,15 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
       </div>
 
       <div className={`${SECTION_CARD} mt-5`}>
-        <p className="mb-3 text-[13px] font-bold text-v2-lake">說出或輸入消費內容</p>
+        <p className="mb-1 text-[13px] font-bold text-v2-lake">說出或輸入消費內容</p>
+        <p className="mb-3 text-xs text-v2-ink-subtle">支援一次多筆；點麥克風可語音輸入</p>
         <div className="relative">
           <textarea
             aria-label="消費內容"
             rows={5}
             value={text}
             onChange={(e) => onTextChange(e.target.value)}
-            placeholder="例如：早餐 100 我付、晚餐 600 大家分……"
+            placeholder="例如：晚餐 600 大家分、我付 800 小明 480"
             className="min-h-20 w-full resize-none rounded-[14px] border border-v2-line bg-v2-paper px-3.5 py-3.5 pr-14 text-[13px] outline-none"
           />
           {speech.supported && (
@@ -57,7 +58,6 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
             </button>
           )}
         </div>
-        <p className="mt-1.5 text-xs text-v2-ink-subtle">支援一次多筆、不同付款成員 · 點麥克風可語音輸入</p>
       </div>
 
       <div className="mx-4 mt-3 flex gap-1.5 overflow-x-auto">

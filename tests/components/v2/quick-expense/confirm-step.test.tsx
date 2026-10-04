@@ -34,6 +34,11 @@ const setup = (o: Partial<Parameters<typeof ConfirmStep>[0]> = {}) => {
 }
 
 describe("ConfirmStep", () => {
+  it("shows the result-page title", () => {
+    setup()
+    expect(screen.getByRole("heading", { name: "AI 辨識結果" })).toBeInTheDocument()
+  })
+
   it("shows position label, progress dots, split title, total card and submit label", () => {
     setup()
     expect(screen.getByText("1 / 2")).toBeInTheDocument()
