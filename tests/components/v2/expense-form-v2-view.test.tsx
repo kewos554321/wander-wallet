@@ -4,7 +4,6 @@ import { renderHook, act } from "@testing-library/react"
 
 vi.mock("@/components/v2/expense-form/location-picker-v2", () => ({ LocationPickerV2: () => <div data-testid="location-picker" /> }))
 vi.mock("@/components/ui/image-picker", () => ({ ImagePicker: () => <div data-testid="image-picker" /> }))
-vi.mock("@/components/ui/calculator", () => ({ Calculator: () => <div data-testid="calculator" /> }))
 
 import { ExpenseFormV2View } from "@/components/v2/expense-form/expense-form-v2-view"
 import { useExpenseDraft } from "@/components/v2/expense-form/use-expense-draft"
@@ -340,14 +339,40 @@ describe("ExpenseFormV2View", () => {
     expect(box?.className).toContain("peer-checked:bg-v2-lake")
   })
 
-  it("edit mode shows 儲存變更 and delete", () => {
+  it("edit mode shows 儲存變更 · amount and a top-bar delete action", () => {
     const onRequestDelete = vi.fn()
     const { hook, rerender } = renderForm({ mode: "edit", onRequestDelete })
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
-    expect(screen.getByRole("button", { name: "儲存變更" })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole("button", { name: "刪除支出" }))
+    expect(screen.getByRole("button", { name: "儲存變更 · TWD 100" })).toBeInTheDocument()
+    // The bottom full-width delete block is gone; delete lives in the top bar.
+    expect(screen.queryByRole("button", { name: "刪除支出" })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "刪除此筆" }))
     expect(onRequestDelete).toHaveBeenCalled()
+  })
+
+  it("uses the create LINE notify sub-copy", () => {
+    renderForm()
+    expect(screen.getByText("儲存後自動發送通知到群組")).toBeInTheDocument()
+  })
+
+  it("uses the edit LINE notify sub-copy", () => {
+    renderForm({ mode: "edit" })
+    expect(screen.getByText("變更後自動發送通知到群組")).toBeInTheDocument()
+    expect(screen.queryByText("儲存後自動發送通知到群組")).not.toBeInTheDocument()
+  })
+
+  it("opens the in-card calculator, hides the amount input and writes the value back", () => {
+    const { rerender } = renderForm()
+    fireEvent.click(screen.getByRole("button", { name: "開啟計算機" }))
+    rerender()
+    expect(screen.getByTestId("calc-display")).toBeInTheDocument()
+    expect(screen.queryByLabelText("金額")).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "7" }))
+    fireEvent.click(screen.getByRole("button", { name: "✓" }))
+    rerender()
+    expect(screen.getByLabelText("金額")).toHaveValue("7")
+    expect(screen.queryByTestId("calc-display")).not.toBeInTheDocument()
   })
 
   it("shows the server error", () => {

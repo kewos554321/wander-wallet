@@ -16,12 +16,6 @@ interface AmountCardProps {
   onToggleCalculator?: () => void
   /** Rendered inside the card, between the header and the value row, when open. */
   calculator?: React.ReactNode
-  /**
-   * Transitional v1→v2 prop. The view migrates to `onToggleCalculator` in a
-   * later task; until then the 計算機 button falls back to this callback.
-   * @deprecated use `onToggleCalculator`
-   */
-  onOpenCalculator?: () => void
 }
 
 export function AmountCard({
@@ -32,7 +26,6 @@ export function AmountCard({
   calculatorOpen = false,
   onToggleCalculator,
   calculator,
-  onOpenCalculator,
 }: AmountCardProps) {
   const open = calculatorOpen
   return (
@@ -50,7 +43,7 @@ export function AmountCard({
         </label>
         <button
           type="button"
-          onClick={onToggleCalculator ?? onOpenCalculator}
+          onClick={onToggleCalculator}
           aria-label="開啟計算機"
           className="inline-flex items-center gap-1 rounded-full bg-v2-paper px-3.5 py-1.5 text-xs font-bold text-v2-lake shadow-[0_1px_2px_rgba(27,24,21,.06)]"
         >

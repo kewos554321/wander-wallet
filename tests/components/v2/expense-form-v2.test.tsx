@@ -38,7 +38,6 @@ vi.mock("@/components/v2/expense-form/location-picker-v2", () => ({
   ),
 }))
 vi.mock("@/components/ui/image-picker", () => ({ ImagePicker: () => null }))
-vi.mock("@/components/ui/calculator", () => ({ Calculator: () => null }))
 const mockGetCurrentLocation = vi.fn()
 vi.mock("@/lib/geolocation", () => ({ getCurrentLocation: () => mockGetCurrentLocation() }))
 
@@ -103,7 +102,7 @@ describe("ExpenseFormV2", () => {
     })
     render(<ExpenseFormV2 projectId="p1" expenseId="e1" mode="edit" />)
     expect(await screen.findByDisplayValue("晚餐")).toBeInTheDocument()
-    fireEvent.click(screen.getByRole("button", { name: "儲存變更" }))
+    fireEvent.click(screen.getByRole("button", { name: "儲存變更 · TWD 100" }))
     await waitFor(() => expect(mockSave).toHaveBeenCalled())
     const req = mockSave.mock.calls[0][0]
     expect(req.mode).toBe("edit")
@@ -132,7 +131,7 @@ describe("ExpenseFormV2", () => {
       }),
     })
     render(<ExpenseFormV2 projectId="p1" expenseId="e1" mode="edit" />)
-    fireEvent.click(await screen.findByRole("button", { name: "刪除支出" }))
+    fireEvent.click(await screen.findByRole("button", { name: "刪除此筆" }))
     fireEvent.click(await screen.findByRole("button", { name: "刪除" }))
     await waitFor(() => expect(mockRemove).toHaveBeenCalledWith(expect.objectContaining({ expenseId: "e1" })))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/projects/p1/expenses"))
@@ -220,7 +219,7 @@ describe("ExpenseFormV2", () => {
     render(<ExpenseFormV2 projectId="p1" expenseId="e1" mode="edit" />)
     const descriptionInput = await screen.findByDisplayValue("晚餐")
     fireEvent.change(descriptionInput, { target: { value: "晚餐（補發票）" } })
-    fireEvent.click(screen.getByRole("button", { name: "儲存變更" }))
+    fireEvent.click(screen.getByRole("button", { name: "儲存變更 · TWD 100" }))
     await waitFor(() => expect(mockSave).toHaveBeenCalled())
     const req = mockSave.mock.calls[0][0]
     expect(req.payload.participants).toEqual([

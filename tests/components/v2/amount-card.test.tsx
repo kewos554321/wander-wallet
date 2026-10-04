@@ -42,22 +42,6 @@ describe("AmountCard states + calculator slot", () => {
     expect(onToggleCalculator).toHaveBeenCalledTimes(1)
   })
 
-  it("falls back to the transitional onOpenCalculator prop when onToggleCalculator is absent", () => {
-    const onOpenCalculator = vi.fn()
-    render(
-      <AmountCard
-        amount="0"
-        currency="TWD"
-        onAmount={vi.fn()}
-        onCurrency={vi.fn()}
-        calculatorOpen={false}
-        onOpenCalculator={onOpenCalculator}
-      />,
-    )
-    fireEvent.click(screen.getByRole("button", { name: "開啟計算機" }))
-    expect(onOpenCalculator).toHaveBeenCalledTimes(1)
-  })
-
   it("open card turns solid lake and hides the 金額 input", () => {
     const { card } = setup({ calculatorOpen: true, calculator: <div data-testid="calculator">pad</div> })
     expect(card.className).toContain("bg-v2-lake")

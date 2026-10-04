@@ -5,7 +5,6 @@ import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
 import { CalendarIcon, Check, Trash2 } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
-import { Calculator } from "@/components/ui/calculator"
 import { ImagePicker } from "@/components/ui/image-picker"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { LocationPickerV2 } from "./location-picker-v2"
@@ -13,6 +12,7 @@ import { formatCurrency } from "@/lib/constants/currencies"
 import { SECTION_CARD, SECTION_TITLE } from "./section-card"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { AmountCard } from "./amount-card"
+import { CalculatorPad } from "./calculator-pad"
 import { CategoryPicker } from "./category-picker"
 import { PayerPicker } from "./payer-picker"
 import { SplitEditor } from "./split-editor"
@@ -36,7 +36,7 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
   const [showCalculator, setShowCalculator] = useState(false)
   const error = derived.error ?? props.submitError
   const amountLabel = formatCurrency(derived.splitInput.amount, state.currency)
-  const submitLabel = props.mode === "create" ? `新增支出 · ${amountLabel}` : "儲存變更"
+  const submitLabel = props.mode === "create" ? `新增支出 · ${amountLabel}` : `儲存變更 · ${amountLabel}`
 
   return (
     <form
@@ -45,26 +45,41 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
         if (!derived.error) props.onSubmit()
       }}
     >
-      <V2TopBar title={props.mode === "create" ? "新增支出" : "編輯支出"} backHref={`/projects/${props.projectId}`} />
+      <V2TopBar
+        title={props.mode === "create" ? "新增支出" : "編輯支出"}
+        backHref={`/projects/${props.projectId}`}
+        actions={
+          props.mode === "edit" && props.onRequestDelete ? (
+            <button
+              type="button"
+              onClick={props.onRequestDelete}
+              aria-label="刪除此筆"
+              className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-v2-coral-soft text-v2-danger"
+            >
+              <Trash2 className="h-[15px] w-[15px]" />
+            </button>
+          ) : undefined
+        }
+      />
       <AmountCard
         amount={state.amount}
         currency={state.currency}
         onAmount={actions.setAmount}
         onCurrency={actions.setCurrency}
-        onOpenCalculator={() => setShowCalculator(true)}
+        calculatorOpen={showCalculator}
+        onToggleCalculator={() => setShowCalculator((v) => !v)}
+        calculator={
+          <CalculatorPad
+            // onApply receives the evaluated number, not a string.
+            initialValue={state.amount}
+            onApply={(value: number) => {
+              actions.setAmount(String(value))
+              setShowCalculator(false)
+            }}
+            onClose={() => setShowCalculator(false)}
+          />
+        }
       />
-      {showCalculator && (
-        <Calculator
-          // Props follow the v1 form's usage of Calculator (components/expense/expense-form.tsx):
-          // onApply receives the evaluated number, not a string.
-          initialValue={state.amount}
-          onApply={(value: number) => {
-            actions.setAmount(String(value))
-            setShowCalculator(false)
-          }}
-          onClose={() => setShowCalculator(false)}
-        />
-      )}
       <div className={`${SECTION_CARD} mt-3.5`}>
         <label htmlFor="v2-desc" className={`block ${SECTION_TITLE} mb-1.5`}>
           描述
@@ -127,23 +142,13 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
           </span>
           <span>
             <span className="block text-xs font-bold">通知 LINE 群組</span>
-            <span className="mt-px block text-xs text-v2-ink-muted">儲存後自動發送通知到群組</span>
+            <span className="mt-px block text-xs text-v2-ink-muted">
+              {props.mode === "edit" ? "變更後自動發送通知到群組" : "儲存後自動發送通知到群組"}
+            </span>
           </span>
         </label>
       )}
 
-      {props.mode === "edit" && props.onRequestDelete && (
-        <div className="mx-4 mb-28">
-          <button
-            type="button"
-            onClick={props.onRequestDelete}
-            className="flex w-full items-center justify-center gap-1.5 rounded-[14px] border border-v2-line bg-v2-surface py-3 text-[13px] font-bold text-v2-danger"
-          >
-            <Trash2 className="h-4 w-4" aria-hidden="true" />
-            刪除支出
-          </button>
-        </div>
-      )}
       <div className="h-28" />
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-v2-line bg-v2-surface px-4 py-3.5">
