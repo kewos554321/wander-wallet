@@ -70,6 +70,27 @@ describe("AmountCard", () => {
     expect(screen.queryByRole("button", { name: "開啟計算機" })).not.toBeInTheDocument()
   })
 
+  it("uses the dark lake face in both the closed and open states", () => {
+    const { unmount } = render(
+      <AmountCard amount="1280" currency="TWD" onAmount={vi.fn()} onCurrency={vi.fn()} calculatorOpen={false} onToggleCalculator={vi.fn()} />
+    )
+    expect(screen.getByTestId("amount-card")).toHaveClass("bg-v2-lake", "border-v2-lake")
+    unmount()
+
+    render(
+      <AmountCard
+        amount="1280"
+        currency="TWD"
+        onAmount={vi.fn()}
+        onCurrency={vi.fn()}
+        calculatorOpen
+        onToggleCalculator={vi.fn()}
+        calculator={<div data-testid="calculator" />}
+      />
+    )
+    expect(screen.getByTestId("amount-card")).toHaveClass("bg-v2-lake", "border-v2-lake")
+  })
+
   it("does not render the calculator slot while closed", () => {
     setup({ calculator: <div data-testid="calculator" /> })
     expect(screen.queryByTestId("calculator")).not.toBeInTheDocument()

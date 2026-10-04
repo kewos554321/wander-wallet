@@ -50,6 +50,19 @@ describe("CalculatorPad", () => {
     expect(result()).toBe("= 15")
   })
 
+  it("reserves both rows so the display does not grow once a result appears", () => {
+    setup()
+    // The result row keeps its height even while empty, and the expression row
+    // never wraps, so typing the first result adds no extra line.
+    expect(screen.getByTestId("calc-result")).toHaveClass("min-h-[36px]")
+    expect(screen.getByTestId("calc-expression")).toHaveClass("whitespace-nowrap")
+  })
+
+  it("shows = 0 before any input instead of a blank result row", () => {
+    setup({ initialValue: "" })
+    expect(screen.getByTestId("calc-result")).toHaveTextContent("= 0")
+  })
+
   it("does not allow two operators in a row", () => {
     const { expression } = setup()
     press("7")
@@ -103,7 +116,7 @@ describe("CalculatorPad", () => {
     expect(expression()).toBe("7")
     press("⌫")
     expect(expression()).toBe("0")
-    expect(result()).toBe("")
+    expect(result()).toBe("= 0")
   })
 
   it("clears the expression", () => {
@@ -113,7 +126,7 @@ describe("CalculatorPad", () => {
     press("8")
     press("C")
     expect(expression()).toBe("0")
-    expect(result()).toBe("")
+    expect(result()).toBe("= 0")
   })
 
   it("applies the evaluated number and closes", () => {
@@ -149,7 +162,7 @@ describe("CalculatorPad", () => {
   it("sanitises a malicious initial value and never executes it", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch")
     const { onApply, onClose, result } = setup({ initialValue: "1+fetch('x')" })
-    expect(result()).toBe("")
+    expect(result()).toBe("= 0")
     press("✓")
     expect(fetchSpy).not.toHaveBeenCalled()
     expect(onApply).toHaveBeenCalledTimes(1)

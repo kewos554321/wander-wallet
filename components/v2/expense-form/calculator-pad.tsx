@@ -195,15 +195,15 @@ export function CalculatorPad({ initialValue, onApply, onClose }: CalculatorPadP
       <div data-testid="calc-display" className="rounded-[14px] bg-v2-surface p-3.5">
         <p
           data-testid="calc-expression"
-          className="min-h-[16px] text-right font-mono text-xs text-v2-ink-subtle"
+          className="min-h-[16px] overflow-hidden whitespace-nowrap text-right font-mono text-xs text-v2-ink-subtle"
         >
           {expression || "0"}
         </p>
         <p
           data-testid="calc-result"
-          className="text-right font-v2-serif text-[26px] font-bold text-v2-lake tabular-nums"
+          className="min-h-[36px] text-right font-v2-serif text-[26px] font-bold leading-[36px] text-v2-lake tabular-nums"
         >
-          {result !== null ? `= ${result.toLocaleString("zh-TW")}` : ""}
+          {`= ${(result ?? 0).toLocaleString("zh-TW")}`}
         </p>
       </div>
       <div className="grid grid-cols-4 gap-[7px]">

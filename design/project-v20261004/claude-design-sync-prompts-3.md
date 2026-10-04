@@ -21,12 +21,18 @@
 
 ---
 
-## 1b — 金額卡與計算機（已還原，設計稿無需修改）
+## 1b — 金額卡與計算機（輸入金額卡一律深綠）
 
 **目標檔案**：`AddExpense-ngs7-sections.dc.html`、`AddExpense-section-demo.dc.html`、`EditExpense-ngs7-sections.dc.html`、`EditExpense-section-demo.dc.html`、`VoiceExpense-ngs7.dc.html`
 
 ```text
-此項作廢：金額卡／計算機已還原為設計稿原本的樣式——展開時卡面深綠、隱藏金額與幣別輸入、只顯示計算機；結果行不含幣別；「計算機」按鈕白底。請維持 board 現狀，不要改成淺色卡面或把金額輸入保留在展開狀態。
+修改上述 board 的「輸入金額」卡，讓它與計算機同一張卡面：
+1. 關閉（輸入金額）與展開（計算機）兩種狀態都使用深綠卡面（bg-v2-lake、border-v2-lake）。
+2. 標題「輸入金額」一律白字（text-v2-paper）；展開時可略降不透明度。
+3. 金額輸入數字改白字（text-v2-paper），placeholder 用淡白。
+4. 幣別選單改成白色 pill（白底、深綠字），與計算機的白鍵一致。
+5.「計算機」切換鈕維持白底（paper）。
+6. 展開計算機時仍隱藏金額/幣別輸入、只顯示計算機；結果行不含幣別（維持現狀）。
 ```
 
 ---
