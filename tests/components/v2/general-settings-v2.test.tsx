@@ -116,6 +116,14 @@ describe("GeneralSettingsV2", () => {
     expect(mockSetTheme).toHaveBeenCalledWith("light")
   })
 
+  it("explains the preference currency under the card title", () => {
+    render(<GeneralSettingsV2 />)
+    const copy = screen.getByText("建立新專案時預設使用的幣別；專案內以結算幣別為準")
+    const control = screen.getByLabelText("預設幣別")
+    expect(copy.compareDocumentPosition(control) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.queryByText("新增支出時優先使用此幣別")).not.toBeInTheDocument()
+  })
+
   it("no longer shows the default split mode control", () => {
     render(<GeneralSettingsV2 />)
     expect(screen.queryByText("預設分帳方式")).not.toBeInTheDocument()

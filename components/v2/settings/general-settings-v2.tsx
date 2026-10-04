@@ -140,13 +140,13 @@ export function GeneralSettingsV2() {
               <Wallet className="h-[15px] w-[15px] text-v2-lake" aria-hidden="true" />
               <p className={cardTitleClass}>記帳偏好</p>
             </div>
+            <p className="m-0 text-xs text-v2-ink-subtle">建立新專案時預設使用的幣別；專案內以結算幣別為準</p>
             <div>
               <label className="mb-2 block text-xs font-semibold text-v2-ink-muted">預設幣別</label>
               <V2CurrencyField
                 value={preferences.defaultCurrency}
                 onChange={(currency) => save({ defaultCurrency: currency as CurrencyCode })}
               />
-              <p className="mt-1.5 text-xs text-v2-ink-subtle">新增支出時優先使用此幣別</p>
             </div>
           </div>
 
