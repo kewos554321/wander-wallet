@@ -80,16 +80,26 @@ describe("QuickExpenseV2", () => {
   it("turns a receipt photo into one item", async () => {
     parseReceipt.mockResolvedValue({ amount: 880, description: "超商", category: "shopping", date: null, confidence: 1 })
     setup()
-    fireEvent.click(screen.getByRole("button", { name: /拍照或掃描收據/ }))
+    fireEvent.click(screen.getByRole("button", { name: "拍照" }))
     fireEvent.click(screen.getByText("fake-shot"))
     await screen.findByText("1 / 1")
+    expect(screen.getByLabelText("金額")).toHaveValue("880")
+  })
+
+  it("turns a chosen gallery image into one item", async () => {
+    parseReceipt.mockResolvedValue({ amount: 880, description: "超商", category: "shopping", date: null, confidence: 1 })
+    setup()
+    fireEvent.click(screen.getByRole("button", { name: "選擇圖片" }))
+    fireEvent.change(screen.getByTestId("quick-gallery-input"), { target: { files: [new File(["a"], "g.jpg")] } })
+    await screen.findByText("1 / 1")
+    expect(parseReceipt).toHaveBeenCalled()
     expect(screen.getByLabelText("金額")).toHaveValue("880")
   })
 
   it("returns to input when a receipt parse fails", async () => {
     parseReceipt.mockRejectedValue(new Error("收據辨識失敗"))
     setup()
-    fireEvent.click(screen.getByRole("button", { name: /拍照或掃描收據/ }))
+    fireEvent.click(screen.getByRole("button", { name: "拍照" }))
     fireEvent.click(screen.getByText("fake-shot"))
     expect(await screen.findByRole("alert")).toHaveTextContent("收據辨識失敗")
     expect(screen.getByLabelText("消費內容")).toBeInTheDocument()

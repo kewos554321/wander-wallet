@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
@@ -45,6 +45,7 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
   const [index, setIndex] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [notifyLine, setNotifyLine] = useState(true)
+  const galleryInput = useRef<HTMLInputElement>(null)
 
   const close = () => onOpenChange(false)
 
@@ -80,6 +81,12 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
       setError(err instanceof Error ? err.message : "收據辨識失敗")
       setStep("input")
     }
+  }
+
+  const pickGallery = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (file) void handleImage(file)
   }
 
   const handleItemsChange = (next: QuickItem[]) => {
@@ -118,8 +125,9 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
   return (
     <UiV2Scope className="fixed inset-0 z-50 overflow-y-auto bg-v2-paper">
       <div className="mx-auto min-h-full max-w-md">
+        <input ref={galleryInput} data-testid="quick-gallery-input" type="file" accept="image/*" className="hidden" onChange={pickGallery} />
         {step === "input" && (
-          <QuickInputStep text={text} onTextChange={setText} onParse={handleParse} onCamera={() => { setError(null); setStep("camera") }} onClose={close} error={error} />
+          <QuickInputStep text={text} onTextChange={setText} onParse={handleParse} onCamera={() => { setError(null); setStep("camera") }} onGallery={() => galleryInput.current?.click()} onClose={close} error={error} />
         )}
         {step === "camera" && <CameraStep onImage={handleImage} onManual={() => setStep("input")} onClose={close} />}
         {(step === "parsing" || step === "saving") && (

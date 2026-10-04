@@ -1,15 +1,17 @@
 "use client"
 
-import { Camera, Loader2, Mic, Sparkles, Square, X } from "lucide-react"
+import { Camera, Image as ImageIcon, Loader2, Mic, Sparkles, Square, X } from "lucide-react"
 import { useSpeechInput } from "@/lib/quick-expense/speech-input"
+import { SECTION_CARD } from "@/components/v2/expense-form/section-card"
 
 export const EXAMPLES = ["早餐 100 我付", "晚餐 600 大家分", "計程車 250 小明付"]
 
-export function QuickInputStep({ text, onTextChange, onParse, onCamera, onClose, error }: {
+export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGallery, onClose, error }: {
   text: string
   onTextChange: (text: string) => void
   onParse: () => void
   onCamera: () => void
+  onGallery: () => void
   onClose: () => void
   error: string | null
 }) {
@@ -23,18 +25,16 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onClose,
 
   return (
     <div className="flex min-h-full flex-col">
-      <div className="flex items-center justify-between px-4 py-3">
-        <p className="m-0 flex items-center gap-1.5 text-base font-semibold">
-          <Sparkles className="h-4 w-4 text-v2-lake" aria-hidden="true" />
-          AI 快速記帳
-        </p>
-        <button type="button" aria-label="關閉" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-v2-lake-soft">
-          <X className="h-5 w-5" />
+      <div className="flex items-center justify-between px-4 py-4">
+        <button type="button" aria-label="關閉" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-v2-sand">
+          <X className="h-4 w-4" />
         </button>
+        <h1 className="m-0 font-v2-serif text-[17px] font-semibold">AI 快速記帳</h1>
+        <span className="h-8 w-8" aria-hidden="true" />
       </div>
 
-      <div className="mx-4 mb-4">
-        <p className="mb-2.5 text-sm font-medium">說出或輸入消費內容</p>
+      <div className={`${SECTION_CARD} mt-5`}>
+        <p className="mb-3 text-[13px] font-bold text-v2-lake">說出或輸入消費內容</p>
         <div className="relative">
           <textarea
             aria-label="消費內容"
@@ -42,7 +42,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onClose,
             value={text}
             onChange={(e) => onTextChange(e.target.value)}
             placeholder="例如：早餐 100 我付、晚餐 600 大家分……"
-            className="w-full resize-none rounded-2xl border border-v2-line bg-v2-surface px-3.5 py-3 pr-14 text-[13px] outline-none"
+            className="min-h-20 w-full resize-none rounded-[14px] border border-v2-line bg-v2-paper px-3.5 py-3.5 pr-14 text-[13px] outline-none"
           />
           {speech.supported && (
             <button
@@ -51,31 +51,49 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onClose,
               aria-pressed={speech.recording}
               disabled={speech.transcribing}
               onClick={speech.toggle}
-              className={`absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full ${speech.recording ? "bg-v2-danger text-v2-on-lake" : "bg-v2-lake text-v2-on-lake"}`}
+              className={`absolute bottom-2.5 right-2.5 flex h-[38px] w-[38px] items-center justify-center rounded-full shadow-[0_4px_10px_rgba(27,88,71,.3)] ${speech.recording ? "bg-v2-danger text-v2-on-lake" : "bg-v2-lake text-v2-on-lake"}`}
             >
               {speech.transcribing ? <Loader2 className="h-4 w-4 animate-spin" /> : speech.recording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
             </button>
           )}
         </div>
-        <p className="mt-2 text-xs text-v2-ink-muted">支援一次多筆、不同付款人 · 點麥克風可語音輸入</p>
-        <div className="mt-2.5 flex flex-wrap gap-2">
-          {EXAMPLES.map((ex) => (
-            <button key={ex} type="button" onClick={() => append(ex)} className="rounded-full border border-v2-lake-border bg-v2-lake-soft px-3 py-[5px] text-xs font-semibold">
-              {ex}
-            </button>
-          ))}
-        </div>
+        <p className="mt-1.5 text-xs text-v2-ink-subtle">支援一次多筆、不同付款人 · 點麥克風可語音輸入</p>
       </div>
 
-      <button type="button" onClick={onCamera} className="mx-4 mb-4 flex items-center gap-3 rounded-2xl border border-v2-line bg-v2-surface px-3.5 py-3 text-left">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-v2-lake-tint text-v2-lake" aria-hidden="true">
-          <Camera className="h-5 w-5" />
-        </span>
-        <span>
-          <span className="block text-[13px] font-bold">拍照或掃描收據</span>
-          <span className="block text-xs text-v2-ink-muted">AI 自動辨識金額與品項</span>
-        </span>
-      </button>
+      <div className="mx-4 mt-3 flex gap-1.5 overflow-x-auto">
+        {EXAMPLES.map((ex) => (
+          <button key={ex} type="button" onClick={() => append(ex)} className="flex-shrink-0 rounded-full bg-v2-sand px-3 py-1.5 text-xs font-semibold text-v2-ink-muted">
+            {ex}
+          </button>
+        ))}
+      </div>
+
+      <div className={`${SECTION_CARD} mt-5`}>
+        <p className="mb-2 text-[13px] font-bold text-v2-lake">收據/消費圖片</p>
+        <div className="flex gap-2.5">
+          <button
+            type="button"
+            onClick={onCamera}
+            className="flex flex-1 flex-col items-center justify-center gap-1.5 rounded-[14px] border-[1.5px] border-dashed border-v2-check bg-v2-paper px-2.5 py-4 text-v2-ink-muted"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-v2-coral-soft text-v2-coral" aria-hidden="true">
+              <Camera className="h-[15px] w-[15px]" />
+            </span>
+            <span className="text-xs font-semibold">拍照</span>
+          </button>
+          <button
+            type="button"
+            onClick={onGallery}
+            className="flex flex-1 flex-col items-center justify-center gap-1.5 rounded-[14px] border-[1.5px] border-dashed border-v2-check bg-v2-paper px-2.5 py-4 text-v2-ink-muted"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-v2-lake-soft text-v2-lake" aria-hidden="true">
+              <ImageIcon className="h-[15px] w-[15px]" />
+            </span>
+            <span className="text-xs font-semibold">選擇圖片</span>
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-v2-ink-subtle">AI 自動辨識金額與品項</p>
+      </div>
 
       <div className="mt-auto border-t border-v2-line bg-v2-surface px-4 py-3.5">
         {shownError && (
@@ -87,8 +105,9 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onClose,
           type="button"
           disabled={!text.trim() || busy}
           onClick={onParse}
-          className="w-full rounded-[14px] bg-v2-lake py-3.5 text-sm font-bold text-v2-on-lake disabled:opacity-40"
+          className="flex w-full items-center justify-center gap-1.5 rounded-[14px] bg-v2-lake py-[15px] text-[15px] font-bold text-v2-on-lake disabled:opacity-40"
         >
+          <Sparkles className="h-[15px] w-[15px]" aria-hidden="true" />
           AI 解析
         </button>
       </div>
