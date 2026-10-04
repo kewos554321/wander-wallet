@@ -19,7 +19,7 @@ export function StatsV2({ projectId }: { projectId: string }) {
   if (loading) {
     content = (
       <>
-        <V2TopBar title="統計" backHref={`/projects/${projectId}`} />
+        <V2TopBar title="統計" backHref={`/projects/${projectId}`} titleClassName="text-[17px] font-semibold" />
         <div data-testid="v2-stats-skeleton" className="space-y-3 p-4">
           <div className="h-36 animate-pulse rounded-2xl bg-v2-sand" />
           <div className="h-36 animate-pulse rounded-2xl bg-v2-sand" />
@@ -33,7 +33,7 @@ export function StatsV2({ projectId }: { projectId: string }) {
   } else if (!project || !stats) {
     content = (
       <>
-        <V2TopBar title="統計" backHref={`/projects/${projectId}`} />
+        <V2TopBar title="統計" backHref={`/projects/${projectId}`} titleClassName="text-[17px] font-semibold" />
         <p className="py-8 text-center text-v2-ink-muted">專案不存在</p>
       </>
     )

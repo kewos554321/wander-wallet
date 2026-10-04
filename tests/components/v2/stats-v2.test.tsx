@@ -70,6 +70,28 @@ describe("StatsV2View", () => {
     expect(areaPath).not.toBeNull()
   })
 
+  it("places each section heading inside its own card", () => {
+    render(<StatsV2View projectId="p1" currency="TWD" stats={stats} currentMemberId="me" />)
+    const categoryHeading = screen.getByText("類別佔比")
+    expect(categoryHeading.closest("div.rounded-2xl")).toBe(screen.getByRole("list", { name: "類別佔比" }).closest("div.rounded-2xl"))
+    const memberHeading = screen.getByText("成員排行")
+    expect(memberHeading.closest("div.rounded-2xl")).toBe(screen.getByRole("list", { name: "成員排行" }).closest("div.rounded-2xl"))
+    const trendHeading = screen.getByText("每日趨勢")
+    expect(trendHeading.closest("figure")).toBe(screen.getByRole("figure", { name: "每日趨勢" }))
+  })
+
+  it("links to the settle screen from the bottom of the page", () => {
+    render(<StatsV2View projectId="p1" currency="TWD" stats={stats} currentMemberId="me" />)
+    expect(screen.getByRole("link", { name: /查看結算/ })).toHaveAttribute("href", "/projects/p1/settle")
+  })
+
+  it("uses the v2 top bar heading style", () => {
+    render(<StatsV2View projectId="p1" currency="TWD" stats={stats} currentMemberId="me" />)
+    const heading = screen.getByRole("heading", { level: 1, name: "統計" })
+    expect(heading.className).toContain("text-[17px]")
+    expect(heading.className).toContain("font-semibold")
+  })
+
   it("shows empty states without NaN", () => {
     const { container } = render(
       <StatsV2View
@@ -102,6 +124,7 @@ describe("StatsV2 container", () => {
     expect(screen.getByText("統計")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
     expect(screen.getByText("專案不存在")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { level: 1, name: "統計" }).className).toContain("text-[17px]")
   })
 
   it("shows a back link while loading", () => {
@@ -118,5 +141,6 @@ describe("StatsV2 container", () => {
     render(<StatsV2 projectId="p1" />)
     expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
     expect(screen.getByTestId("v2-stats-skeleton")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { level: 1, name: "統計" }).className).toContain("text-[17px]")
   })
 })
