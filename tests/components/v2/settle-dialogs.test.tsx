@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
+import { readFileSync } from "node:fs"
 import { render, screen, fireEvent, within } from "@testing-library/react"
 import type { SettleData } from "@/lib/hooks/useSettlement"
 
@@ -9,6 +10,7 @@ vi.mock("next/font/google", () => ({
 
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { SettlementCalcDialog } from "@/components/v2/settle/settle-calc-dialog"
+import { SettleShareDialog } from "@/components/v2/settle/settle-share-dialog"
 
 function equalSplitData(): SettleData {
   return {
@@ -164,5 +166,106 @@ describe("SettlementCalcDialog (A26)", () => {
     renderDialog(equalSplitData(), vi.fn(), false)
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     expect(screen.queryByText("計算過程")).not.toBeInTheDocument()
+  })
+})
+
+const SHARE_TEXT = "💰 結算明細\n總支出：TWD 15,280\n\n📋 轉帳清單：\n1. 志明 ➡️ 小美：TWD 2,540"
+
+function renderShare(shareText = SHARE_TEXT, onOpenChange = vi.fn(), open = true) {
+  render(
+    <UiV2Scope>
+      <SettleShareDialog open={open} onOpenChange={onOpenChange} shareText={shareText} />
+    </UiV2Scope>
+  )
+  return onOpenChange
+}
+
+describe("SettleShareDialog (A27)", () => {
+  beforeEach(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+    })
+  })
+
+  it("renders the 分享結算結果 title inside a labelled modal dialog", () => {
+    renderShare()
+    expect(screen.getByRole("heading", { name: "分享結算結果" })).toBeInTheDocument()
+    const dialog = screen.getByRole("dialog")
+    expect(dialog).toHaveAttribute("aria-modal", "true")
+    expect(dialog).toHaveAttribute("aria-labelledby")
+    expect(dialog).toHaveFocus()
+  })
+
+  it("renders the v2 overlay and card frame classes", () => {
+    renderShare()
+    const overlay = screen.getByTestId("settle-share-overlay")
+    expect(overlay.className).toContain("bg-v2-overlay")
+    const card = screen.getByRole("dialog")
+    expect(card.className).toContain("bg-v2-surface")
+    expect(card.className).toContain("rounded-[20px]")
+    expect(card.className).toContain("w-[340px]")
+  })
+
+  it("shows the share text in the pre-line preview", () => {
+    renderShare()
+    const preview = screen.getByTestId("settle-share-preview")
+    expect(preview).toHaveTextContent("💰 結算明細")
+    expect(preview).toHaveTextContent("1. 志明 ➡️ 小美：TWD 2,540")
+    expect(preview.className).toContain("whitespace-pre-line")
+    expect(preview.className).toContain("bg-v2-lake-soft")
+  })
+
+  it("copies the share text and flips the button to 已複製", async () => {
+    renderShare()
+    fireEvent.click(screen.getByRole("button", { name: "複製文字" }))
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(SHARE_TEXT)
+    const copied = await screen.findByRole("button", { name: "已複製" })
+    expect(copied.className).toContain("text-v2-lake")
+    expect(screen.queryByRole("button", { name: "複製文字" })).not.toBeInTheDocument()
+  })
+
+  it("opens the LINE share URL then closes the dialog", () => {
+    const open = vi.spyOn(window, "open").mockImplementation(() => null)
+    const onOpenChange = renderShare()
+    fireEvent.click(screen.getByRole("button", { name: /LINE 分享/ }))
+    expect(open).toHaveBeenCalledWith(`https://line.me/R/share?text=${encodeURIComponent(SHARE_TEXT)}`, "_blank")
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+    open.mockRestore()
+  })
+
+  it("styles the LINE button with the v2 token and no raw hex", () => {
+    renderShare()
+    const line = screen.getByRole("button", { name: /LINE 分享/ })
+    expect(line.className).toContain("bg-v2-line-green")
+    expect(line.className).toContain("text-v2-on-lake")
+    expect(line.className).not.toMatch(/#[0-9a-fA-F]{3,8}/)
+    const source = readFileSync("components/v2/settle/settle-share-dialog.tsx", "utf8")
+    expect(source).not.toMatch(/-\[#[0-9a-fA-F]{3,8}\]/)
+    expect(source).not.toContain("text-white")
+  })
+
+  it("calls onOpenChange(false) when the overlay is clicked", () => {
+    const onOpenChange = renderShare()
+    fireEvent.click(screen.getByTestId("settle-share-overlay"))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it("calls onOpenChange(false) when Escape is pressed", () => {
+    const onOpenChange = renderShare()
+    fireEvent.keyDown(document, { key: "Escape" })
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it("calls onOpenChange(false) from the close button", () => {
+    const onOpenChange = renderShare()
+    fireEvent.click(screen.getByRole("button", { name: "關閉" }))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it("renders nothing when open is false", () => {
+    renderShare(SHARE_TEXT, vi.fn(), false)
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(screen.queryByText("分享結算結果")).not.toBeInTheDocument()
   })
 })

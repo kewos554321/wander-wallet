@@ -3,8 +3,8 @@
 import { useState, type ReactNode } from "react"
 import { useLiff } from "@/components/auth/liff-provider"
 import { AdContainer } from "@/components/ads/ad-container"
-import { ShareSettlementDialog } from "@/components/settle/share-settlement-dialog"
-import { SettlementCalcDialog } from "@/components/settle/settlement-calc-dialog"
+import { SettleShareDialog } from "@/components/v2/settle/settle-share-dialog"
+import { SettlementCalcDialog } from "@/components/v2/settle/settle-calc-dialog"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
@@ -62,7 +62,7 @@ export function SettleV2({ projectId }: { projectId: string }) {
           onShowCalc={() => setShowCalc(true)}
           onShare={() => setShowShare(true)}
         />
-        <ShareSettlementDialog open={showShare} onOpenChange={setShowShare} shareText={s.shareText} />
+        <SettleShareDialog open={showShare} onOpenChange={setShowShare} shareText={s.shareText} />
         <SettlementCalcDialog open={showCalc} onOpenChange={setShowCalc} data={s.data} />
       </>
     )

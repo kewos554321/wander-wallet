@@ -12,8 +12,8 @@ vi.mock("@/components/auth/liff-provider", () => ({
   useAuthFetch: () => vi.fn(),
 }))
 vi.mock("@/components/ads/ad-container", () => ({ AdContainer: () => null }))
-vi.mock("@/components/settle/share-settlement-dialog", () => ({ ShareSettlementDialog: () => null }))
-vi.mock("@/components/settle/settlement-calc-dialog", () => ({ SettlementCalcDialog: () => null }))
+vi.mock("@/components/v2/settle/settle-share-dialog", () => ({ SettleShareDialog: () => null }))
+vi.mock("@/components/v2/settle/settle-calc-dialog", () => ({ SettlementCalcDialog: () => null }))
 
 const mockProjectData = vi.fn()
 vi.mock("@/lib/hooks", () => ({ useProjectData: () => mockProjectData() }))
