@@ -1,0 +1,349 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "ActivityLogs-after.dc.html": {
+      "h": 810,
+      "is_interactive": true,
+      "title": "A22 · 歷史紀錄 — After",
+      "w": 390,
+      "x": 370,
+      "y": 11258
+    },
+    "AddExpense-ngs7-sections.dc.html": {
+      "h": 2980,
+      "is_interactive": true,
+      "title": "A3d · 新增支出 — 整合A4b（Section 化，參考A3b）",
+      "w": 390,
+      "x": 1410,
+      "y": 2200
+    },
+    "AddExpense-section-demo.dc.html": {
+      "h": 1850,
+      "is_interactive": true,
+      "title": "A3b · 新增支出 — Section Demo（標題移入卡片內，參考A14）",
+      "w": 390,
+      "x": 940,
+      "y": 2200
+    },
+    "Camera.dc.html": {
+      "h": 760,
+      "is_interactive": true,
+      "title": "A10 · 拍照記帳（新流程）",
+      "w": 390,
+      "x": -1000,
+      "y": 7734
+    },
+    "CategorySelectedState-discuss.dc.html": {
+      "h": 870,
+      "is_interactive": true,
+      "title": "A3f · 類別勾選狀態 — 設計討論",
+      "w": 390,
+      "x": 1410,
+      "y": 5220
+    },
+    "Currency-after.dc.html": {
+      "h": 910,
+      "is_interactive": true,
+      "title": "A15 · 匯率 — After",
+      "w": 390,
+      "x": 900,
+      "y": 7734
+    },
+    "EditExpense-ngs7-sections.dc.html": {
+      "h": 2980,
+      "is_interactive": true,
+      "title": "A21d · 編輯支出 — 整合版（參考A3d）",
+      "w": 390,
+      "x": 4700,
+      "y": 2200
+    },
+    "EditExpense-section-demo.dc.html": {
+      "h": 1850,
+      "is_interactive": true,
+      "title": "A21b · 編輯支出 — Section Demo（參考A3b）",
+      "w": 390,
+      "x": 4230,
+      "y": 2200
+    },
+    "ExpenseList-sections.dc.html": {
+      "h": 1420,
+      "is_interactive": true,
+      "title": "A6b · 全部支出（Section 化，參考A3b）",
+      "w": 390,
+      "x": 2355,
+      "y": 2200
+    },
+    "Export-after.dc.html": {
+      "h": 730,
+      "is_interactive": true,
+      "title": "A23 · 匯出 — After",
+      "w": 390,
+      "x": 880,
+      "y": 11268
+    },
+    "FilterDropdowns-test.dc.html": {
+      "h": 1664,
+      "is_interactive": true,
+      "title": "A6b · 篩選下拉選單測試",
+      "w": 390,
+      "x": 2345,
+      "y": 3740
+    },
+    "GeneralSettings.dc.html": {
+      "h": 939,
+      "is_interactive": true,
+      "title": "A14 · 通用設定 — After",
+      "w": 390,
+      "x": 6110,
+      "y": 2200
+    },
+    "Invite-after.dc.html": {
+      "h": 380,
+      "is_interactive": true,
+      "title": "A20 · 邀請分享（對話框）— After",
+      "w": 390,
+      "x": -530,
+      "y": 11268
+    },
+    "JoinTrip-after.dc.html": {
+      "h": 580,
+      "is_interactive": true,
+      "title": "A19 · 加入旅程（對話框）— After",
+      "w": 390,
+      "x": -1000,
+      "y": 11268
+    },
+    "Login-after.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "title": "A18 · 登入 — After",
+      "w": 390,
+      "x": -80,
+      "y": 11268
+    },
+    "M3ForApp.dc.html": {
+      "h": 2420,
+      "is_interactive": true,
+      "title": "M3 精選 9 級 — 用於 After App",
+      "w": 390,
+      "x": -940,
+      "y": 2200
+    },
+    "M3Typescale.dc.html": {
+      "h": 3550,
+      "is_interactive": true,
+      "title": "M3 Typescale 對照（Baseline／Emphasized）",
+      "w": 390,
+      "x": -470,
+      "y": 2200
+    },
+    "MainCard3-njus.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "A1 · 旅程列表 — After",
+      "w": 390,
+      "x": 0,
+      "y": 2200
+    },
+    "Map-after.dc.html": {
+      "h": 810,
+      "is_interactive": true,
+      "title": "A16 · 消費地圖 — After",
+      "w": 390,
+      "x": 1340,
+      "y": 7734
+    },
+    "Members-sections.dc.html": {
+      "h": 590,
+      "is_interactive": true,
+      "title": "A7b · 成員（Section 化，參考A3b）",
+      "w": 390,
+      "x": 2820,
+      "y": 2200
+    },
+    "Mileage-after.dc.html": {
+      "h": 1030,
+      "is_interactive": true,
+      "title": "A17 · 里程 — After",
+      "w": 390,
+      "x": 1780,
+      "y": 7734
+    },
+    "NewProject-sections-demo.dc.html": {
+      "h": 1525,
+      "is_interactive": true,
+      "title": "A9b · 建立旅程 — Section Demo（語意合併4卡，參考A3b）",
+      "w": 390,
+      "x": 3760,
+      "y": 2200
+    },
+    "Notes-after.dc.html": {
+      "h": 720,
+      "is_interactive": true,
+      "title": "A24 · 筆記 — After",
+      "w": 390,
+      "x": 1350,
+      "y": 11268
+    },
+    "Photos-after.dc.html": {
+      "h": 575,
+      "is_interactive": true,
+      "title": "A25 · 照片相簿 — After",
+      "w": 390,
+      "x": 1820,
+      "y": 11268
+    },
+    "ProfileSettings-after.dc.html": {
+      "h": 575,
+      "is_interactive": true,
+      "title": "A14b · 個人資料 — After",
+      "w": 390,
+      "x": 6540,
+      "y": 2200
+    },
+    "ProjectSettings.dc.html": {
+      "h": 1618,
+      "is_interactive": true,
+      "title": "A13 · 專案設定 — After",
+      "w": 390,
+      "x": 5640,
+      "y": 2200
+    },
+    "Settle-sections.dc.html": {
+      "h": 1200,
+      "is_interactive": true,
+      "title": "A5b · 結算（Section 化，參考A3b）",
+      "w": 390,
+      "x": 1880,
+      "y": 2202
+    },
+    "SettleCalcDialog-after.dc.html": {
+      "h": 650,
+      "is_interactive": true,
+      "title": "A26 · 結算｜計算明細（對話框）— After",
+      "w": 390,
+      "x": 2290,
+      "y": 11268
+    },
+    "SettleShareDialog-after.dc.html": {
+      "h": 380,
+      "is_interactive": true,
+      "title": "A27 · 結算｜分享結算結果（對話框）— After",
+      "w": 390,
+      "x": 2760,
+      "y": 11268
+    },
+    "Stats-sections.dc.html": {
+      "h": 870,
+      "is_interactive": true,
+      "title": "A8b · 統計（Section 化，參考A3b）",
+      "w": 390,
+      "x": 410,
+      "y": 7734
+    },
+    "Trip-feature-row-demo.dc.html": {
+      "h": 520,
+      "is_interactive": true,
+      "title": "A2d · 功能區塊 — 單排＋更多 Demo",
+      "w": 390,
+      "x": 470,
+      "y": 3298
+    },
+    "Trip-m0lh.dc.html": {
+      "h": 1010,
+      "is_interactive": true,
+      "title": "A2 · 旅程總覽 — After",
+      "w": 390,
+      "x": 470,
+      "y": 2200
+    },
+    "VoiceExpense-ngs7.dc.html": {
+      "h": 2660,
+      "is_interactive": true,
+      "title": "A12b · AI 語音記帳（批次確認）— 參考A3d完全模板",
+      "w": 390,
+      "x": -60,
+      "y": 7734
+    },
+    "VoiceExpenseInput.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "A11 · AI 語音記帳（輸入）",
+      "w": 390,
+      "x": -530,
+      "y": 7734
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-16T00:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "rationale": {
+      "color": "gray",
+      "text": "設計方向\n\n• 從「主畫面圖示牆」轉為「旅行手帳」語感：暖調紙感背景 + 登機證式行程卡\n• 新增底部導覽列，取代原本需左右滑動兩頁的 12 宮格功能選單\n• 主色改為更飽和的深湖水綠，搭配珊瑚色點綴語音記帳等 AI 功能，兩色皆延續原品牌色相\n• 標題與金額改用 Noto Serif TC 襯線字體，讓旅行紀錄更有溫度、金額更易讀\n• 新增支出流程把「語音記帳」前置為首選捷徑，手動輸入表單退居第二選擇",
+      "w": 380,
+      "x": -1380,
+      "y": 2670
+    },
+    "title1": {
+      "color": "teal",
+      "kind": "title1",
+      "maxW": 4620,
+      "text": "新版設計 — After",
+      "w": 240,
+      "x": 0,
+      "y": 1900
+    },
+    "typography": {
+      "color": "teal",
+      "text": "字體系統\n\nNoto Serif TC（600/700）只用於 4 種角色：\n40px 單一主要數字（餘額／輸入金額）\n27px 頁面主標題\n20px 次要強調金額（卡片總額／結算金額）\n17px 區塊標題／卡片標題／次頁標題\n\nNoto Sans TC 用於其餘一切，分 4 級：\n15px 主要按鈕文字／主要輸入值\n13px 預設內文（列表項目、次要按鈕）\n12px 說明文字、純文字連結\n11px 頁籤與最小介面元素（標籤、chip）\n\n例外：頭像姓名縮寫依圓形直徑等比例縮放，不屬於此字級系統。\n按鈕文字依視覺份量而非畫面決定：實心主按鈕 15px、外框次要按鈕 13px、純文字動作 12px。",
+      "w": 380,
+      "x": -1380,
+      "y": 2227
+    }
+  },
+  "order": [
+    "AddExpense-section-demo.dc.html",
+    "Settle-sections.dc.html",
+    "ExpenseList-sections.dc.html",
+    "FilterDropdowns-test.dc.html",
+    "Members-sections.dc.html",
+    "Stats-sections.dc.html",
+    "NewProject-sections-demo.dc.html",
+    "EditExpense-section-demo.dc.html",
+    "EditExpense-ngs7-sections.dc.html",
+    "Camera.dc.html",
+    "VoiceExpenseInput.dc.html",
+    "VoiceExpense-ngs7.dc.html",
+    "ProjectSettings.dc.html",
+    "GeneralSettings.dc.html",
+    "ProfileSettings-after.dc.html",
+    "AddExpense-ngs7-sections.dc.html",
+    "CategorySelectedState-discuss.dc.html",
+    "MainCard3-njus.dc.html",
+    "Trip-m0lh.dc.html",
+    "Trip-feature-row-demo.dc.html",
+    "Currency-after.dc.html",
+    "Map-after.dc.html",
+    "Mileage-after.dc.html",
+    "Login-after.dc.html",
+    "JoinTrip-after.dc.html",
+    "Invite-after.dc.html",
+    "ActivityLogs-after.dc.html",
+    "Export-after.dc.html",
+    "Notes-after.dc.html",
+    "Photos-after.dc.html",
+    "SettleCalcDialog-after.dc.html",
+    "SettleShareDialog-after.dc.html",
+    "M3Typescale.dc.html",
+    "M3ForApp.dc.html"
+  ],
+  "pages": [],
+  "title": "Wander Wallet UI/UX 重新設計 — 新舊上下比對"
+}

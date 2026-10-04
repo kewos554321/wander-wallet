@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&amp;family=Noto+Sans+TC:wght@400;500;600;700&amp;display=swap">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  a:hover { opacity: .85; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width: 390px; height: 1616px; position: relative; background: #FAF7F2; font-family: 'Noto Sans TC',sans-serif; color: #1B1815; overflow: hidden">
+
+  <div style="padding:16px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E7DFD2;">
+    <a href="Trip.dc.html" aria-label="返回" style="width:34px;height:34px;border-radius:50%;border:1px solid #E7DFD2;background:#FFFFFF;display:flex;align-items:center;justify-content:center;color:#1B1815;">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <h1 style="margin:0;font-family:'Noto Serif TC',serif;font-weight:500;font-size:16px;line-height:24px;letter-spacing:.15px;">專案設定</h1>
+    <span style="width:34px;height:34px;" aria-hidden="true"></span>
+  </div>
+
+  <div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+
+    <div style="background:#FFFFFF;border:1px solid #E7DFD2;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:14px;">
+      <p style="margin:0;font-size:13px;font-weight:700;color:#1B5847;">基本資訊</p>
+
+      <div>
+        <label style="display:block;font-size:12px;color:#6E6860;font-weight:600;margin-bottom:8px;">專案名稱</label>
+        <div style="background:#FAF7F2;border:1px solid #E7DFD2;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:600;">京都紅葉五日遊</div>
+      </div>
+
+      <div>
+        <label style="display:block;font-size:12px;color:#6E6860;font-weight:600;margin-bottom:8px;">封面圖示與顏色</label>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="width:48px;height:48px;border-radius:14px;background:#1B5847;display:flex;align-items:center;justify-content:center;color:#FFFFFF;flex-shrink:0;">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l6-8 4 5 3-4 5 7z"></path><circle cx="8" cy="8" r="2"></circle></svg>
+          </span>
+          <span style="font-size:12px;color:#6E6860;">點擊更換圖示與底色</span>
+        </div>
+      </div>
+
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <label style="font-size:12px;color:#6E6860;font-weight:600;">描述（選填）</label>
+          <span style="font-size:12px;color:#B7AE9D;">0/50</span>
+        </div>
+        <div style="background:#FAF7F2;border:1px solid #E7DFD2;border-radius:12px;padding:12px 14px;font-size:13px;color:#B7AE9D;min-height:64px;">記錄這次旅行的目的地、日期等資訊…</div>
+      </div>
+    </div>
+
+    <div style="background:#FFFFFF;border:1px solid #E7DFD2;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:14px;">
+      <p style="margin:0;font-size:13px;font-weight:700;color:#1B5847;">日期與預算</p>
+
+      <div>
+        <label style="display:block;font-size:12px;color:#6E6860;font-weight:600;margin-bottom:8px;">出發日與結束日</label>
+        <div style="display:flex;align-items:center;gap:8px;background:#FAF7F2;border:1px solid #E7DFD2;border-radius:12px;padding:12px 14px;font-size:13px;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6E6860" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>
+          <span>2026/11/12 – 2026/11/16</span>
+        </div>
+      </div>
+
+      <div>
+        <label style="display:block;font-size:12px;color:#6E6860;font-weight:600;margin-bottom:8px;">旅程預算（選填）</label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#6E6860;font-size:13px;">$</span>
+          <div style="background:#FAF7F2;border:1px solid #E7DFD2;border-radius:12px;padding:12px 14px 12px 26px;font-size:13px;">50,000</div>
+        </div>
+        <p style="margin:6px 0 0;font-size:12px;color:#B7AE9D;">設定預算後，可在旅程總覽查看花費進度</p>
+      </div>
+    </div>
+
+    <div style="background:#FFFFFF;border:1px solid #E7DFD2;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:14px;">
+      <p style="margin:0;font-size:13px;font-weight:700;color:#1B5847;">幣別與匯率</p>
+
+      <div>
+        <label style="display:block;font-size:12px;color:#6E6860;font-weight:600;margin-bottom:8px;">結算幣別</label>
+        <div style="display:flex;align-items:center;justify-content:space-between;background:#FAF7F2;border:1px solid #E7DFD2;border-radius:12px;padding:12px 14px;font-size:13px;">
+          <span style="font-weight:600;">TWD 新台幣</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6E6860" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+        </div>
+        <p style="margin:6px 0 0;font-size:12px;color:#B7AE9D;">所有費用將以此幣別進行結算計算</p>
+      </div>
+
+      <div>
+        <label style="display:block;font-size:12px;color:#6E6860;font-weight:600;margin-bottom:4px;">自訂匯率（選填）</label>
+        <p style="margin:0 0 8px;font-size:12px;color:#B7AE9D;">不設定則使用即時匯率</p>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="width:52px;flex-shrink:0;font-size:13px;font-weight:700;color:#1B5847;">JPY</span>
+          <span style="color:#B7AE9D;">=</span>
+          <div style="flex:1;position:relative;">
+            <div style="background:#FAF7F2;border:1px solid #E7DFD2;border-radius:12px;padding:10px 44px 10px 12px;font-size:13px;color:#B7AE9D;">0.21</div>
+            <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:#6E6860;">TWD</span>
+          </div>
+        </div>
+        <p style="margin:8px 0 0;font-size:12px;color:#6E6860;">目前使用即時匯率：1 JPY = 0.21 TWD</p>
+      </div>
+
+      <div>
+        <label style="display:block;font-size:12px;color:#6E6860;font-weight:600;margin-bottom:8px;">匯率計算精度</label>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:56px;background:#FAF7F2;border:1px solid #E7DFD2;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;text-align:center;">2</div>
+          <span style="font-size:12px;color:#6E6860;">位小數，影響匯率顯示與結算四捨五入</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#FFFFFF;border:1px solid #E7DFD2;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px;">
+      <div>
+        <p style="margin:0;font-size:13px;font-weight:700;color:#1B5847;">成員加入方式</p>
+        <p style="margin:4px 0 0;font-size:12px;color:#B7AE9D;">設定新成員透過分享連結加入時的方式</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:14px;border:1.5px solid #1B5847;background:#EAF5F1;">
+          <span style="width:16px;height:16px;border-radius:50%;background:#1B5847;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;">
+            <span style="width:6px;height:6px;border-radius:50%;background:#FFFFFF;"></span>
+          </span>
+          <span>
+            <span style="display:block;font-size:13px;font-weight:700;">兩者皆可</span>
+            <span style="display:block;font-size:12px;color:#6E6860;">新成員可選擇建立新身份或取代佔位成員</span>
+          </span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:14px;border:1px solid #E7DFD2;">
+          <span style="width:16px;height:16px;border-radius:50%;border:1.5px solid #C9BFAC;flex-shrink:0;margin-top:1px;"></span>
+          <span>
+            <span style="display:block;font-size:13px;font-weight:600;">僅建立新成員</span>
+            <span style="display:block;font-size:12px;color:#6E6860;">新成員只能建立自己的身份</span>
+          </span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:14px;border:1px solid #E7DFD2;">
+          <span style="width:16px;height:16px;border-radius:50%;border:1.5px solid #C9BFAC;flex-shrink:0;margin-top:1px;"></span>
+          <span>
+            <span style="display:block;font-size:13px;font-weight:600;">僅取代佔位成員</span>
+            <span style="display:block;font-size:12px;color:#6E6860;">新成員只能取代現有的佔位成員</span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <button style="flex:1;background:#FFFFFF;border:1px solid #E7DFD2;color:#1B1815;border-radius:14px;padding:14px;font-size:14px;font-weight:700;">取消</button>
+      <button style="flex:1;background:#1B5847;color:#FFFFFF;border:none;border-radius:14px;padding:14px;font-size:14px;font-weight:700;">儲存變更</button>
+    </div>
+
+    <div style="background:#FDF1EC;border:1px solid #F3D3C4;border-radius:18px;padding:16px;">
+      <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#C4432A;">危險區域</p>
+      <p style="margin:0 0 12px;font-size:12px;color:#C4432A;">刪除專案後，所有成員、支出紀錄都會永久移除，此操作無法復原。</p>
+      <button style="display:inline-flex;align-items:center;gap:6px;background:#C4432A;color:#FFFFFF;border:none;border-radius:99px;padding:9px 16px;font-size:12px;font-weight:700;">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z"></path></svg>
+        刪除專案
+      </button>
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":2160}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

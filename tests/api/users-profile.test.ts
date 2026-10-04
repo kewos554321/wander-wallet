@@ -252,4 +252,55 @@ describe("PUT /api/users/profile", () => {
     expect(response.status).toBe(500)
     expect(data.error).toBe("更新失敗")
   })
+
+  it("should update preferences with uiVersion v2", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockAuthUser)
+    vi.mocked(prisma.user.update).mockResolvedValue({
+      ...mockDbUser,
+      preferences: { uiVersion: "v2" },
+    } as never)
+
+    const req = new NextRequest("http://localhost:3000/api/users/profile", {
+      method: "PUT",
+      body: JSON.stringify({ preferences: { uiVersion: "v2" } }),
+    })
+    const response = await PUT(req)
+
+    expect(response.status).toBe(200)
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: "user-123" },
+      data: { preferences: { uiVersion: "v2" } },
+      select: expect.any(Object),
+    })
+  })
+
+  it("should return 400 for invalid uiVersion", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockAuthUser)
+
+    const req = new NextRequest("http://localhost:3000/api/users/profile", {
+      method: "PUT",
+      body: JSON.stringify({ preferences: { uiVersion: "v3" } }),
+    })
+    const response = await PUT(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe("無效的介面版本")
+    expect(prisma.user.update).not.toHaveBeenCalled()
+  })
+
+  it("should return 400 for numeric uiVersion", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockAuthUser)
+
+    const req = new NextRequest("http://localhost:3000/api/users/profile", {
+      method: "PUT",
+      body: JSON.stringify({ preferences: { uiVersion: 1 } }),
+    })
+    const response = await PUT(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe("無效的介面版本")
+    expect(prisma.user.update).not.toHaveBeenCalled()
+  })
 })

@@ -6,6 +6,7 @@ import { LiffProvider } from "@/components/auth/liff-provider";
 import { AuthGate } from "@/components/auth/auth-gate";
 import ServiceWorkerRegister from "@/components/system/sw-register";
 import { DebugOverlay } from "@/components/debug/debug-overlay";
+import { UiVersionToggle } from "@/components/ui-version/ui-version-toggle";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -136,6 +137,7 @@ export default function RootLayout({
             <AuthGate>
               {children}
             </AuthGate>
+            <UiVersionToggle />
           </ThemeProvider>
         </LiffProvider>
         <ServiceWorkerRegister />

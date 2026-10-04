@@ -311,3 +311,200 @@
 .driver-popover.wander-wallet-tour .driver-popover-arrow-side-bottom {
   border-color: var(--driver-popover-bg);
 }
+
+/* ============================================
+   UI v2 tokens — only active under [data-ui="v2"]
+   Values from design/project/*.dc.html
+   ============================================ */
+@theme inline {
+  --color-v2-paper: var(--v2-paper);
+  --color-v2-surface: var(--v2-surface);
+  --color-v2-ink: var(--v2-ink);
+  --color-v2-ink-muted: var(--v2-ink-muted);
+  --color-v2-ink-subtle: var(--v2-ink-subtle);
+  --color-v2-line: var(--v2-line);
+  --color-v2-sand: var(--v2-sand);
+  --color-v2-check: var(--v2-check);
+  --color-v2-lake: var(--v2-lake);
+  --color-v2-lake-soft: var(--v2-lake-soft);
+  --color-v2-link: var(--v2-link);
+  --color-v2-coral: var(--v2-coral);
+  --color-v2-coral-soft: var(--v2-coral-soft);
+  --color-v2-coral-tint: var(--v2-coral-tint);
+  --color-v2-plum: var(--v2-plum);
+  --color-v2-plum-soft: var(--v2-plum-soft);
+  --color-v2-plum-tint: var(--v2-plum-tint);
+  --color-v2-sky: var(--v2-sky);
+  --color-v2-sky-soft: var(--v2-sky-soft);
+  --color-v2-gold: var(--v2-gold);
+  --color-v2-gold-soft: var(--v2-gold-soft);
+  --color-v2-rose: var(--v2-rose);
+  --color-v2-rose-soft: var(--v2-rose-soft);
+  --color-v2-danger: var(--v2-danger);
+  --color-v2-line-soft: var(--v2-line-soft);
+  --color-v2-lake-tint: var(--v2-lake-tint);
+  --color-v2-lake-border: var(--v2-lake-border);
+  --color-v2-lake-mid: var(--v2-lake-mid);
+  --color-v2-on-lake: var(--v2-on-lake);
+  --color-v2-coral-strong: var(--v2-coral-strong);
+  --color-v2-danger-soft: var(--v2-danger-soft);
+  --color-v2-danger-strong: var(--v2-danger-strong);
+  --color-v2-overlay: var(--v2-overlay);
+  --color-v2-knob: var(--v2-knob);
+  --color-v2-lake-edge: var(--v2-lake-edge);
+  --color-v2-danger-tint: var(--v2-danger-tint);
+  --color-v2-danger-border: var(--v2-danger-border);
+  --color-v2-danger-wash: var(--v2-danger-wash);
+  --color-v2-danger-edge: var(--v2-danger-edge);
+  --color-v2-coral-deep: var(--v2-coral-deep);
+  --color-v2-sky-tint: var(--v2-sky-tint);
+  --color-v2-line-green: var(--v2-line-green);
+  --color-v2-camera-bg: var(--v2-camera-bg);
+  --color-v2-on-dark: var(--v2-on-dark);
+  --font-v2-serif: var(--font-noto-serif-tc), serif;
+  --font-v2-sans: var(--font-noto-sans-tc), sans-serif;
+}
+
+[data-ui="v2"] {
+  color-scheme: light;
+  --v2-paper: #FAF7F2;
+  --v2-surface: #FFFFFF;
+  --v2-ink: #1B1815;
+  --v2-ink-muted: #6E6860;
+  --v2-ink-subtle: #B7AE9D;
+  --v2-line: #E7DFD2;
+  --v2-sand: #F1EBE0;
+  --v2-check: #C9BFAC;
+  --v2-lake: #1B5847;
+  --v2-lake-soft: #EAF5F1;
+  --v2-link: #24735D;
+  --v2-coral: #E8825A;
+  --v2-coral-soft: #FBEAE0;
+  --v2-coral-tint: #F6DCCB;
+  --v2-plum: #6B5B95;
+  --v2-plum-soft: #EFEAF7;
+  --v2-plum-tint: #E4DCF2;
+  --v2-sky: #4A6FA5;
+  --v2-sky-soft: #E8EEF7;
+  --v2-gold: #9C7A28;
+  --v2-gold-soft: #F7EFDD;
+  --v2-rose: #A14A68;
+  --v2-rose-soft: #F6E9EE;
+  --v2-danger: #C4472F;
+  --v2-line-soft: #F0EAE0;
+  --v2-lake-tint: #D2EAE1;
+  --v2-lake-border: #DDEDE6;
+  --v2-lake-mid: #2F8F74;
+  --v2-on-lake: #FFFFFF;
+  --v2-coral-strong: #C4602F;
+  --v2-danger-soft: #F6DCD3;
+  --v2-danger-strong: #C4432A;
+  --v2-overlay: rgb(0 0 0 / 0.4);
+  --v2-knob: #FFFFFF;
+  --v2-lake-edge: #B7D9CB;
+  --v2-danger-tint: #FDF1EC;
+  --v2-danger-border: #F3D3C4;
+  --v2-danger-wash: #FDF2EF;
+  --v2-danger-edge: #E8A796;
+  --v2-coral-deep: #8F3714;
+  --v2-sky-tint: #D3E0F5;
+  --v2-line-green: #06C755;
+  --v2-camera-bg: #171412;
+  --v2-on-dark: #FFFFFF;
+}
+
+[data-cover-art] { background-color: var(--cover-bg); color: var(--cover-fg); }
+
+.dark [data-ui="v2"] {
+  color-scheme: dark;
+  --v2-paper: #161412;
+  --v2-surface: #201D1A;
+  --v2-ink: #F2EDE4;
+  --v2-ink-muted: #B3AB9F;
+  --v2-ink-subtle: #7A7268;
+  --v2-line: #34302B;
+  --v2-sand: #2A2622;
+  --v2-check: #5A534A;
+  --v2-lake: #4FB394;
+  --v2-lake-soft: #17302A;
+  --v2-link: #6CC7AA;
+  --v2-coral: #F09A76;
+  --v2-coral-soft: #3A2519;
+  --v2-coral-tint: #4A2F20;
+  --v2-plum: #A897D6;
+  --v2-plum-soft: #2A2438;
+  --v2-plum-tint: #362E48;
+  --v2-sky: #8FB0DE;
+  --v2-sky-soft: #1E2838;
+  --v2-gold: #D4AE55;
+  --v2-gold-soft: #332A16;
+  --v2-rose: #D77E9C;
+  --v2-rose-soft: #37212A;
+  --v2-danger: #E8735A;
+  --v2-line-soft: #2A2622;
+  --v2-lake-tint: #1F3D34;
+  --v2-lake-border: #2C4A41;
+  --v2-lake-mid: #4FB394;
+  --v2-on-lake: #0F1F1A;
+  --v2-coral-strong: #F09A76;
+  --v2-danger-soft: #3A1E18;
+  --v2-danger-strong: #E8735A;
+  --v2-overlay: rgb(0 0 0 / 0.6);
+  --v2-knob: #F2EDE4;
+  --v2-lake-edge: #2E5A4C;
+  --v2-danger-tint: #2A1713;
+  --v2-danger-border: #5A2E23;
+  --v2-danger-wash: #2E1914;
+  --v2-danger-edge: #6A3A2E;
+  --v2-coral-deep: #E89872;
+  --v2-sky-tint: #28354A;
+  --v2-line-green: #06C755;
+  --v2-camera-bg: #171412;
+  --v2-on-dark: #FFFFFF;
+}
+
+.dark [data-ui="v2"] [data-cover-art] { background-color: var(--cover-bg-dark); color: var(--cover-fg-dark); }
+
+[data-ui="v2"] .v2-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--v2-line) transparent;
+}
+
+[data-ui="v2"] .v2-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+}
+
+[data-ui="v2"] .v2-range::-webkit-slider-runnable-track {
+  height: 4px;
+  background: transparent;
+}
+
+[data-ui="v2"] .v2-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  height: 14px;
+  width: 14px;
+  border-radius: 9999px;
+  background: var(--v2-knob);
+  border: 2px solid var(--v2-lake);
+  cursor: pointer;
+}
+
+[data-ui="v2"] .v2-range::-moz-range-track {
+  height: 4px;
+  background: transparent;
+}
+
+[data-ui="v2"] .v2-range::-moz-range-thumb {
+  pointer-events: auto;
+  height: 14px;
+  width: 14px;
+  border-radius: 9999px;
+  background: var(--v2-knob);
+  border: 2px solid var(--v2-lake);
+  cursor: pointer;
+}

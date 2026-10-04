@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&amp;family=Noto+Sans+TC:wght@400;500;600;700&amp;display=swap">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; }
+</style>
+</helmet>
+
+<div style="width:390px;height:650px;position:relative;background:rgba(27,24,21,.5);font-family:'Noto Sans TC',sans-serif;color:#1B1815;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+
+  <div style="width:350px;max-height:1080px;overflow-y:auto;background:#FFFFFF;border-radius:20px;padding:22px;">
+
+    <h2 style="margin:0 0 18px;font-family:'Noto Serif TC',serif;font-weight:700;font-size:17px;display:flex;align-items:center;gap:8px;">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1B5847" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="8" y1="10" x2="8.01" y2="10"></line><line x1="12" y1="10" x2="12.01" y2="10"></line><line x1="16" y1="10" x2="16.01" y2="10"></line><line x1="8" y1="14" x2="8.01" y2="14"></line><line x1="12" y1="14" x2="12.01" y2="14"></line><line x1="16" y1="14" x2="16.01" y2="14"></line></svg>
+      計算過程
+    </h2>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <span style="width:24px;height:24px;border-radius:50%;background:#1B5847;color:#FAF7F2;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</span>
+      <p style="margin:0;font-size:13px;font-weight:700;color:#1B5847;">支出明細（共 3 筆）</p>
+    </div>
+    <div style="max-height:150px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin:0 0 18px 32px;">
+      <div style="background:#FAF7F2;border-radius:10px;padding:9px 12px;">
+        <p style="margin:0 0 3px;font-size:13px;font-weight:600;">一蘭拉麵晚餐 · $1,280</p>
+        <p style="margin:0;font-size:11px;color:#1B5847;">付款：志明</p>
+        <p style="margin:0;font-size:11px;color:#9C7A28;">分攤：$320（1280 ÷ 4）</p>
+      </div>
+      <div style="background:#FAF7F2;border-radius:10px;padding:9px 12px;">
+        <p style="margin:0 0 3px;font-size:13px;font-weight:600;">溫泉旅館兩晚 · $14,000</p>
+        <p style="margin:0;font-size:11px;color:#1B5847;">付款：小美</p>
+        <p style="margin:0;font-size:11px;color:#9C7A28;">分攤：$3,500（14000 ÷ 4）</p>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <span style="width:24px;height:24px;border-radius:50%;background:#1B5847;color:#FAF7F2;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</span>
+      <p style="margin:0;font-size:13px;font-weight:700;color:#1B5847;">計算各人總額</p>
+    </div>
+    <table style="margin:0 0 6px 32px;width:calc(100% - 32px);background:#FAF7F2;border-radius:10px;overflow:hidden;">
+      <tr style="background:#EAF5F1;">
+        <td style="padding:7px 8px;font-size:11px;color:#1B5847;">成員</td>
+        <td style="padding:7px 8px;font-size:11px;color:#1B5847;">已付</td>
+        <td style="padding:7px 8px;font-size:11px;color:#1B5847;">應付</td>
+        <td style="padding:7px 8px;font-size:11px;color:#1B5847;">餘額</td>
+      </tr>
+      <tr>
+        <td style="padding:7px 8px;font-size:12px;">志明</td>
+        <td style="padding:7px 8px;font-size:12px;color:#1B5847;">$1,280</td>
+        <td style="padding:7px 8px;font-size:12px;color:#9C7A28;">$3,820</td>
+        <td style="padding:7px 8px;font-size:12px;color:#C0533A;">-$2,540</td>
+      </tr>
+      <tr>
+        <td style="padding:7px 8px;font-size:12px;">小美</td>
+        <td style="padding:7px 8px;font-size:12px;color:#1B5847;">$14,000</td>
+        <td style="padding:7px 8px;font-size:12px;color:#9C7A28;">$3,820</td>
+        <td style="padding:7px 8px;font-size:12px;color:#1B5847;">+$10,180</td>
+      </tr>
+    </table>
+    <p style="margin:0 0 18px 32px;font-size:10px;color:#A79F8F;">餘額 = 已付金額 − 應付金額（正數表示應收回，負數表示需付出）</p>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <span style="width:24px;height:24px;border-radius:50%;background:#1B5847;color:#FAF7F2;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</span>
+      <p style="margin:0;font-size:13px;font-weight:700;color:#1B5847;">結算方案</p>
+    </div>
+    <div style="margin:0 0 4px 32px;background:#EAF5F1;border-radius:10px;padding:10px 12px;">
+      <p style="margin:0 0 6px;font-size:13px;display:flex;align-items:center;gap:6px;">
+        <span style="color:#A79F8F;">1.</span>
+        <span style="color:#C0533A;">志明</span>
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#6E6860" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        <span style="color:#1B5847;">小美</span>
+        <span style="margin-left:auto;font-weight:700;color:#1B5847;">$2,540</span>
+      </p>
+    </div>
+    <p style="margin:6px 0 0 32px;font-size:10px;color:#A79F8F;">以上為最少轉帳次數的結算方案，共需 1 筆轉帳</p>
+
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":650}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

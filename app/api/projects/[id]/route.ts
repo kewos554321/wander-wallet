@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { Prisma } from "@prisma/client"
+import { isValidCover } from "@/lib/covers"
 
 // 獲取單個專案詳情
 export async function GET(
@@ -155,6 +156,10 @@ export async function PUT(
 
     const body = await req.json()
     const { name, description, cover, budget, currency, startDate, endDate, joinMode, exchangeRatePrecision, customRates } = body
+
+    if (cover !== undefined && !isValidCover(cover)) {
+      return NextResponse.json({ error: "封面格式不正確" }, { status: 400 })
+    }
 
     const updateData: {
       name?: string

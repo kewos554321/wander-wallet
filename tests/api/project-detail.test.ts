@@ -335,6 +335,40 @@ describe("PUT /api/projects/[id]", () => {
       expect(response.status).toBe(200)
     }
   })
+
+  it("should return 400 with invalid cover format", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue({ id: "member-1" } as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123", {
+      method: "PUT",
+      body: JSON.stringify({ cover: "icon:rocket;color:lake" }),
+    })
+    const response = await PUT(req, { params: Promise.resolve({ id: "project-123" }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe("封面格式不正確")
+    expect(prisma.project.update).not.toHaveBeenCalled()
+  })
+
+  it("should accept valid data URL cover for legacy support", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue({ id: "member-1" } as never)
+    vi.mocked(prisma.project.update).mockResolvedValue({
+      ...mockProjectAsMember,
+      cover: "data:image/webp;base64,AAAA",
+    } as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123", {
+      method: "PUT",
+      body: JSON.stringify({ cover: "data:image/webp;base64,AAAA" }),
+    })
+    const response = await PUT(req, { params: Promise.resolve({ id: "project-123" }) })
+
+    expect(response.status).toBe(200)
+    expect(prisma.project.update).toHaveBeenCalled()
+  })
 })
 
 describe("DELETE /api/projects/[id]", () => {

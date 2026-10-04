@@ -10,6 +10,7 @@ export interface UserPreferences {
   defaultCurrency: string                    // 預設幣別，如 "TWD", "JPY"
   defaultSplitMode: "equal" | "custom"       // 預設分帳方式
   notifications: NotificationPreferences     // 通知設定
+  uiVersion?: "v1" | "v2"                    // UI version opt-in (stage 1+)
 }
 
 export const DEFAULT_PREFERENCES: UserPreferences = {

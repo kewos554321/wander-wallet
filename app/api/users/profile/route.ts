@@ -72,6 +72,11 @@ export async function PUT(request: NextRequest) {
         }
       }
 
+      // uiVersion opt-in (stage 1): only "v1" | "v2"
+      if (preferences.uiVersion !== undefined && !["v1", "v2"].includes(preferences.uiVersion)) {
+        return NextResponse.json({ error: "無效的介面版本" }, { status: 400 })
+      }
+
       // 驗證 notifications
       if (preferences.notifications !== undefined) {
         if (typeof preferences.notifications !== "object") {

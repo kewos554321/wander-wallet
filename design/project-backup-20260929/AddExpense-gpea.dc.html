@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&amp;family=Noto+Sans+TC:wght@400;500;600;700&amp;display=swap">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  a:hover { opacity: .85; }
+  button { font-family: inherit; cursor: pointer; }
+  .sr-only { position: absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+</style>
+</helmet>
+
+<div style="width:390px;height:1340px;position:relative;background:#FAF7F2;font-family:'Noto Sans TC',sans-serif;color:#1B1815;overflow:hidden;">
+
+  <div style="padding:16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E7DFD2;">
+    <a href="Trip.dc.html" aria-label="關閉" style="width:32px;height:32px;border-radius:50%;background:#F1EBE0;display:flex;align-items:center;justify-content:center;color:#1B1815;">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </a>
+    <h1 style="margin:0;font-family:'Noto Serif TC',serif;font-weight:600;font-size:17px;">新增支出</h1>
+    <span style="width:32px;height:32px;" aria-hidden="true"></span>
+  </div>
+
+  <div style="margin:16px 16px 0;background:linear-gradient(135deg,#EAF5F1,#FAF7F2);border:1px solid #DCEAE3;border-radius:20px;padding:18px 20px;box-shadow:0 2px 8px rgba(27,88,71,.07);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <label for="amt" style="font-size:12px;color:#6E6860;font-weight:600;">輸入金額</label>
+      <button aria-label="開啟計算機" style="display:inline-flex;align-items:center;gap:4px;background:#FFFFFF;color:#1B5847;border:none;border-radius:99px;padding:6px 14px;font-size:12px;font-weight:700;box-shadow:0 1px 2px rgba(27,24,21,.06);">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"></rect><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01"></path></svg>
+        計算機
+      </button>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button style="display:inline-flex;align-items:center;gap:4px;flex-shrink:0;background:#FFFFFF;color:#1B1815;border:none;border-radius:12px;padding:10px 12px;font-size:14px;font-weight:700;box-shadow:0 1px 2px rgba(27,24,21,.06);">
+        TWD
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#B7AE9D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+      <label for="amt" class="sr-only">金額</label>
+      <input id="amt" value="1,280" style="flex:1;min-width:0;font-family:'Noto Serif TC',serif;font-weight:700;font-size:40px;border:none;background:none;text-align:left;color:#1B1815;outline:none;">
+    </div>
+  </div>
+
+  <div style="margin:14px 16px 16px;">
+    <label for="desc" style="display:block;font-size:12px;color:#6E6860;margin-bottom:6px;font-weight:600;">描述</label>
+    <input id="desc" value="一蘭拉麵晚餐" style="width:100%;box-sizing:border-box;border:1px solid #E7DFD2;border-radius:12px;padding:12px 14px;font-size:13px;background:#FFFFFF;color:#1B1815;">
+  </div>
+
+  <div style="margin:0 16px 12px;">
+    <p style="margin:0 0 6px;font-size:12px;color:#6E6860;font-weight:600;">類別</p>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+      <button style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #2F8F74;background:#EAF5F1;color:#1B5847;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7a2 2 0 002 2 2 2 0 002-2V3M9 12v9M17 3c-1.5 0-2.5 2-2.5 5s1 5 2.5 5v6"></path></svg>
+        <span style="font-size:12px;font-weight:700;">餐飲</span>
+      </button>
+      <button style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #E7DFD2;background:#E7F3EE;color:#2F8F74;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16V12l2-5h12l2 5v4"></path><path d="M4 16h16M7 16v2M17 16v2"></path><circle cx="7.5" cy="16" r="1.3"></circle><circle cx="16.5" cy="16" r="1.3"></circle></svg>
+        <span style="font-size:12px;font-weight:600;">交通</span>
+      </button>
+      <button style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #E7DFD2;background:#EFEAF7;color:#6B5B95;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19v-6a2 2 0 012-2h14a2 2 0 012 2v6M3 19h18M5 11V7a1 1 0 011-1h4a1 1 0 011 1v4M13 11V9a1 1 0 011-1h4a1 1 0 011 1v2"></path></svg>
+        <span style="font-size:12px;font-weight:600;">住宿</span>
+      </button>
+      <button style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #E7DFD2;background:#F7EFDD;color:#9C7A28;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 000 4v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2a2 2 0 000-4z"></path><path d="M13 6v2M13 11v2M13 16v2"></path></svg>
+        <span style="font-size:12px;font-weight:600;">票券</span>
+      </button>
+      <button style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #E7DFD2;background:#F6E9EE;color:#A14A68;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5z"></path><path d="M9 8V6a3 3 0 016 0v2"></path></svg>
+        <span style="font-size:12px;font-weight:600;">購物</span>
+      </button>
+      <button style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #E7DFD2;background:#E8EEF7;color:#4A6FA5;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="10" rx="5"></rect><path d="M6 11v4M4 13h4"></path><circle cx="15" cy="12" r="1"></circle><circle cx="18" cy="14" r="1"></circle></svg>
+        <span style="font-size:12px;font-weight:600;">娛樂</span>
+      </button>
+      <button style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #E7DFD2;background:#F7EFDD;color:#9C7A28;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="4"></rect><rect x="4" y="13" width="16" height="8"></rect><path d="M12 9v12M12 9c-1.5-4-6-4-6-1.5S9 9 12 9zM12 9c1.5-4 6-4 6-1.5S15 9 12 9z"></path></svg>
+        <span style="font-size:12px;font-weight:600;">禮品</span>
+      </button>
+      <button style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #E7DFD2;background:#F1EBE0;color:#6E6860;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="8" cy="8" r="1.5"></circle><circle cx="16" cy="8" r="1.5"></circle><circle cx="8" cy="16" r="1.5"></circle><circle cx="16" cy="16" r="1.5"></circle></svg>
+        <span style="font-size:12px;font-weight:600;">其他</span>
+      </button>
+    </div>
+  </div>
+
+  <div style="margin:0 16px 16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <p style="margin:0;font-size:12px;color:#6E6860;font-weight:600;">付款人</p>
+      <a href="AddExpenseMultiPayer.dc.html" style="font-size:12px;color:#B7AE9D;font-weight:600;">實驗：多位付款人版本 →</a>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <div style="position:relative;width:44px;height:44px;border-radius:50%;background:#D2EAE1;color:#1B5847;border:2px solid #2F8F74;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;">我
+        <span style="position:absolute;bottom:-2px;right:-2px;width:15px;height:15px;border-radius:50%;background:#2F8F74;border:2px solid #FAF7F2;display:flex;align-items:center;justify-content:center;">
+          <svg viewBox="0 0 24 24" width="8" height="8" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"></path></svg>
+        </span>
+      </div>
+      <div style="width:44px;height:44px;border-radius:50%;background:#FBE3D2;color:#C4602F;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;">志</div>
+      <div style="width:44px;height:44px;border-radius:50%;background:#EFEAF7;color:#6B5B95;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;">凱</div>
+      <div style="width:44px;height:44px;border-radius:50%;background:#F6E9EE;color:#A14A68;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;">婷</div>
+    </div>
+  </div>
+
+  <div style="margin:0 16px 16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <p style="margin:0;font-size:12px;color:#6E6860;font-weight:600;">分攤成員</p>
+      <span style="font-size:12px;color:#24735D;font-weight:700;">取消全選</span>
+    </div>
+
+    <div style="display:flex;gap:6px;padding:4px;background:#F1EBE0;border-radius:10px;margin-bottom:10px;">
+      <span style="flex:1;text-align:center;padding:8px 0;border-radius:8px;color:#6E6860;font-size:12px;font-weight:700;">均分</span>
+      <span style="flex:1;text-align:center;padding:8px 0;border-radius:8px;background:#FFFFFF;box-shadow:0 1px 3px rgba(27,24,21,.08);font-size:12px;font-weight:700;">自訂金額</span>
+    </div>
+
+    <div style="background:#FFFFFF;border:1px solid #E7DFD2;border-radius:14px;overflow:hidden;">
+
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #F0EAE0;background:#EAF5F1;">
+        <span style="width:18px;height:18px;border-radius:5px;background:#2F8F74;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"></path></svg>
+        </span>
+        <span style="width:28px;height:28px;border-radius:50%;background:#D2EAE1;color:#1B5847;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">我</span>
+        <span style="flex:1;font-size:13px;font-weight:600;">我</span>
+        <span style="display:flex;align-items:center;gap:6px;">
+          <span style="text-align:right;font-size:13px;font-weight:700;">NT$500</span>
+          <span aria-label="已固定金額" style="width:24px;height:24px;border-radius:7px;background:#1B5847;color:#FFFFFF;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2C9 2 7 4.2 7 7c0 2.6 2.3 4.8 4 6.6V21a1 1 0 002 0v-7.4c1.7-1.8 4-4 4-6.6 0-2.8-2-5-5-5z"></path></svg>
+          </span>
+        </span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #F0EAE0;background:#EAF5F1;">
+        <span style="width:18px;height:18px;border-radius:5px;background:#2F8F74;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"></path></svg>
+        </span>
+        <span style="width:28px;height:28px;border-radius:50%;background:#FBE3D2;color:#C4602F;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">志</span>
+        <span style="flex:1;font-size:13px;font-weight:600;">志明</span>
+        <span style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:13px;font-weight:700;color:#24735D;">NT$390</span>
+          <span aria-label="均分剩餘金額" style="width:24px;height:24px;border-radius:7px;border:1.5px solid #C9BFAC;color:#6E6860;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C9 2 7 4.2 7 7c0 2.6 2.3 4.8 4 6.6V21a1 1 0 002 0v-7.4c1.7-1.8 4-4 4-6.6 0-2.8-2-5-5-5z"></path></svg>
+          </span>
+        </span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#EAF5F1;">
+        <span style="width:18px;height:18px;border-radius:5px;background:#2F8F74;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"></path></svg>
+        </span>
+        <span style="width:28px;height:28px;border-radius:50%;background:#EFEAF7;color:#6B5B95;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">凱</span>
+        <span style="flex:1;font-size:13px;font-weight:600;">阿凱</span>
+        <span style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:13px;font-weight:700;color:#24735D;">NT$390</span>
+          <span aria-label="均分剩餘金額" style="width:24px;height:24px;border-radius:7px;border:1.5px solid #C9BFAC;color:#6E6860;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C9 2 7 4.2 7 7c0 2.6 2.3 4.8 4 6.6V21a1 1 0 002 0v-7.4c1.7-1.8 4-4 4-6.6 0-2.8-2-5-5-5z"></path></svg>
+          </span>
+        </span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;opacity:.5;">
+        <span style="width:18px;height:18px;border-radius:5px;border:1.5px solid #C9BFAC;flex-shrink:0;"></span>
+        <span style="width:28px;height:28px;border-radius:50%;background:#F6E9EE;color:#A14A68;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">婷</span>
+        <span style="flex:1;font-size:13px;font-weight:600;">佳婷</span>
+      </div>
+
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;">
+      <span style="font-size:12px;color:#6E6860;flex-shrink:0;">已選 3 人</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:12px;color:#24735D;font-weight:700;text-align:right;">
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M4 12l5 5L20 6"></path></svg>
+        固定 $500 + 均分 $780（2 人）= $1,280 / $1,280
+      </span>
+    </div>
+  </div>
+
+  <div style="margin:0 16px 16px;">
+    <p style="margin:0 0 8px;font-size:12px;color:#6E6860;font-weight:600;">支出日期</p>
+    <button type="button" style="display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;border:1px solid #E7DFD2;border-radius:12px;padding:12px 14px;font-size:13px;background:#FFFFFF;color:#1B1815;text-align:left;">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#6E6860" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>
+      <span>2026/11/16（一）</span>
+    </button>
+  </div>
+
+  <div style="margin:0 16px 16px;">
+    <p style="margin:0 0 8px;font-size:12px;color:#6E6860;font-weight:600;">消費地點</p>
+    <div style="display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;border:1px solid #E7DFD2;border-radius:12px;padding:12px 14px;background:#FFFFFF;">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#E8825A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"></path><circle cx="12" cy="9" r="2.5"></circle></svg>
+      <span style="flex:1;font-size:13px;">東京都台東區 上野公園</span>
+      <button type="button" aria-label="重新定位" style="background:none;border:none;color:#24735D;font-size:12px;font-weight:700;flex-shrink:0;">重新定位</button>
+    </div>
+  </div>
+
+  <div style="margin:0 16px 16px;">
+    <p style="margin:0 0 8px;font-size:12px;color:#6E6860;font-weight:600;">收據/消費圖片</p>
+    <div style="display:flex;gap:10px;">
+      <button type="button" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;border:1.5px dashed #C9BFAC;border-radius:14px;padding:16px 10px;background:#FFFFFF;color:#6E6860;">
+        <span style="width:32px;height:32px;border-radius:50%;background:#FBEAE0;color:#E8825A;display:flex;align-items:center;justify-content:center;">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 012-2h1.2a2 2 0 001.6-.8l.9-1.2a2 2 0 011.6-.8h1.4a2 2 0 011.6.8l.9 1.2a2 2 0 001.6.8H18a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2z"></path><circle cx="12" cy="13" r="3.3"></circle></svg>
+        </span>
+        <span style="font-size:12px;font-weight:600;">拍照</span>
+      </button>
+      <button type="button" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;border:1.5px dashed #C9BFAC;border-radius:14px;padding:16px 10px;background:#FFFFFF;color:#6E6860;">
+        <span style="width:32px;height:32px;border-radius:50%;background:#EAF5F1;color:#1B5847;display:flex;align-items:center;justify-content:center;">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="8.5" cy="10" r="1.4"></circle><path d="M21 15l-5-4-4 3-3-2-6 5"></path></svg>
+        </span>
+        <span style="font-size:12px;font-weight:600;">選擇圖片</span>
+      </button>
+    </div>
+  </div>
+
+  <div style="margin:0 16px 100px;background:#FFFFFF;border:1px solid #E7DFD2;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;">
+    <span style="width:20px;height:20px;border-radius:6px;background:#1B5847;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"></path></svg>
+    </span>
+    <div>
+      <p style="margin:0;font-size:12px;font-weight:700;">通知 LINE 群組</p>
+      <p style="margin:1px 0 0;font-size:12px;color:#6E6860;">儲存後自動發送通知到群組</p>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:0;right:0;bottom:0;padding:14px 16px;background:#FFFFFF;border-top:1px solid #E7DFD2;">
+    <button style="width:100%;background:#1B5847;color:#FFFFFF;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;">新增支出 · NT$ 1,280</button>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":1340}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
