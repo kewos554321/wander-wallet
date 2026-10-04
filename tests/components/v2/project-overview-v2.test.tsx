@@ -249,6 +249,12 @@ describe("ProjectOverviewV2View", () => {
     expect(screen.queryByRole("link", { name: "專案設定" })).not.toBeInTheDocument()
   })
 
+  it("uses the brand mark as the back control to the trip list", () => {
+    render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
+    const back = screen.getByRole("link", { name: "回旅程列表" })
+    expect(within(back).getByTestId("v2-brand-mark")).toBeInTheDocument()
+  })
+
   it("shows the current user's avatar instead of the project creator's initial", () => {
     render(
       <ProjectOverviewV2View

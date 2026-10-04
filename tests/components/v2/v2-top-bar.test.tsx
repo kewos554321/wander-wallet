@@ -23,6 +23,11 @@ describe("V2TopBar", () => {
     expect(screen.getByRole("heading", { level: 1, name: "結算" }).className).toContain("font-v2-serif")
   })
 
+  it("overrides the back control classes when backClassName is given", () => {
+    render(<V2TopBar title="旅程總覽" backHref="/projects" backClassName="flex items-center justify-center" />)
+    expect(screen.getByRole("link", { name: "返回" }).className).toBe("flex items-center justify-center")
+  })
+
   it("ignores history and uses backHref when fixedBack is set", () => {
     const back = vi.spyOn(window.history, "back").mockImplementation(() => {})
     Object.defineProperty(window.history, "length", { configurable: true, get: () => 2 })

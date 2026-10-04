@@ -1,10 +1,11 @@
 import Link from "next/link"
-import { Folders, Pencil, Share2 } from "lucide-react"
+import { Pencil, Share2 } from "lucide-react"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import type { OverviewProject, ProjectSummary } from "@/lib/project-overview"
 import { formatTripDateRange } from "@/lib/trip"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
+import { V2BrandMark } from "@/components/v2/ui/v2-brand-mark"
 import { TripSummaryCard } from "./trip-summary-card"
 import { BalanceCard } from "./balance-card"
 import { FeatureGrid } from "./feature-grid"
@@ -40,7 +41,8 @@ export function ProjectOverviewV2View({
         backHref="/projects"
         fixedBack
         backAriaLabel="回旅程列表"
-        backIcon={<Folders className="h-[18px] w-[18px]" strokeWidth={2} />}
+        backClassName="flex h-[34px] w-[34px] items-center justify-center"
+        backIcon={<V2BrandMark />}
         actions={
           <Link
             href="/settings"
