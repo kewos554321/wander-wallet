@@ -90,6 +90,23 @@ describe("PhotosV2View", () => {
     expect(screen.queryByTestId("photo-lightbox")).not.toBeInTheDocument()
   })
 
+  it("shows location in the lightbox", () => {
+    renderView()
+    fireEvent.click(screen.getByTestId("photo-tile-e1"))
+    expect(screen.getByText(/新宿/)).toBeInTheDocument()
+  })
+
+  it("navigates with the on-screen arrows and closes", () => {
+    renderView()
+    fireEvent.click(screen.getByTestId("photo-tile-e1"))
+    fireEvent.click(screen.getByRole("button", { name: "下一張" }))
+    expect(screen.getByTestId("photo-counter")).toHaveTextContent("2 / 2")
+    fireEvent.click(screen.getByRole("button", { name: "上一張" }))
+    expect(screen.getByTestId("photo-counter")).toHaveTextContent("1 / 2")
+    fireEvent.click(screen.getByRole("button", { name: "關閉" }))
+    expect(screen.queryByTestId("photo-lightbox")).not.toBeInTheDocument()
+  })
+
   it("closes the lightbox when the filter empties it (Review Focus 3)", async () => {
     const { rerender } = renderView()
     fireEvent.click(screen.getByTestId("photo-tile-e1"))

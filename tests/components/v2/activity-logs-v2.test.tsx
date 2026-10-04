@@ -125,6 +125,29 @@ describe("ActivityLogsV2View", () => {
     renderView({ logs: [baseLog], filteredLogs: [], hasActiveFilters: true })
     expect(screen.getByText("沒有符合條件的紀錄")).toBeInTheDocument()
   })
+
+  it("opens every filter panel and toggles a category", () => {
+    const props = renderView({ currencyOptions: ["TWD", "JPY"] })
+    for (const label of ["操作", "操作者", "類別", "付款人", "幣別", "金額", "建立日期", "付款日期"]) {
+      fireEvent.click(screen.getAllByText(label)[0])
+      expect(screen.getAllByTestId("filter-panel").length).toBeGreaterThan(0)
+      fireEvent.click(screen.getAllByText(label)[0])
+    }
+    fireEvent.click(screen.getAllByText("類別")[0])
+    fireEvent.click(screen.getByRole("checkbox", { name: "餐飲" }))
+    expect(props.onToggle).toHaveBeenCalledWith("categories", "food")
+  })
+
+  it("hides the currency filter with a single currency", () => {
+    renderView({ currencyOptions: ["TWD"] })
+    expect(screen.queryByText("幣別")).not.toBeInTheDocument()
+  })
+
+  it("renders a log with no metadata and no actor", () => {
+    renderView({ logs: [{ ...baseLog, id: "l3", metadata: null, actor: null }], filteredLogs: [{ ...baseLog, id: "l3", metadata: null, actor: null }] })
+    expect(screen.getByTestId("activity-card-l3")).toBeInTheDocument()
+    expect(screen.getByText("系統")).toBeInTheDocument()
+  })
 })
 
 describe("ActivityLogsV2 container", () => {
