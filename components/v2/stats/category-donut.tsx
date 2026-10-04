@@ -3,7 +3,7 @@ import { formatCurrency } from "@/lib/constants/currencies"
 import type { CategoryStat } from "@/lib/project-stats"
 
 // Colors follow the design's legend order; extra categories cycle.
-const COLORS = ["#E8825A", "#6B5B95", "#2F8F74", "#9C7A28", "#A14A68", "#1B5847", "#C4602F", "#6E6860"]
+const COLORS = ["var(--v2-coral)", "var(--v2-plum)", "var(--v2-lake-mid)", "var(--v2-gold)", "var(--v2-rose)", "var(--v2-lake)", "var(--v2-coral-strong)", "var(--v2-ink-muted)"]
 const R = 42
 const CIRCUMFERENCE = 2 * Math.PI * R
 
@@ -25,7 +25,7 @@ export function CategoryDonut({ categories, currency }: { categories: CategorySt
     <div className="flex items-center gap-5">
       <svg viewBox="0 0 100 100" width="108" height="108" className="shrink-0" aria-hidden="true">
         <g transform="rotate(-90 50 50)">
-          <circle cx="50" cy="50" r={R} fill="none" stroke="#F0EAE0" strokeWidth="15" />
+          <circle cx="50" cy="50" r={R} fill="none" strokeWidth="15" style={{ stroke: "var(--v2-line-soft)" }} />
           {arcs.map((a, i) => (
             <circle
               key={i}
@@ -33,7 +33,7 @@ export function CategoryDonut({ categories, currency }: { categories: CategorySt
               cy="50"
               r={R}
               fill="none"
-              stroke={a.color}
+              style={{ stroke: a.color }}
               strokeWidth="15"
               strokeDasharray={`${a.length} ${CIRCUMFERENCE}`}
               strokeDashoffset={-a.offset}

@@ -31,14 +31,14 @@ export function DailyTrend({ daily }: { daily: DailyStat[] }) {
       <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} width="100%" height={HEIGHT} preserveAspectRatio="none" aria-hidden="true">
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#2F8F74" stopOpacity="0.32" />
-            <stop offset="100%" stopColor="#2F8F74" stopOpacity="0" />
+            <stop offset="0%" style={{ stopColor: "var(--v2-lake-mid)" }} stopOpacity="0.32" />
+            <stop offset="100%" style={{ stopColor: "var(--v2-lake-mid)" }} stopOpacity="0" />
           </linearGradient>
         </defs>
         <path d={area} fill={`url(#${gradientId})`} />
-        <path d={line} fill="none" stroke="#2F8F74" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={line} fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: "var(--v2-lake-mid)" }} />
         {points.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r="3.5" fill="#1B5847" />
+          <circle key={i} cx={p.x} cy={p.y} r="3.5" style={{ fill: "var(--v2-lake)" }} />
         ))}
       </svg>
       <div className="mt-1.5 flex justify-between">
