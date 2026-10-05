@@ -158,7 +158,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
 
       <div className="mb-2.5 mt-3 flex items-center justify-between gap-2">
         <p className="m-0 text-xs font-semibold text-v2-ink-muted">
-          共同分攤 <span className="font-bold text-v2-ink">（剩餘應攤分金額 ${num(Math.max(0, derived.autoRemaining))}）</span>
+          共同分攤 <span className="font-bold text-v2-ink">（{state.personalMode ? "剩餘 " : ""}${num(Math.max(0, derived.splitInput.amount - derived.personalTotal))}）</span>
         </p>
         <button type="button" onClick={() => actions.setPoolAll(!allInPool)} className="shrink-0 text-xs font-bold text-v2-lake">
           {allInPool ? "取消全選" : "全選"}

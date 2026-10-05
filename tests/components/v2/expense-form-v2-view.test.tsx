@@ -157,6 +157,20 @@ describe("ExpenseFormV2View", () => {
     expect(within(split).queryByText(/個人項目 \$/)).not.toBeInTheDocument()
   })
 
+  it("only calls the shared amount 'remaining' while the personal-items switch is on", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    // Nothing has been deducted yet: plain shared amount, no "剩餘" wording.
+    expect(within(split).getByText("（$100）")).toBeInTheDocument()
+    expect(within(split).queryByText(/剩餘/)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("switch", { name: "先扣個人項目" }))
+    rerender()
+    expect(within(split).getByText(/剩餘/)).toHaveTextContent("$100")
+  })
+
   it("groups the pool pills and the breakdown under the 分攤成員 region", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))
@@ -168,7 +182,7 @@ describe("ExpenseFormV2View", () => {
     const split = screen.getByRole("region", { name: "分攤成員" })
     expect(within(split).getByRole("button", { name: "小雨" })).toHaveAttribute("aria-pressed", "true")
     expect(within(split).getByRole("region", { name: "分攤明細" })).toBeInTheDocument()
-    expect(within(split).getByText(/剩餘應攤分金額/)).toBeInTheDocument()
+    expect(within(split).getByText(/剩餘/)).toBeInTheDocument()
   })
 
   it("keeps personal items off until the personal-mode switch is turned on", () => {
@@ -361,10 +375,35 @@ describe("ExpenseFormV2View", () => {
     })
     rerender()
     // Pool of 2 splits the remaining 900; 小雨's row shows 450, not 450 + 100.
-    expect(screen.getByText(/剩餘應攤分金額/)).toHaveTextContent("$900")
+    expect(screen.getByText(/剩餘/)).toHaveTextContent("$900")
     expect(screen.getByLabelText("小雨的分攤金額")).toHaveTextContent(/^\$450$/)
     expect(screen.getByLabelText("志明的分攤金額")).toHaveTextContent(/^\$450$/)
     expect(hook.result.current.derived.shares.map((s) => s.shareAmount)).toEqual([550, 450])
+  })
+
+  it("keeps the remaining shared amount tied to personal items, not custom shares", () => {
+    const { hook, rerender } = renderForm()
+    act(() => {
+      hook.result.current.actions.setAmount("1000")
+      hook.result.current.actions.setPersonalMode(true)
+      hook.result.current.actions.togglePersonalMember("a")
+    })
+    const itemId = hook.result.current.state.personalItems.a[0].id
+    act(() => {
+      hook.result.current.actions.updateItem("a", itemId, "name", "咖啡")
+      hook.result.current.actions.updateItem("a", itemId, "amount", "100")
+    })
+    rerender()
+    // The pool after deducting 小雨's $100 personal item.
+    expect(screen.getByText(/剩餘/)).toHaveTextContent("$900")
+
+    // Pinning a custom share in the list below must not change it: the number
+    // exists to show how much is left after the personal items above.
+    fireEvent.click(screen.getByRole("button", { name: "小雨固定金額" }))
+    rerender()
+    fireEvent.change(screen.getByLabelText("小雨的分攤金額"), { target: { value: "300" } })
+    rerender()
+    expect(screen.getByText(/剩餘/)).toHaveTextContent("$900")
   })
 
   it("shows the split breakdown with dollar amounts when personal items are present", () => {

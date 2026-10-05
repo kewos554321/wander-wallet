@@ -89,7 +89,8 @@ describe("QuickItemCard", () => {
   it("shows the shared split and the participant pills", () => {
     setup({ amount: "60" })
     const split = screen.getByRole("region", { name: "分攤成員" })
-    expect(within(split).getByText(/剩餘應攤分金額/)).toBeInTheDocument()
+    expect(within(split).queryByText(/剩餘/)).not.toBeInTheDocument()
+    expect(within(split).getByText("（$60）")).toBeInTheDocument()
     expect(within(split).getByText("已選 3 人")).toBeInTheDocument()
     expect(within(split).getByText("金額相符")).toBeInTheDocument()
     expect(within(split).getByRole("button", { name: "小雨" })).toHaveAttribute("aria-pressed", "true")
