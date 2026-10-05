@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { format } from "date-fns"
 import type { DateRange } from "react-day-picker"
 import { CalendarDays, CircleX, Coins, DollarSign, Filter, Search, User, Users } from "lucide-react"
@@ -41,6 +41,7 @@ const icon = "h-3.5 w-3.5 shrink-0"
 export function ExpenseFilterBar(props: ExpenseFilterBarProps) {
   const { filters } = props
   const [openId, setOpenId] = useState<string | null>(null)
+  const gridRef = useRef<HTMLDivElement>(null)
   const amountActive = filters.amountRange[0] > 0 || filters.amountRange[1] > 0 ? 1 : 0
   const toggle = (id: string) => setOpenId((cur) => (cur === id ? null : id))
   const members = (list: { id: string; displayName: string; image?: string | null }[]) =>
@@ -59,12 +60,12 @@ export function ExpenseFilterBar(props: ExpenseFilterBarProps) {
           className="w-full bg-transparent text-xs outline-none placeholder:text-v2-ink-subtle"
         />
       </label>
-      <div className="mx-4 mt-2.5 grid grid-cols-3 gap-2">
-        <FilterPopover label="類別" icon={<Filter className={icon} />} count={filters.selectedCategories.size} open={openId === "category"} onToggle={() => toggle("category")} widthClass="w-[232px]">
+      <div ref={gridRef} className="mx-4 mt-2.5 grid grid-cols-3 gap-2">
+        <FilterPopover label="類別" icon={<Filter className={icon} />} count={filters.selectedCategories.size} open={openId === "category"} onToggle={() => toggle("category")} widthClass="w-[232px]" boundsRef={gridRef}>
           <CategoryPanel selected={filters.selectedCategories} onToggle={props.onToggleCategory} onClear={props.onClearCategories} />
         </FilterPopover>
 
-        <FilterPopover label="付款成員" icon={<User className={icon} />} count={filters.selectedPayers.size} open={openId === "payer"} onToggle={() => toggle("payer")} widthClass="w-[184px]">
+        <FilterPopover label="付款成員" icon={<User className={icon} />} count={filters.selectedPayers.size} open={openId === "payer"} onToggle={() => toggle("payer")} widthClass="w-[184px]" boundsRef={gridRef}>
           <MemberPanel
             title="選擇付款成員"
             members={members(props.payers)}
@@ -75,21 +76,21 @@ export function ExpenseFilterBar(props: ExpenseFilterBarProps) {
           />
         </FilterPopover>
 
-        <FilterPopover label="參與者" icon={<Users className={icon} />} count={filters.selectedParticipants.size} open={openId === "participant"} onToggle={() => toggle("participant")} align="right" widthClass="w-[190px]">
+        <FilterPopover label="參與者" icon={<Users className={icon} />} count={filters.selectedParticipants.size} open={openId === "participant"} onToggle={() => toggle("participant")} align="right" widthClass="w-[190px]" boundsRef={gridRef}>
           <MemberPanel title="選擇參與者（可複選）" members={members(props.participants)} selected={filters.selectedParticipants} onToggle={props.onToggleParticipant} onClear={props.onClearParticipants} />
         </FilterPopover>
 
         {props.currencies.length > 1 && (
-          <FilterPopover label="幣別" icon={<Coins className={icon} />} count={filters.selectedCurrencies.size} open={openId === "currency"} onToggle={() => toggle("currency")} widthClass="w-[150px]">
+          <FilterPopover label="幣別" icon={<Coins className={icon} />} count={filters.selectedCurrencies.size} open={openId === "currency"} onToggle={() => toggle("currency")} widthClass="w-[150px]" boundsRef={gridRef}>
             <CurrencyPanel currencies={props.currencies} selected={filters.selectedCurrencies} onToggle={props.onToggleCurrency} onClear={props.onClearCurrencies} />
           </FilterPopover>
         )}
 
-        <FilterPopover label="金額" icon={<DollarSign className={icon} />} count={amountActive} open={openId === "amount"} onToggle={() => toggle("amount")} widthClass="w-[230px]">
+        <FilterPopover label="金額" icon={<DollarSign className={icon} />} count={amountActive} open={openId === "amount"} onToggle={() => toggle("amount")} widthClass="w-[230px]" boundsRef={gridRef}>
           <AmountPanel range={filters.amountRange} max={props.maxAmount} currency={props.currency} onChange={props.onAmountRange} onClear={() => props.onAmountRange([0, 0])} />
         </FilterPopover>
 
-        <FilterPopover label={rangeLabel(filters.expenseDateRange, "付款日期")} ariaLabel="付款日期" icon={<CalendarDays className={icon} />} count={filters.expenseDateRange?.from ? 1 : 0} open={openId === "date"} onToggle={() => toggle("date")} align="right" widthClass="w-[236px]" panelRadiusClass="rounded-[10px]">
+        <FilterPopover label={rangeLabel(filters.expenseDateRange, "付款日期")} ariaLabel="付款日期" icon={<CalendarDays className={icon} />} count={filters.expenseDateRange?.from ? 1 : 0} open={openId === "date"} onToggle={() => toggle("date")} align="right" widthClass="w-[236px]" panelRadiusClass="rounded-[10px]" boundsRef={gridRef}>
           <DatePanel range={filters.expenseDateRange} onChange={props.onExpenseRange} />
         </FilterPopover>
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react"
 import { ChevronDown } from "lucide-react"
 import { useDismiss } from "@/components/v2/use-dismiss"
 
@@ -15,10 +15,15 @@ interface TriggerRect {
  * Position a filter panel below (or above) its trigger.
  *
  * The panel is anchored to the trigger's left or right edge and clamped into
- * the viewport. Because the trigger sits in a 3-column grid, a preferred
- * `align` can be impossible to satisfy (e.g. a right-aligned panel on a
- * left-column chip would run off-screen); in that case we keep the panel
- * attached to whichever edge is closest. `align` only breaks ties.
+ * the filter grid's content box (or the viewport when no `bounds` are given).
+ * Because the trigger sits in a 3-column grid, a preferred `align` can be
+ * impossible to satisfy (e.g. a right-aligned panel on a left-column chip
+ * would run off-screen); in that case we keep the panel attached to whichever
+ * edge is closest. `align` only breaks ties.
+ *
+ * `bounds` is the filter area (the 3-column grid) in viewport coordinates.
+ * Clamping to it keeps an over-wide panel from spilling past the amount
+ * filter on the left (instead of only being kept on-screen).
  */
 export function computePopoverPosition({
   align,
@@ -27,6 +32,7 @@ export function computePopoverPosition({
   panelHeight,
   viewportWidth,
   viewportHeight,
+  bounds,
 }: {
   align: "left" | "right"
   trigger: TriggerRect
@@ -34,13 +40,23 @@ export function computePopoverPosition({
   panelHeight: number
   viewportWidth: number
   viewportHeight: number
+  bounds?: { left: number; right: number }
 }): { top: number; left: number } {
   const top =
     trigger.bottom + 4 + panelHeight > viewportHeight
       ? Math.max(4, trigger.top - panelHeight - 4)
       : trigger.bottom + 4
-  const maxLeft = Math.max(4, viewportWidth - panelWidth - 4)
-  const clampLeft = (value: number) => Math.min(Math.max(4, value), maxLeft)
+  const viewportMin = 4
+  const viewportMax = Math.max(viewportMin, viewportWidth - panelWidth - viewportMin)
+  let minLeft = Math.max(viewportMin, bounds?.left ?? viewportMin)
+  let maxLeft = Math.min(viewportMax, (bounds?.right ?? viewportWidth - viewportMin) - panelWidth)
+  // A panel wider than the available bounds cannot honour both edges; fall
+  // back to the viewport so it stays on-screen.
+  if (maxLeft < minLeft) {
+    minLeft = viewportMin
+    maxLeft = viewportMax
+  }
+  const clampLeft = (value: number) => Math.min(Math.max(minLeft, value), maxLeft)
   const leftAnchor = clampLeft(trigger.left)
   const rightAnchor = clampLeft(trigger.right - panelWidth)
   const leftError = Math.abs(leftAnchor - trigger.left)
@@ -57,6 +73,8 @@ interface FilterPopoverProps {
   onToggle: () => void
   align?: "left" | "right"
   widthClass: string
+  /** Filter grid the panel must stay inside; defaults to clamping to the viewport. */
+  boundsRef?: RefObject<HTMLElement | null>
   /** Panel corner radius; defaults to the 12px filter-panel shell. */
   panelRadiusClass?: string
   /** Persistent accessible name when the visible label changes (e.g. a date range). */
@@ -72,6 +90,7 @@ export function FilterPopover({
   onToggle,
   align = "left",
   widthClass,
+  boundsRef,
   panelRadiusClass = "rounded-[12px]",
   ariaLabel,
   children,
@@ -89,6 +108,7 @@ export function FilterPopover({
     const panel = panelRef.current
     if (!trigger || !panel) return
     const r = trigger.getBoundingClientRect()
+    const grid = boundsRef?.current?.getBoundingClientRect()
     setPos(
       computePopoverPosition({
         align,
@@ -97,9 +117,10 @@ export function FilterPopover({
         panelHeight: panel.offsetHeight,
         viewportWidth: window.innerWidth,
         viewportHeight: window.innerHeight,
+        bounds: grid ? { left: grid.left, right: grid.right } : undefined,
       })
     )
-  }, [align])
+  }, [align, boundsRef])
 
   // Measure when the panel mounts (ref callback commit) rather than in an
   // effect, so the position is ready before paint.

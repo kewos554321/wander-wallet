@@ -41,6 +41,37 @@ describe("computePopoverPosition", () => {
     expect(pos.left).toBe(16)
   })
 
+  it("clamps a right-aligned panel to the filter grid's left edge", () => {
+    // Single-currency 360px layout: the grid content spans 16..344 and the
+    // 付款日期 chip sits in column 2 (128..232). The 236px panel cannot
+    // right-align to the chip without crossing the 金額 chip's left edge
+    // (x=16), so it must be clamped to the grid's content box.
+    const pos = computePopoverPosition({
+      align: "right",
+      trigger: { top: 344, bottom: 376, left: 128, right: 232 },
+      panelWidth: 236,
+      panelHeight: 300,
+      viewportWidth: 360,
+      viewportHeight: 844,
+      bounds: { left: 16, right: 344 },
+    })
+    expect(pos.left).toBe(16)
+  })
+
+  it("falls back to the viewport when the panel is wider than its bounds", () => {
+    const pos = computePopoverPosition({
+      align: "right",
+      trigger: { top: 100, bottom: 132, left: 128, right: 232 },
+      panelWidth: 236,
+      panelHeight: 300,
+      viewportWidth: 360,
+      viewportHeight: 844,
+      bounds: { left: 200, right: 260 },
+    })
+    expect(pos.left).toBeGreaterThanOrEqual(4)
+    expect(pos.left).toBeLessThanOrEqual(360 - 236 - 4)
+  })
+
   it("flips the panel above the trigger when there is no room below", () => {
     const pos = computePopoverPosition({
       align: "left",

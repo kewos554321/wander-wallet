@@ -337,4 +337,34 @@ describe("ExpenseFilterBar panels", () => {
     if (ow) Object.defineProperty(HTMLElement.prototype, "offsetWidth", ow)
     if (oh) Object.defineProperty(HTMLElement.prototype, "offsetHeight", oh)
   })
+
+  it("clamps the date panel to the filter grid, not the viewport", () => {
+    const domRect = (left: number, top: number, right: number, bottom: number) =>
+      ({ left, top, right, bottom, width: right - left, height: bottom - top, x: left, y: top, toJSON: () => ({}) }) as DOMRect
+
+    // 360px-wide single-currency layout: the filter grid spans 16..344, the
+    // 金額 chip is column 1 and the 付款日期 chip is column 2 (128..232). A
+    // 236px panel right-aligned to the trigger would reach x=4, 12px left of
+    // the grid/金額 edge, so it must be clamped to the grid's content box.
+    const gridRect = domRect(16, 300, 344, 376)
+    const triggerRect = domRect(128, 344, 232, 376)
+    const zero = domRect(0, 0, 0, 0)
+    const rectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      if (this.className.includes("grid-cols-3")) return gridRect
+      if (this.querySelector('button[aria-label="付款日期"]')) return triggerRect
+      return zero
+    })
+    const ow = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetWidth")
+    const oh = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetHeight")
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", { configurable: true, get: () => 236 })
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", { configurable: true, get: () => 260 })
+
+    renderBar()
+    fireEvent.click(screen.getByRole("button", { name: /付款日期/ }))
+    expect(parseFloat(screen.getByTestId("filter-panel").style.left)).toBe(16)
+
+    rectSpy.mockRestore()
+    if (ow) Object.defineProperty(HTMLElement.prototype, "offsetWidth", ow)
+    if (oh) Object.defineProperty(HTMLElement.prototype, "offsetHeight", oh)
+  })
 })
