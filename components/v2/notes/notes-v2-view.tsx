@@ -32,7 +32,7 @@ export function NotesV2View({
   onSave,
 }: NotesV2ViewProps) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col pb-24">
       <V2TopBar title="筆記" backHref={`/projects/${projectId}`} titleClassName="text-[17px] font-semibold" />
       {loading ? (
         <div data-testid="v2-notes-skeleton" className="mx-4 mt-3.5 h-64 animate-pulse rounded-2xl bg-v2-sand" />
@@ -50,16 +50,18 @@ export function NotesV2View({
               className="h-full w-full resize-none bg-transparent text-[15px] leading-[1.7] text-v2-ink outline-none placeholder:text-v2-ink-subtle"
             />
           </div>
-          <div className="p-3.5">
-            <button
-              type="button"
-              onClick={onSave}
-              disabled={!hasChanges || saving}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-v2-lake text-[15px] font-bold text-v2-paper disabled:opacity-50"
-            >
-              <Save className="h-4 w-4" />
-              {saved ? "已儲存" : saving ? "儲存中..." : "儲存變更"}
-            </button>
+          <div className="fixed inset-x-0 bottom-0 z-40 border-t border-v2-line bg-v2-surface px-4 py-3.5">
+            <div className="mx-auto max-w-md">
+              <button
+                type="button"
+                onClick={onSave}
+                disabled={!hasChanges || saving}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-v2-lake text-[15px] font-bold text-v2-paper disabled:opacity-50"
+              >
+                <Save className="h-4 w-4" />
+                {saved ? "已儲存" : saving ? "儲存中..." : "儲存變更"}
+              </button>
+            </div>
           </div>
         </>
       )}

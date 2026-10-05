@@ -51,6 +51,13 @@ describe("NotesV2View", () => {
     expect(screen.getByRole("button", { name: "儲存變更" })).toBeDisabled()
   })
 
+  it("pins the save button to the bottom of the page", () => {
+    renderView({ hasChanges: true })
+    const footer = screen.getByRole("button", { name: "儲存變更" }).closest("div.fixed")
+    expect(footer).not.toBeNull()
+    expect(footer).toHaveClass("inset-x-0", "bottom-0")
+  })
+
   it("shows 已儲存 when saved", () => {
     renderView({ saved: true })
     expect(screen.getByRole("button", { name: /已儲存/ })).toBeInTheDocument()
