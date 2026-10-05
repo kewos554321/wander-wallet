@@ -12,6 +12,7 @@ vi.mock("@/components/auth/liff-provider", () => ({
 }))
 vi.mock("@/lib/hooks/useUiVersion", () => ({ useUiVersion: () => mockUseUiVersion() }))
 vi.mock("next/navigation", () => ({ usePathname: () => mockPathname() }))
+vi.mock("next/dynamic", () => ({ default: () => () => <div data-testid="login-v2" /> }))
 vi.mock("next/font/google", () => ({
   Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
   Noto_Sans_TC: () => ({ variable: "font-var-sans" }),

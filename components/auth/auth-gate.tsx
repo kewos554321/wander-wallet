@@ -8,7 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertTriangle } from "lucide-react"
 import { Logo } from "@/components/brand/logo"
-import { LoginV2 } from "@/components/v2/auth/login-v2"
+import dynamic from "next/dynamic"
+
+// Lazy: only a logged-out v2 user pays for the v2 fonts/bundle.
+const LoginV2 = dynamic(() => import("@/components/v2/auth/login-v2").then((m) => m.LoginV2), { ssr: false })
 
 interface AuthGateProps {
   children: ReactNode
