@@ -21,6 +21,16 @@ describe("CategoryPicker", () => {
     }
   })
 
+  it("gives every category its own distinct tone", () => {
+    setup()
+    const tones = LABELS.map((label) => {
+      const button = screen.getByRole("button", { name: label })
+      return button.className.match(/\btext-v2-[a-z-]+\b/)?.[0]
+    })
+    expect(tones.every(Boolean)).toBe(true)
+    expect(new Set(tones).size).toBe(LABELS.length)
+  })
+
   it("marks only the selected category as pressed", () => {
     setup("transport")
     expect(screen.getByRole("button", { name: "交通" })).toHaveAttribute("aria-pressed", "true")

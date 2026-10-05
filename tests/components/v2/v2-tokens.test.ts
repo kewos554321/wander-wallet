@@ -22,6 +22,8 @@ const NEW_TOKENS: Record<string, [string, string]> = {
   "camera-bg": ["#171412", "#171412"],
   "on-dark": ["#FFFFFF", "#FFFFFF"],
   "gold-tint": ["#F0E0AD", "#4A3C18"],
+  "olive": ["#6B7A3A", "#BCC98A"],
+  "olive-soft": ["#EEF0E1", "#2A2E1C"],
   "lightbox": ["rgb(23 20 18 / 0.96)", "rgb(23 20 18 / 0.96)"],
 }
 

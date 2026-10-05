@@ -338,6 +338,8 @@
   --color-v2-sky-soft: var(--v2-sky-soft);
   --color-v2-gold: var(--v2-gold);
   --color-v2-gold-soft: var(--v2-gold-soft);
+  --color-v2-olive: var(--v2-olive);
+  --color-v2-olive-soft: var(--v2-olive-soft);
   --color-v2-rose: var(--v2-rose);
   --color-v2-rose-soft: var(--v2-rose-soft);
   --color-v2-danger: var(--v2-danger);
@@ -390,6 +392,8 @@
   --v2-sky-soft: #E8EEF7;
   --v2-gold: #9C7A28;
   --v2-gold-soft: #F7EFDD;
+  --v2-olive: #6B7A3A;
+  --v2-olive-soft: #EEF0E1;
   --v2-rose: #A14A68;
   --v2-rose-soft: #F6E9EE;
   --v2-danger: #C4472F;
@@ -442,6 +446,8 @@
   --v2-sky-soft: #1E2838;
   --v2-gold: #D4AE55;
   --v2-gold-soft: #332A16;
+  --v2-olive: #BCC98A;
+  --v2-olive-soft: #2A2E1C;
   --v2-rose: #D77E9C;
   --v2-rose-soft: #37212A;
   --v2-danger: #E8735A;
