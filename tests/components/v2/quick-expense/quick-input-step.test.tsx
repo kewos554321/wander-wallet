@@ -76,6 +76,14 @@ describe("QuickInputStep", () => {
     expect(screen.getByPlaceholderText(/我付 800 小明 480/)).toBeInTheDocument()
     expect(screen.getByText(/點麥克風可語音輸入/)).toBeInTheDocument()
   })
+  it("keeps the example chips scrollable without a visible scrollbar", () => {
+    setup("")
+    const scroller = screen.getByRole("button", { name: "早餐 100 我付" }).parentElement
+    expect(scroller?.className).toContain("overflow-x-auto")
+    expect(scroller?.className).toContain("[scrollbar-width:none]")
+    expect(scroller?.className).toContain("[&::-webkit-scrollbar]:hidden")
+  })
+
   it("disables parse while recording and hides mic when unsupported", () => {
     speech.recording = true
     setup("早餐 100")

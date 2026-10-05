@@ -62,7 +62,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
         </div>
       </div>
 
-      <div className="mx-4 mt-3 flex gap-1.5 overflow-x-auto">
+      <div className="mx-4 mt-3 flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {EXAMPLES.map((ex) => (
           <button key={ex} type="button" onClick={() => append(ex)} className="flex-shrink-0 rounded-full bg-v2-sand px-3 py-1.5 text-xs font-semibold text-v2-ink-muted">
             {ex}
