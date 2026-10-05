@@ -75,7 +75,7 @@ describe("NewProjectV2", () => {
       expect(screen.getByText(title)).toBeInTheDocument()
     }
     expect(screen.getByText("JPY 日圓")).toBeInTheDocument()
-    expect(screen.getByText("¥")).toBeInTheDocument()
+    expect(screen.getByLabelText("預算").previousElementSibling).toHaveTextContent("JPY")
   })
 
   it("blocks submit with an empty name", () => {
@@ -157,7 +157,9 @@ describe("NewProjectV2", () => {
     fireEvent.change(screen.getByLabelText("結算幣別"), { target: { value: "TWD" } })
 
     expect(screen.getByText("TWD 台幣")).toBeInTheDocument()
-    expect(screen.getByText("NT$")).toBeInTheDocument()
+    // Budget prefix is the currency code; scoped to the field because the
+    // currency select also renders a "TWD" option.
+    expect(screen.getByLabelText("預算").previousElementSibling).toHaveTextContent("TWD")
 
     fireEvent.click(screen.getByRole("button", { name: "建立旅程" }))
     await waitFor(() => expect(mockAuthFetch).toHaveBeenCalled())

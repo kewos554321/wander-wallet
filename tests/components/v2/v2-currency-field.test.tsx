@@ -10,7 +10,7 @@ vi.mock("@/components/ui/currency-select", () => ({
   ),
 }))
 
-import { V2CurrencyField, currencyLabel, currencySymbol } from "@/components/v2/ui/currency-field"
+import { V2CurrencyField, currencyLabel, currencySymbol, moneySymbol } from "@/components/v2/ui/currency-field"
 
 describe("currencyLabel", () => {
   it("uses the short name when short is true", () => {
@@ -27,13 +27,22 @@ describe("currencyLabel", () => {
 })
 
 describe("currencySymbol", () => {
-  it("maps known settlement currencies", () => {
-    expect(currencySymbol("TWD")).toBe("NT$")
-    expect(currencySymbol("JPY")).toBe("¥")
-    expect(currencySymbol("USD")).toBe("$")
-  })
-  it("falls back to the currency code", () => {
+  it("uses the ISO 4217 3-letter code for every currency", () => {
+    expect(currencySymbol("TWD")).toBe("TWD")
+    expect(currencySymbol("JPY")).toBe("JPY")
+    expect(currencySymbol("USD")).toBe("USD")
     expect(currencySymbol("EUR")).toBe("EUR")
+  })
+})
+
+describe("moneySymbol", () => {
+  it("shows a plain $ for TWD", () => {
+    expect(moneySymbol("TWD")).toBe("$")
+  })
+  it("uses the currency code for other currencies", () => {
+    expect(moneySymbol("JPY")).toBe("JPY")
+    expect(moneySymbol("USD")).toBe("USD")
+    expect(moneySymbol("EUR")).toBe("EUR")
   })
 })
 

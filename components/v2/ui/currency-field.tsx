@@ -6,8 +6,6 @@ import { SUPPORTED_CURRENCIES, type CurrencyCode } from "@/lib/constants/currenc
 
 // A9b shows the short name (台幣); A13/A14 show the full name (新台幣) (D22).
 const SHORT_NAMES: Record<string, string> = { TWD: "台幣" }
-// D10: budget prefix is the settlement currency symbol, no thousand separators.
-const SYMBOLS: Record<string, string> = { TWD: "NT$", JPY: "¥", USD: "$" }
 
 export function currencyLabel(code: string, short = false): string {
   const info = SUPPORTED_CURRENCIES.find((c) => c.code === code)
@@ -16,8 +14,16 @@ export function currencyLabel(code: string, short = false): string {
   return `${info.code} ${info.name}`
 }
 
+// Amounts are labelled with the ISO 4217 3-letter code (TWD, JPY, USD…), never a
+// symbol such as "NT$".
 export function currencySymbol(code: string): string {
-  return SYMBOLS[code] ?? code
+  return code
+}
+
+// Money prefixes (settlement budget, amount-range filter) use a plain "$" for
+// TWD; every other currency uses its code.
+export function moneySymbol(code: string): string {
+  return code === "TWD" ? "$" : currencySymbol(code)
 }
 
 // v2-styled select trigger over the shared CurrencySelect (v1 component untouched).

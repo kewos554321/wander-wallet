@@ -198,17 +198,30 @@ describe("ProjectSettingsV2", () => {
     render(<ProjectSettingsV2 projectId="p1" />)
     await screen.findByLabelText("專案名稱")
     expect(screen.getByText("TWD 新台幣")).toBeInTheDocument()
-    expect(screen.getByText("NT$")).toBeInTheDocument()
+    expect(screen.getByText("$")).toBeInTheDocument()
+  })
+
+  it("keeps the budget symbol inline with the value so they cannot overlap", async () => {
+    mockRoutes()
+    render(<ProjectSettingsV2 projectId="p1" />)
+    const budget = await screen.findByLabelText("旅程預算")
+    const symbol = screen.getByText("$")
+    const container = budget.parentElement!
+    // Flex row: the symbol is a sibling that takes its own width, so a
+    // multi-char symbol (NT$/EUR/…) can never paint over the digits.
+    expect(container.className).toContain("flex")
+    expect(container).toContainElement(symbol)
+    expect(budget.className).not.toContain("pl-[26px]")
   })
 
   it("shows a danger counter for long descriptions but still saves them (RC3)", async () => {
     mockRoutes()
     render(<ProjectSettingsV2 projectId="p1" />)
     const desc = await screen.findByLabelText("描述")
-    expect(screen.getByText("6/50")).toBeInTheDocument()
-    const long = "x".repeat(51)
+    expect(screen.getByText("6/60")).toBeInTheDocument()
+    const long = "x".repeat(61)
     fireEvent.change(desc, { target: { value: long } })
-    expect(screen.getByText("51/50")).toHaveClass("text-v2-danger")
+    expect(screen.getByText("61/60")).toHaveClass("text-v2-danger")
     fireEvent.click(screen.getByRole("button", { name: "儲存變更" }))
     await waitFor(() =>
       expect(mockAuthFetch).toHaveBeenCalledWith("/api/projects/p1", expect.objectContaining({ method: "PUT" }))

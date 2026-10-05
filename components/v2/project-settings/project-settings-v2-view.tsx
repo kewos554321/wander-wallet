@@ -2,7 +2,7 @@ import { Trash2 } from "lucide-react"
 import { CoverTileButton } from "@/components/v2/cover/cover-tile-button"
 import { DateRangeField } from "@/components/v2/project/date-range-field"
 import { JoinModePicker } from "@/components/v2/project/join-mode-picker"
-import { V2CurrencyField, currencySymbol } from "@/components/v2/ui/currency-field"
+import { V2CurrencyField, moneySymbol } from "@/components/v2/ui/currency-field"
 import type { ProjectFormValues } from "@/lib/hooks/use-project-form"
 import { ExchangeRateRow } from "./exchange-rate-row"
 
@@ -63,7 +63,7 @@ export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
             <label htmlFor="v2-project-desc" className="block text-xs font-semibold text-v2-ink-muted">
               描述（選填）
             </label>
-            <span className={`text-xs ${descriptionCount > 50 ? "text-v2-danger" : "text-v2-ink-subtle"}`}>{descriptionCount}/50</span>
+            <span className={`text-xs ${descriptionCount > 60 ? "text-v2-danger" : "text-v2-ink-subtle"}`}>{descriptionCount}/60</span>
           </div>
           <textarea
             id="v2-project-desc"
@@ -93,8 +93,8 @@ export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
           <label htmlFor="v2-project-budget" className={fieldLabelClass}>
             旅程預算（選填）
           </label>
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[13px] text-v2-ink-muted">{currencySymbol(values.currency)}</span>
+          <div className="flex items-center gap-1.5 rounded-xl border border-v2-line bg-v2-paper px-3.5 py-3">
+            <span className="text-[13px] text-v2-ink-muted">{moneySymbol(values.currency)}</span>
             <input
               id="v2-project-budget"
               aria-label="旅程預算"
@@ -102,7 +102,7 @@ export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
               value={values.budget}
               onChange={(e) => set("budget", e.target.value)}
               disabled={props.saving}
-              className="w-full rounded-xl border border-v2-line bg-v2-paper py-3 pl-[26px] pr-3.5 text-[13px] outline-none"
+              className="w-full bg-transparent text-[13px] outline-none"
             />
           </div>
           <p className="mt-1.5 text-xs text-v2-ink-subtle">設定預算後，可在旅程總覽查看花費進度</p>

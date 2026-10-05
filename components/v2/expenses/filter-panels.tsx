@@ -5,7 +5,6 @@ import type { DateRange } from "react-day-picker"
 import { Check, ChevronLeft, ChevronRight, CircleX } from "lucide-react"
 import { CATEGORY_LABELS, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
 import { formatAmount } from "@/lib/constants/currencies"
-import { currencySymbol } from "@/components/v2/ui/currency-field"
 import { CATEGORY_TONES } from "@/components/v2/category-style"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 
@@ -164,11 +163,12 @@ export function AmountPanel({
   const hiValue = hi === 0 ? upper : hi
   const loPct = upper > 0 ? (lo / upper) * 100 : 0
   const hiPct = upper > 0 ? (hiValue / upper) * 100 : 100
-  const label = (n: number) => `${currencySymbol(currency)}${formatAmount(n, currency)}`
+  // The panel header shows the currency code, so labels use the generic "$".
+  const label = (n: number) => `$${formatAmount(n, currency)}`
   return (
     <div className="px-3 pt-2.5 pb-3.5">
       <div className="mb-2 flex items-center justify-between">
-        <p className="m-0 text-[10px] font-bold text-v2-ink-subtle">設定金額區間</p>
+        <p className="m-0 text-[10px] font-bold text-v2-ink-subtle">設定金額區間 ({currency})</p>
         {(lo > 0 || hi > 0) && (
           <button
             type="button"
