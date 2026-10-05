@@ -144,6 +144,80 @@ describe("useSpeechRecognition", () => {
     expect(result.current.transcript).toBe("測試語音")
   })
 
+  it("should not accumulate a duplicate consecutive final result", async () => {
+    const { useSpeechRecognition } = await import("@/lib/speech")
+    const { result } = renderHook(() => useSpeechRecognition())
+
+    await act(async () => {
+      result.current.startRecording()
+    })
+
+    // Android Chrome can deliver the same finalized phrase across two result
+    // entries; it must only be counted once.
+    await act(async () => {
+      mockRecognition.onresult?.({
+        resultIndex: 7,
+        results: { length: 8, 7: { isFinal: true, 0: { transcript: "晚餐600元大家分" } } },
+      })
+    })
+    await act(async () => {
+      mockRecognition.onresult?.({
+        resultIndex: 8,
+        results: { length: 9, 8: { isFinal: true, 0: { transcript: "晚餐600元大家分" } } },
+      })
+    })
+
+    expect(result.current.transcript).toBe("晚餐600元大家分")
+  })
+
+  it("should replace a final that is re-delivered as a longer version", async () => {
+    const { useSpeechRecognition } = await import("@/lib/speech")
+    const { result } = renderHook(() => useSpeechRecognition())
+
+    await act(async () => {
+      result.current.startRecording()
+    })
+
+    await act(async () => {
+      mockRecognition.onresult?.({
+        resultIndex: 4,
+        results: { length: 5, 4: { isFinal: true, 0: { transcript: "早餐100元" } } },
+      })
+    })
+    await act(async () => {
+      mockRecognition.onresult?.({
+        resultIndex: 5,
+        results: { length: 6, 5: { isFinal: true, 0: { transcript: "早餐100元我付的" } } },
+      })
+    })
+
+    expect(result.current.transcript).toBe("早餐100元我付的")
+  })
+
+  it("should append distinct final fragments", async () => {
+    const { useSpeechRecognition } = await import("@/lib/speech")
+    const { result } = renderHook(() => useSpeechRecognition())
+
+    await act(async () => {
+      result.current.startRecording()
+    })
+
+    await act(async () => {
+      mockRecognition.onresult?.({
+        resultIndex: 0,
+        results: { length: 1, 0: { isFinal: true, 0: { transcript: "早餐100元" } } },
+      })
+    })
+    await act(async () => {
+      mockRecognition.onresult?.({
+        resultIndex: 1,
+        results: { length: 2, 1: { isFinal: true, 0: { transcript: "我付的" } } },
+      })
+    })
+
+    expect(result.current.transcript).toBe("早餐100元我付的")
+  })
+
   it("should handle interim transcript results", async () => {
     const { useSpeechRecognition } = await import("@/lib/speech")
     const { result } = renderHook(() => useSpeechRecognition())

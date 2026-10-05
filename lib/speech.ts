@@ -106,6 +106,8 @@ export function useSpeechRecognition() {
   const [interimTranscript, setInterimTranscript] = useState("")
   const [error, setError] = useState<string | null>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
+  // Mirrors `transcript` so the merge below can run outside the state updater.
+  const transcriptRef = useRef("")
 
   useEffect(() => {
     // 初始化平台偵測
@@ -152,7 +154,16 @@ export function useSpeechRecognition() {
         }
 
         if (finalTranscript) {
-          setTranscript((prev) => prev + finalTranscript)
+          // Android Chrome re-delivers a finalized phrase, sometimes identical
+          // and sometimes as a longer version that already contains the previous
+          // fragment. Merge instead of blindly appending so it is not counted twice.
+          const prev = transcriptRef.current
+          let next: string
+          if (!prev || prev === finalTranscript || prev.endsWith(finalTranscript)) next = prev || finalTranscript
+          else if (finalTranscript.startsWith(prev)) next = finalTranscript
+          else next = prev + finalTranscript
+          transcriptRef.current = next
+          setTranscript(next)
         }
         setInterimTranscript(interimText)
       }
@@ -199,6 +210,7 @@ export function useSpeechRecognition() {
 
   const startRecording = useCallback(() => {
     if (recognitionRef.current && !isRecording) {
+      transcriptRef.current = ""
       setTranscript("")
       setInterimTranscript("")
       setError(null)
@@ -218,6 +230,7 @@ export function useSpeechRecognition() {
   }, [isRecording])
 
   const resetTranscript = useCallback(() => {
+    transcriptRef.current = ""
     setTranscript("")
     setInterimTranscript("")
     setError(null)
