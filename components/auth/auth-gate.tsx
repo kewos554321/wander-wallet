@@ -3,10 +3,12 @@
 import { ReactNode } from "react"
 import { usePathname } from "next/navigation"
 import { useLiff, PUBLIC_ROUTES, PUBLIC_PREFIXES } from "./liff-provider"
+import { useUiVersion } from "@/lib/hooks/useUiVersion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertTriangle } from "lucide-react"
 import { Logo } from "@/components/brand/logo"
+import { LoginV2 } from "@/components/v2/auth/login-v2"
 
 interface AuthGateProps {
   children: ReactNode
@@ -36,6 +38,7 @@ function FullScreenLoading() {
 export function AuthGate({ children }: AuthGateProps) {
   const pathname = usePathname()
   const { user, isLoading, isDevMode, login } = useLiff()
+  const { version } = useUiVersion()
 
   // 公開路由：直接顯示內容
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname) ||
@@ -61,6 +64,9 @@ export function AuthGate({ children }: AuthGateProps) {
 
   // 未登入
   if (!user) {
+    if (version === "v2") {
+      return <LoginV2 isDevMode={isDevMode} onLogin={login} />
+    }
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 via-background to-brand-100 dark:from-brand-700/20 dark:via-background dark:to-brand-600/20">
         <Card className="w-full max-w-md animate-fade-in">
