@@ -21,12 +21,10 @@ https://liff.line.me/2008702256-zk3uzDl3/projects/550e8400-e29b-41d4-a716-446655
 |---|---|---|
 | UUID PK / FK | **全部保留** | 避免跨表 migration、保住 Postgres native `uuid`（16 bytes）與既有 `ExpenseParticipant`、`ActivityLog.entityId` 關聯 |
 | 專案對外識別 | 新增 `Project.publicCode`（`@unique`） | URL / 分享連結改用它；PK 不變 |
-| 短路徑前綴 | `/p/[code]` | 最短；避開頂層既有字（`admin`、`projects`、`api`…） |
-| 舊連結 | `/projects/{uuid}` 與 `/projects/{code}` → 302 到 `/p/{code}` | 向後相容既有書籤與分享連結 |
+| 路徑前綴 | **保留 `/projects/[code]`**（只把 UUID 換成 code） | 改動最小；不新增頂層命名空間、不搬路由樹 |
+| 舊連結 | 仍可用（API 接受 uuid）；專案首頁可選 302 到 code | 向後相容既有書籤與分享連結 |
 | 費用識別 | **維持 UUID**（本階段） | 加流水號屬純新增、可日後再做，先降低風險 |
 | API 識別字 | 接受「code 或 uuid」 | 前端統一把 code 當識別字，API 邊界解析成 uuid |
-
-> 註：短路徑前綴 `/p` 為建議預設；若審核時想降低改動量，可改回 `/projects/[code]`（只把 UUID 換成 code）。本 spec 其餘設計兩種皆適用。
 
 ## 3. 資料模型變更
 
@@ -82,33 +80,26 @@ model Project {
 
 ## 5. 路由變更
 
-### 5.1 新正式路徑
+### 5.1 路徑不變，只把 UUID 換成 code
 
-將 `app/projects/[id]/` **整棵樹** 更名為 `app/p/[code]/`（15 個檔案）。頁面內 `params.id` → `params.code`，並以**原本的 `projectId` prop 名稱**傳給 V1/V2 component（元件不需改 prop 介面）。
+**不搬動路由樹、不新增前綴。** `app/projects/[id]/` 原地保留；建議將動態段更名為 `app/projects/[code]/`（純為語意清晰，15 個檔案用 `git mv`，`params.id` → `params.code`）。頁面以**原本的 `projectId` prop 名稱**把 code 傳給 V1/V2 component（元件不需改 prop 介面）。
 
 ```
-app/p/[code]/page.tsx                      /p/{code}
-app/p/[code]/expenses/page.tsx             /p/{code}/expenses
-app/p/[code]/expenses/[expenseId]/edit     /p/{code}/expenses/{expenseUuid}/edit   ← 唯一仍帶 UUID
-app/p/[code]/settle/page.tsx               /p/{code}/settle
+/projects/{code}                              專案總覽
+/projects/{code}/expenses
+/projects/{code}/expenses/{expenseUuid}/edit  ← 唯一仍帶 UUID
+/projects/{code}/settle
 ...（其餘 11 條同理）
 ```
 
-保留不動：`app/projects/page.tsx`（專案列表）、`app/projects/new/page.tsx`（建立）。
+`app/projects/page.tsx`（列表）、`app/projects/new/page.tsx`（建立）不變。`app/robots.ts`、`components/layout/app-header.tsx` 不需修改（判斷仍為 `/projects/`）。
 
-### 5.2 舊連結轉址
+### 5.2 舊 / 混用識別字
 
-新增 `app/projects/[...slug]/page.tsx`（server component）：
+因為 API 同時接受 code 與 uuid（§6），既有 `/projects/{uuid}/...` 連結**仍可正常運作**，無需強制轉址。
 
-- 取第一段 `slug[0]`，以「uuid 或 code」查專案。
-- 找到 → `redirect('/p/' + project.publicCode + 其餘子路徑)`。
-- 找不到 → `notFound()`。
-- 靜態段 `new` 優先於 catch-all，故 `/projects/new` 不受影響；`/projects` 仍由 `app/projects/page.tsx` 處理。
-
-### 5.3 其他路由參照
-
-- `app/robots.ts`：disallow 加入 `/p/`（保留 `/projects/`）。
-- `components/layout/app-header.tsx`：`pathname.startsWith("/projects/")` 判斷加入 `/p/`。
+- 建議（可選）：把 `app/projects/[code]/page.tsx`（專案首頁）改為 server component，解析後若傳入的是 uuid，`redirect` 到 `/projects/{publicCode}`，讓最常被分享的首頁連結自動正規化。
+- 深層舊連結維持可用（不強制轉址）；若日後要求全部正規化，再以 middleware 或逐頁 server 解析處理。
 
 ## 6. API：code / uuid 解析
 
@@ -140,7 +131,7 @@ export async function resolveProjectId(param: string): Promise<string | null>
 
 原則：**元件的 `projectId` prop 一律承載 `publicCode`**；API 路徑維持 `/api/projects/{projectId}/...`（由 API 解析）。
 
-- 導覽 URL：把所有專案範圍的 `/projects/${projectId}` 改為 `/p/${projectId}`（V1/V2 元件，例如 `components/v2/expense-form/expense-form-v2.tsx`、`components/v2/project-settings/project-settings-v2.tsx`、`components/v2/map/map-v2-view.tsx` 等）。
+- 導覽 URL 前綴**維持 `/projects`，不需修改**；既有 V1/V2 元件沿用原本的 `projectId` prop 即可。
 - 使用已載入專案物件處，把「給 URL / prop 用的 `project.id`」改為 `project.publicCode`：
   - `components/v1/projects/projects-v1.tsx`
   - `components/v2/projects/projects-v2-view.tsx`
@@ -162,25 +153,25 @@ export async function resolveProjectId(param: string): Promise<string | null>
 2. 執行 backfill 腳本，確認 0 筆 `NULL`。
 3. 階段 B schema（必填）→ `db:push`。
 4. 部署應用（路由、API、前端）。
-5. 抽驗：`/p/{code}` 正常、舊 `/projects/{uuid}` 正確 302、分享連結可用、加入流程可用。
+5. 抽驗：`/projects/{code}` 正常、既有 `/projects/{uuid}` 可用、分享連結可用、加入流程可用。
 
 ## 10. 測試
 
 - 單元：`generateProjectCode` 格式/字母集/長度；`resolveProjectId` 對 uuid 與 code 的行為。
 - API：`GET /api/projects/{code}` 回 200；不存在回 404；`join` 以 code 成功。
-- 路由：舊 `/projects/{uuid}` → 302 `/p/{code}`；子路徑保留。
-- E2E/手動：建立專案 → 導向 `/p/{code}`；邀請連結分享 → 開啟 → 加入成功。
+- 路由：`/projects/{uuid}`（含深層子路徑）可正常載入；專案首頁（若有實作）302 至 `/projects/{code}`。
+- E2E/手動：建立專案 → 導向 `/projects/{code}`；邀請連結分享 → 開啟 → 加入成功。
 
 ## 11. 不在本次範圍（未來工作）
 
-- 費用短參照：`Expense.no`（專案內流水號）+ `Project.expenseSeq` 原子計數器 + backfill，URL 變 `/p/{code}/e/{no}`。
+- 費用短參照：`Expense.no`（專案內流水號）+ `Project.expenseSeq` 原子計數器 + backfill，URL 變 `/projects/{code}/e/{no}`。
 - 自訂短網域（縮短 `liff.line.me/...` 那段）；需處理 LIFF endpoint / redirect。
 - `publicCode` 輪替與過期。
 
 ## 12. 驗收條件
 
-- 專案及其 14 條子路由 URL 由 `/projects/{uuid}` 改為 `/p/{code}`（唯一例外：費用編輯頁仍含一個 UUID）。
-- 舊 `/projects/{uuid}`（含深層子路徑）皆 302 至新路徑。
+- 專案及其子路由 URL 由 `/projects/{uuid}` 改為 `/projects/{code}`（唯一例外：費用編輯頁仍含一個 UUID）。
+- 既有 `/projects/{uuid}`（含深層子路徑）仍可正常使用；專案首頁（可選）302 至 `/projects/{code}`。
 - 所有既有專案皆已補上唯一 `publicCode`，且無 `NULL`。
 - 所有既有 API 行為不變（以 uuid 呼叫仍可用）。
 - `npm run test:run` 全綠。
