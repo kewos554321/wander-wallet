@@ -201,6 +201,13 @@ describe("ExpenseFilterBar panels", () => {
     expect(props.onAmountRange).toHaveBeenCalledWith([0, 3000])
   })
 
+  it("draws a divider under the amount panel header, like the other panels", () => {
+    renderBar()
+    fireEvent.click(screen.getByRole("button", { name: /金額/ }))
+    const panel = screen.getByTestId("filter-panel")
+    expect(panel.querySelector(".h-px.bg-v2-line-soft")).toBeInTheDocument()
+  })
+
   it("clears the payment date range", () => {
     const props = renderBar({
       filters: { ...baseFilters, expenseDateRange: { from: new Date(2026, 10, 12), to: new Date(2026, 10, 16) } },

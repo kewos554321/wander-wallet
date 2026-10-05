@@ -167,7 +167,7 @@ export function AmountPanel({
   const label = (n: number) => `$${formatAmount(n, currency)}`
   return (
     <div className="px-3 pt-2.5 pb-3.5">
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-1.5 flex items-center justify-between">
         <p className="m-0 text-[10px] font-bold text-v2-ink-subtle">設定金額區間 ({currency})</p>
         {(lo > 0 || hi > 0) && (
           <button
@@ -180,7 +180,8 @@ export function AmountPanel({
           </button>
         )}
       </div>
-      <div className="mb-2 flex items-center justify-between text-xs font-bold text-v2-ink">
+      <div className="-mx-3 h-px bg-v2-line-soft" />
+      <div className="mb-2 mt-2 flex items-center justify-between text-xs font-bold text-v2-ink">
         <span>{label(lo)}</span>
         <span>{label(hiValue)}</span>
       </div>
