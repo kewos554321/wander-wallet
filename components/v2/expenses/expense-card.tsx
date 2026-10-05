@@ -5,9 +5,8 @@ import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import type { ProjectExpense } from "@/lib/hooks/useProjectExpenses"
 import { CATEGORY_TONES, categoryKey } from "@/components/v2/category-style"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
+import { NEUTRAL_AVATAR_TONE } from "./avatar-tone"
 import { SwipeRow } from "./swipe-row"
-
-const PARTICIPANT_TONES = ["bg-v2-lake", "bg-v2-coral", "bg-v2-plum"]
 
 const monthDay = (iso: string): string => {
   const d = new Date(iso)
@@ -63,7 +62,7 @@ export function ExpenseCard({
             image={expense.payer.user?.image ?? null}
             name={payerName}
             className="h-3.5 w-3.5 shrink-0 rounded-full"
-            fallbackClassName={`text-[7px] font-bold text-v2-on-lake ${isMe ? "bg-v2-lake" : "bg-v2-coral"}`}
+            fallbackClassName={`text-[7px] font-bold ${NEUTRAL_AVATAR_TONE}`}
           />
           <span className="shrink-0 text-[11px] font-medium">{isMe ? "我付款" : `${payerName}付款`}</span>
           <span className="h-px w-2 shrink-0 bg-v2-check" aria-hidden="true" />
@@ -76,7 +75,7 @@ export function ExpenseCard({
                   image={m.user?.image ?? null}
                   name={label}
                   className={`h-3.5 w-3.5 rounded-full border-2 border-v2-surface ${i > 0 ? "-ml-[5px]" : ""}`}
-                  fallbackClassName={`text-[6px] font-bold text-v2-on-lake ${PARTICIPANT_TONES[i % PARTICIPANT_TONES.length]}`}
+                  fallbackClassName={`text-[6px] font-bold ${NEUTRAL_AVATAR_TONE}`}
                 />
               )
             })}

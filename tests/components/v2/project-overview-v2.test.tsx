@@ -190,15 +190,109 @@ describe("ProjectOverviewV2View", () => {
     expect(within(grid).queryByRole("link", { name: "設定" })).not.toBeInTheDocument()
   })
 
-  it("lists recent expenses with payer and split count", () => {
+  it("lists recent expenses with payer and split avatars", () => {
     render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
     const card = screen.getByTestId("v2-recent-expenses-card")
     expect(within(card).getByText("最近支出")).toBeInTheDocument()
     expect(within(card).getByRole("link", { name: "查看全部" })).toHaveAttribute("href", "/projects/p1/expenses")
     expect(screen.getByText("一蘭拉麵晚餐")).toBeInTheDocument()
-    expect(screen.getByText("志明 付款 · 2 人分攤")).toBeInTheDocument()
-    expect(screen.getByText("我 付款 · 1 人分攤")).toBeInTheDocument()
+    expect(screen.getByText("志明付款")).toBeInTheDocument()
+    expect(screen.getByText("我付款")).toBeInTheDocument()
+    expect(screen.getByText("共2人分攤")).toBeInTheDocument()
+    expect(screen.getByText("共1人分攤")).toBeInTheDocument()
     expect(screen.getByText("購物")).toBeInTheDocument() // description fallback to category label
+  })
+
+  it("caps the participant avatars and shows the overflow count", () => {
+    const fourMembers: OverviewProject["members"] = [
+      { id: "me", role: "owner", displayName: "Emma", user: { id: "u1", name: "Emma", email: "e@x.com", image: null } },
+      { id: "m2", role: "member", displayName: "志明", user: { id: "u2", name: "志明", email: "m2@x.com", image: null } },
+      { id: "m3", role: "member", displayName: "美玲", user: { id: "u3", name: "美玲", email: "m3@x.com", image: null } },
+      { id: "m4", role: "member", displayName: "大雄", user: { id: "u4", name: "大雄", email: "m4@x.com", image: null } },
+    ]
+    const expense: OverviewProject["expenses"][number] = {
+      id: "e9",
+      amount: 1000,
+      currency: "TWD",
+      description: "合菜",
+      category: "food",
+      createdAt: local(11, 16),
+      payer: { id: "me", displayName: "Emma", user: null },
+      participants: [
+        { id: "q1", memberId: "me", shareAmount: 250 },
+        { id: "q2", memberId: "m2", shareAmount: 250 },
+        { id: "q3", memberId: "m3", shareAmount: 250 },
+        { id: "q4", memberId: "m4", shareAmount: 250 },
+      ],
+    }
+    render(
+      <ProjectOverviewV2View
+        project={{ ...project, members: fourMembers, expenses: [expense] }}
+        summary={summary}
+        onShare={vi.fn()}
+        onVoice={vi.fn()}
+      />
+    )
+    const card = screen.getByTestId("v2-recent-expenses-card")
+    expect(within(card).getByText("共4人分攤")).toBeInTheDocument()
+    expect(within(card).getByText("+1")).toBeInTheDocument()
+  })
+
+  it("uses a neutral tint for members without a real avatar and keeps chosen avatar colors", () => {
+    const withAvatars: OverviewProject = {
+      ...project,
+      members: [
+        { id: "me", role: "owner", displayName: "Emma", user: { id: "u1", name: "Emma", email: "e@x.com", image: null } },
+        { id: "chi", role: "member", displayName: "志明", user: { id: "u2", name: "志明", email: "zhi@x.com", image: "avatar:cat:red" } },
+      ],
+      expenses: [
+        {
+          id: "e1",
+          amount: 1280,
+          currency: "TWD",
+          description: "拉麵",
+          category: "food",
+          createdAt: local(11, 16),
+          payer: { id: "me", displayName: "Emma", user: null },
+          participants: [
+            { id: "p1", memberId: "me", shareAmount: 640 },
+            { id: "p2", memberId: "chi", shareAmount: 640 },
+          ],
+        },
+      ],
+    }
+    render(<ProjectOverviewV2View project={withAvatars} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
+    const card = screen.getByTestId("v2-recent-expenses-card")
+    // "我" is the fallback initial for the current user (no real avatar) appearing
+    // as both payer and participant; those must not get an auto color.
+    const fallbacks = within(card).getAllByText("我", { exact: true })
+    expect(fallbacks.length).toBeGreaterThan(0)
+    for (const el of fallbacks) {
+      expect(el.className).toContain("bg-v2-sand")
+      expect(el.className).not.toMatch(/bg-v2-(lake|coral|plum)/)
+    }
+    // A member with a chosen avatar keeps its own color, not the neutral tint.
+    const chosen = card.querySelectorAll('[style*="background-color"]')
+    expect(chosen.length).toBeGreaterThan(0)
+    chosen.forEach((el) => expect(el.className).not.toContain("bg-v2-sand"))
+  })
+
+  it("lets the payer name truncate instead of clipping the split count", () => {
+    render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
+    const card = screen.getByTestId("v2-recent-expenses-card")
+    const name = within(card).getByText("志明付款")
+    expect(name.className).toContain("truncate")
+    expect(name.className).toContain("min-w-0")
+  })
+
+  it("aligns the amount with the title so the split detail spans the full row", () => {
+    render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
+    const card = screen.getByTestId("v2-recent-expenses-card")
+    const titleRow = within(card).getByText("一蘭拉麵晚餐").parentElement
+    // The amount shares the title's row, freeing the width below it for the
+    // payer/participant detail to extend.
+    expect(titleRow).toContainElement(within(card).getByText("TWD 1,280"))
+    expect(titleRow).not.toContainElement(within(card).getByText("志明付款"))
   })
 
   it("shows an empty state without expenses", () => {
@@ -281,7 +375,11 @@ describe("ProjectOverviewV2View", () => {
     rerender(
       <ProjectOverviewV2View project={{ ...project, description }} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />
     )
-    expect(screen.getByText(description)).toBeInTheDocument()
+    const desc = screen.getByText(description)
+    expect(desc).toBeInTheDocument()
+    // The description must sit on its own full-width row, not squeezed next to
+    // the share/edit buttons, so a full-length description can wrap to two lines.
+    expect(within(screen.getByTestId("v2-overview-header")).queryByText(description)).not.toBeInTheDocument()
   })
 
   it("renders an undated, unbudgeted, description-less trip with an empty expenses state", () => {

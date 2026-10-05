@@ -59,17 +59,12 @@ export function ProjectOverviewV2View({
         }
       />
 
-      <div className="flex items-start justify-between gap-3 px-4 pt-4">
+      <div data-testid="v2-overview-header" className="flex items-start justify-between gap-3 px-4 pt-4">
         <div className="min-w-0">
           <h2 className="m-0 font-v2-serif text-2xl font-bold leading-8">{project.name}</h2>
           <p className="mt-1 text-xs leading-4 tracking-[.4px] text-v2-ink-muted">
             {formatTripDateRange(project.startDate, project.endDate)} · {project.members.length} 位旅伴
           </p>
-          {project.description && (
-            <p className="mt-1.5 line-clamp-2 text-[12px] leading-[17px] tracking-[.3px] text-v2-ink-muted">
-              {project.description}
-            </p>
-          )}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           <button type="button" onClick={onShare} className={pill}>
@@ -83,10 +78,21 @@ export function ProjectOverviewV2View({
         </div>
       </div>
 
+      {project.description && (
+        <p className="mx-4 mt-1.5 line-clamp-2 text-[12px] leading-[17px] tracking-[.3px] text-v2-ink-muted">
+          {project.description}
+        </p>
+      )}
+
       <TripSummaryCard summary={summary} currency={currency} cover={project.cover ?? null} />
       <BalanceCard balance={summary.userBalance} currency={currency} projectId={project.id} />
       <FeatureGrid projectId={project.id} />
-      <RecentExpenses projectId={project.id} expenses={project.expenses} currentMemberId={summary.currentMemberId} />
+      <RecentExpenses
+        projectId={project.id}
+        expenses={project.expenses}
+        members={project.members}
+        currentMemberId={summary.currentMemberId}
+      />
       <QuickActions projectId={project.id} onVoice={onVoice} />
     </>
   )
