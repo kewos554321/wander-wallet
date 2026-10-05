@@ -21,6 +21,10 @@
     "db:reset": "prisma migrate reset",
     "db:studio": "prisma studio",
     "db:push": "prisma db push",
+    "db:push:dev": "dotenv -e .env.dev -- prisma db push",
+    "db:push:main": "dotenv -e .env.main -- prisma db push",
+    "db:diff:dev": "dotenv -e .env.dev -- sh -c 'prisma migrate diff --from-url \"$DATABASE_URL\" --to-schema-datamodel prisma/schema.prisma --script'",
+    "db:diff:main": "dotenv -e .env.main -- sh -c 'prisma migrate diff --from-url \"$DATABASE_URL\" --to-schema-datamodel prisma/schema.prisma --script'",
     "db:export": "export $(grep -E '^DATABASE_URL=' .env.dev | xargs) && echo $DATABASE_URL"
   },
   "dependencies": {

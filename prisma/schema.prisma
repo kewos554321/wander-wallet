@@ -22,6 +22,7 @@ model User {
 
   createdProjects     Project[]           @relation("ProjectCreator")
   projectMemberships  ProjectMember[]
+  bankAccounts        BankAccount[]
 
   @@map("users")
 }
@@ -63,9 +64,12 @@ model ProjectMember {
   role        String    @default("member")
   joinedAt    DateTime  @default(now()) @map("joined_at")
   claimedAt   DateTime? @map("claimed_at")
+  bankAccountId   String?  @map("bank_account_id") @db.Uuid
+  showBankAccount Boolean  @default(false) @map("show_bank_account")
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bankAccount BankAccount? @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
 
   paidExpenses        Expense[]            @relation("ExpensePayer")
   deletedExpenses     Expense[]            @relation("ExpenseDeleter")
@@ -74,8 +78,30 @@ model ProjectMember {
 
   @@index([projectId])
   @@index([userId])
+  @@index([bankAccountId])
   @@unique([projectId, userId])
   @@map("project_members")
+}
+
+// 使用者收款銀行帳戶
+model BankAccount {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  bankName    String   @map("bank_name")
+  bankCode    String?  @map("bank_code")
+  branchName  String?  @map("branch_name")
+  accountNo   String   @map("account_no")
+  accountName String   @map("account_name")
+  nickname    String?
+  isDefault   Boolean  @default(false) @map("is_default")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectMembers ProjectMember[]
+
+  @@index([userId])
+  @@map("bank_accounts")
 }
 
 // 費用記錄
@@ -88,6 +114,7 @@ model Expense {
   description String?
   category    String?
   image       String?  @db.Text // 收據/消費圖片：base64 data URL
+  splitDetail Json?    @map("split_detail") // 分攤明細：個人項目與指定金額（v2）
   location    String?  // 消費地點地址
   latitude    Decimal? @db.Decimal(10, 7) // 緯度
   longitude   Decimal? @db.Decimal(10, 7) // 經度

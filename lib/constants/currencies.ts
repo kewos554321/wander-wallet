@@ -28,12 +28,17 @@ export function getCurrencyInfo(code: string) {
 }
 
 export function formatCurrency(amount: number, currencyCode: string): string {
+  return `${getCurrencyInfo(currencyCode).code} ${formatAmount(amount, currencyCode)}`
+}
+
+// Number only, formatted with the currency's locale and decimals.
+export function formatAmount(amount: number, currencyCode: string): string {
   const info = getCurrencyInfo(currencyCode)
   const decimals = "decimals" in info ? info.decimals : 2
-  return `${info.code} ${amount.toLocaleString(info.locale, {
+  return amount.toLocaleString(info.locale, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  })}`
+  })
 }
 
 export function getCurrencyDecimals(currencyCode: string): number {

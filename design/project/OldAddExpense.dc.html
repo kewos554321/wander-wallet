@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width:390px;height:1520px;position:relative;background:#FFFFFF;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;color:#0F172A;overflow:hidden;">
+
+  <div style="height:56px;padding:0 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E2E8F0;">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+    <span style="font-weight:600;font-size:15px;">新增支出</span>
+  </div>
+
+  <div style="padding:16px;display:flex;flex-direction:column;gap:20px;">
+
+    <div style="background:linear-gradient(135deg, rgba(79,174,142,.12), rgba(79,174,142,.05));border-radius:16px;padding:24px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span style="font-size:13px;font-weight:500;color:#64748B;">輸入金額</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:99px;font-size:11px;font-weight:500;background:rgba(255,255,255,.6);">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"></rect><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01"></path></svg>
+          計算機
+        </span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="flex-shrink:0;height:48px;min-width:64px;padding:0 12px;background:rgba(255,255,255,.55);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;">TWD</span>
+        <span style="flex:1;font-size:34px;font-weight:700;color:#94A3B8;">0</span>
+      </div>
+    </div>
+
+    <div>
+      <label style="display:block;font-size:13px;font-weight:500;margin-bottom:10px;">描述</label>
+      <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:12px 16px;color:#94A3B8;font-size:13px;">例如：午餐、計程車費</div>
+    </div>
+
+    <div>
+      <label style="display:block;font-size:13px;font-weight:500;margin-bottom:10px;">類別</label>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+        <span style="display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:99px;background:#FFEDD5;color:#EA580C;font-size:11px;font-weight:500;">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7a2 2 0 002 2 2 2 0 002-2V3M9 12v9M17 3c-1.5 0-2.5 2-2.5 5s1 5 2.5 5v6"></path></svg>
+          餐飲
+        </span>
+        <span style="display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:99px;background:#DBEAFE;color:#2563EB;font-size:11px;font-weight:500;">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16V12l2-5h12l2 5v4"></path><path d="M4 16h16M7 16v2M17 16v2"></path><circle cx="7.5" cy="16" r="1.3"></circle><circle cx="16.5" cy="16" r="1.3"></circle></svg>
+          交通
+        </span>
+        <span style="display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:99px;background:#EDE9FE;color:#7C3AED;font-size:11px;font-weight:500;">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19v-6a2 2 0 012-2h14a2 2 0 012 2v6M3 19h18M5 11V7a1 1 0 011-1h4a1 1 0 011 1v4M13 11V9a1 1 0 011-1h4a1 1 0 011 1v2"></path></svg>
+          住宿
+        </span>
+        <span style="display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:99px;background:#CFFAFE;color:#0891B2;font-size:11px;font-weight:500;">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6-9 6z"></path><path d="M3 10v6l9 6 9-6v-6"></path></svg>
+          票券
+        </span>
+        <span style="display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:99px;background:#D1FAE5;color:#059669;font-size:11px;font-weight:500;">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5z"></path><path d="M9 8V6a3 3 0 016 0v2"></path></svg>
+          購物
+        </span>
+        <span style="display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:99px;background:#FCE7F3;color:#DB2777;font-size:11px;font-weight:500;">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"></rect><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M12 10v6M9 13h6"></path></svg>
+          娛樂
+        </span>
+        <span style="display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:99px;background:#FEF3C7;color:#D97706;font-size:11px;font-weight:500;">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 7v14M12 7C10 3 6 3 6 6c0 2 3 1 6 1zM12 7c2-4 6-4 6-1 0 2-3 1-6 1z"></path></svg>
+          禮品
+        </span>
+        <span style="display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:99px;background:#0F172A;color:#FFFFFF;font-size:11px;font-weight:500;box-shadow:0 2px 4px rgba(0,0,0,.15);">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"></rect><path d="M2 11h20"></path></svg>
+          其他
+        </span>
+      </div>
+      <div style="margin-top:10px;height:40px;border:1px solid #4FAE8E;border-radius:10px;padding:0 12px;display:flex;align-items:center;font-size:12px;color:#0F172A;">
+        <span style="color:#94A3B8;">輸入自訂類別（最多4字）</span>
+        <span style="margin-left:2px;width:1px;height:14px;background:#0F172A;display:inline-block;"></span>
+      </div>
+    </div>
+
+    <div>
+      <label style="display:block;font-size:13px;font-weight:500;margin-bottom:10px;">誰付的錢？</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <span style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;background:#4FAE8E;color:#FFFFFF;font-size:12px;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.1);">
+          <span style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.35);"></span>我
+        </span>
+        <span style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;background:#FFFFFF;border:1px solid #E2E8F0;font-size:12px;font-weight:500;">
+          <span style="width:16px;height:16px;border-radius:50%;background:#F1F5F9;"></span>志明
+        </span>
+        <span style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;background:#FFFFFF;border:1px solid #E2E8F0;font-size:12px;font-weight:500;">
+          <span style="width:16px;height:16px;border-radius:50%;background:#F1F5F9;"></span>阿凱
+        </span>
+        <span style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;background:#FFFFFF;border:1px solid #E2E8F0;font-size:12px;font-weight:500;">
+          <span style="width:16px;height:16px;border-radius:50%;background:#F1F5F9;"></span>佳婷
+        </span>
+      </div>
+    </div>
+
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <label style="font-size:13px;font-weight:500;">幫誰付？</label>
+        <span style="font-size:11px;color:#4FAE8E;font-weight:500;">取消全選</span>
+      </div>
+      <div style="display:flex;gap:6px;padding:4px;background:#F1F5F9;border-radius:8px;margin-bottom:10px;">
+        <span style="flex:1;text-align:center;padding:8px 0;border-radius:6px;background:#FFFFFF;box-shadow:0 1px 2px rgba(0,0,0,.06);font-size:11px;font-weight:500;">均分</span>
+        <span style="flex:1;text-align:center;padding:8px 0;border-radius:6px;color:#64748B;font-size:11px;font-weight:500;">自訂金額</span>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid #F1F5F9;background:rgba(79,174,142,.05);">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="width:16px;height:16px;border-radius:4px;background:#4FAE8E;"></span>
+            <span style="width:28px;height:28px;border-radius:50%;background:#F1F5F9;"></span>
+            <span style="font-size:13px;font-weight:500;">我</span>
+          </div>
+          <span style="font-size:13px;font-weight:500;color:#4FAE8E;">$0.00</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid #F1F5F9;background:rgba(79,174,142,.05);">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="width:16px;height:16px;border-radius:4px;background:#4FAE8E;"></span>
+            <span style="width:28px;height:28px;border-radius:50%;background:#F1F5F9;"></span>
+            <span style="font-size:13px;font-weight:500;">志明</span>
+          </div>
+          <span style="font-size:13px;font-weight:500;color:#4FAE8E;">$0.00</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid #F1F5F9;background:rgba(79,174,142,.05);">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="width:16px;height:16px;border-radius:4px;background:#4FAE8E;"></span>
+            <span style="width:28px;height:28px;border-radius:50%;background:#F1F5F9;"></span>
+            <span style="font-size:13px;font-weight:500;">阿凱</span>
+          </div>
+          <span style="font-size:13px;font-weight:500;color:#4FAE8E;">$0.00</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:rgba(79,174,142,.05);">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="width:16px;height:16px;border-radius:4px;background:#4FAE8E;"></span>
+            <span style="width:28px;height:28px;border-radius:50%;background:#F1F5F9;"></span>
+            <span style="font-size:13px;font-weight:500;">佳婷</span>
+          </div>
+          <span style="font-size:13px;font-weight:500;color:#4FAE8E;">$0.00</span>
+        </div>
+      </div>
+      <p style="margin:8px 0 0;font-size:11px;color:#94A3B8;">已選 4 人</p>
+    </div>
+
+    <hr style="border:none;border-top:1px solid #E2E8F0;margin:0;">
+
+    <div>
+      <label style="display:block;font-size:13px;font-weight:500;margin-bottom:10px;">支出日期</label>
+      <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#94A3B8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M8 2v4M16 2v4M3 10h18"></path></svg>
+        <span style="font-size:13px;">2025/11/12（星期三）</span>
+      </div>
+    </div>
+
+    <div>
+      <label style="display:block;font-size:13px;font-weight:500;margin-bottom:10px;">消費地點</label>
+      <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;color:#94A3B8;">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#94A3B8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"></path><circle cx="12" cy="9" r="2.5"></circle></svg>
+        <span style="font-size:13px;">取得目前位置</span>
+      </div>
+    </div>
+
+    <div>
+      <label style="display:block;font-size:13px;font-weight:500;margin-bottom:10px;">收據/消費圖片</label>
+      <div style="padding:20px;border:1.5px dashed #E2E8F0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#94A3B8;">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"></rect><path d="M8 6l2-3h4l2 3"></path><circle cx="12" cy="13" r="3.5"></circle></svg>
+        <span style="font-size:12px;">上傳照片</span>
+      </div>
+    </div>
+
+    <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:16px;display:flex;align-items:flex-start;gap:12px;">
+      <span style="width:16px;height:16px;border-radius:4px;background:#4FAE8E;flex-shrink:0;margin-top:2px;"></span>
+      <div>
+        <p style="margin:0;font-size:13px;font-weight:500;">通知 LINE 群組</p>
+        <p style="margin:2px 0 0;font-size:11px;color:#94A3B8;">儲存後自動發送通知到群組</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="position:absolute;left:0;right:0;bottom:0;padding:16px;background:rgba(255,255,255,.95);border-top:1px solid #E2E8F0;display:flex;gap:12px;">
+    <span style="flex:1;text-align:center;padding:13px 0;border-radius:10px;border:1px solid #E2E8F0;font-size:13px;font-weight:500;">取消</span>
+    <span style="flex:1;text-align:center;padding:13px 0;border-radius:10px;background:#0F172A;color:#FFFFFF;font-size:13px;font-weight:500;">儲存支出</span>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":1520}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

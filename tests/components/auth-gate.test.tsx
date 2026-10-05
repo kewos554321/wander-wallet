@@ -1,5 +1,11 @@
-import { describe, it, expect, vi } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
+
+// AuthGate picks its login screen from the resolved UI version; the v1 login is
+// the fallback branch. Default the fixture to v1 and override per test.
+const ui = { version: "v1" as "v1" | "v2" | null }
+vi.mock("@/lib/hooks/useUiVersion", () => ({ useUiVersion: () => ui }))
+
 import { AuthGate } from "@/components/auth/auth-gate"
 
 // Mock next/navigation
@@ -17,6 +23,10 @@ vi.mock("@/components/auth/liff-provider", () => ({
 }))
 
 describe("AuthGate Component", () => {
+  beforeEach(() => {
+    ui.version = "v1"
+  })
+
   describe("loading state", () => {
     it("should show loading UI when isLoading is true", () => {
       mockUseLiff.mockReturnValue({

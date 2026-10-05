@@ -1,0 +1,211 @@
+import { describe, it, expect, vi, beforeEach } from "vitest"
+import { render, screen, fireEvent, within } from "@testing-library/react"
+import { SettleV2View } from "@/components/v2/settle/settle-v2-view"
+import { SPONSOR_LINKS } from "@/lib/constants/sponsor"
+import type { SettleData } from "@/lib/hooks/useSettlement"
+
+vi.mock("next/font/google", () => ({
+  Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
+  Noto_Sans_TC: () => ({ variable: "font-var-sans" }),
+}))
+vi.mock("@/components/auth/liff-provider", () => ({
+  useLiff: () => ({ user: { id: "u1" } }),
+  useAuthFetch: () => vi.fn(),
+}))
+vi.mock("@/components/ads/ad-container", () => ({ AdContainer: () => null }))
+vi.mock("@/components/v2/settle/settle-share-dialog", () => ({ SettleShareDialog: () => null }))
+vi.mock("@/components/v2/settle/settle-calc-dialog", () => ({ SettlementCalcDialog: () => null }))
+
+const mockProjectData = vi.fn()
+vi.mock("@/lib/hooks", () => ({ useProjectData: () => mockProjectData() }))
+
+const mockSettlement = vi.fn()
+vi.mock("@/lib/hooks/useSettlement", () => ({ useSettlement: () => mockSettlement() }))
+
+import { SettleV2 } from "@/components/v2/settle/settle-v2"
+
+const data: SettleData = {
+  balances: [
+    { memberId: "me", displayName: "Emma", userImage: null, balance: 3370, totalPaid: 18200, totalShare: 14830 },
+    { memberId: "mei", displayName: "小美", userImage: null, balance: -2400, totalPaid: 12430, totalShare: 14830 },
+  ],
+  settlements: [
+    { from: { memberId: "mei", displayName: "小美", userImage: null }, to: { memberId: "me", displayName: "Emma", userImage: null }, amount: 2400 },
+  ],
+  expenseDetails: [],
+  summary: { totalExpenses: 12, totalAmount: 29660, totalShared: 29660, isBalanced: true, currency: "TWD", exchangeRatesUsed: { JPY: 0.2 } },
+}
+
+function renderView(overrides: Partial<Parameters<typeof SettleV2View>[0]> = {}) {
+  const props: Parameters<typeof SettleV2View>[0] = {
+    projectId: "p1",
+    data,
+    currentMemberId: "me",
+    dailyAverage: 5932,
+    displayCurrencyCode: "TWD",
+    currencyOptions: ["TWD", "JPY"],
+    onDisplayCurrency: vi.fn(),
+    toDisplay: (n: number) => n,
+    adSlot: <div>ad</div>,
+    onShowCalc: vi.fn(),
+    onShare: vi.fn(),
+    ...overrides,
+  }
+  render(<SettleV2View {...props} />)
+  return props
+}
+
+describe("SettleV2View", () => {
+  it("shows the four summary tiles", () => {
+    renderView()
+    const grid = screen.getByTestId("settle-summary")
+    expect(within(grid).getByText("12")).toBeInTheDocument()
+    expect(within(grid).getByText("29,660")).toBeInTheDocument()
+    expect(within(grid).getByText("5,932")).toBeInTheDocument()
+    expect(within(grid).getByText("14,830")).toBeInTheDocument()
+    expect(within(grid).getByText("總金額 (TWD)")).toBeInTheDocument()
+  })
+
+  it("lists transfers with 我 for the current member", () => {
+    renderView()
+    const row = screen.getByTestId("settlement-0")
+    expect(within(row).getByTestId("settlement-name-mei")).toHaveTextContent("小美")
+    expect(within(row).getByTestId("settlement-name-me")).toHaveTextContent("我")
+    expect(within(row).getByText("TWD 2,400")).toBeInTheDocument()
+  })
+
+  it("shows the settled state without transfers", () => {
+    renderView({ data: { ...data, settlements: [] } })
+    expect(screen.getByText("所有人都已結清")).toBeInTheDocument()
+  })
+
+  it("shows the no-expenses state when there are no expenses at all", () => {
+    renderView({ data: { ...data, settlements: [], summary: { ...data.summary, totalExpenses: 0 } } })
+    expect(screen.getByText("尚無支出記錄")).toBeInTheDocument()
+    expect(screen.queryByText("所有人都已結清")).not.toBeInTheDocument()
+  })
+
+  it("does not render the per-member balances section", () => {
+    renderView()
+    expect(screen.queryByRole("region", { name: "各人收支" })).not.toBeInTheDocument()
+  })
+
+  it("wires calc, share, stats link and currency select", () => {
+    const props = renderView()
+    fireEvent.click(screen.getByRole("button", { name: "計算說明" }))
+    fireEvent.click(screen.getByRole("button", { name: "分享" }))
+    expect(props.onShowCalc).toHaveBeenCalled()
+    expect(props.onShare).toHaveBeenCalled()
+    expect(screen.getByRole("link", { name: /查看統計/ })).toHaveAttribute("href", "/projects/p1/stats")
+    expect(screen.getByLabelText("顯示幣別")).toBeInTheDocument()
+  })
+
+  it("hides the currency select with a single currency", () => {
+    renderView({ currencyOptions: ["TWD"] })
+    expect(screen.queryByLabelText("顯示幣別")).not.toBeInTheDocument()
+  })
+
+  it("shows the exchange-rate note and sponsor card", () => {
+    renderView()
+    expect(screen.getByRole("link", { name: /前往專案設定調整匯率/ })).toHaveAttribute("href", "/projects/p1/settings")
+    expect(screen.getByText("喜歡 Wander Wallet 嗎？")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /請我們喝杯咖啡/ })).toBeInTheDocument()
+  })
+
+  it("places the ad banner above the summary grid", () => {
+    renderView()
+    const ad = screen.getByText("ad")
+    const summary = screen.getByTestId("settle-summary")
+    expect(ad.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it("links the sponsor options to their destinations", () => {
+    renderView()
+    const primary = screen.getByRole("link", { name: /請我們喝杯咖啡/ })
+    expect(primary).toHaveAttribute("href", SPONSOR_LINKS.buyMeACoffee)
+    expect(primary).toHaveAttribute("target", "_blank")
+
+    // Secondary options stay available but are visually de-emphasised.
+    expect(screen.getByRole("link", { name: /Ko-fi/ })).toHaveAttribute("href", SPONSOR_LINKS.koFi)
+    expect(screen.getByRole("link", { name: /PayPal/ })).toHaveAttribute("href", SPONSOR_LINKS.paypal)
+    expect(screen.getByRole("link", { name: /其他方式/ })).toHaveAttribute("href", SPONSOR_LINKS.email)
+  })
+
+  it("shows 0 per person without balances", () => {
+    renderView({ data: { ...data, balances: [], settlements: [] } })
+    expect(within(screen.getByTestId("settle-summary")).getAllByText("0").length).toBeGreaterThan(0)
+  })
+
+  it("labels the daily-average tile with the display currency", () => {
+    renderView()
+    const tile = screen.getByTestId("settle-tile-daily")
+    expect(within(tile).getByText("日均花費 (TWD)")).toBeInTheDocument()
+    expect(within(tile).getByText("5,932")).toBeInTheDocument()
+  })
+
+  it("keeps the summary heading inside the summary card", () => {
+    renderView()
+    const grid = screen.getByTestId("settle-summary")
+    expect(within(grid).getByText("計算總覽")).toBeInTheDocument()
+  })
+
+  it("renders the summary values through the display-currency conversion", () => {
+    renderView({ toDisplay: (n) => n * 2 })
+    const grid = screen.getByTestId("settle-summary")
+    expect(within(grid).getByText("59,320")).toBeInTheDocument()
+    expect(within(grid).getByText("11,864")).toBeInTheDocument()
+  })
+
+  it("keeps the transfer heading in the same card as the rows", () => {
+    renderView()
+    const list = screen.getByTestId("settlement-list")
+    expect(within(list).getByText("轉帳建議")).toBeInTheDocument()
+    expect(list).toContainElement(screen.getByTestId("settlement-0"))
+  })
+
+  it("uses the gold tone for the current user avatar", () => {
+    renderView()
+    const row = screen.getByTestId("settlement-0")
+    // Intentional token check: the current member's avatar must use the gold tone.
+    expect(within(row).getByTestId("settlement-avatar-me").className).toContain("bg-v2-gold-soft")
+  })
+})
+
+describe("SettleV2 container", () => {
+  beforeEach(() => {
+    mockProjectData.mockReset().mockReturnValue({ project: null, members: [] })
+    mockSettlement.mockReset()
+  })
+
+  it("shows a back link in the error state", () => {
+    mockSettlement.mockReturnValue({
+      data: null,
+      loading: false,
+      error: "獲取結算數據失敗",
+      displayCurrencyCode: "TWD",
+      setDisplayCurrency: vi.fn(),
+      toDisplay: (n: number) => n,
+      shareText: "",
+    })
+    render(<SettleV2 projectId="p1" />)
+    expect(screen.getByRole("heading", { level: 1, name: "結算" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
+    expect(screen.getByText("獲取結算數據失敗")).toBeInTheDocument()
+  })
+
+  it("shows a back link while loading", () => {
+    mockSettlement.mockReturnValue({
+      data: null,
+      loading: true,
+      error: null,
+      displayCurrencyCode: "TWD",
+      setDisplayCurrency: vi.fn(),
+      toDisplay: (n: number) => n,
+      shareText: "",
+    })
+    render(<SettleV2 projectId="p1" />)
+    expect(screen.getByRole("heading", { level: 1, name: "結算" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
+    expect(screen.getByTestId("v2-settle-skeleton")).toBeInTheDocument()
+  })
+})

@@ -1,0 +1,260 @@
+"use client"
+
+import { CornerRightDown, Pin, PinOff, Plus, UserMinus, X } from "lucide-react"
+import { formatAmount } from "@/lib/constants/currencies"
+import { toMoneyInput } from "@/lib/money-input"
+import { V2Avatar } from "@/components/v2/ui/v2-avatar"
+import type { DraftMember } from "./use-expense-draft"
+import { memberPillClass, memberTone } from "./payer-picker"
+import { SECTION_CARD, SECTION_TITLE } from "./section-card"
+import { MatchBadge, SplitEquation, SplitSummary, shouldShowBreakdown } from "./split-summary"
+import type { SplitDraft } from "@/lib/split-draft"
+
+// Must match the server-enforced splitDetail limit (lib/expense-split.ts).
+const MAX_PERSONAL_ITEM_NAME = 30
+
+const smallButton = "flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
+const itemInput = "min-w-0 rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-xs outline-none"
+
+export function SplitEditor({ members, draft, currency }: { members: DraftMember[]; draft: SplitDraft; currency: string }) {
+  const { state, actions, derived } = draft
+  // Currency code only on totals; per-member amounts show the number alone.
+  const num = (n: number) => formatAmount(Math.round(n * 100) / 100, currency)
+  const tone = (id: string) => memberTone(members.findIndex((m) => m.id === id))
+  const name = (id: string) => members.find((m) => m.id === id)?.displayName ?? ""
+  // Shared-pool portion only: personal items are shown in their own section.
+  const personalOf = (id: string) => derived.splitInput.personalItems[id]?.reduce((s, i) => s + i.amount, 0) ?? 0
+  const poolShareOf = (id: string) =>
+    Math.round(((derived.shares.find((s) => s.memberId === id)?.shareAmount ?? 0) - personalOf(id)) * 100) / 100
+  const allInPool = members.every((m) => state.pool.includes(m.id))
+  const allPersonal = members.every((m) => state.personalMembers.includes(m.id))
+  // The breakdown table is shown only when personal items make its 個人項目
+  // column meaningful; otherwise the header text summary stands alone.
+  const showBreakdown = shouldShowBreakdown(members, draft)
+
+  return (
+    <section aria-label="分攤成員" className={SECTION_CARD}>
+      <div className="mb-2.5 flex items-center justify-between">
+        <p className={`m-0 ${SECTION_TITLE}`}>分攤成員</p>
+        <label className="flex items-center gap-1.5">
+          <span className="text-[13px] font-bold text-v2-lake">先扣個人項目</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={state.personalMode}
+            aria-label="先扣個人項目"
+            onClick={() => actions.setPersonalMode(!state.personalMode)}
+            className={`relative inline-block h-[19px] w-8 shrink-0 rounded-full ${state.personalMode ? "bg-v2-link" : "bg-v2-check"}`}
+          >
+            <span className={`absolute top-0.5 h-[15px] w-[15px] rounded-full bg-v2-knob transition-[left] ${state.personalMode ? "left-[15px]" : "left-0.5"}`} />
+          </button>
+        </label>
+      </div>
+
+      {state.personalMode && (
+        <div className="mb-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="m-0 text-xs font-semibold text-v2-ink-muted">個人項目</p>
+            <button
+              type="button"
+              aria-label={allPersonal ? "取消全選個人項目" : "全選個人項目"}
+              onClick={() => actions.setPersonalAll(!allPersonal)}
+              className="shrink-0 text-xs font-bold text-v2-lake"
+            >
+              {allPersonal ? "取消全選" : "全選"}
+            </button>
+          </div>
+          <div className="mb-2.5 flex flex-wrap gap-2">
+            {members.map((m) => {
+              const on = state.personalMembers.includes(m.id)
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  aria-label={`${m.displayName}的個人項目`}
+                  aria-pressed={on}
+                  onClick={() => actions.togglePersonalMember(m.id)}
+                  className={memberPillClass(on)}
+                >
+                  <V2Avatar
+                    image={m.image ?? null}
+                    name={m.displayName}
+                    className="h-5 w-5 rounded-full"
+                    fallbackClassName={`text-[9px] font-bold ${tone(m.id)}`}
+                  />
+                  <span className="text-xs font-semibold">{m.displayName}</span>
+                </button>
+              )
+            })}
+          </div>
+          {state.personalMembers.length === 0 ? (
+            <p className="rounded-[14px] border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
+              目前沒有人有個人項目，點上面的名字挑一位。
+            </p>
+          ) : (
+            <div className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
+              {state.personalMembers.map((id) => {
+                const items = state.personalItems[id] ?? []
+                const sum = items.reduce((s, i) => s + (Number(i.amount) || 0), 0)
+                return (
+                  <div key={id} className="border-b border-v2-line-soft bg-v2-lake-soft px-3.5 py-2 last:border-b-0">
+                    <div className="flex items-center gap-2.5">
+                      <V2Avatar
+                        image={members.find((m) => m.id === id)?.image ?? null}
+                        name={name(id)}
+                        className="h-6 w-6 rounded-full"
+                        fallbackClassName={`text-[10px] font-bold ${tone(id)}`}
+                      />
+                      <span className="flex flex-1 items-center justify-between gap-2 text-[13px]">
+                        <span className="font-semibold">{name(id)}</span>
+                        <span className="font-bold">${num(sum)}</span>
+                      </span>
+                      <button type="button" aria-label={`為${name(id)}新增品項`} onClick={() => actions.addItem(id)} className="flex h-[22px] shrink-0 items-center justify-center gap-px rounded-md bg-v2-lake-tint px-1 text-v2-lake">
+                        <CornerRightDown className="h-3 w-3" aria-hidden="true" />
+                        <Plus className="h-3 w-3" aria-hidden="true" />
+                      </button>
+                      <button type="button" aria-label={`移除${name(id)}的個人項目`} onClick={() => actions.togglePersonalMember(id)} className={`${smallButton} bg-v2-danger-soft text-v2-danger-strong`}>
+                        <UserMinus className="h-3 w-3" />
+                      </button>
+                    </div>
+                    <div className="ml-[34px] mt-1 border-l border-v2-check pl-2.5">
+                      {items.map((item, idx) => (
+                        <div key={item.id} className="mt-1.5 flex items-center gap-1.5">
+                          <input
+                            aria-label={`${name(id)}的品項名稱 ${idx + 1}`}
+                            placeholder="品項名稱"
+                            maxLength={MAX_PERSONAL_ITEM_NAME}
+                            value={item.name}
+                            onChange={(e) => actions.updateItem(id, item.id, "name", e.target.value)}
+                            className={`${itemInput} flex-[2]`}
+                          />
+                          <label className={`${itemInput} flex flex-1 items-center gap-1`}>
+                            <span aria-hidden="true">$</span>
+                            <input
+                              aria-label={`${name(id)}的品項金額 ${idx + 1}`}
+                              placeholder="金額"
+                              inputMode="decimal"
+                              value={item.amount}
+                              onChange={(e) => {
+                                const v = toMoneyInput(e.target.value)
+                                if (v !== null) actions.updateItem(id, item.id, "amount", v)
+                              }}
+                              className="w-full min-w-0 bg-transparent text-right outline-none"
+                            />
+                          </label>
+                          <button type="button" aria-label="刪除項目" onClick={() => actions.removeItem(id, item.id)} className="flex h-5 w-5 shrink-0 items-center justify-center text-v2-danger-strong">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="mb-2.5 mt-3 flex items-center justify-between gap-2">
+        <p className="m-0 text-xs font-semibold text-v2-ink-muted">
+          共同分攤 <span className="font-bold text-v2-ink">（剩餘應攤分金額 ${num(Math.max(0, derived.autoRemaining))}）</span>
+        </p>
+        <button type="button" onClick={() => actions.setPoolAll(!allInPool)} className="shrink-0 text-xs font-bold text-v2-lake">
+          {allInPool ? "取消全選" : "全選"}
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {members.map((m) => {
+          const on = state.pool.includes(m.id)
+          return (
+            <button
+              key={m.id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => actions.togglePool(m.id)}
+              className={memberPillClass(on)}
+            >
+              <V2Avatar
+                image={m.image ?? null}
+                name={m.displayName}
+                className={`h-5 w-5 rounded-full ${on ? "" : "opacity-40"}`}
+                fallbackClassName={`text-[9px] font-bold ${tone(m.id)}`}
+              />
+              <span className="text-xs font-semibold">{m.displayName}</span>
+            </button>
+          )
+        })}
+      </div>
+      {state.pool.length === 0 && (
+        <p className="mt-2.5 rounded-[14px] border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
+          目前沒有人參與共同分攤，點上面的名字挑選分攤的人。
+        </p>
+      )}
+      {state.pool.length > 0 && (
+        <div className="mt-2.5 overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
+          {state.pool.map((id) => {
+            const custom = state.customShares[id]
+            const isCustom = custom !== undefined
+            return (
+              <div key={id} className="flex items-center gap-2.5 border-b border-v2-line-soft bg-v2-lake-soft px-3.5 py-3 last:border-b-0">
+                <V2Avatar
+                  image={members.find((m) => m.id === id)?.image ?? null}
+                  name={name(id)}
+                  className="h-7 w-7 rounded-full"
+                  fallbackClassName={`text-[11px] font-bold ${tone(id)}`}
+                />
+                <span className="flex-1 text-[13px] font-semibold">{name(id)}</span>
+                {isCustom ? (
+                  // An emptied input keeps the pinned state; the draft treats "" as auto.
+                  <label className="flex w-24 items-center rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-[13px] font-bold">
+                    <span aria-hidden="true">$</span>
+                    <input
+                      aria-label={`${name(id)}的分攤金額`}
+                      inputMode="decimal"
+                      value={custom}
+                      placeholder={String(poolShareOf(id))}
+                      onChange={(e) => {
+                        const v = toMoneyInput(e.target.value)
+                        if (v !== null) actions.setCustomShare(id, v)
+                      }}
+                      className="w-full min-w-0 bg-transparent text-right outline-none"
+                    />
+                  </label>
+                ) : (
+                  <span aria-label={`${name(id)}的分攤金額`} className="text-right text-[13px] font-bold">
+                    ${num(poolShareOf(id))}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  aria-label={isCustom ? `${name(id)}取消固定金額` : `${name(id)}固定金額`}
+                  aria-pressed={isCustom}
+                  onClick={() => (isCustom ? actions.clearCustomShare(id) : actions.setCustomShare(id, String(poolShareOf(id))))}
+                  className={`${smallButton} ${isCustom ? "bg-v2-lake text-v2-on-lake" : "border-[1.5px] border-v2-check text-v2-ink-muted"}`}
+                >
+                  {isCustom ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
+                </button>
+                <button type="button" aria-label={`${name(id)}不參與共同分攤`} onClick={() => actions.togglePool(id)} className={`${smallButton} bg-v2-danger-soft text-v2-danger-strong`}>
+                  <UserMinus className="h-3 w-3" />
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {!showBreakdown && (
+        <div className="mt-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs text-v2-ink-muted">已選 {derived.splitInput.participantIds.length} 人</span>
+            <MatchBadge matches={derived.matches} />
+          </div>
+          <SplitEquation draft={draft} currency={currency} />
+        </div>
+      )}
+
+      {showBreakdown && <SplitSummary members={members} draft={draft} currency={currency} />}
+    </section>
+  )
+}

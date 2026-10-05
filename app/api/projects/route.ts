@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { isValidCover } from "@/lib/covers"
 
 // 創建新專案
 export async function POST(req: NextRequest) {
@@ -33,6 +34,10 @@ export async function POST(req: NextRequest) {
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return NextResponse.json({ error: "專案名稱必填" }, { status: 400 })
+    }
+
+    if (cover !== undefined && !isValidCover(cover)) {
+      return NextResponse.json({ error: "封面格式不正確" }, { status: 400 })
     }
 
     // 驗證日期

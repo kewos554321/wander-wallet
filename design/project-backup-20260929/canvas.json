@@ -1,0 +1,348 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "AddExpense-gpea.dc.html": {
+      "h": 1340,
+      "is_interactive": true,
+      "title": "A3 · 新增支出 — After copy",
+      "w": 390,
+      "x": 6580,
+      "y": -260
+    },
+    "AddExpense-ngs7.dc.html": {
+      "h": 2700,
+      "is_interactive": true,
+      "title": "A3c · 新增支出 — 整合A4b付款人＋分攤成員邏輯",
+      "w": 390,
+      "x": 1410,
+      "y": 2200
+    },
+    "AddExpense-section-demo.dc.html": {
+      "h": 1850,
+      "is_interactive": true,
+      "title": "A3b · 新增支出 — Section Demo（標題移入卡片內，參考A14）",
+      "w": 390,
+      "x": 940,
+      "y": 4050
+    },
+    "AddExpense.dc.html": {
+      "h": 1550,
+      "is_interactive": true,
+      "title": "A3 · 新增支出 — After（單一付款人／先扣個人項目關閉／先選2人）",
+      "w": 390,
+      "x": 940,
+      "y": 2200
+    },
+    "Camera.dc.html": {
+      "h": 760,
+      "is_interactive": true,
+      "title": "A10 · 拍照記帳（新流程）",
+      "w": 390,
+      "x": 4230,
+      "y": 2200
+    },
+    "ExpenseList.dc.html": {
+      "h": 1960,
+      "is_interactive": true,
+      "title": "A6 · 全部支出 — After",
+      "w": 390,
+      "x": 2350,
+      "y": 2200
+    },
+    "GeneralSettings.dc.html": {
+      "h": 1560,
+      "is_interactive": true,
+      "title": "A14 · 通用設定 — After",
+      "w": 390,
+      "x": 6110,
+      "y": 2200
+    },
+    "M3ForApp.dc.html": {
+      "h": 2420,
+      "is_interactive": true,
+      "title": "M3 精選 9 級 — 用於 After App",
+      "w": 390,
+      "x": -940,
+      "y": 2200
+    },
+    "M3Typescale.dc.html": {
+      "h": 3550,
+      "is_interactive": true,
+      "title": "M3 Typescale 對照（Baseline／Emphasized）",
+      "w": 390,
+      "x": -470,
+      "y": 2200
+    },
+    "MainCard3-njus.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "A1 · 旅程列表 — After",
+      "w": 390,
+      "x": 0,
+      "y": 2200
+    },
+    "Members.dc.html": {
+      "h": 530,
+      "is_interactive": true,
+      "title": "A7 · 成員 — After",
+      "w": 390,
+      "x": 2820,
+      "y": 2200
+    },
+    "NewProject.dc.html": {
+      "h": 1230,
+      "is_interactive": true,
+      "title": "A9 · 建立旅程（新流程）",
+      "w": 390,
+      "x": 3760,
+      "y": 2200
+    },
+    "OldAddExpense.dc.html": {
+      "h": 1520,
+      "is_interactive": true,
+      "title": "B3 · 新增支出 — Before",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "OldExpenseList.dc.html": {
+      "h": 960,
+      "is_interactive": true,
+      "title": "B5 · 支出列表 — Before",
+      "w": 390,
+      "x": 2350,
+      "y": 0
+    },
+    "OldGeneralSettings.dc.html": {
+      "h": 1020,
+      "is_interactive": true,
+      "title": "B11 · 個人設定 — Before",
+      "w": 390,
+      "x": 6110,
+      "y": 0
+    },
+    "OldMain.dc.html": {
+      "h": 720,
+      "is_interactive": true,
+      "title": "B1 · 旅程列表 — Before",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "OldMembers.dc.html": {
+      "h": 480,
+      "is_interactive": true,
+      "title": "B6 · 成員管理 — Before",
+      "w": 390,
+      "x": 2820,
+      "y": 0
+    },
+    "OldProjectSettings.dc.html": {
+      "h": 1980,
+      "is_interactive": true,
+      "title": "B10 · 專案設定 — Before",
+      "w": 390,
+      "x": 5640,
+      "y": 0
+    },
+    "OldSettle.dc.html": {
+      "h": 1320,
+      "is_interactive": true,
+      "title": "B4 · 結算 — Before",
+      "w": 390,
+      "x": 1880,
+      "y": 0
+    },
+    "OldStats.dc.html": {
+      "h": 1360,
+      "is_interactive": true,
+      "title": "B7 · 統計 — Before",
+      "w": 390,
+      "x": 3290,
+      "y": 0
+    },
+    "OldTrip.dc.html": {
+      "h": 1080,
+      "is_interactive": true,
+      "title": "B2 · 旅程總覽 — Before",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "OldVoiceExpense.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "B8 · AI 快速記帳 — Before",
+      "w": 390,
+      "x": 4700,
+      "y": 0
+    },
+    "OldVoiceExpenseConfirm.dc.html": {
+      "h": 1360,
+      "is_interactive": true,
+      "title": "B9 · AI 快速記帳 — 批次確認 — Before",
+      "w": 390,
+      "x": 5170,
+      "y": 0
+    },
+    "ProjectSettings.dc.html": {
+      "h": 2160,
+      "is_interactive": true,
+      "title": "A13 · 專案設定 — After",
+      "w": 390,
+      "x": 5640,
+      "y": 2200
+    },
+    "Settle.dc.html": {
+      "h": 1140,
+      "is_interactive": true,
+      "title": "A5 · 結算 — After",
+      "w": 390,
+      "x": 1880,
+      "y": 2200
+    },
+    "Stats.dc.html": {
+      "h": 830,
+      "is_interactive": true,
+      "title": "A8 · 統計 — After",
+      "w": 390,
+      "x": 3290,
+      "y": 2200
+    },
+    "Trip-m0lh.dc.html": {
+      "h": 1015,
+      "is_interactive": true,
+      "title": "A2 · 旅程總覽 — After",
+      "w": 390,
+      "x": 470,
+      "y": 2200
+    },
+    "VoiceExpense.dc.html": {
+      "h": 1500,
+      "is_interactive": true,
+      "title": "A12 · AI 語音記帳（批次確認）",
+      "w": 390,
+      "x": 5170,
+      "y": 2200
+    },
+    "VoiceExpenseInput.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "A11 · AI 語音記帳（輸入）",
+      "w": 390,
+      "x": 4700,
+      "y": 2200
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-16T00:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "a13-m3-review": {
+      "color": "orange",
+      "text": "A13 字級重新評估 — 若套用M3精選8級的規劃（現況尚未套用M3）\n\n現況：\n• 「專案設定」導覽標題：17px/600 serif\n• 各卡片區塊標題（基本資訊/日期與預算/幣別與匯率/成員加入方式）：13px/700 teal色\n• 欄位標籤：12px/600、欄位顯示值：13px（400或600不等）、輔助說明：12px/400\n• 成員加入選項標題：13px/700、說明：12px/400\n• 「取消」「儲存變更」按鈕：14px/700\n• 危險區域標題：13px/700 紅色、按鈕：12px/700\n\n功能性／品牌感建議：\n• 這頁的13px/700區塊標題（用teal色）剛好對應title-small的Emphasized（14px/700，差1px），是全頁最一致的圖案，可以直接視為title-small套用。\n• 欄位標籤12px/600、輔助說明12px/400分別對應label-medium和body-small，都能直接套用。\n• 「取消」「儲存變更」按鈕14px/700剛好精準對應label-large的Emphasized，不用改。\n• 導覽標題17px維持例外。\n• 危險區域用紅色而非teal色是刻意的語意色彩，跟字級系統無關，不用調整。\n\n結論：這頁跟M3精選8級的吻合度最高——13px區塊標題、12px標籤/說明、14px按鈕幾乎都能直接對應，只差在600要不要收斂、以及17px導覽標題維持例外。",
+      "w": 400,
+      "x": 5640,
+      "y": 4400
+    },
+    "a14-m3-review": {
+      "color": "orange",
+      "text": "A14 字級重新評估 — 若套用M3精選8級的規劃（現況尚未套用M3）\n\n現況：\n• 「通用設定」導覽標題：17px/600 serif\n• 個人資料卡「Emma」：15px/600 serif、副標：12px/400\n• 各卡片區塊標題（外觀/記帳偏好/LINE通知）：13px/700 teal色\n• 外觀選項/分帳方式標籤：12px/600或700\n• 通知切換項目文字：13px（無明確weight，預設400，跟其他頁的13px/700項目文字不一致）\n• 列表動作項（重看導覽/功能介紹/意見回饋）標題：13px/700、說明：12px/400\n\n功能性疑慮：\n• 通知切換項目「新增支出時通知」等用13px/400，但同頁其他13px文字（區塊標題、列表動作標題）都是700——這是頁內不一致，建議統一：如果這些是可互動的設定項，應該跟其他13px項目一樣用Emphasized(700)以保持一致的視覺語言。\n\n品牌感建議：\n• 13px/700區塊標題和列表項目標題對應title-small的Emphasized，可直接套用。\n• 個人資料「Emma」15px/600 serif沒有精準對應（最接近title-medium16px），這是唯一的品牌例外，建議維持。\n• 導覽標題17px維持例外。\n\n結論：這頁最值得處理的不是M3對應問題，而是頁內13px粗細不一致（400 vs 700混用）——建議先統一這個，再套M3精選8級的角色會更乾淨。",
+      "w": 400,
+      "x": 6110,
+      "y": 3800
+    },
+    "a6-m3-review": {
+      "color": "orange",
+      "text": "A6 字級重新評估 — 若套用M3精選8級的規劃（現況尚未套用M3）\n\n現況：\n• 「全部支出」導覽標題：17px/600 serif\n• 頂部總支出卡：標籤12px/600、日期chip 12px/600、總額「NT$27,100」20px/700 serif\n• 列表項目名稱：15px/600 sans、金額：16px/700 sans\n• 大量12px文字（52處）為日期分組、分類標籤等說明文字\n\n功能性／品牌感建議：\n• 這頁的列表已經有良好差異——名稱15px/600、金額16px/700，size和weight都不同，比A2c清楚很多，不需要調整。\n• 總支出「NT$27,100」20px是M3精選8級沒涵蓋的量級（介於title-medium 16與headline-small 24之間），這是頁面裡最重要的單一數字，建議維持20px serif例外，不硬套進系統。\n• 導覽標題17px跟A3/A5一樣沒有精準對應，建議維持例外。\n• 其餘12px說明文字/分類標籤已對應body-small和label-medium，可直接套用，差異一樣在600要不要收斂成500或升到700。\n\n結論：這頁狀況最好——列表已有清楚的size+weight雙重差異，只有導覽標題17px和總額20px兩個既有的品牌例外量級，建議都保留不動。",
+      "w": 400,
+      "x": 2350,
+      "y": 4200
+    },
+    "a9-m3-review": {
+      "color": "orange",
+      "text": "A9 字級重新評估 — 若套用M3精選8級的規劃（現況尚未套用M3）\n\n現況：\n• 「建立旅程」導覽標題：17px/600 serif\n• 各欄位標籤（卡片預覽/封面圖示/封面顏色/旅程名稱/出發日/結算幣別/預算/描述/成員加入方式）：12px/600 sans，一致性很高\n• 即時預覽卡片標題：16px/600 serif、日期badge：12px/700、預覽金額「尚未記帳」：15px/700 serif\n• 旅程名稱輸入框：15px/600、其餘輸入值：13px\n• 成員加入方式選項標題：13px/700、說明：12px/400\n• 底部CTA按鈕「建立旅程」：15px/700\n\n功能性／品牌感建議：\n• 欄位標籤12px/600全部一致，對應label-medium，是這頁最工整的部分，直接套用即可。\n• 預覽卡片金額「尚未記帳」15px/700serif跟CTA按鈕15px/700都沒有精準對應M3精選8級（最接近title-medium16px或label-large14px），這兩個15px是這頁唯二的缺口，建議維持例外或視覺上就近升到16px/title-medium測試看看。\n• 導覽標題17px維持例外（跟其他頁一致的邏輯）。\n• 成員加入方式選項標題13px/700 → 對應title-small的Emphasized，剛好吻合不用改。\n\n結論：這頁欄位標籤系統最一致，主要待決策點是兩個15px（預覽金額、CTA按鈕）要不要升到16px貼合title-medium，或維持例外。",
+      "w": 400,
+      "x": 3760,
+      "y": 3470
+    },
+    "before-title": {
+      "color": "gray",
+      "kind": "title1",
+      "maxW": 3210,
+      "text": "現況重現 — Before",
+      "w": 240,
+      "x": 0,
+      "y": -260
+    },
+    "observations": {
+      "color": "gray",
+      "text": "現況觀察（Before 這一列都是依實際程式碼還原）\n\n• 系統預設字體、尺寸邏輯不明顯，粗細與大小交錯使用\n• 旅程總覽被 12 宮格功能選單佔掉大半版面，還要左右滑動\n• 新增支出是一路往下滑的長表單，語音記帳藏在別的入口\n• 結算、支出列表頁都夾了廣告橫幅與贊助卡片\n• 統計頁塞了 4 張圖表 + 排行榜 + 結算預覽，一次全部展開\n• 卡片與強調色偏淡（現有 brand 色 oklch 0.65 0.11 175 一帶），彼此對比較弱\n• 這一列沒有「建立旅程／拍照記帳／更多面板」對應畫面，因為現況是整頁塞滿或藏在別的元件裡",
+      "w": 380,
+      "x": -1380,
+      "y": 0
+    },
+    "rationale": {
+      "color": "gray",
+      "text": "設計方向\n\n• 從「主畫面圖示牆」轉為「旅行手帳」語感：暖調紙感背景 + 登機證式行程卡\n• 新增底部導覽列，取代原本需左右滑動兩頁的 12 宮格功能選單\n• 主色改為更飽和的深湖水綠，搭配珊瑚色點綴語音記帳等 AI 功能，兩色皆延續原品牌色相\n• 標題與金額改用 Noto Serif TC 襯線字體，讓旅行紀錄更有溫度、金額更易讀\n• 新增支出流程把「語音記帳」前置為首選捷徑，手動輸入表單退居第二選擇",
+      "w": 380,
+      "x": -1380,
+      "y": 2670
+    },
+    "title1": {
+      "color": "teal",
+      "kind": "title1",
+      "maxW": 4620,
+      "text": "新版設計 — After",
+      "w": 240,
+      "x": 0,
+      "y": 1900
+    },
+    "typography": {
+      "color": "teal",
+      "text": "字體系統\n\nNoto Serif TC（600/700）只用於 4 種角色：\n40px 單一主要數字（餘額／輸入金額）\n27px 頁面主標題\n20px 次要強調金額（卡片總額／結算金額）\n17px 區塊標題／卡片標題／次頁標題\n\nNoto Sans TC 用於其餘一切，分 4 級：\n15px 主要按鈕文字／主要輸入值\n13px 預設內文（列表項目、次要按鈕）\n12px 說明文字、純文字連結\n11px 頁籤與最小介面元素（標籤、chip）\n\n例外：頭像姓名縮寫依圓形直徑等比例縮放，不屬於此字級系統。\n按鈕文字依視覺份量而非畫面決定：實心主按鈕 15px、外框次要按鈕 13px、純文字動作 12px。",
+      "w": 380,
+      "x": -1380,
+      "y": 2227
+    }
+  },
+  "order": [
+    "OldMain.dc.html",
+    "OldTrip.dc.html",
+    "OldAddExpense.dc.html",
+    "OldSettle.dc.html",
+    "OldExpenseList.dc.html",
+    "OldMembers.dc.html",
+    "OldStats.dc.html",
+    "OldVoiceExpense.dc.html",
+    "OldVoiceExpenseConfirm.dc.html",
+    "OldProjectSettings.dc.html",
+    "OldGeneralSettings.dc.html",
+    "AddExpense.dc.html",
+    "AddExpense-section-demo.dc.html",
+    "Settle.dc.html",
+    "ExpenseList.dc.html",
+    "Members.dc.html",
+    "Stats.dc.html",
+    "NewProject.dc.html",
+    "Camera.dc.html",
+    "VoiceExpenseInput.dc.html",
+    "VoiceExpense.dc.html",
+    "ProjectSettings.dc.html",
+    "GeneralSettings.dc.html",
+    "AddExpense-gpea.dc.html",
+    "AddExpense-ngs7.dc.html",
+    "MainCard3-njus.dc.html",
+    "Trip-m0lh.dc.html",
+    "M3Typescale.dc.html",
+    "M3ForApp.dc.html"
+  ],
+  "pages": [],
+  "title": "Wander Wallet UI/UX 重新設計 — 新舊上下比對"
+}

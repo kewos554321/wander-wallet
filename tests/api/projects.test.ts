@@ -386,4 +386,44 @@ describe("POST /api/projects", () => {
     expect(response.status).toBe(500)
     expect(data.error).toBe("獲取專案失敗")
   })
+
+  it("should return 400 with invalid cover format", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects", {
+      method: "POST",
+      body: JSON.stringify({ name: "Test Project", cover: "javascript:alert(1)" }),
+    })
+    const response = await POST(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe("封面格式不正確")
+    expect(prisma.project.create).not.toHaveBeenCalled()
+  })
+
+  it("should create project with valid icon cover", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never)
+    vi.mocked(prisma.project.create).mockResolvedValue({
+      ...mockProject,
+      cover: "icon:leaf;color:lake",
+    } as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects", {
+      method: "POST",
+      body: JSON.stringify({ name: "Test Project", cover: "icon:leaf;color:lake" }),
+    })
+    const response = await POST(req)
+
+    expect(response.status).toBe(201)
+    expect(prisma.project.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          cover: "icon:leaf;color:lake",
+        }),
+      })
+    )
+  })
 })

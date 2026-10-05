@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&amp;family=Noto+Sans+TC:wght@400;500;600;700&amp;display=swap">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  a:hover { opacity: .85; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width: 390px; height: 939px; position: relative; background: #FAF7F2; font-family: 'Noto Sans TC',sans-serif; color: #1B1815; overflow: hidden">
+
+  <div style="padding:16px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E7DFD2;">
+    <a href="MainCard2.dc.html" aria-label="返回" style="width:34px;height:34px;border-radius:50%;border:1px solid #E7DFD2;background:#FFFFFF;display:flex;align-items:center;justify-content:center;color:#1B1815;">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <h1 style="margin:0;font-family:'Noto Serif TC',serif;font-weight:500;font-size:16px;line-height:24px;letter-spacing:.15px;">通用設定</h1>
+    <span style="width:34px;height:34px;" aria-hidden="true"></span>
+  </div>
+
+  <div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+
+    <a href="ProfileSettings-after.dc.html" style="background:#1B5847;border-radius:18px;padding:16px;display:flex;align-items:center;gap:14px;color:#FAF7F2;">
+      <span style="width:48px;height:48px;border-radius:50%;background:rgba(250,247,242,.15);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0;">E</span>
+      <span style="flex:1;min-width:0;">
+        <p style="margin:0;font-family:'Noto Serif TC',serif;font-size:15px;font-weight:600;">Emma</p>
+        <p style="margin:2px 0 0;font-size:12px;opacity:.75;">LINE 用戶 · 點擊編輯個人資料</p>
+      </span>
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="opacity:.85;flex-shrink:0;"><path d="M9 6l6 6-6 6"></path></svg>
+    </a>
+
+    <div style="background:#FFFFFF;border:1px solid #E7DFD2;border-radius:18px;padding:16px;">
+      <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#1B5847;">外觀</p>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;border-radius:12px;background:#FAF7F2;border:1px solid #E7DFD2;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#6E6860" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+          <span style="font-size:12px;color:#6E6860;font-weight:600;">淺色</span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;border-radius:12px;background:#FAF7F2;border:1px solid #E7DFD2;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#6E6860" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"></path></svg>
+          <span style="font-size:12px;color:#6E6860;font-weight:600;">深色</span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;border-radius:12px;background:#EAF5F1;border:1.5px solid #1B5847;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1B5847" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>
+          <span style="font-size:12px;color:#1B5847;font-weight:700;">系統</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#FFFFFF;border:1px solid #E7DFD2;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:14px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#1B5847" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"></rect><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"></path></svg>
+        <p style="margin:0;font-size:13px;font-weight:700;color:#1B5847;">記帳偏好</p>
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;color:#6E6860;font-weight:600;margin-bottom:8px;">預設幣別</label>
+        <div style="display:flex;align-items:center;justify-content:space-between;background:#FAF7F2;border:1px solid #E7DFD2;border-radius:12px;padding:12px 14px;font-size:13px;">
+          <span style="font-weight:600;">TWD 新台幣</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6E6860" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+        </div>
+        <p style="margin:6px 0 0;font-size:12px;color:#B7AE9D;">新增支出時優先使用此幣別</p>
+      </div>
+      
+    </div>
+
+    <div style="background:#FFFFFF;border:1px solid #E7DFD2;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#1B5847" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 01-3.4 0"></path></svg>
+        <p style="margin:0;font-size:13px;font-weight:700;color:#1B5847;">LINE 通知</p>
+      </div>
+      <p style="margin:0;font-size:12px;color:#B7AE9D;">控制支出操作時是否發送 LINE 群組通知</p>
+      <label style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:13px;">新增支出時通知</span>
+        <span style="width:20px;height:20px;border-radius:6px;background:#1B5847;display:flex;align-items:center;justify-content:center;">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"></path></svg>
+        </span>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:13px;">更新支出時通知</span>
+        <span style="width:20px;height:20px;border-radius:6px;border:1.5px solid #C9BFAC;"></span>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:13px;">刪除支出時通知</span>
+        <span style="width:20px;height:20px;border-radius:6px;border:1.5px solid #C9BFAC;"></span>
+      </label>
+    </div>
+
+    <a href="#" style="background:#FFFFFF;border:1px solid #E7DFD2;border-radius:18px;padding:16px;display:flex;align-items:center;justify-content:space-between;">
+      <span>
+        <span style="display:flex;align-items:center;gap:8px;">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#1B5847" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.1 9a3 3 0 015.8 1c0 2-3 2-3 4M12 17v.01"></path></svg>
+          <span style="font-size:13px;font-weight:700;">重看導覽</span>
+        </span>
+        <span style="display:block;margin-top:4px;font-size:12px;color:#B7AE9D;">進入任一旅程時會重新顯示導覽</span>
+      </span>
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#B7AE9D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M9 6l6 6-6 6"></path></svg>
+    </a>
+
+    <a href="#" style="background:#FFFFFF;border:1px solid #E7DFD2;border-radius:18px;padding:16px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:8px;">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#1B5847" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>
+        <span style="font-size:13px;font-weight:700;">功能介紹</span>
+      </span>
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#B7AE9D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"></path></svg>
+    </a><a href="#" style="background:#FFFFFF;border:1px solid #E7DFD2;border-radius:18px;padding:16px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:8px;">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#1B5847" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-8.8 8.5 9 9 0 01-4-1L3 20l1.3-3.9a8.4 8.4 0 01-1.3-4.5 8.38 8.38 0 018.5-8.6 8.5 8.5 0 018.5 8.5z"></path></svg>
+        <span style="font-size:13px;font-weight:700;">意見回饋</span>
+      </span>
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#B7AE9D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"></path></svg>
+    </a>
+
+    
+
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":1560}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

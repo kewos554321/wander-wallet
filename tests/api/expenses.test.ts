@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { NextRequest } from "next/server"
+import { Prisma } from "@prisma/client"
 
 // Mock Prisma client
 vi.mock("@/lib/db", () => ({
@@ -569,6 +570,83 @@ describe("POST /api/projects/[id]/expenses", () => {
     expect(response.status).toBe(500)
     expect(data.error).toBe("創建費用失敗")
   })
+
+  it("stores a valid splitDetail", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([{ id: "member-123" }, { id: "member-456" }] as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
+    vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense as never)
+
+    const splitDetail = { version: 1, personalItems: { "member-123": [{ name: "咖啡", amount: 100 }] }, customShares: {} }
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123/expenses", {
+      method: "POST",
+      body: JSON.stringify({
+        paidByMemberId: "member-123",
+        amount: 1000,
+        participants: [
+          { memberId: "member-123", shareAmount: 550 },
+          { memberId: "member-456", shareAmount: 450 },
+        ],
+        splitDetail,
+      }),
+    })
+    const response = await POST(req, { params: createParams("project-123") })
+
+    expect(response.status).toBe(201)
+    expect(vi.mocked(prisma.expense.create).mock.calls[0][0].data).toMatchObject({ splitDetail })
+  })
+
+  it("normalizes an empty splitDetail (no personal items, no custom shares) to no splitDetail field", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([{ id: "member-123" }, { id: "member-456" }] as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
+    vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123/expenses", {
+      method: "POST",
+      body: JSON.stringify({
+        paidByMemberId: "member-123",
+        amount: 1000,
+        participants: [
+          { memberId: "member-123", shareAmount: 500 },
+          { memberId: "member-456", shareAmount: 500 },
+        ],
+        splitDetail: { version: 1, personalItems: {}, customShares: {} },
+      }),
+    })
+    const response = await POST(req, { params: createParams("project-123") })
+
+    expect(response.status).toBe(201)
+    expect(vi.mocked(prisma.expense.create).mock.calls[0][0].data).not.toHaveProperty("splitDetail")
+  })
+
+  it("rejects an inconsistent splitDetail with 400", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([{ id: "member-123" }, { id: "member-456" }] as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123/expenses", {
+      method: "POST",
+      body: JSON.stringify({
+        paidByMemberId: "member-123",
+        amount: 1000,
+        participants: [
+          { memberId: "member-123", shareAmount: 500 },
+          { memberId: "member-456", shareAmount: 500 },
+        ],
+        splitDetail: { version: 1, personalItems: {}, customShares: { "member-456": 300 } },
+      }),
+    })
+    const response = await POST(req, { params: createParams("project-123") })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe("分攤明細與分攤金額不一致")
+    expect(prisma.expense.create).not.toHaveBeenCalled()
+  })
 })
 
 describe("GET /api/projects/[id]/expenses/[expenseId]", () => {
@@ -948,6 +1026,107 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
 
     expect(response.status).toBe(500)
     expect(data.error).toBe("更新費用失敗")
+  })
+
+  function mockUpdateTransaction() {
+    const update = vi.fn()
+    vi.mocked(prisma.$transaction).mockImplementation(async (cb) =>
+      cb({
+        expenseParticipant: { deleteMany: vi.fn(), createMany: vi.fn() },
+        expense: { update },
+      } as never)
+    )
+    return update
+  }
+
+  function putRequest(body: unknown) {
+    return new NextRequest("http://localhost:3000/api/projects/project-123/expenses/expense-123", {
+      method: "PUT",
+      body: JSON.stringify(body),
+    })
+  }
+
+  function mockExisting(splitDetail: unknown = null) {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.expense.findFirst).mockResolvedValue({ ...mockExpense, splitDetail } as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([{ id: "member-123" }, { id: "member-456" }] as never)
+    vi.mocked(prisma.expense.findUnique).mockResolvedValue(mockExpense as never)
+  }
+
+  const oldDetail = { version: 1, personalItems: { "member-123": [{ name: "x", amount: 100 }] }, customShares: {} }
+
+  it("clears splitDetail when participants change without splitDetail (old clients)", async () => {
+    mockExisting(oldDetail)
+    const update = mockUpdateTransaction()
+    const response = await PUT_EXPENSE(
+      putRequest({ participants: [{ memberId: "member-123", shareAmount: 500 }, { memberId: "member-456", shareAmount: 500 }] }),
+      { params: createExpenseParams("project-123", "expense-123") }
+    )
+    expect(response.status).toBe(200)
+    expect(update.mock.calls[0][0].data.splitDetail).toBe(Prisma.DbNull)
+  })
+
+  it("leaves splitDetail alone when only the description changes", async () => {
+    mockExisting(oldDetail)
+    const update = mockUpdateTransaction()
+    const response = await PUT_EXPENSE(putRequest({ description: "新描述" }), {
+      params: createExpenseParams("project-123", "expense-123"),
+    })
+    expect(response.status).toBe(200)
+    expect(update.mock.calls[0][0].data).not.toHaveProperty("splitDetail")
+  })
+
+  it("updates a valid splitDetail", async () => {
+    mockExisting(null)
+    const update = mockUpdateTransaction()
+    const splitDetail = { version: 1, personalItems: {}, customShares: { "member-456": 300 } }
+    const response = await PUT_EXPENSE(
+      putRequest({
+        participants: [{ memberId: "member-123", shareAmount: 700 }, { memberId: "member-456", shareAmount: 300 }],
+        splitDetail,
+      }),
+      { params: createExpenseParams("project-123", "expense-123") }
+    )
+    expect(response.status).toBe(200)
+    expect(update.mock.calls[0][0].data.splitDetail).toEqual(splitDetail)
+  })
+
+  it("validates splitDetail against existing participants when participants are not sent", async () => {
+    mockExisting(null)
+    mockUpdateTransaction()
+    const response = await PUT_EXPENSE(
+      putRequest({ splitDetail: { version: 1, personalItems: {}, customShares: { "member-456": 999 } } }),
+      { params: createExpenseParams("project-123", "expense-123") }
+    )
+    expect(response.status).toBe(400)
+  })
+
+  it("clears splitDetail when null is sent", async () => {
+    mockExisting(oldDetail)
+    const update = mockUpdateTransaction()
+    const response = await PUT_EXPENSE(putRequest({ splitDetail: null }), {
+      params: createExpenseParams("project-123", "expense-123"),
+    })
+    expect(response.status).toBe(200)
+    expect(update.mock.calls[0][0].data.splitDetail).toBe(Prisma.DbNull)
+  })
+
+  it("normalizes an empty splitDetail (no personal items, no custom shares) to clearing the column", async () => {
+    mockExisting(oldDetail)
+    const update = mockUpdateTransaction()
+    const response = await PUT_EXPENSE(
+      putRequest({
+        participants: [
+          { memberId: "member-123", shareAmount: 500 },
+          { memberId: "member-456", shareAmount: 500 },
+        ],
+        splitDetail: { version: 1, personalItems: {}, customShares: {} },
+      }),
+      { params: createExpenseParams("project-123", "expense-123") }
+    )
+    expect(response.status).toBe(200)
+    expect(update.mock.calls[0][0].data.splitDetail).toBe(Prisma.DbNull)
   })
 })
 

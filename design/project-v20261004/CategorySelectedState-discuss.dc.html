@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&amp;family=Noto+Sans+TC:wght@400;500;600;700&amp;display=swap">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; padding: 0; }
+</style>
+</helmet>
+
+<div style="width:390px;height:870px;position:relative;background:#FAF7F2;font-family:'Noto Sans TC',sans-serif;color:#1B1815;overflow:hidden;">
+
+  <div style="padding:16px;border-bottom:1px solid #E7DFD2;">
+    <h1 style="margin:0;font-family:'Noto Serif TC',serif;font-weight:700;font-size:17px;">類別勾選狀態</h1>
+    <p style="margin:4px 0 0;font-size:12px;color:#6E6860;">8個分類在「未勾選」跟「已勾選」時實際用的是哪些顏色</p>
+  </div>
+
+  <div style="margin:14px 16px 0;background:#EAF5F1;border:1px solid #DCEAE3;border-radius:14px;padding:14px;">
+    <p style="margin:0;font-size:12px;color:#1B5847;line-height:1.7;">
+      目前程式碼的規則：底色跟文字顏色是該分類「固定不變」的身分色，不管有沒有勾選都一樣；會變的只有外框顏色（未勾選＝統一淺灰#E7DFD2；已勾選＝換成該分類自己的顏色）跟文字粗細（未勾選600、已勾選700）。
+    </p>
+  </div>
+
+  <div style="margin:18px 16px 0;display:flex;align-items:center;gap:8px;padding:0 2px;">
+    <span style="width:84px;flex-shrink:0;"></span>
+    <span style="flex:1;text-align:center;font-size:11px;color:#A79F8F;font-weight:700;">未勾選</span>
+    <span style="flex:1;text-align:center;font-size:11px;color:#A79F8F;font-weight:700;">已勾選</span>
+  </div>
+
+  <div style="margin:8px 16px 0;display:flex;flex-direction:column;gap:10px;">
+
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="width:84px;flex-shrink:0;font-size:12px;color:#1B1815;font-weight:600;">餐飲</span>
+      <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #E7DFD2;background:#FBEAE0;color:#8F3714;font-size:12px;font-weight:600;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7a2 2 0 002 2 2 2 0 002-2V3M9 12v9M17 3c-1.5 0-2.5 2-2.5 5s1 5 2.5 5v6"></path></svg>餐飲</button>
+      <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #8F3714;background:#FBEAE0;color:#8F3714;font-size:12px;font-weight:700;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7a2 2 0 002 2 2 2 0 002-2V3M9 12v9M17 3c-1.5 0-2.5 2-2.5 5s1 5 2.5 5v6"></path></svg>餐飲</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="width:84px;flex-shrink:0;font-size:12px;color:#1B1815;font-weight:600;">交通</span>
+      <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #E7DFD2;background:#E7F3EE;color:#2F8F74;font-size:12px;font-weight:600;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16V12l2-5h12l2 5v4"></path><path d="M4 16h16M7 16v2M17 16v2"></path><circle cx="7.5" cy="16" r="1.3"></circle><circle cx="16.5" cy="16" r="1.3"></circle></svg>交通</button>
+      <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #2F8F74;background:#E7F3EE;color:#2F8F74;font-size:12px;font-weight:700;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16V12l2-5h12l2 5v4"></path><path d="M4 16h16M7 16v2M17 16v2"></path><circle cx="7.5" cy="16" r="1.3"></circle><circle cx="16.5" cy="16" r="1.3"></circle></svg>交通</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="width:84px;flex-shrink:0;font-size:12px;color:#1B1815;font-weight:600;">住宿</span>
+      <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #E7DFD2;background:#EFEAF7;color:#6B5B95;font-size:12px;font-weight:600;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19v-6a2 2 0 012-2h14a2 2 0 012 2v6M3 19h18M5 11V7a1 1 0 011-1h4a1 1 0 011 1v4M13 11V9a1 1 0 011-1h4a1 1 0 011 1v2"></path></svg>住宿</button>
+      <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #6B5B95;background:#EFEAF7;color:#6B5B95;font-size:12px;font-weight:700;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19v-6a2 2 0 012-2h14a2 2 0 012 2v6M3 19h18M5 11V7a1 1 0 011-1h4a1 1 0 011 1v4M13 11V9a1 1 0 011-1h4a1 1 0 011 1v2"></path></svg>住宿</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="width:84px;flex-shrink:0;font-size:12px;color:#1B1815;font-weight:600;">票券</span>
+      <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #E7DFD2;background:#F7EFDD;color:#9C7A28;font-size:12px;font-weight:600;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 000 4v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2a2 2 0 000-4z"></path><path d="M13 6v2M13 11v2M13 16v2"></path></svg>票券</button>
+      <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #9C7A28;background:#F7EFDD;color:#9C7A28;font-size:12px;font-weight:700;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 000 4v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2a2 2 0 000-4z"></path><path d="M13 6v2M13 11v2M13 16v2"></path></svg>票券</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="width:84px;flex-shrink:0;font-size:12px;color:#1B1815;font-weight:600;">購物</span>
+      <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #E7DFD2;background:#F6E9EE;color:#A14A68;font-size:12px;font-weight:600;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5z"></path><path d="M9 8V6a3 3 0 016 0v2"></path></svg>購物</button>
+      <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #A14A68;background:#F6E9EE;color:#A14A68;font-size:12px;font-weight:700;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5z"></path><path d="M9 8V6a3 3 0 016 0v2"></path></svg>購物</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="width:84px;flex-shrink:0;font-size:12px;color:#1B1815;font-weight:600;">娛樂</span>
+      <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #E7DFD2;background:#E8EEF7;color:#4A6FA5;font-size:12px;font-weight:600;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="10" rx="5"></rect><path d="M6 11v4M4 13h4"></path><circle cx="15" cy="12" r="1"></circle><circle cx="18" cy="14" r="1"></circle></svg>娛樂</button>
+      <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #4A6FA5;background:#E8EEF7;color:#4A6FA5;font-size:12px;font-weight:700;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="10" rx="5"></rect><path d="M6 11v4M4 13h4"></path><circle cx="15" cy="12" r="1"></circle><circle cx="18" cy="14" r="1"></circle></svg>娛樂</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="width:84px;flex-shrink:0;font-size:12px;color:#1B1815;font-weight:600;">禮品</span>
+      <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #E7DFD2;background:#F7EFDD;color:#9C7A28;font-size:12px;font-weight:600;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="4"></rect><rect x="4" y="13" width="16" height="8"></rect><path d="M12 9v12M12 9c-1.5-4-6-4-6-1.5S9 9 12 9zM12 9c1.5-4 6-4 6-1.5S15 9 12 9z"></path></svg>禮品</button>
+      <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #9C7A28;background:#F7EFDD;color:#9C7A28;font-size:12px;font-weight:700;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="4"></rect><rect x="4" y="13" width="16" height="8"></rect><path d="M12 9v12M12 9c-1.5-4-6-4-6-1.5S9 9 12 9zM12 9c1.5-4 6-4 6-1.5S15 9 12 9z"></path></svg>禮品</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="width:84px;flex-shrink:0;font-size:12px;color:#1B1815;font-weight:600;">其他</span>
+      <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #E7DFD2;background:#F1EBE0;color:#6E6860;font-size:12px;font-weight:600;"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><circle cx="8" cy="8" r="1.5"></circle><circle cx="16" cy="8" r="1.5"></circle><circle cx="8" cy="16" r="1.5"></circle><circle cx="16" cy="16" r="1.5"></circle></svg>其他</button>
+      <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:14px;border:1.5px solid #6E6860;background:#F1EBE0;color:#6E6860;font-size:12px;font-weight:700;"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><circle cx="8" cy="8" r="1.5"></circle><circle cx="16" cy="8" r="1.5"></circle><circle cx="8" cy="16" r="1.5"></circle><circle cx="16" cy="16" r="1.5"></circle></svg>其他</button>
+    </div>
+
+  </div>
+
+  <div style="margin:20px 16px 0;background:#1B5847;border-radius:16px;padding:16px;">
+    <p style="margin:0 0 6px;font-size:13px;color:#FAF7F2;font-weight:700;">兩個小提醒</p>
+    <p style="margin:0;font-size:12px;color:#FAF7F2;opacity:.9;line-height:1.7;">
+1. 餐飲原本已勾選外框用的是比文字更亮的珊瑚橘#E8825A，跟其他7個分類「外框＝文字色」的規則不一致，已經統一改成border:#8F3714（跟自己的文字色一樣），A3b/A3d的程式碼也同步修正。<br>2. 票券跟禮品目前是同一組顏色(#F7EFDD/#9C7A28)，已勾選時兩個會長得一樣，不勾選其中一個也分不出來——這個問題跟勾選狀態無關，是本來就撞色。
+    </p>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":870}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width:390px;height:960px;position:relative;background:#FFFFFF;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;color:#0F172A;overflow:hidden;">
+
+  <div style="height:56px;padding:0 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E2E8F0;">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+    <span style="font-weight:600;font-size:15px;">支出列表</span>
+  </div>
+
+  <div style="padding:14px 16px 0;">
+    <div style="height:52px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:11px;">廣告 Banner</div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;">
+      <div>
+        <p style="margin:0;font-size:11px;color:#94A3B8;">總支出</p>
+        <p style="margin:0;font-weight:700;font-size:22px;">NT$27,100</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="text-align:center;">
+          <p style="margin:0;font-weight:600;font-size:15px;">8</p>
+          <p style="margin:0;font-size:10px;color:#94A3B8;">筆支出</p>
+        </div>
+        <div style="width:1px;height:26px;background:#E2E8F0;"></div>
+        <div style="text-align:center;">
+          <p style="margin:0;font-weight:600;font-size:15px;color:#4FAE8E;">NT$3,388</p>
+          <p style="margin:0;font-size:10px;color:#94A3B8;">平均每筆</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:40px;border:1px solid #E2E8F0;border-radius:10px;display:flex;align-items:center;padding:0 12px;color:#94A3B8;font-size:12px;gap:8px;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+      搜尋支出描述...
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px;">
+      <span style="border:1px solid #E2E8F0;border-radius:8px;padding:6px;text-align:center;font-size:11px;">類別 ⌄</span>
+      <span style="border:1px solid #E2E8F0;border-radius:8px;padding:6px;text-align:center;font-size:11px;">付款人 ⌄</span>
+      <span style="border:1px solid #E2E8F0;border-radius:8px;padding:6px;text-align:center;font-size:11px;">參與者 ⌄</span>
+      <span style="border:1px solid #E2E8F0;border-radius:8px;padding:6px;text-align:center;font-size:11px;">金額 ⌄</span>
+      <span style="border:1px solid #E2E8F0;border-radius:8px;padding:6px;text-align:center;font-size:11px;">建立日期 ⌄</span>
+      <span style="border:1px solid #E2E8F0;border-radius:8px;padding:6px;text-align:center;font-size:11px;">付款日期 ⌄</span>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:12px;color:#64748B;">
+      <span>顯示 <b style="color:#0F172A;">8</b> / 8 筆</span>
+      <span style="border:1px solid #E2E8F0;border-radius:8px;padding:4px 10px;">批次</span>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px;">
+
+      <div style="border:1px solid #F1F5F9;border-radius:16px;padding:14px;box-shadow:0 4px 12px rgba(0,0,0,.06);">
+        <div style="display:flex;gap:12px;">
+          <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+            <span style="width:48px;height:48px;border-radius:16px;background:#FFEDD5;color:#EA580C;display:flex;align-items:center;justify-content:center;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7a2 2 0 002 2 2 2 0 002-2V3M9 12v9M17 3c-1.5 0-2.5 2-2.5 5s1 5 2.5 5v6"></path></svg>
+            </span>
+            <span style="font-size:9px;color:#94A3B8;margin-top:3px;">餐飲</span>
+          </div>
+          <div style="flex:1;min-width:0;position:relative;">
+            <div style="display:flex;justify-content:space-between;gap:8px;">
+              <h3 style="margin:0;font-size:15px;font-weight:600;flex:1;min-width:0;">一蘭拉麵晚餐</h3>
+              <p style="margin:0;font-weight:700;font-size:16px;">NT$1,280</p>
+            </div>
+            <p style="margin:3px 0 0;font-size:11px;color:#94A3B8;">付款 11/16 19:20</p>
+            <p style="margin:1px 0 0;font-size:11px;color:#94A3B8;">建立 11/16 19:22</p>
+            <span aria-label="收據縮圖" style="position:absolute;right:0;bottom:0;width:40px;height:40px;border-radius:8px;overflow:hidden;border:1px solid #E2E8F0;background:linear-gradient(135deg,#E2E8F0,#CBD5E1);display:flex;align-items:center;justify-content:center;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#64748B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="8.5" cy="10" r="1.4"></circle><path d="M21 15l-5-4-4 3-3-2-6 5"></path></svg>
+            </span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid #F1F5F9;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;">
+            <span style="width:20px;height:20px;border-radius:50%;background:#F1F5F9;"></span>
+            <span style="font-weight:500;">志明</span>
+            <span style="color:#CBD5E1;">·</span>
+            <span style="display:flex;margin-left:2px;">
+              <span style="width:16px;height:16px;border-radius:50%;background:#DBEAFE;border:2px solid #fff;"></span>
+              <span style="width:16px;height:16px;border-radius:50%;background:#FFEDD5;border:2px solid #fff;margin-left:-5px;"></span>
+              <span style="width:16px;height:16px;border-radius:50%;background:#EDE9FE;border:2px solid #fff;margin-left:-5px;"></span>
+              <span style="width:16px;height:16px;border-radius:50%;background:#F1F5F9;border:2px solid #fff;margin-left:-5px;"></span>
+            </span>
+            <span style="color:#94A3B8;">4人</span>
+          </div>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        </div>
+      </div>
+
+      <div style="border:1px solid #F1F5F9;border-radius:16px;padding:14px;box-shadow:0 4px 12px rgba(0,0,0,.06);">
+        <div style="display:flex;gap:12px;">
+          <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+            <span style="width:48px;height:48px;border-radius:16px;background:#DBEAFE;color:#2563EB;display:flex;align-items:center;justify-content:center;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16V12l2-5h12l2 5v4"></path><path d="M4 16h16M7 16v2M17 16v2"></path><circle cx="7.5" cy="16" r="1.3"></circle><circle cx="16.5" cy="16" r="1.3"></circle></svg>
+            </span>
+            <span style="font-size:9px;color:#94A3B8;margin-top:3px;">交通</span>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;justify-content:space-between;gap:8px;">
+              <h3 style="margin:0;font-size:15px;font-weight:600;flex:1;min-width:0;">京都一日包車</h3>
+              <p style="margin:0;font-weight:700;font-size:16px;">NT$6,400</p>
+            </div>
+            <p style="margin:3px 0 0;font-size:11px;color:#94A3B8;">付款 11/15 09:00</p>
+            <p style="margin:1px 0 0;font-size:11px;color:#94A3B8;">建立 11/15 09:03</p>
+            <div style="display:flex;align-items:flex-start;gap:4px;margin-top:5px;">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin-top:1px;flex-shrink:0;"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"></path><circle cx="12" cy="9" r="2.5"></circle></svg>
+              <span style="font-size:11px;color:#94A3B8;">京都市內</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid #F1F5F9;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;">
+            <span style="width:20px;height:20px;border-radius:50%;background:#F1F5F9;"></span>
+            <span style="font-weight:500;">我</span>
+            <span style="color:#CBD5E1;">·</span>
+            <span style="display:flex;margin-left:2px;">
+              <span style="width:16px;height:16px;border-radius:50%;background:#F1F5F9;border:2px solid #fff;"></span>
+              <span style="width:16px;height:16px;border-radius:50%;background:#FFEDD5;border:2px solid #fff;margin-left:-5px;"></span>
+              <span style="width:16px;height:16px;border-radius:50%;background:#EDE9FE;border:2px solid #fff;margin-left:-5px;"></span>
+              <span style="width:16px;height:16px;border-radius:50%;background:#DBEAFE;border:2px solid #fff;margin-left:-5px;"></span>
+            </span>
+            <span style="color:#94A3B8;">4人</span>
+          </div>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        </div>
+      </div>
+
+      <div style="border:1px solid #F1F5F9;border-radius:16px;padding:14px;box-shadow:0 4px 12px rgba(0,0,0,.06);">
+        <div style="display:flex;gap:12px;">
+          <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+            <span style="width:48px;height:48px;border-radius:16px;background:#EDE9FE;color:#7C3AED;display:flex;align-items:center;justify-content:center;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19v-6a2 2 0 012-2h14a2 2 0 012 2v6M3 19h18M5 11V7a1 1 0 011-1h4a1 1 0 011 1v4M13 11V9a1 1 0 011-1h4a1 1 0 011 1v2"></path></svg>
+            </span>
+            <span style="font-size:9px;color:#94A3B8;margin-top:3px;">住宿</span>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;justify-content:space-between;gap:8px;">
+              <h3 style="margin:0;font-size:15px;font-weight:600;flex:1;min-width:0;">溫泉旅館兩晚</h3>
+              <p style="margin:0;font-weight:700;font-size:16px;">NT$14,000</p>
+            </div>
+            <p style="margin:3px 0 0;font-size:11px;color:#94A3B8;">付款 11/14 15:00</p>
+            <p style="margin:1px 0 0;font-size:11px;color:#94A3B8;">建立 11/14 15:10</p>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid #F1F5F9;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;">
+            <span style="width:20px;height:20px;border-radius:50%;background:#F1F5F9;"></span>
+            <span style="font-weight:500;">小美</span>
+            <span style="color:#CBD5E1;">·</span>
+            <span style="display:flex;margin-left:2px;">
+              <span style="width:16px;height:16px;border-radius:50%;background:#EDE9FE;border:2px solid #fff;"></span>
+              <span style="width:16px;height:16px;border-radius:50%;background:#F1F5F9;border:2px solid #fff;margin-left:-5px;"></span>
+              <span style="width:16px;height:16px;border-radius:50%;background:#DBEAFE;border:2px solid #fff;margin-left:-5px;"></span>
+              <span style="width:16px;height:16px;border-radius:50%;background:#FFEDD5;border:2px solid #fff;margin-left:-5px;"></span>
+            </span>
+            <span style="color:#94A3B8;">4人</span>
+          </div>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="position:absolute;right:16px;bottom:24px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+    <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#FDBA74,#FB7185);color:#FFFFFF;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(251,113,133,.35);">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l1.3 3.7L17 9l-3.7 1.3L12 14l-1.3-3.7L7 9l3.7-1.3z"></path></svg>
+    </div>
+    <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#7FC7AE,#3B8F76);color:#FFFFFF;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(59,143,118,.35);">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

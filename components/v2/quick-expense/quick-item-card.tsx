@@ -1,0 +1,153 @@
+"use client"
+
+import { useState } from "react"
+import { format } from "date-fns"
+import { zhTW } from "date-fns/locale"
+import { CalendarIcon } from "lucide-react"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { toMoneyInput } from "@/lib/money-input"
+import {
+  deriveSplit,
+  withAddedItem,
+  withClearedCustomShare,
+  withCustomShare,
+  withPersonalAll,
+  withPersonalMode,
+  withPoolAll,
+  withRemovedItem,
+  withToggledPersonalMember,
+  withToggledPool,
+  withUpdatedItem,
+  type SplitActions,
+  type SplitDraft,
+  type SplitState,
+} from "@/lib/split-draft"
+import type { QuickItem } from "@/lib/quick-expense/draft"
+import { AmountCard } from "@/components/v2/expense-form/amount-card"
+import { CalculatorPad } from "@/components/v2/expense-form/calculator-pad"
+import { CategoryPicker } from "@/components/v2/expense-form/category-picker"
+import { LocationPickerV2 } from "@/components/v2/expense-form/location-picker-v2"
+import { PayerPicker } from "@/components/v2/expense-form/payer-picker"
+import { SECTION_CARD, SECTION_TITLE } from "@/components/v2/expense-form/section-card"
+import { SplitEditor } from "@/components/v2/expense-form/split-editor"
+import { V2ImagePicker } from "@/components/v2/expense-form/v2-image-picker"
+
+type Member = { id: string; displayName: string; image?: string | null }
+export function QuickItemCard({ item, members, onChange }: { item: QuickItem; members: Member[]; onChange: (patch: Partial<QuickItem>) => void }) {
+  const [showCalculator, setShowCalculator] = useState(false)
+  const amount = Number(item.amount) || 0
+
+  // Drive the shared SplitEditor from the item's own split state so the AI
+  // result card matches the expense form exactly.
+  const memberIds = members.map((m) => m.id)
+  const splitState: SplitState = {
+    pool: item.participantIds,
+    personalMode: item.personalMode,
+    personalItems: item.personalItems,
+    personalMembers: item.personalMembers,
+    customShares: item.customShares,
+  }
+  const applySplit = (next: SplitState) =>
+    onChange({
+      participantIds: next.pool,
+      personalMode: next.personalMode,
+      personalItems: next.personalItems,
+      personalMembers: next.personalMembers,
+      customShares: next.customShares,
+    })
+  const splitActions: SplitActions = {
+    setPersonalMode: (v) => applySplit(withPersonalMode(splitState, v)),
+    togglePersonalMember: (id) => applySplit(withToggledPersonalMember(splitState, id)),
+    setPersonalAll: (v) => applySplit(withPersonalAll(splitState, memberIds, v)),
+    addItem: (id) => applySplit(withAddedItem(splitState, id)),
+    updateItem: (id, itemId, field, value) => applySplit(withUpdatedItem(splitState, id, itemId, field, value)),
+    removeItem: (id, itemId) => applySplit(withRemovedItem(splitState, id, itemId)),
+    togglePool: (id) => applySplit(withToggledPool(splitState, id)),
+    setPoolAll: (v) => applySplit(withPoolAll(splitState, memberIds, v)),
+    setCustomShare: (id, value) => applySplit(withCustomShare(splitState, id, value)),
+    clearCustomShare: (id) => applySplit(withClearedCustomShare(splitState, id)),
+  }
+  const splitDraft: SplitDraft = { state: splitState, actions: splitActions, derived: deriveSplit(amount, memberIds, splitState) }
+
+  return (
+    <div>
+      <AmountCard
+        amount={item.amount}
+        currency={item.currency}
+        onAmount={(v) => {
+          const m = toMoneyInput(v)
+          if (m !== null) onChange({ amount: m })
+        }}
+        onCurrency={(c) => onChange({ currency: c })}
+        calculatorOpen={showCalculator}
+        onToggleCalculator={() => setShowCalculator((v) => !v)}
+        calculator={
+          <CalculatorPad
+            initialValue={item.amount}
+            onApply={(value: number) => {
+              onChange({ amount: String(value) })
+              setShowCalculator(false)
+            }}
+            onClose={() => setShowCalculator(false)}
+          />
+        }
+      />
+
+      <div className={`${SECTION_CARD} mt-3.5`}>
+        <label htmlFor="v2-quick-desc" className={`block ${SECTION_TITLE} mb-1.5`}>
+          描述
+        </label>
+        <input
+          id="v2-quick-desc"
+          aria-label="描述"
+          value={item.description}
+          onChange={(e) => onChange({ description: e.target.value })}
+          className="w-full rounded-xl border border-v2-line bg-v2-paper px-3.5 py-3 text-[13px] outline-none"
+        />
+      </div>
+
+      <CategoryPicker value={item.category} onChange={(c) => onChange({ category: c as QuickItem["category"] })} />
+
+      <PayerPicker members={members} value={item.payerId} onChange={(id) => onChange({ payerId: id })} amount={amount} currency={item.currency} />
+
+      <SplitEditor members={members} currency={item.currency} draft={splitDraft} />
+
+      <div className={SECTION_CARD}>
+        <p className={`mb-2 ${SECTION_TITLE}`}>支出日期</p>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button type="button" className="flex w-full items-center gap-2 rounded-xl border border-v2-line bg-v2-paper px-3.5 py-3 text-left text-[13px]">
+              <CalendarIcon className="h-[15px] w-[15px] text-v2-ink-muted" aria-hidden="true" />
+              <span>{format(item.expenseDate, "yyyy/MM/dd（EEEEE）", { locale: zhTW })}</span>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar mode="single" selected={item.expenseDate} onSelect={(d) => d && onChange({ expenseDate: d })} />
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      <div className={SECTION_CARD}>
+        <p className={`mb-2 ${SECTION_TITLE}`}>消費地點</p>
+        <LocationPickerV2
+          value={{ location: item.location, latitude: item.latitude, longitude: item.longitude }}
+          onChange={(v) => onChange({ location: v.location, latitude: v.latitude, longitude: v.longitude })}
+        />
+      </div>
+
+      <V2ImagePicker
+        label="收據/消費圖片"
+        value={item.image.preview ?? item.image.image}
+        onChange={(file) => {
+          if (item.image.preview) URL.revokeObjectURL(item.image.preview)
+          onChange({ image: { image: null, pendingFile: file, preview: URL.createObjectURL(file) } })
+        }}
+        onRemove={() => {
+          if (item.image.preview) URL.revokeObjectURL(item.image.preview)
+          onChange({ image: { image: null, pendingFile: null, preview: null } })
+        }}
+      />
+    </div>
+  )
+}
