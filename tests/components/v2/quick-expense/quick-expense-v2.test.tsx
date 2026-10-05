@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from "vitest"
+import { StrictMode } from "react"
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react"
 
 vi.mock("next/font/google", () => ({
   Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
@@ -42,15 +43,20 @@ const typeAndParse = (text = "早餐 100") => {
 
 const originalCreateObjectURL = globalThis.URL.createObjectURL
 const originalRevokeObjectURL = globalThis.URL.revokeObjectURL
+let backMock: MockInstance
 
 beforeEach(() => {
   parseText.mockReset(); parseReceipt.mockReset(); save.mockReset()
   canNotifyLine = false
   globalThis.URL.createObjectURL = vi.fn(() => "blob:1")
   globalThis.URL.revokeObjectURL = vi.fn()
+  // jsdom can't navigate; keep the history bookkeeping inert.
+  window.history.replaceState(null, "")
+  backMock = vi.spyOn(window.history, "back").mockImplementation(() => {})
 })
 
 afterEach(() => {
+  vi.restoreAllMocks()
   if (originalCreateObjectURL) {
     globalThis.URL.createObjectURL = originalCreateObjectURL
   } else {
@@ -100,13 +106,72 @@ describe("QuickExpenseV2", () => {
     expect(screen.getByLabelText("消費內容")).toBeInTheDocument()
   })
 
+  it("closes the dialog when the phone back button is pressed on the input step", () => {
+    const p = setup()
+    expect(window.history.state?.qe).toBe("dialog")
+
+    act(() => {
+      window.dispatchEvent(new PopStateEvent("popstate", { state: null }))
+    })
+
+    expect(p.onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it("stays open under StrictMode without popping its history entry", () => {
+    render(
+      <StrictMode>
+        <QuickExpenseV2 open onOpenChange={vi.fn()} projectId="p1" projectName="" members={members} currentUserMemberId="a" onSuccess={vi.fn()} />
+      </StrictMode>
+    )
+
+    expect(screen.getByLabelText("消費內容")).toBeInTheDocument()
+    expect(backMock).not.toHaveBeenCalled()
+    expect(window.history.state?.qe).toBe("dialog")
+  })
+
+  it("pops its history entry when closed with the X button", () => {
+    const p = setup()
+    fireEvent.click(screen.getByRole("button", { name: "關閉" }))
+    expect(p.onOpenChange).toHaveBeenCalledWith(false)
+    expect(backMock).toHaveBeenCalled()
+  })
+
+  it("returns to the input step when the phone back button is pressed on the camera step", () => {
+    const p = setup()
+    fireEvent.click(screen.getByRole("button", { name: "拍照／圖片" }))
+    fireEvent.click(screen.getByRole("button", { name: "拍照" }))
+    expect(screen.getByText("fake-shot")).toBeInTheDocument()
+    expect(window.history.state?.qe).toBe("camera")
+
+    // Popping the camera entry lands back on the dialog entry.
+    act(() => {
+      window.dispatchEvent(new PopStateEvent("popstate", { state: { qe: "dialog" } }))
+    })
+
+    expect(screen.queryByText("fake-shot")).toBeNull()
+    expect(screen.getByRole("button", { name: "文字／語音" })).toBeInTheDocument()
+    expect(p.onOpenChange).not.toHaveBeenCalled()
+  })
+
+  it("returns to the input step on back when opening straight on the camera", () => {
+    render(<QuickExpenseV2 open onOpenChange={vi.fn()} projectId="p1" projectName="" members={members} currentUserMemberId="a" onSuccess={vi.fn()} initialStep="camera" />)
+    expect(window.history.state?.qe).toBe("camera")
+
+    act(() => {
+      window.dispatchEvent(new PopStateEvent("popstate", { state: { qe: "dialog" } }))
+    })
+
+    expect(screen.getByLabelText("消費內容")).toBeInTheDocument()
+  })
+
   it("attaches a receipt photo and only parses it on AI 解析", async () => {
     parseReceipt.mockResolvedValue({ amount: 880, description: "超商", category: "shopping", date: null, confidence: 1 })
     setup()
+    fireEvent.click(screen.getByRole("button", { name: "拍照／圖片" }))
     fireEvent.click(screen.getByRole("button", { name: "拍照" }))
     fireEvent.click(screen.getByText("fake-shot"))
-    // Back on the input with a thumbnail; parsing is deferred.
-    expect(screen.getByLabelText("消費內容")).toBeInTheDocument()
+    // Back on the input in image mode; parsing is deferred.
+    expect(screen.queryByLabelText("消費內容")).toBeNull()
     expect(screen.getByRole("button", { name: "移除圖片" })).toBeInTheDocument()
     expect(parseReceipt).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole("button", { name: "AI 解析" }))
@@ -118,6 +183,7 @@ describe("QuickExpenseV2", () => {
   it("attaches a chosen gallery image and parses it on AI 解析", async () => {
     parseReceipt.mockResolvedValue({ amount: 880, description: "超商", category: "shopping", date: null, confidence: 1 })
     setup()
+    fireEvent.click(screen.getByRole("button", { name: "拍照／圖片" }))
     fireEvent.click(screen.getByRole("button", { name: "選擇圖片" }))
     fireEvent.change(screen.getByTestId("quick-gallery-input"), { target: { files: [new File(["a"], "g.jpg")] } })
     expect(screen.getByRole("button", { name: "移除圖片" })).toBeInTheDocument()
@@ -130,6 +196,7 @@ describe("QuickExpenseV2", () => {
 
   it("replaces the tiles with the image and restores them on remove", () => {
     setup()
+    fireEvent.click(screen.getByRole("button", { name: "拍照／圖片" }))
     fireEvent.click(screen.getByRole("button", { name: "拍照" }))
     fireEvent.click(screen.getByText("fake-shot"))
     expect(screen.queryByRole("button", { name: "拍照" })).toBeNull()
@@ -139,10 +206,11 @@ describe("QuickExpenseV2", () => {
     expect(screen.getByRole("button", { name: "選擇圖片" })).toBeInTheDocument()
   })
 
-  it("uses the image and ignores the text when both are present", async () => {
+  it("uses the image and ignores the text when the image tab is active", async () => {
     parseReceipt.mockResolvedValue({ amount: 880, description: "超商", category: "shopping", date: null, confidence: 1 })
     setup()
     fireEvent.change(screen.getByLabelText("消費內容"), { target: { value: "早餐 100" } })
+    fireEvent.click(screen.getByRole("button", { name: "拍照／圖片" }))
     fireEvent.click(screen.getByRole("button", { name: "拍照" }))
     fireEvent.click(screen.getByText("fake-shot"))
     fireEvent.click(screen.getByRole("button", { name: "AI 解析" }))
@@ -154,11 +222,12 @@ describe("QuickExpenseV2", () => {
   it("returns to input when a receipt parse fails", async () => {
     parseReceipt.mockRejectedValue(new Error("收據辨識失敗"))
     setup()
+    fireEvent.click(screen.getByRole("button", { name: "拍照／圖片" }))
     fireEvent.click(screen.getByRole("button", { name: "拍照" }))
     fireEvent.click(screen.getByText("fake-shot"))
     fireEvent.click(screen.getByRole("button", { name: "AI 解析" }))
     expect(await screen.findByRole("alert")).toHaveTextContent("收據辨識失敗")
-    expect(screen.getByLabelText("消費內容")).toBeInTheDocument()
+    expect(screen.queryByLabelText("消費內容")).toBeNull()
     expect(screen.getByRole("button", { name: "移除圖片" })).toBeInTheDocument()
   })
 

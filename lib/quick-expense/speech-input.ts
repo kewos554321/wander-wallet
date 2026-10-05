@@ -16,11 +16,18 @@ export function useSpeechInput({ onText }: { onText: (text: string) => void }) {
   const [error, setError] = useState<string | null>(null)
   const onTextRef = useRef(onText)
   onTextRef.current = onText
+  // A recognition session can deliver a late final result after `onend`, and
+  // Android Chrome can report a spurious start/stop around one utterance. Both
+  // would make us emit the same phrase twice, so consume at most one finished
+  // transcript and re-arm only when the mic is explicitly started again.
+  const consumedRef = useRef(false)
 
   useEffect(() => {
     if (useRecorder || web.isRecording) return
+    if (consumedRef.current) return
     const text = web.transcript.trim()
     if (!text) return
+    consumedRef.current = true
     onTextRef.current(text)
     web.resetTranscript()
   }, [useRecorder, web.isRecording, web.transcript, web])
@@ -55,8 +62,20 @@ export function useSpeechInput({ onText }: { onText: (text: string) => void }) {
   const recording = web.isRecording || rec.isRecording
   const toggle = useCallback(() => {
     setError(null)
-    if (useRecorder) (rec.isRecording ? rec.stopRecording : rec.startRecording)()
-    else (web.isRecording ? web.stopRecording : web.startRecording)()
+    // Starting a new recording is the only thing that re-arms the transcript
+    // guard, so a spurious isRecording flicker cannot re-emit the same phrase.
+    if (useRecorder) {
+      if (rec.isRecording) rec.stopRecording()
+      else {
+        consumedRef.current = false
+        rec.startRecording()
+      }
+    } else if (web.isRecording) {
+      web.stopRecording()
+    } else {
+      consumedRef.current = false
+      web.startRecording()
+    }
   }, [useRecorder, rec, web])
 
   return {
