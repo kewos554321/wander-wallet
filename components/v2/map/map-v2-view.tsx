@@ -60,6 +60,16 @@ export function MapV2View({ projectId, projectCurrency, expenses, loading }: Map
     () => (selectedCategory ? withLocation.filter((e) => categoryKey(e.category) === selectedCategory) : withLocation),
     [withLocation, selectedCategory]
   )
+  const mapExpenses = useMemo(
+    () =>
+      filtered.map((e) => ({
+        ...e,
+        latitude: Number(e.latitude),
+        longitude: Number(e.longitude),
+        currency: e.currency || projectCurrency,
+      })),
+    [filtered, projectCurrency]
+  )
   const chipItems = useMemo<CategoryChipItem[]>(() => {
     const counts = new Map<ExpenseCategory, number>()
     for (const e of withLocation) {
@@ -111,7 +121,7 @@ export function MapV2View({ projectId, projectCurrency, expenses, loading }: Map
 
           <div className="relative mx-4 mt-3 h-[400px] overflow-hidden rounded-[18px] border border-v2-line bg-v2-lake-soft">
             <ExpenseMap
-              expenses={filtered.map((e) => ({ ...e, latitude: e.latitude as number, longitude: e.longitude as number, currency: e.currency || projectCurrency }))}
+              expenses={mapExpenses}
               projectCurrency={projectCurrency}
               mapStyle={mapStyle}
               onExpenseClick={(id) => router.push(`/projects/${projectId}/expenses/${id}/edit`)}

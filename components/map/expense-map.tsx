@@ -67,11 +67,18 @@ const categoryEmojis: Record<string, string> = {
   other: "📍",
 }
 
-export function ExpenseMap({ expenses, projectCurrency, mapStyle = "standard", onExpenseClick }: ExpenseMapProps) {
+export function ExpenseMap({ expenses, mapStyle = "standard", onExpenseClick }: ExpenseMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<L.Map | null>(null)
   const tileLayerRef = useRef<L.TileLayer | null>(null)
   const labelLayerRef = useRef<L.TileLayer | null>(null)
+  const onExpenseClickRef = useRef(onExpenseClick)
+
+  // Keep the latest handler without making it an effect dependency: a new
+  // function identity on every render must not tear down and rebuild the map.
+  useEffect(() => {
+    onExpenseClickRef.current = onExpenseClick
+  }, [onExpenseClick])
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return
@@ -82,13 +89,18 @@ export function ExpenseMap({ expenses, projectCurrency, mapStyle = "standard", o
     // 計算中心點
     let center: [number, number] = [25.033, 121.565] // 預設台北
     if (validExpenses.length > 0) {
-      const avgLat = validExpenses.reduce((sum, e) => sum + e.latitude, 0) / validExpenses.length
-      const avgLng = validExpenses.reduce((sum, e) => sum + e.longitude, 0) / validExpenses.length
-      center = [avgLat, avgLng]
+      const avgLat = validExpenses.reduce((sum, e) => sum + Number(e.latitude), 0) / validExpenses.length
+      const avgLng = validExpenses.reduce((sum, e) => sum + Number(e.longitude), 0) / validExpenses.length
+      if (Number.isFinite(avgLat) && Number.isFinite(avgLng)) {
+        center = [avgLat, avgLng]
+      }
     }
 
     // 初始化地圖
-    const map = L.map(mapRef.current).setView(center, 13)
+    // 關閉縮放動畫：Leaflet 的 zoom 動畫會在 250ms 後才觸發 transition 結束回呼，
+    // 若地圖在這段期間被移除（React StrictMode 重掛載、切換篩選／樣式），
+    // 回呼會讀取已被刪除的 mapPane._leaflet_pos 而拋出錯誤。
+    const map = L.map(mapRef.current, { zoomAnimation: false }).setView(center, 13)
     mapInstanceRef.current = map
 
     // 加入地圖圖層
@@ -165,7 +177,7 @@ export function ExpenseMap({ expenses, projectCurrency, mapStyle = "standard", o
         popupAnchor: [0, -48],
       })
 
-      const marker = L.marker([expense.latitude, expense.longitude], { icon: customIcon })
+      const marker = L.marker([Number(expense.latitude), Number(expense.longitude)], { icon: customIcon })
         .addTo(map)
         .bindPopup(`
           <div style="
@@ -224,26 +236,26 @@ export function ExpenseMap({ expenses, projectCurrency, mapStyle = "standard", o
           maxWidth: 280,
         })
 
-      if (onExpenseClick) {
+      if (onExpenseClickRef.current) {
         marker.on("click", () => {
-          onExpenseClick(expense.id)
+          onExpenseClickRef.current?.(expense.id)
         })
       }
 
       markers.push(marker)
     })
 
-    // 自動調整視野以包含所有標記
+    // 自動調整視野以包含所有標記（不使用動畫，避免移除地圖時留下未取消的動畫回呼）
     if (markers.length > 1) {
       const group = L.featureGroup(markers)
-      map.fitBounds(group.getBounds().pad(0.1))
+      map.fitBounds(group.getBounds().pad(0.1), { animate: false })
     }
 
     return () => {
       map.remove()
       mapInstanceRef.current = null
     }
-  }, [expenses, projectCurrency, onExpenseClick])
+  }, [expenses, mapStyle])
 
   return (
     <div

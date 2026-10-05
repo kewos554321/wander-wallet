@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { render } from "@testing-library/react"
+import L from "leaflet"
 
 // Mock Leaflet - must be defined before vi.mock
 vi.mock("leaflet", () => {
@@ -115,6 +116,45 @@ describe("ExpenseMap Component", () => {
 
       const mapDiv = container.firstChild as HTMLElement
       expect(mapDiv.className).toContain("rounded-xl")
+    })
+  })
+
+  describe("coordinate normalization", () => {
+    it("computes a finite center when coordinates arrive as numeric strings", () => {
+      // Prisma Decimal fields arrive from the API as JSON strings.
+      const stringyExpenses = mockExpenses.map((e) => ({
+        ...e,
+        latitude: String(e.latitude) as unknown as number,
+        longitude: String(e.longitude) as unknown as number,
+      }))
+
+      render(<ExpenseMap expenses={stringyExpenses} projectCurrency="TWD" />)
+
+      const mapInstance = vi.mocked(L.map).mock.results.at(-1)?.value as { setView: ReturnType<typeof vi.fn> }
+      expect(mapInstance.setView).toHaveBeenCalled()
+      const center = mapInstance.setView.mock.calls[0][0] as unknown[]
+      expect(center).toHaveLength(2)
+      expect(center.every((value) => Number.isFinite(value))).toBe(true)
+    })
+  })
+
+  describe("map lifecycle", () => {
+    it("disables zoom animation to avoid orphaned transition callbacks on removal", () => {
+      render(<ExpenseMap expenses={mockExpenses} projectCurrency="TWD" />)
+
+      expect(vi.mocked(L.map)).toHaveBeenCalledWith(expect.anything(), { zoomAnimation: false })
+      const mapInstance = vi.mocked(L.map).mock.results.at(-1)?.value as { fitBounds: ReturnType<typeof vi.fn> }
+      expect(mapInstance.fitBounds).toHaveBeenCalledWith(expect.anything(), { animate: false })
+    })
+
+    it("does not rebuild the map when only the click handler identity changes", () => {
+      const { rerender } = render(
+        <ExpenseMap expenses={mockExpenses} projectCurrency="TWD" onExpenseClick={vi.fn()} />
+      )
+      expect(vi.mocked(L.map)).toHaveBeenCalledTimes(1)
+
+      rerender(<ExpenseMap expenses={mockExpenses} projectCurrency="TWD" onExpenseClick={vi.fn()} />)
+      expect(vi.mocked(L.map)).toHaveBeenCalledTimes(1)
     })
   })
 

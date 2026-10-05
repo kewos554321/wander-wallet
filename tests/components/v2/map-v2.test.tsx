@@ -6,14 +6,24 @@ vi.mock("next/font/google", () => ({
   Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
   Noto_Sans_TC: () => ({ variable: "font-var-sans" }),
 }))
+const mapStubProps = vi.hoisted(() => ({
+  current: null as {
+    expenses?: unknown[]
+    mapStyle?: string
+    onExpenseClick?: (id: string) => void
+  } | null,
+}))
 vi.mock("next/dynamic", () => ({
-  default: () => (props: { mapStyle?: string; onExpenseClick?: (id: string) => void }) => (
-    <div data-testid="expense-map-stub" data-style={props.mapStyle}>
-      <button type="button" onClick={() => props.onExpenseClick?.("e1")}>
-        map-open
-      </button>
-    </div>
-  ),
+  default: () => (props: { expenses?: unknown[]; mapStyle?: string; onExpenseClick?: (id: string) => void }) => {
+    mapStubProps.current = props
+    return (
+      <div data-testid="expense-map-stub" data-style={props.mapStyle}>
+        <button type="button" onClick={() => props.onExpenseClick?.("e1")}>
+          map-open
+        </button>
+      </div>
+    )
+  },
 }))
 
 const push = vi.hoisted(() => vi.fn())
@@ -48,6 +58,26 @@ describe("MapV2View", () => {
     expect(screen.getByTestId("category-chip-food")).toHaveTextContent("餐飲 1")
   })
 
+  it("passes numeric coordinates to the map when the API serializes them as strings", () => {
+    // Prisma Decimal fields arrive from the API as JSON strings.
+    const stringyExpenses = expenses.map((e) => ({
+      ...e,
+      latitude: (e.latitude === null ? null : String(e.latitude)) as unknown as number,
+      longitude: (e.longitude === null ? null : String(e.longitude)) as unknown as number,
+    }))
+
+    renderView({ expenses: stringyExpenses })
+
+    const passed = (mapStubProps.current?.expenses ?? []) as { latitude?: unknown; longitude?: unknown }[]
+    expect(passed).toHaveLength(2)
+    for (const expense of passed) {
+      expect(typeof expense.latitude).toBe("number")
+      expect(typeof expense.longitude).toBe("number")
+      expect(Number.isNaN(expense.latitude)).toBe(false)
+      expect(Number.isNaN(expense.longitude)).toBe(false)
+    }
+  })
+
   it("opens an expense from the map", () => {
     renderView()
     fireEvent.click(screen.getByText("map-open"))
@@ -65,6 +95,15 @@ describe("MapV2View", () => {
     fireEvent.click(screen.getByTestId("map-style-toggle"))
     fireEvent.click(screen.getByTestId("map-style-option-watercolor"))
     await waitFor(() => expect(screen.getByTestId("expense-map-stub")).toHaveAttribute("data-style", "watercolor"))
+  })
+
+  it("keeps the map expenses array stable across unrelated re-renders", () => {
+    renderView()
+    const first = mapStubProps.current?.expenses
+
+    fireEvent.click(screen.getByTestId("map-style-toggle"))
+
+    expect(mapStubProps.current?.expenses).toBe(first)
   })
 
   it("shows the empty state with no located expenses (Review Focus 5)", () => {
