@@ -7,7 +7,7 @@ export function parseUiVersion(value: unknown): UiVersion | null {
   return value === "v1" || value === "v2" ? value : null
 }
 
-// Priority: url param > session storage > user preference > v1.
+// Priority: url param > session storage > user preference > v2.
 // `overridden` is true when the choice came from the comparison override
 // (param or storage), which is what makes the floating toggle visible.
 export function resolveUiVersion(input: {
@@ -24,7 +24,7 @@ export function resolveUiVersion(input: {
   const fromPreference = parseUiVersion(input.preference)
   if (fromPreference) return { version: fromPreference, overridden: false }
 
-  return { version: "v1", overridden: false }
+  return { version: "v2", overridden: false }
 }
 
 // sessionStorage can throw in LINE in-app browsers and private mode.

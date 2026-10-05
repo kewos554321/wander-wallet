@@ -37,7 +37,7 @@ export function GeneralSettingsV2() {
   const { user } = useLiff()
   const { preferences, save, error } = usePreferences()
   const { theme, setTheme } = useTheme()
-  const { enabled: betaEnabled, toggle: betaToggle, saving: betaSaving, error: betaError } = useBetaToggle()
+  const { enabled: betaEnabled, toggle: betaToggle, saving: betaSaving, error: betaError } = useBetaToggle({ invert: true })
   const { resetOnboarding } = useOnboarding()
   const [resettingTour, setResettingTour] = useState(false)
 
@@ -81,17 +81,17 @@ export function GeneralSettingsV2() {
           </button>
 
           <div className={`${cardClass} flex flex-col gap-3`}>
-            <p className={cardTitleClass}>新版介面</p>
+            <p className={cardTitleClass}>介面版本</p>
             <div className="flex items-center justify-between gap-3">
               <span>
-                <span className="block text-[13px] font-bold">試用新版介面（Beta）</span>
-                <span className="mt-0.5 block text-xs text-v2-ink-subtle">關閉後回到舊版介面</span>
+                <span className="block text-[13px] font-bold">使用舊版介面</span>
+                <span className="mt-0.5 block text-xs text-v2-ink-subtle">開啟後回到舊版介面</span>
               </span>
               <button
                 type="button"
                 role="switch"
                 aria-checked={betaEnabled}
-                aria-label="試用新版介面（Beta）"
+                aria-label="使用舊版介面"
                 disabled={betaSaving}
                 onClick={() => betaToggle(!betaEnabled)}
                 className={`relative inline-block h-[19px] w-8 shrink-0 rounded-full disabled:opacity-60 ${

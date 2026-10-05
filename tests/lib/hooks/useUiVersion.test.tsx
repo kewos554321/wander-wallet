@@ -19,9 +19,9 @@ describe("useUiVersion", () => {
     mockUseLiff.mockReturnValue({ user: { preferences: null } })
   })
 
-  it("defaults to v1 without override", async () => {
+  it("defaults to v2 without override", async () => {
     const { result } = renderHook(() => useUiVersion())
-    await waitFor(() => expect(result.current.version).toBe("v1"))
+    await waitFor(() => expect(result.current.version).toBe("v2"))
     expect(result.current.overridden).toBe(false)
   })
 

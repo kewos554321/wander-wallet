@@ -14,15 +14,15 @@ describe("UiVersionSwitch / UiVersionToggle", () => {
     window.history.replaceState(null, "", "/projects")
   })
 
-  it("renders v1 by default and hides the toggle", async () => {
+  it("renders v2 by default and hides the toggle", async () => {
     render(
       <>
         <UiVersionSwitch v1={<p>old</p>} v2={<p>new</p>} />
         <UiVersionToggle />
       </>
     )
-    expect(await screen.findByText("old")).toBeInTheDocument()
-    expect(screen.queryByText("new")).not.toBeInTheDocument()
+    expect(await screen.findByText("new")).toBeInTheDocument()
+    expect(screen.queryByText("old")).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /切換到/ })).not.toBeInTheDocument()
   })
 

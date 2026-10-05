@@ -41,3 +41,24 @@ describe("useBetaToggle", () => {
     expect(window.sessionStorage.getItem(UI_VERSION_STORAGE_KEY)).toBe("v2")
   })
 })
+
+describe("useBetaToggle (inverted: 使用舊版介面)", () => {
+  it("reflects the legacy (v1) version", () => {
+    ui.version = "v1"
+    expect(renderHook(() => useBetaToggle({ invert: true })).result.current.enabled).toBe(true)
+    ui.version = "v2"
+    expect(renderHook(() => useBetaToggle({ invert: true })).result.current.enabled).toBe(false)
+  })
+  it("saves v2 when the legacy switch is turned off", async () => {
+    save.mockResolvedValue(true)
+    const h = renderHook(() => useBetaToggle({ invert: true }))
+    await act(() => h.result.current.toggle(false))
+    expect(save).toHaveBeenCalledWith({ uiVersion: "v2" })
+  })
+  it("saves v1 when the legacy switch is turned on", async () => {
+    save.mockResolvedValue(true)
+    const h = renderHook(() => useBetaToggle({ invert: true }))
+    await act(() => h.result.current.toggle(true))
+    expect(save).toHaveBeenCalledWith({ uiVersion: "v1" })
+  })
+})

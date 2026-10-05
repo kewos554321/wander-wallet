@@ -45,9 +45,9 @@ describe("resolveUiVersion", () => {
     })
   })
 
-  it("defaults to v1", () => {
+  it("defaults to v2", () => {
     expect(resolveUiVersion({ param: null, stored: "garbage", preference: undefined })).toEqual({
-      version: "v1",
+      version: "v2",
       overridden: false,
     })
   })

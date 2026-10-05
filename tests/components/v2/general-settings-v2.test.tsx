@@ -92,10 +92,11 @@ describe("GeneralSettingsV2", () => {
     expect(within(card).getByText("E")).toBeInTheDocument()
   })
 
-  it("shows the beta switch checked and toggles it off on click", () => {
+  it("shows the legacy-UI switch and toggles it on click", () => {
     render(<GeneralSettingsV2 />)
-    const sw = screen.getByRole("switch", { name: "試用新版介面（Beta）" })
+    const sw = screen.getByRole("switch", { name: "使用舊版介面" })
     expect(sw).toHaveAttribute("aria-checked", "true")
+    expect(screen.getByText("開啟後回到舊版介面")).toBeInTheDocument()
     fireEvent.click(sw)
     expect(mockToggle).toHaveBeenCalledWith(false)
   })
