@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type ReactNode } from "react"
+import { useRef, useState, type ReactNode } from "react"
 import { format, formatDistanceToNow } from "date-fns"
 import { zhTW } from "date-fns/locale"
 import { CalendarDays, CircleX, Coins, DollarSign, Pencil, Plus, SlidersHorizontal, Tag, Trash2, User, Users } from "lucide-react"
@@ -118,6 +118,7 @@ export function ActivityLogsV2View(props: ActivityLogsV2ViewProps) {
     onLoadMore,
   } = props
   const [openPanel, setOpenPanel] = useState<string | null>(null)
+  const gridRef = useRef<HTMLDivElement>(null)
   const togglePanel = (key: string) => setOpenPanel((current) => (current === key ? null : key))
   const showCurrency = currencyOptions.length > 1
 
@@ -133,25 +134,25 @@ export function ActivityLogsV2View(props: ActivityLogsV2ViewProps) {
             <SearchField value={filters.search} onChange={onSearch} placeholder="搜尋描述、付款人、操作者..." ariaLabel="搜尋紀錄" />
           </div>
 
-          <div className="mb-2.5 grid grid-cols-3 gap-2">
-            <FilterPopover label="操作" icon={<SlidersHorizontal className="h-3.5 w-3.5" />} count={filters.actions.size} open={openPanel === "actions"} onToggle={() => togglePanel("actions")} widthClass="w-32">
+          <div ref={gridRef} className="mb-2.5 grid grid-cols-3 gap-2">
+            <FilterPopover label="操作" icon={<SlidersHorizontal className="h-3.5 w-3.5" />} count={filters.actions.size} open={openPanel === "actions"} onToggle={() => togglePanel("actions")} widthClass="w-32" boundsRef={gridRef}>
               <ActionPanel selected={filters.actions} onToggle={(k) => onToggle("actions", k)} onClear={() => filters.actions.forEach((k) => onToggle("actions", k))} />
             </FilterPopover>
-            <FilterPopover label="操作者" icon={<Users className="h-3.5 w-3.5" />} count={filters.actors.size} open={openPanel === "actors"} onToggle={() => togglePanel("actors")} widthClass="w-40">
+            <FilterPopover label="操作者" icon={<Users className="h-3.5 w-3.5" />} count={filters.actors.size} open={openPanel === "actors"} onToggle={() => togglePanel("actors")} widthClass="w-40" boundsRef={gridRef}>
               <NameListPanel title="誰執行操作" options={actorOptions} selected={filters.actors} onToggle={(k) => onToggle("actors", k)} onClear={() => filters.actors.forEach((k) => onToggle("actors", k))} emptyText="無操作者" />
             </FilterPopover>
-            <FilterPopover label="類別" icon={<Tag className="h-3.5 w-3.5" />} count={filters.categories.size} open={openPanel === "categories"} onToggle={() => togglePanel("categories")} align="right" widthClass="w-36">
+            <FilterPopover label="類別" icon={<Tag className="h-3.5 w-3.5" />} count={filters.categories.size} open={openPanel === "categories"} onToggle={() => togglePanel("categories")} align="right" widthClass="w-36" boundsRef={gridRef}>
               <CategoryPanel selected={filters.categories} onToggle={(k) => onToggle("categories", k)} onClear={() => filters.categories.forEach((k) => onToggle("categories", k))} />
             </FilterPopover>
-            <FilterPopover label="付款人" icon={<User className="h-3.5 w-3.5" />} count={filters.payers.size} open={openPanel === "payers"} onToggle={() => togglePanel("payers")} widthClass="w-36">
+            <FilterPopover label="付款人" icon={<User className="h-3.5 w-3.5" />} count={filters.payers.size} open={openPanel === "payers"} onToggle={() => togglePanel("payers")} widthClass="w-36" boundsRef={gridRef}>
               <NameListPanel title="誰付錢" options={payerOptions} selected={filters.payers} onToggle={(k) => onToggle("payers", k)} onClear={() => filters.payers.forEach((k) => onToggle("payers", k))} emptyText="無付款人" />
             </FilterPopover>
             {showCurrency ? (
-              <FilterPopover label="幣別" icon={<Coins className="h-3.5 w-3.5" />} count={filters.currencies.size} open={openPanel === "currencies"} onToggle={() => togglePanel("currencies")} widthClass="w-32">
+              <FilterPopover label="幣別" icon={<Coins className="h-3.5 w-3.5" />} count={filters.currencies.size} open={openPanel === "currencies"} onToggle={() => togglePanel("currencies")} widthClass="w-32" boundsRef={gridRef}>
                 <CurrencyPanel currencies={currencyOptions} selected={filters.currencies} onToggle={(k) => onToggle("currencies", k)} onClear={() => filters.currencies.forEach((k) => onToggle("currencies", k))} />
               </FilterPopover>
             ) : null}
-            <FilterPopover label="金額" icon={<DollarSign className="h-3.5 w-3.5" />} count={filters.amountRange[0] > 0 || filters.amountRange[1] > 0 ? 1 : 0} open={openPanel === "amount"} onToggle={() => togglePanel("amount")} widthClass="w-56">
+            <FilterPopover label="金額" icon={<DollarSign className="h-3.5 w-3.5" />} count={filters.amountRange[0] > 0 || filters.amountRange[1] > 0 ? 1 : 0} open={openPanel === "amount"} onToggle={() => togglePanel("amount")} widthClass="w-56" boundsRef={gridRef}>
               <AmountPanel range={filters.amountRange} max={amountMax} currency={projectCurrency} onChange={onAmountRange} onClear={() => onAmountRange([0, 0])} />
             </FilterPopover>
             <FilterPopover
@@ -164,6 +165,7 @@ export function ActivityLogsV2View(props: ActivityLogsV2ViewProps) {
               align="right"
               widthClass="w-[236px]"
               panelRadiusClass="rounded-[10px]"
+              boundsRef={gridRef}
             >
               <DatePanel range={filters.expenseRange} onChange={onExpenseRange} />
             </FilterPopover>

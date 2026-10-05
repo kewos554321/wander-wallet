@@ -160,6 +160,35 @@ describe("ActivityLogsV2View", () => {
     expect(panel.className).toContain("rounded-[10px]")
   })
 
+  it("clamps an over-wide filter panel to the filter grid", () => {
+    const domRect = (left: number, top: number, right: number, bottom: number) =>
+      ({ left, top, right, bottom, width: right - left, height: bottom - top, x: left, y: top, toJSON: () => ({}) }) as DOMRect
+    // 360px-wide single-currency layout: the grid spans 16..344 and the 金額
+    // chip is column 2 (128..232). Its 224px panel would reach x=352, 8px past
+    // the grid's right edge, so it must clamp to x=120 (344 - 224).
+    const gridRect = domRect(16, 100, 344, 400)
+    const amountRect = domRect(128, 140, 232, 172)
+    const zero = domRect(0, 0, 0, 0)
+    const rectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      if (this.className.includes("grid-cols-3")) return gridRect
+      if (this.querySelector("button")?.textContent?.includes("金額")) return amountRect
+      return zero
+    })
+    const ow = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetWidth")
+    const oh = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetHeight")
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", { configurable: true, get: () => 224 })
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", { configurable: true, get: () => 260 })
+
+    renderView()
+    fireEvent.click(screen.getByRole("button", { name: "金額" }))
+    const panel = screen.getByTestId("filter-panel")
+    expect(parseFloat(panel.style.left)).toBe(120)
+
+    rectSpy.mockRestore()
+    if (ow) Object.defineProperty(HTMLElement.prototype, "offsetWidth", ow)
+    if (oh) Object.defineProperty(HTMLElement.prototype, "offsetHeight", oh)
+  })
+
   it("shows the selected payment-date range on the chip", () => {
     renderView({ filters: { ...emptyFilters, expenseRange: { from: new Date(2026, 9, 4), to: new Date(2026, 9, 18) } } })
     expect(screen.getByRole("button", { name: "付款日期" })).toHaveTextContent("10/4~10/18")
