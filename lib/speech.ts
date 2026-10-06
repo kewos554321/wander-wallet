@@ -1,7 +1,7 @@
 /* c8 ignore start */
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from "react"
 
 interface SpeechRecognitionEvent {
   results: SpeechRecognitionResultList
@@ -98,9 +98,35 @@ function checkSpeechRecognitionSupport(): SpeechSupportStatus {
   return { supported: true, reason: "full" as const }
 }
 
+type DetectedPlatform = ReturnType<typeof detectPlatform>
+
+const DEFAULT_PLATFORM: DetectedPlatform = { isIOS: false, isAndroid: false, isWKWebView: false, isLIFF: false }
+const DEFAULT_SUPPORT: SpeechSupportStatus = { supported: false, reason: "ssr" }
+
+// 平台與支援狀態是對瀏覽器 API 的一次性讀取。透過 useSyncExternalStore 暴露，
+// 在 SSR/hydration 期間回傳預設值，掛載後才切換成實際偵測結果，避免在 effect
+// 內同步 setState 造成連鎖 render。快照需保持穩定，因此在此快取結果。
+const subscribeNoop = () => () => {}
+let platformSnapshot: DetectedPlatform | null = null
+function getPlatformSnapshot(): DetectedPlatform {
+  if (platformSnapshot === null) platformSnapshot = detectPlatform()
+  return platformSnapshot
+}
+function getPlatformServerSnapshot(): DetectedPlatform {
+  return DEFAULT_PLATFORM
+}
+let supportSnapshot: SpeechSupportStatus | null = null
+function getSupportSnapshot(): SpeechSupportStatus {
+  if (supportSnapshot === null) supportSnapshot = checkSpeechRecognitionSupport()
+  return supportSnapshot
+}
+function getSupportServerSnapshot(): SpeechSupportStatus {
+  return DEFAULT_SUPPORT
+}
+
 export function useSpeechRecognition() {
-  const [supportStatus, setSupportStatus] = useState<SpeechSupportStatus>({ supported: false, reason: "ssr" })
-  const [platform, setPlatform] = useState({ isIOS: false, isAndroid: false, isWKWebView: false, isLIFF: false })
+  const platform = useSyncExternalStore(subscribeNoop, getPlatformSnapshot, getPlatformServerSnapshot)
+  const supportStatus = useSyncExternalStore(subscribeNoop, getSupportSnapshot, getSupportServerSnapshot)
   const [isRecording, setIsRecording] = useState(false)
   const [transcript, setTranscript] = useState("")
   const [interimTranscript, setInterimTranscript] = useState("")
@@ -110,13 +136,9 @@ export function useSpeechRecognition() {
   const transcriptRef = useRef("")
 
   useEffect(() => {
-    // 初始化平台偵測
+    // 初始化平台偵測與語音支援狀態；對外暴露的狀態由上方 useSyncExternalStore 提供
     const detectedPlatform = detectPlatform()
-    setPlatform(detectedPlatform)
-
-    // 檢查語音支援狀態
     const status = checkSpeechRecognitionSupport()
-    setSupportStatus(status)
 
     if (!status.supported) return
 
