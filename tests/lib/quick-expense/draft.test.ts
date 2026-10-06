@@ -41,6 +41,26 @@ describe("fromParsed", () => {
     expect(q.payerIds).toEqual(["a", "b"])
     expect(q.pinnedPayerAmounts).toEqual({})
   })
+
+  it("seeds personal items and enables personal mode", () => {
+    const [q] = fromParsed([
+      {
+        ...base,
+        amount: 1200,
+        payers: [{ memberId: "a", amount: 700 }, { memberId: "b", amount: 500 }],
+        personalItems: [
+          { memberId: "b", name: "飲料", amount: 200 },
+          { memberId: "b", name: "甜點", amount: 100 },
+        ],
+      },
+    ])
+    expect(q.personalMode).toBe(true)
+    expect(q.personalMembers).toEqual(["b"])
+    expect(q.personalItems.b.map((i) => ({ name: i.name, amount: i.amount }))).toEqual([
+      { name: "飲料", amount: "200" },
+      { name: "甜點", amount: "100" },
+    ])
+  })
 })
 
 describe("itemDerivedPayers", () => {

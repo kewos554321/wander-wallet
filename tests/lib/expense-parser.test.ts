@@ -23,6 +23,7 @@ import {
   ParsedExpensesSchema,
   EXPENSE_CATEGORIES,
   resolvePayers,
+  resolvePersonalItems,
   type MemberInfo,
 } from "@/lib/ai/expense-parser"
 
@@ -210,6 +211,53 @@ describe("resolvePayers", () => {
   it("dedupes repeated members and keeps the first amount", () => {
     const payers = resolvePayers([{ name: "我", amount: 300 }, { name: "小雨", amount: 200 }], 500, members, currentUserName)
     expect(payers).toEqual([{ memberId: "member-1", amount: 300 }])
+  })
+})
+
+describe("resolvePersonalItems", () => {
+  const members: MemberInfo[] = [
+    { id: "member-1", displayName: "小明" },
+    { id: "member-2", displayName: "小華" },
+  ]
+  const currentUserName = "小明"
+
+  it("maps a person name to a member id", () => {
+    expect(resolvePersonalItems([{ person: "小華", name: "飲料", amount: 200 }], members, currentUserName)).toEqual([
+      { memberId: "member-2", name: "飲料", amount: 200 },
+    ])
+  })
+
+  it("resolves 我 to the current user", () => {
+    expect(resolvePersonalItems([{ person: "我", name: "咖啡", amount: 100 }], members, currentUserName)).toEqual([
+      { memberId: "member-1", name: "咖啡", amount: 100 },
+    ])
+  })
+
+  it("keeps multiple items for the same member", () => {
+    expect(
+      resolvePersonalItems(
+        [
+          { person: "小華", name: "飲料", amount: 200 },
+          { person: "小華", name: "甜點", amount: 100 },
+        ],
+        members,
+        currentUserName
+      )
+    ).toHaveLength(2)
+  })
+
+  it("drops entries with an empty name or a non-positive amount", () => {
+    expect(
+      resolvePersonalItems(
+        [
+          { person: "小華", name: "  ", amount: 200 },
+          { person: "小華", name: "飲料", amount: 0 },
+          { person: "小華", name: "飲料", amount: -5 },
+        ],
+        members,
+        currentUserName
+      )
+    ).toEqual([])
   })
 })
 

@@ -38,6 +38,18 @@ const ExpenseItemSchema = z.object({
   participantNames: z
     .array(z.string())
     .describe("這筆費用的分擔者名字陣列，如果說「大家」「全部」則填入所有成員"),
+  personalItems: z
+    .array(
+      z.object({
+        person: z
+          .string()
+          .describe("個人項目所屬的成員名字；若指目前用戶則填目前用戶名字"),
+        name: z.string().describe("個人項目名稱，例如 飲料、牛排、伴手禮，10字以內"),
+        amount: z.number().describe("該個人項目的金額，只取數字部分"),
+      })
+    )
+    .optional()
+    .describe("先扣的個人項目清單；若沒有任何人的個人項目就填空陣列 []（仍要輸出此欄位）"),
 })
 
 /**
@@ -75,6 +87,15 @@ export interface ParseExpenseInput {
 }
 
 /**
+ * 解析後的個人項目（已對應成員 ID），同一成員可有多項
+ */
+export interface ResolvedPersonalItem {
+  memberId: string
+  name: string
+  amount: number
+}
+
+/**
  * 單筆解析結果（含 ID 對應）
  */
 export interface ExpenseItemResult {
@@ -85,6 +106,7 @@ export interface ExpenseItemResult {
   currency: string // 幣別代碼
   payers: PayerShare[] // 這筆費用的付款人與各自金額（合計 = amount）
   participantIds: string[] // 這筆費用的分擔者 ID 陣列
+  personalItems?: ResolvedPersonalItem[] // 先扣的個人項目（已對應成員 ID）
   selected: boolean // 是否選中要儲存
 }
 
@@ -153,7 +175,15 @@ const EXPENSES_PARSER_PROMPT = ChatPromptTemplate.fromMessages([
    - 如果說「XXX 幫 A 跟 B 付」→ 分擔者是 A 和 B
    - 如果說「XXX 幫她自己跟 YYY 付」→ 分擔者是 XXX 和 YYY
    - 例如「交通 90, monica 幫她自己跟 tommy 付」→ 分擔者是 monica 和 tommy
-   - 如果沒提到分擔者 → 預設所有成員`,
+   - 如果沒提到分擔者 → 預設所有成員
+
+7. 每筆費用的個人項目（personalItems）：
+   - 「個人項目」是某位成員在這筆消費中專屬、要先從總額扣除的部分；扣完剩下的才由共同分攤者均分。
+   - 例如「晚餐 1200，jay 飲料 200 先扣，大家分」→ personalItems 加入一筆：person 填 "jay"、name 填 "飲料"、amount 填 200，而整筆 amount 仍為 1200
+   - 例如「早餐 300，小明自己買了 100 的咖啡」→ personalItems 加入一筆：person 填 "小明"、name 填 "咖啡"、amount 填 100
+   - 例如「門票 900，我和小明各有一張 300 的票」→ personalItems 加入兩筆：person 分別填 "我" 與 "小明"、name 皆填 "門票"、amount 皆填 300
+   - **這是同一筆費用內的個人項目，絕對不要拆成另一筆費用！**（不要因為出現「個人項目」或某人金額就新增一筆）
+   - 如果沒有任何人的個人項目 → personalItems 填空陣列（不填任何元素）`,
   ],
   ["human", "{transcript}"],
 ])
@@ -222,6 +252,7 @@ export async function parseExpenses(
       currency: expenseCurrency,
       payers,
       participantIds: finalParticipantIds,
+      personalItems: resolvePersonalItems(expense.personalItems ?? [], members, currentUserName),
       selected: true, // 預設全部選中
     }
   })
@@ -320,6 +351,41 @@ export function resolvePayers(
   if (result.ok) return result.shares
   // 解析出的金額加總超過支出金額：退回均分，避免產生無法儲存的付款清單。
   return derivePayerShares({ amount, payerIds, pinned: {} }).shares
+}
+
+/**
+ * 單一 parsed 個人項目（AI 原始輸出，名字 + 金額）
+ */
+export interface ParsedPersonalItem {
+  person: string
+  name: string
+  amount: number
+}
+
+/**
+ * 將 AI 解析出的個人項目名字對應到成員 ID。
+ *
+ * - 同一成員可有多個項目（各自保留）
+ * - 金額非正數或名稱為空者忽略
+ * - 成員對應沿用 findMemberIdByName
+ */
+export function resolvePersonalItems(
+  parsed: ParsedPersonalItem[],
+  members: MemberInfo[],
+  currentUserName: string
+): ResolvedPersonalItem[] {
+  const result: ResolvedPersonalItem[] = []
+  for (const item of parsed) {
+    if (!item) continue
+    const person = typeof item.person === "string" ? item.person.trim() : ""
+    const name = typeof item.name === "string" ? item.name.trim() : ""
+    const amount = Number(item.amount)
+    if (!person || !name || !Number.isFinite(amount) || amount <= 0) continue
+    const memberId = findMemberIdByName(person, members, currentUserName)
+    if (!memberId) continue
+    result.push({ memberId, name, amount })
+  }
+  return result
 }
 
 /**

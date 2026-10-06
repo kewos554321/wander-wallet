@@ -4,7 +4,13 @@ import { Camera, Image as ImageIcon, Loader2, Mic, SendHorizontal, Square, X } f
 import { useSpeechInput } from "@/lib/quick-expense/speech-input"
 import { SECTION_CARD } from "@/components/v2/expense-form/section-card"
 
-export const EXAMPLES = ["早餐 100 我付", "晚餐 600 大家分", "計程車 250 小明付", "超市 1280 我付 800、小明 480"]
+export const EXAMPLES = [
+  "早餐 100 我付",
+  "晚餐 600 大家分",
+  "計程車 250 小明付",
+  "超市 1280 我付 800、小明 480",
+  "晚餐 1200 我付 700、小明 500，小明飲料 200 先扣",
+]
 
 export type QuickInputMode = "text" | "image"
 

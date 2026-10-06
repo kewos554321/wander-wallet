@@ -1,7 +1,7 @@
 import type { ExpenseItemResult } from "@/lib/ai/expense-parser"
 import type { ImagePickerValue } from "@/components/ui/image-picker"
 import { derivePayerShares, type PayerShare } from "@/lib/expense-payers"
-import { deriveSplit, type SplitDraftItem, type SplitState } from "@/lib/split-draft"
+import { deriveSplit, newSplitItem, type SplitDraftItem, type SplitState } from "@/lib/split-draft"
 
 // A parsed expense being reviewed in the quick-expense confirm step.
 // `amount` stays a string so partially typed input ("12.") survives edits.
@@ -9,7 +9,7 @@ import { deriveSplit, type SplitDraftItem, type SplitState } from "@/lib/split-d
 // state the expense form uses, so both flows share SplitEditor.
 // Payer state mirrors useExpenseDraft: `payerIds` (ordered, multi-select) plus
 // `pinnedPayerAmounts` for manually-set amounts (absent = auto/equal).
-export interface QuickItem extends Omit<ExpenseItemResult, "amount" | "selected" | "payers"> {
+export interface QuickItem extends Omit<ExpenseItemResult, "amount" | "selected" | "payers" | "personalItems"> {
   amount: string
   payerIds: string[]
   pinnedPayerAmounts: Record<string, string>
@@ -28,7 +28,7 @@ export const EMPTY_IMAGE: ImagePickerValue = { image: null, pendingFile: null, p
 
 export function fromParsed(results: ExpenseItemResult[], today: Date = new Date()): QuickItem[] {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  return results.map(({ selected: _selected, amount, payers, ...rest }) => {
+  return results.map(({ selected: _selected, amount, payers, personalItems: parsedPersonalItems, ...rest }) => {
     const parsedPayers = payers ?? []
     const payerIds = parsedPayers.map((p) => p.memberId)
     // Pin amounts only when the AI returned an explicit split that differs from
@@ -42,6 +42,15 @@ export function fromParsed(results: ExpenseItemResult[], today: Date = new Date(
     if (!isEqualPayerSplit) {
       for (const p of parsedPayers) pinnedPayerAmounts[p.memberId] = String(p.amount)
     }
+
+    // Seed "先扣個人項目" from whatever the AI extracted (if any).
+    const personalItems: Record<string, SplitDraftItem[]> = {}
+    for (const item of parsedPersonalItems ?? []) {
+      if (!personalItems[item.memberId]) personalItems[item.memberId] = []
+      personalItems[item.memberId].push(newSplitItem(item.name, String(item.amount)))
+    }
+    const personalMembers = Object.keys(personalItems)
+
     return {
       ...rest,
       amount: String(amount),
@@ -52,9 +61,9 @@ export function fromParsed(results: ExpenseItemResult[], today: Date = new Date(
       latitude: null,
       longitude: null,
       image: { ...EMPTY_IMAGE },
-      personalMode: false,
-      personalItems: {},
-      personalMembers: [],
+      personalMode: personalMembers.length > 0,
+      personalItems,
+      personalMembers,
       customShares: {},
     }
   })
