@@ -160,6 +160,32 @@ describe("ConfirmStep", () => {
     expect(p.onIndexChange).not.toHaveBeenCalled()
   })
 
+  it("keeps the card when a vertical scroll drifts sideways past the threshold", () => {
+    const p = setup({ index: 0 })
+    const surface = screen.getByLabelText("金額").closest("div.mt-2")!
+    fireEvent.touchStart(surface, { touches: [{ clientX: 200, clientY: 400 }] })
+    fireEvent.touchMove(surface, { touches: [{ clientX: 140, clientY: 500 }] })
+    fireEvent.touchEnd(surface, { changedTouches: [{ clientX: 140, clientY: 500 }] })
+    expect(p.onIndexChange).not.toHaveBeenCalled()
+  })
+
+  it("keeps the card when the gesture is more vertical than horizontal", () => {
+    const p = setup({ index: 0 })
+    const surface = screen.getByLabelText("金額").closest("div.mt-2")!
+    fireEvent.touchStart(surface, { touches: [{ clientX: 200, clientY: 100 }] })
+    fireEvent.touchEnd(surface, { changedTouches: [{ clientX: 140, clientY: 200 }] })
+    expect(p.onIndexChange).not.toHaveBeenCalled()
+  })
+
+  it("switches cards on a deliberate horizontal swipe", () => {
+    const p = setup({ index: 0 })
+    const surface = screen.getByLabelText("金額").closest("div.mt-2")!
+    fireEvent.touchStart(surface, { touches: [{ clientX: 220, clientY: 300 }] })
+    fireEvent.touchMove(surface, { touches: [{ clientX: 180, clientY: 305 }] })
+    fireEvent.touchEnd(surface, { changedTouches: [{ clientX: 140, clientY: 308 }] })
+    expect(p.onIndexChange).toHaveBeenLastCalledWith(1)
+  })
+
   it("navigates with the previous/next buttons and disables them at the ends", () => {
     const p = setup({ index: 0 })
     expect(screen.getByRole("button", { name: "上一筆" })).toBeDisabled()

@@ -8,6 +8,9 @@ import { QuickItemCard } from "./quick-item-card"
 
 type Member = { id: string; displayName: string; image?: string | null }
 const SWIPE_THRESHOLD = 50
+// Movement below this many pixels on both axes stays ambiguous; past it we lock
+// the gesture to an axis so a vertical scroll never switches cards.
+const AXIS_SLOP = 10
 
 export function ConfirmStep({ items, members, index, onIndexChange, onItemsChange, onReinput, onSubmit, onClose, canNotifyLine, notifyLine, onNotifyLineChange, error }: {
   items: QuickItem[]
@@ -23,7 +26,8 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
   onNotifyLineChange: (notifyLine: boolean) => void
   error: string | null
 }) {
-  const touchX = useRef<number | null>(null)
+  const touchStart = useRef<{ x: number; y: number } | null>(null)
+  const axis = useRef<"x" | "y" | null>(null)
   const [dragX, setDragX] = useState(0)
   const current = items[index]
   const go = (i: number) => i >= 0 && i < items.length && onIndexChange(i)
@@ -37,19 +41,36 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
   const totals = itemTotals(items).map((t) => formatCurrency(t.total, t.currency)).join(" · ")
 
   const startSwipe = (e: React.TouchEvent) => {
-    touchX.current = e.touches[0].clientX
+    const t = e.touches[0]
+    touchStart.current = { x: t.clientX, y: t.clientY ?? 0 }
+    axis.current = null
   }
   const moveSwipe = (e: React.TouchEvent) => {
-    if (touchX.current !== null) setDragX(e.touches[0].clientX - touchX.current)
+    const start = touchStart.current
+    if (!start) return
+    const t = e.touches[0]
+    const dx = t.clientX - start.x
+    const dy = (t.clientY ?? 0) - start.y
+    if (axis.current === null) {
+      if (Math.abs(dx) < AXIS_SLOP && Math.abs(dy) < AXIS_SLOP) return
+      axis.current = Math.abs(dx) > Math.abs(dy) ? "x" : "y"
+    }
+    if (axis.current === "x") setDragX(dx)
   }
   const endSwipe = (e: React.TouchEvent) => {
-    if (touchX.current === null) {
-      setDragX(0)
-      return
-    }
-    const dx = e.changedTouches[0].clientX - touchX.current
-    touchX.current = null
+    const start = touchStart.current
+    const locked = axis.current
+    touchStart.current = null
+    axis.current = null
     setDragX(0)
+    if (!start) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - start.x
+    const dy = (t.clientY ?? 0) - start.y
+    // A vertical gesture, or one that isn't clearly horizontal, is a scroll —
+    // never switch cards on it.
+    if (locked === "y") return
+    if (Math.abs(dx) <= Math.abs(dy)) return
     if (dx <= -SWIPE_THRESHOLD) go(index + 1)
     else if (dx >= SWIPE_THRESHOLD) go(index - 1)
   }
@@ -125,7 +146,10 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
       >
         <QuickItemCard key={current.id} item={current} members={members} onChange={patch} />
       </div>
-      <div className="h-44" />
+      {/* Reserve room for the fixed action bar below. It can stack the LINE
+          toggle, an error line, the totals card and the buttons (~224px), so a
+          plain spacer must clear all of them or the last field is covered. */}
+      <div className="h-60" />
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-v2-line bg-v2-surface px-4 py-3.5">
