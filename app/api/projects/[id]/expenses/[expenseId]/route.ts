@@ -275,7 +275,7 @@ export async function PUT(
       for (const m of members) memberNameMap[m.id] = m.displayName
     }
 
-    const payerLabel = (list: { memberId: string; amount: number | string }[]) =>
+    const payerLabel = (list: { memberId: string; amount: unknown }[]) =>
       list.map((p) => `${memberNameMap[p.memberId] ?? "未知"} $${Number(p.amount)}`).join("、")
 
     const oldPayerKey = [...existingExpense.payers]
