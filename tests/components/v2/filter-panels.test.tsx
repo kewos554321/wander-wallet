@@ -145,11 +145,11 @@ describe("ExpenseFilterBar panels", () => {
     expect(props.onClearCategories).toHaveBeenCalled()
   })
 
-  it("single-selects a payer", () => {
-    const props = renderBar()
+  it("adds a payer to the existing selection (multi-select)", () => {
+    const props = renderBar({ filters: { ...baseFilters, selectedPayers: new Set(["me"]) } })
     fireEvent.click(screen.getByRole("button", { name: /付款成員/ }))
-    fireEvent.click(screen.getByRole("radio", { name: "志明" }))
-    expect(props.onSetPayers).toHaveBeenCalledWith(new Set(["chi"]))
+    fireEvent.click(screen.getByRole("checkbox", { name: "志明" }))
+    expect(props.onSetPayers).toHaveBeenCalledWith(new Set(["me", "chi"]))
   })
 
   it("clears the selected payer", () => {
@@ -279,7 +279,7 @@ describe("ExpenseFilterBar panels", () => {
     expect(screen.getByRole("checkbox", { name: "餐飲" })).toHaveAttribute("aria-checked", "true")
     fireEvent.mouseDown(document.body)
     fireEvent.click(screen.getByRole("button", { name: /付款成員/ }))
-    expect(screen.getByRole("radio", { name: "志明" })).toHaveAttribute("aria-checked", "true")
+    expect(screen.getByRole("checkbox", { name: "志明" })).toHaveAttribute("aria-checked", "true")
     fireEvent.mouseDown(document.body)
     fireEvent.click(screen.getByRole("button", { name: /參與者/ }))
     expect(screen.getByRole("checkbox", { name: "我" })).toHaveAttribute("aria-checked", "true")
@@ -307,10 +307,10 @@ describe("ExpenseFilterBar panels", () => {
     expect(screen.getByText("11/12~")).toBeInTheDocument()
   })
 
-  it("clears the payer when the selected payer is toggled again", () => {
+  it("removes a payer when the selected payer is toggled again", () => {
     const props = renderBar({ filters: { ...baseFilters, selectedPayers: new Set(["chi"]) } })
     fireEvent.click(screen.getByRole("button", { name: /付款成員/ }))
-    fireEvent.click(screen.getByRole("radio", { name: "志明" }))
+    fireEvent.click(screen.getByRole("checkbox", { name: "志明" }))
     expect(props.onSetPayers).toHaveBeenCalledWith(new Set())
   })
 

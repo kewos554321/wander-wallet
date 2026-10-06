@@ -70,9 +70,13 @@ export function ExpenseFilterBar(props: ExpenseFilterBarProps) {
             title="選擇付款成員"
             members={members(props.payers)}
             selected={filters.selectedPayers}
-            onToggle={(id) => props.onSetPayers(filters.selectedPayers.has(id) ? new Set() : new Set([id]))}
+            onToggle={(id) => {
+              const next = new Set(filters.selectedPayers)
+              if (next.has(id)) next.delete(id)
+              else next.add(id)
+              props.onSetPayers(next)
+            }}
             onClear={props.onClearPayers}
-            round
           />
         </FilterPopover>
 
