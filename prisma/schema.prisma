@@ -74,6 +74,7 @@ model ProjectMember {
   paidExpenses        Expense[]            @relation("ExpensePayer")
   deletedExpenses     Expense[]            @relation("ExpenseDeleter")
   expenseParticipants ExpenseParticipant[] @relation("ExpenseParticipant")
+  paidPayers          ExpensePayer[]       @relation("ExpensePayerMember")
   activityLogs        ActivityLog[]        @relation("ActivityActor")
 
   @@index([projectId])
@@ -128,6 +129,7 @@ model Expense {
   payer         ProjectMember        @relation("ExpensePayer", fields: [paidByMemberId], references: [id], onDelete: Cascade)
   deletedBy     ProjectMember?       @relation("ExpenseDeleter", fields: [deletedByMemberId], references: [id], onDelete: SetNull)
   participants  ExpenseParticipant[]
+  payers        ExpensePayer[]
 
   @@index([projectId])
   @@index([paidByMemberId])
@@ -149,6 +151,23 @@ model ExpenseParticipant {
   @@index([memberId])
   @@unique([expenseId, memberId])
   @@map("expense_participants")
+}
+
+// 費用付款人（一筆費用可多人共同出資）
+model ExpensePayer {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  expenseId String  @map("expense_id") @db.Uuid
+  memberId  String  @map("member_id") @db.Uuid
+  amount    Decimal @db.Decimal(10, 2)
+  sortOrder Int     @default(0) @map("sort_order")
+
+  expense Expense       @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  member  ProjectMember @relation("ExpensePayerMember", fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([expenseId])
+  @@index([memberId])
+  @@unique([expenseId, memberId])
+  @@map("expense_payers")
 }
 
 // 操作歷史紀錄

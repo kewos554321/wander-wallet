@@ -25,7 +25,10 @@
     "db:push:main": "dotenv -e .env.main -- prisma db push",
     "db:diff:dev": "dotenv -e .env.dev -- sh -c 'prisma migrate diff --from-url \"$DATABASE_URL\" --to-schema-datamodel prisma/schema.prisma --script'",
     "db:diff:main": "dotenv -e .env.main -- sh -c 'prisma migrate diff --from-url \"$DATABASE_URL\" --to-schema-datamodel prisma/schema.prisma --script'",
-    "db:export": "export $(grep -E '^DATABASE_URL=' .env.dev | xargs) && echo $DATABASE_URL"
+    "db:export": "export $(grep -E '^DATABASE_URL=' .env.dev | xargs) && echo $DATABASE_URL",
+    "db:backfill-expense-payers": "dotenv -e .env -- node scripts/backfill-expense-payers.mjs",
+    "db:backfill-expense-payers:dev": "dotenv -e .env.dev -- node scripts/backfill-expense-payers.mjs",
+    "db:backfill-expense-payers:main": "dotenv -e .env.main -- node scripts/backfill-expense-payers.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.958.0",
