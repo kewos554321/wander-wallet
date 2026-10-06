@@ -1,6 +1,7 @@
 "use client"
 
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
+import { V2BrandMark } from "@/components/v2/ui/v2-brand-mark"
 
 export interface LoginV2Props {
   isDevMode: boolean
@@ -15,9 +16,10 @@ export function LoginV2({ isDevMode, onLogin }: LoginV2Props) {
   return (
     <UiV2Scope className="flex min-h-screen items-center justify-center p-4">
       <div data-testid="login-v2" className="w-[320px] rounded-[20px] border border-v2-line bg-v2-surface px-[26px] py-8 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[20px] bg-v2-lake font-v2-serif text-[26px] font-bold text-v2-paper">
-          W
-        </div>
+        <V2BrandMark
+          className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[20px] bg-gradient-to-br from-v2-link to-v2-lake text-v2-paper shadow-[0_2px_6px_rgba(27,88,71,.35)]"
+          iconClassName="h-[38px] w-[38px]"
+        />
         <h1 className="m-0 font-v2-serif text-[22px] font-bold text-v2-ink">Wander Wallet</h1>
         <p className="mb-6 mt-1.5 text-[13px] leading-[1.5] text-v2-ink-muted">
           <span className="block">旅行分帳好幫手</span>

@@ -12,6 +12,7 @@ describe("LoginV2", () => {
     const onLogin = vi.fn()
     render(<LoginV2 isDevMode={false} onLogin={onLogin} />)
     expect(screen.getByTestId("login-v2")).toBeInTheDocument()
+    expect(screen.getByTestId("v2-brand-mark")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Wander Wallet" })).toBeInTheDocument()
     expect(screen.getByText("旅行分帳好幫手")).toBeInTheDocument()
     expect(screen.getByText("和旅伴一起輕鬆記帳、安心同行")).toBeInTheDocument()
