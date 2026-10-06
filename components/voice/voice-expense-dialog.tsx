@@ -20,6 +20,7 @@ import { mergePreferences } from "@/types/user-preferences"
 import { Checkbox } from "@/components/ui/checkbox"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import type { ExpenseItemResult, ParseExpensesResult } from "@/lib/ai/expense-parser"
+import { derivePayerShares, primaryPayerId } from "@/lib/expense-payers"
 import {
   Mic,
   MicOff,
@@ -135,7 +136,7 @@ export function VoiceExpenseDialog({
   })
   const [parsingImage, setParsingImage] = useState(false)
 
-  // 多筆費用解析結果（每筆費用有獨立的 payerId 和 participantIds）
+  // 多筆費用解析結果（每筆費用有獨立的 payers 和 participantIds）
   const [expenses, setExpenses] = useState<ExpenseItemResult[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
 
@@ -350,7 +351,7 @@ export function VoiceExpenseDialog({
 
       const parsed: ParseExpensesResult = data.data
 
-      // 填入解析結果（每筆費用已包含獨立的 payerId 和 participantIds）
+      // 填入解析結果（每筆費用已包含獨立的 payers 和 participantIds）
       setExpenses(parsed.expenses)
       setCurrentIndex(0)
       setStep("confirm")
@@ -413,7 +414,8 @@ export function VoiceExpenseDialog({
         description: parsed.description,
         category: parsed.category as ExpenseItemResult["category"],
         currency: currency, // 使用專案預設幣別
-        payerId: currentUserMemberId,
+        // 收據辨識維持單一付款人（目前使用者、全額）
+        payers: [{ memberId: currentUserMemberId, amount: parsed.amount }],
         participantIds: allMemberIds,
         selected: true,
       }
@@ -468,9 +470,31 @@ export function VoiceExpenseDialog({
   // 更新費用欄位
   function updateExpense(expenseId: string, field: keyof ExpenseItemResult, value: string | number | string[]) {
     setExpenses((prev) =>
-      prev.map((e) =>
-        e.id === expenseId ? { ...e, [field]: value } : e
-      )
+      prev.map((e) => {
+        if (e.id !== expenseId) return e
+        // 改金額時以均分重新推算付款人，確保合計 = 金額
+        if (field === "amount") {
+          const amount = Number(value) || 0
+          const payerIds = (e.payers ?? []).map((p) => p.memberId)
+          return { ...e, amount, payers: derivePayerShares({ amount, payerIds, pinned: {} }).shares }
+        }
+        return { ...e, [field]: value }
+      })
+    )
+  }
+
+  // 切換單筆費用的付款人（多選；均分）
+  function toggleExpensePayer(expenseId: string, memberId: string) {
+    setExpenses((prev) =>
+      prev.map((e) => {
+        if (e.id !== expenseId) return e
+        const current = e.payers ?? []
+        const has = current.some((p) => p.memberId === memberId)
+        const payerIds = has
+          ? current.map((p) => p.memberId).filter((id) => id !== memberId)
+          : [...current.map((p) => p.memberId), memberId]
+        return { ...e, payers: derivePayerShares({ amount: e.amount, payerIds, pinned: {} }).shares }
+      })
     )
   }
 
@@ -589,7 +613,7 @@ export function VoiceExpenseDialog({
         description: "早餐",
         category: "food" as const,
         currency: currency,
-        payerId: currentUserMemberId,
+        payers: [{ memberId: currentUserMemberId, amount: 50 }],
         participantIds: allMemberIds,
         selected: true,
       },
@@ -599,7 +623,7 @@ export function VoiceExpenseDialog({
         description: "午餐",
         category: "food" as const,
         currency: currency,
-        payerId: currentUserMemberId,
+        payers: [{ memberId: currentUserMemberId, amount: 60 }],
         participantIds: allMemberIds,
         selected: true,
       },
@@ -609,7 +633,7 @@ export function VoiceExpenseDialog({
         description: "晚餐",
         category: "food" as const,
         currency: currency,
-        payerId: members[1]?.id || currentUserMemberId,
+        payers: [{ memberId: members[1]?.id || currentUserMemberId, amount: 100 }],
         participantIds: allMemberIds,
         selected: true,
       },
@@ -619,7 +643,7 @@ export function VoiceExpenseDialog({
         description: "交通",
         category: "transport" as const,
         currency: currency,
-        payerId: members[1]?.id || currentUserMemberId,
+        payers: [{ memberId: members[1]?.id || currentUserMemberId, amount: 90 }],
         participantIds: members.slice(0, 2).map((m) => m.id),
         selected: true,
       },
@@ -642,8 +666,14 @@ export function VoiceExpenseDialog({
     // 檢查每筆費用是否都有付款人和分擔者
     for (let i = 0; i < expenses.length; i++) {
       const expense = expenses[i]
-      if (!expense.payerId) {
+      if (!expense.payers || expense.payers.length === 0) {
         setError(`第 ${i + 1} 筆費用請選擇付款人`)
+        setCurrentIndex(i)
+        return
+      }
+      const payerSum = expense.payers.reduce((sum, p) => sum + Number(p.amount), 0)
+      if (Math.abs(payerSum - expense.amount) > 0.01) {
+        setError(`第 ${i + 1} 筆費用的付款金額與支出金額不符`)
         setCurrentIndex(i)
         return
       }
@@ -659,7 +689,7 @@ export function VoiceExpenseDialog({
     setSaveProgress({ current: 0, total: expenses.length })
 
     try {
-      // 逐筆儲存，每筆使用獨立的 payerId 和 participantIds
+      // 逐筆儲存，每筆使用獨立的 payers 和 participantIds
       for (let i = 0; i < expenses.length; i++) {
         const expense = expenses[i]
         setSaveProgress({ current: i + 1, total: expenses.length })
@@ -700,7 +730,7 @@ export function VoiceExpenseDialog({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            paidByMemberId: expense.payerId,
+            payers: expense.payers,
             amount: expense.amount,
             currency: expense.currency,
             description: expense.description.trim() || null,
@@ -729,7 +759,7 @@ export function VoiceExpenseDialog({
             operationType: "create",
             projectName,
             projectId,
-            payerName: members.find((m) => m.id === expense.payerId)?.displayName || "未知",
+            payerName: members.find((m) => m.id === primaryPayerId(expense.payers))?.displayName || "未知",
             amount: expense.amount,
             description: expense.description || undefined,
             category: expense.category || undefined,
@@ -746,7 +776,7 @@ export function VoiceExpenseDialog({
               amount: expense.amount,
               description: expense.description || undefined,
               category: expense.category || undefined,
-              payerName: members.find((m) => m.id === expense.payerId)?.displayName || "未知",
+              payerName: members.find((m) => m.id === primaryPayerId(expense.payers))?.displayName || "未知",
               participantCount: expense.participantIds.length,
             })),
           }).catch(() => {
@@ -1271,18 +1301,20 @@ export function VoiceExpenseDialog({
                               </div>
                             </div>
 
-                            {/* 付款人 */}
+                            {/* 付款人（多選） */}
                             <div>
-                              <label className="block text-xs text-muted-foreground mb-2">誰付的錢？</label>
-                              <div className="flex flex-wrap gap-1.5">
+                              <label className="block text-xs text-muted-foreground mb-2">
+                                誰付的錢？（{expense.payers.length}人）
+                              </label>
+                              <div role="group" aria-label="付款成員" className="flex flex-wrap gap-1.5">
                                 {members.map((member) => {
                                   const avatarData = parseAvatarString(member.user?.image)
-                                  const isSelected = expense.payerId === member.id
+                                  const isSelected = expense.payers.some((p) => p.memberId === member.id)
                                   return (
                                     <button
                                       key={member.id}
                                       type="button"
-                                      onClick={() => updateExpense(expense.id, "payerId", member.id)}
+                                      onClick={() => toggleExpensePayer(expense.id, member.id)}
                                       className={`flex items-center gap-1 px-2 py-1 rounded-full transition-all text-xs ${
                                         isSelected
                                           ? "bg-primary text-primary-foreground"

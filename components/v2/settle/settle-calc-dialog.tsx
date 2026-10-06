@@ -117,9 +117,16 @@ export function SettlementCalcDialog({ open, onOpenChange, data }: SettlementCal
                     : ""}
                   {formatCurrency(expense.convertedAmount, currency)}
                 </p>
-                <p className="m-0 flex items-center gap-1.5 text-[11px] text-v2-lake">
-                  <V2Avatar image={expense.payer.userImage ?? null} name={expense.payer.displayName} className="h-4 w-4 rounded-full" />
-                  <span>付款：{expense.payer.displayName}</span>
+                <p data-testid="payer-line" className="m-0 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-v2-lake">
+                  <span>付款：</span>
+                  {expense.payers.map((p, i) => (
+                    <span key={p.memberId} className="inline-flex items-center gap-1">
+                      {i > 0 ? <span aria-hidden="true">、</span> : null}
+                      <V2Avatar image={p.userImage ?? null} name={p.displayName} className="h-4 w-4 rounded-full" />
+                      <span>{p.displayName}</span>
+                      <span className="text-v2-gold">{formatCurrency(p.convertedAmount, currency)}</span>
+                    </span>
+                  ))}
                 </p>
                 <p data-testid="split-line" className="m-0 text-[11px] text-v2-gold">
                   {`分攤：${splitLine(expense, currency)}`}

@@ -39,7 +39,7 @@ function equalSplitData(): SettleData {
         amount: 1280,
         currency: "TWD",
         convertedAmount: 1280,
-        payer: { memberId: "a", displayName: "志明" },
+        payers: [{ memberId: "a", displayName: "志明", amount: 1280, convertedAmount: 1280 }],
         participants: [
           { memberId: "a", displayName: "志明", shareAmount: 320, convertedShareAmount: 320 },
           { memberId: "b", displayName: "小美", shareAmount: 320, convertedShareAmount: 320 },
@@ -78,10 +78,26 @@ describe("SettlementCalcDialog (A26)", () => {
   it("renders the expense detail heading, payer and converted amount", () => {
     renderDialog(equalSplitData())
     expect(screen.getByText("支出明細（共 1 筆）")).toBeInTheDocument()
-    expect(screen.getByText(/付款：志明/)).toBeInTheDocument()
+    const payerLine = screen.getByTestId("payer-line")
+    expect(within(payerLine).getByText("志明")).toBeInTheDocument()
+    expect(payerLine.textContent).toContain("TWD 1,280")
     const detail = screen.getByText(/一蘭拉麵晚餐 · TWD 1,280/)
     expect(detail).toBeInTheDocument()
     expect(detail.textContent).not.toContain("→")
+  })
+
+  it("lists every payer with its converted amount for a multi-payer expense", () => {
+    const data = equalSplitData()
+    data.expenseDetails[0].payers = [
+      { memberId: "a", displayName: "志明", amount: 800, convertedAmount: 800 },
+      { memberId: "b", displayName: "小美", amount: 480, convertedAmount: 480 },
+    ]
+    renderDialog(data)
+    const payerLine = screen.getByTestId("payer-line")
+    expect(within(payerLine).getByText("志明")).toBeInTheDocument()
+    expect(within(payerLine).getByText("小美")).toBeInTheDocument()
+    expect(payerLine.textContent).toContain("TWD 800")
+    expect(payerLine.textContent).toContain("TWD 480")
   })
 
   it("shows the original amount before the converted amount for multi-currency expenses", () => {
@@ -147,13 +163,13 @@ describe("SettlementCalcDialog (A26)", () => {
 
   it("summarizes personal items, the shared remainder and the payer avatar", () => {
     const data = equalSplitData()
-    data.expenseDetails[0].payer.userImage = "https://cdn.example/zhiming.jpg"
+    data.expenseDetails[0].payers[0].userImage = "https://cdn.example/zhiming.jpg"
     data.expenseDetails[0].participants = [
       { memberId: "a", displayName: "志明", userImage: "https://cdn.example/zhiming.jpg", shareAmount: 980, convertedShareAmount: 980, personalItems: [{ name: "溫泉", amount: 660, convertedAmount: 660 }], sharedAmount: 320 },
       { memberId: "b", displayName: "小美", userImage: null, shareAmount: 300, convertedShareAmount: 300, personalItems: [{ name: "紀念品", amount: 300, convertedAmount: 300 }], sharedAmount: 0 },
     ]
     renderDialog(data)
-    const payer = screen.getByText(/付款：志明/).closest("p")!
+    const payer = screen.getByTestId("payer-line")
     expect(payer.querySelector('img[src="https://cdn.example/zhiming.jpg"]')).toBeInTheDocument()
     const split = screen.getByTestId("split-line")
     expect(split.textContent).toContain("個人")

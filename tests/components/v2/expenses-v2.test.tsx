@@ -51,7 +51,7 @@ function expense(overrides: Partial<ProjectExpense>): ProjectExpense {
     longitude: null,
     expenseDate: at(11, 16, 19, 20),
     createdAt: at(11, 16, 19, 22),
-    payer: zhi,
+    payers: [{ id: "py1", memberId: "chi", amount: 1280, member: zhi }],
     participants: [
       { id: "p1", shareAmount: 640, member: zhi },
       { id: "p2", shareAmount: 640, member: me },
@@ -62,7 +62,7 @@ function expense(overrides: Partial<ProjectExpense>): ProjectExpense {
 
 const expenses = [
   expense({ id: "e1" }),
-  expense({ id: "e2", description: null, category: "transport", amount: 6400, payer: me, expenseDate: at(11, 15, 9), createdAt: at(11, 15, 9, 3), location: "京都市內", image: "https://example.com/r.jpg" }),
+  expense({ id: "e2", description: null, category: "transport", amount: 6400, payers: [{ id: "py2", memberId: "me", amount: 6400, member: me }], expenseDate: at(11, 15, 9), createdAt: at(11, 15, 9, 3), location: "京都市內", image: "https://example.com/r.jpg" }),
 ]
 
 function renderView(overrides: Partial<Parameters<typeof ExpensesV2View>[0]> = {}) {
@@ -157,11 +157,24 @@ describe("ExpensesV2View", () => {
   it("renders the payer avatar image in the card when present", () => {
     const withImage = expense({
       id: "e7",
-      payer: { ...zhi, user: { id: "u2", name: "志明", email: "zhi@example.com", image: "https://cdn.example/zhi.jpg" } },
+      payers: [{ id: "py3", memberId: "chi", amount: 1280, member: { ...zhi, user: { id: "u2", name: "志明", email: "zhi@example.com", image: "https://cdn.example/zhi.jpg" } } }],
     })
     renderView({ expenses: [withImage], allCount: 1, summary: { total: 1280, count: 1, average: 1280 } })
     const card = screen.getByRole("link", { name: /一蘭拉麵晚餐/ })
     expect(card.querySelector('img[src="https://cdn.example/zhi.jpg"]')).toBeInTheDocument()
+  })
+
+  it("shows a compact multi-payer label with the primary payer and payer count", () => {
+    const multi = expense({
+      id: "e8",
+      payers: [
+        { id: "py4", memberId: "me", amount: 280, member: me },
+        { id: "py5", memberId: "chi", amount: 1000, member: zhi },
+      ],
+    })
+    renderView({ expenses: [multi], allCount: 1, summary: { total: 1280, count: 1, average: 1280 } })
+    const card = screen.getByRole("link", { name: /一蘭拉麵晚餐/ })
+    expect(within(card).getByText("志明等 2 人付款")).toBeInTheDocument()
   })
 
   it("shows the count line and wires delete and image", () => {

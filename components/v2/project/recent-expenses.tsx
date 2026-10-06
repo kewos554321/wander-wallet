@@ -2,6 +2,7 @@ import Link from "next/link"
 import { CATEGORY_ICONS, getCategoryLabel } from "@/lib/constants/expenses"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { getRecentExpenses, type OverviewExpense, type OverviewMember } from "@/lib/project-overview"
+import { primaryPayerId, primaryPayerName } from "@/lib/expense-payers"
 import { CATEGORY_TONES, categoryKey } from "@/components/v2/category-style"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import { NEUTRAL_AVATAR_TONE } from "@/components/v2/expenses/avatar-tone"
@@ -32,9 +33,18 @@ export function RecentExpenses({ projectId, expenses, members, currentMemberId }
           recent.map((expense, i) => {
             const key = categoryKey(expense.category)
             const Icon = CATEGORY_ICONS[key]
-            const isMe = expense.payer.id === currentMemberId
-            const payerName = isMe ? "我" : expense.payer.displayName
-            const payerMember = memberById.get(expense.payer.id)
+            const primaryId = primaryPayerId(expense.payers)
+            const isMe = primaryId === currentMemberId
+            const payerLabel = isMe
+              ? "我"
+              : primaryPayerName(expense.payers.map((p) => ({ ...p, member: memberById.get(p.memberId) })))
+            const payerMember = memberById.get(primaryId)
+            const payerText =
+              expense.payers.length <= 1
+                ? isMe
+                  ? "我付款"
+                  : `${payerLabel}付款`
+                : `${payerLabel}等 ${expense.payers.length} 人付款`
             const participants = expense.participants
               .map((p) => memberById.get(p.memberId))
               .filter((m): m is OverviewMember => Boolean(m))
@@ -61,11 +71,11 @@ export function RecentExpenses({ projectId, expenses, members, currentMemberId }
                   <span className="mt-0.5 flex items-center gap-1 whitespace-nowrap text-[11px] leading-4 text-v2-ink-muted">
                     <V2Avatar
                       image={payerMember?.user?.image ?? null}
-                      name={payerName}
+                      name={payerLabel}
                       className="h-3.5 w-3.5 shrink-0 rounded-full"
                       fallbackClassName={`text-[7px] font-bold ${NEUTRAL_AVATAR_TONE}`}
                     />
-                    <span className="min-w-0 truncate font-medium">{isMe ? "我付款" : `${payerName}付款`}</span>
+                    <span className="min-w-0 truncate font-medium">{payerText}</span>
                     <span className="h-px w-2 shrink-0 bg-v2-check" aria-hidden="true" />
                     <span className="flex shrink-0" aria-hidden="true">
                       {shown.map((m, idx) => {

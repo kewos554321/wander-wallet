@@ -26,7 +26,6 @@ async function main() {
         expenseId: expense.id,
         memberId: expense.paidByMemberId,
         amount: expense.amount,
-        sortOrder: 0,
       },
     })
     created += 1

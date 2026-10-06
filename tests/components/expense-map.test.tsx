@@ -67,7 +67,10 @@ describe("ExpenseMap Component", () => {
       latitude: 35.6812,
       longitude: 139.7671,
       expenseDate: "2024-12-01",
-      payer: { displayName: "小明" },
+      payers: [
+        { memberId: "m1", displayName: "小明" },
+        { memberId: "m2", displayName: "小華" },
+      ],
     },
     {
       id: "expense-2",
@@ -79,7 +82,7 @@ describe("ExpenseMap Component", () => {
       latitude: 35.6896,
       longitude: 139.6917,
       expenseDate: "2024-12-01",
-      payer: { displayName: "小華" },
+      payers: [{ memberId: "m3", displayName: "小華" }],
     },
   ]
 
@@ -98,6 +101,16 @@ describe("ExpenseMap Component", () => {
       )
 
       expect(container.querySelector("div")).toBeInTheDocument()
+    })
+
+    it("joins every payer's name in the marker popup", () => {
+      render(<ExpenseMap expenses={mockExpenses} projectCurrency="TWD" />)
+
+      const markerFactory = vi.mocked(L.marker)
+      const bindPopup = (markerFactory.mock.results[0]?.value as { bindPopup: ReturnType<typeof vi.fn> }).bindPopup
+      const html = bindPopup.mock.calls[0][0] as string
+
+      expect(html).toContain("小明、小華")
     })
 
     it("should have minimum height style", () => {
@@ -181,7 +194,7 @@ describe("ExpenseMap Component", () => {
           latitude: 0,
           longitude: 0,
           expenseDate: "2024-12-01",
-          payer: { displayName: "小明" },
+          payers: [{ memberId: "m1", displayName: "小明" }],
         },
       ]
 

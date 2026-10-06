@@ -5,6 +5,8 @@ import { Prisma } from "@prisma/client"
 import { createActivityLog, createActivityLogInTransaction, diffChanges } from "@/lib/activity-log"
 import { deleteFile, extractKeyFromUrl } from "@/lib/r2"
 import { validateSplitDetail } from "@/lib/expense-split"
+import { primaryPayerId, validatePayers } from "@/lib/expense-payers"
+import { expensePayersInclude } from "@/lib/expense-payers-include"
 
 interface Participant {
   memberId: string
@@ -42,20 +44,7 @@ export async function GET(
         deletedAt: null, // 只取未刪除的費用
       },
       include: {
-        payer: {
-          select: {
-            id: true,
-            displayName: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                image: true,
-              },
-            },
-          },
-        },
+        payers: expensePayersInclude,
         participants: {
           include: {
             member: {
@@ -116,7 +105,7 @@ export async function PUT(
     }
 
     const body = await req.json()
-    const { paidByMemberId, amount, currency, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail } = body
+    const { payers, amount, currency, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail } = body
     const hasSplitDetailField = Object.prototype.hasOwnProperty.call(body, "splitDetail")
 
     // 獲取現有費用（包含付款人和參與者資訊）
@@ -127,9 +116,14 @@ export async function PUT(
         deletedAt: null, // 只取未刪除的費用
       },
       include: {
-        payer: {
-          select: {
-            displayName: true,
+        payers: {
+          include: {
+            member: {
+              select: {
+                id: true,
+                displayName: true,
+              },
+            },
           },
         },
         participants: {
@@ -157,25 +151,25 @@ export async function PUT(
       }
     }
 
+    const effectiveAmount = amount !== undefined ? Number(amount) : Number(existingExpense.amount)
+
+    // 驗證所有成員（用於付款人與參與者）
+    const projectMembers = await prisma.projectMember.findMany({
+      where: {
+        projectId: id,
+      },
+      select: {
+        id: true,
+      },
+    })
+    const memberIds = new Set(projectMembers.map((m: { id: string }) => m.id))
+
     // 如果更新了參與者，需要重新驗證
     if (participants && Array.isArray(participants)) {
-      const amountNum = amount !== undefined ? Number(amount) : Number(existingExpense.amount)
-      
       if (participants.length === 0) {
         return NextResponse.json({ error: "至少需要一個參與者" }, { status: 400 })
       }
 
-      // 驗證所有參與者都是專案成員
-      const projectMembers = await prisma.projectMember.findMany({
-        where: {
-          projectId: id,
-        },
-        select: {
-          id: true,
-        },
-      })
-
-      const memberIds = new Set(projectMembers.map((m: { id: string }) => m.id))
       const participantMemberIds = participants.map((p: Participant) => p.memberId)
 
       for (const memberId of participantMemberIds) {
@@ -193,13 +187,21 @@ export async function PUT(
         0
       )
 
-      if (Math.abs(totalShare - amountNum) > 0.01) {
+      if (Math.abs(totalShare - effectiveAmount) > 0.01) {
         return NextResponse.json(
           { error: "分擔總額必須等於費用總額" },
           { status: 400 }
         )
       }
     }
+
+    // 付款人（多人）：必須提供，且金額合計等於支出總額
+    const payerValidation = validatePayers(payers, effectiveAmount, memberIds)
+    if (!payerValidation.ok) {
+      return NextResponse.json({ error: payerValidation.error }, { status: 400 })
+    }
+    const validatedPayers = payerValidation.payers
+    const primaryPayer = primaryPayerId(validatedPayers)
 
     // splitDetail: explicit value wins; changed shares without it (old clients) clear it
     let splitDetailUpdate: Prisma.InputJsonValue | typeof Prisma.DbNull | undefined
@@ -227,7 +229,6 @@ export async function PUT(
 
     // 更新費用（匯率轉換在結算時執行）
     const updateData: {
-      paidByMemberId?: string
       amount?: number
       currency?: string
       description?: string | null
@@ -239,7 +240,6 @@ export async function PUT(
       expenseDate?: Date
       splitDetail?: Prisma.InputJsonValue | typeof Prisma.DbNull
     } = {}
-    if (paidByMemberId !== undefined) updateData.paidByMemberId = paidByMemberId
     if (amount !== undefined) updateData.amount = Number(amount)
     if (currency !== undefined) updateData.currency = currency
     if (description !== undefined) updateData.description = description?.trim() || null
@@ -254,7 +254,7 @@ export async function PUT(
     const changes = diffChanges(
       existingExpense as unknown as Record<string, unknown>,
       updateData as unknown as Record<string, unknown>,
-      ["paidByMemberId", "amount", "currency", "description", "category", "location", "expenseDate"]
+      ["amount", "currency", "description", "category", "location", "expenseDate"]
     )
 
     // Add splitDetail after diffChanges so it never pollutes the activity log
@@ -262,27 +262,42 @@ export async function PUT(
       updateData.splitDetail = splitDetailUpdate
     }
 
-    // 如果付款人有變更，獲取成員名稱映射
-    let memberNameMap: Record<string, string> = {}
-    if (changes?.paidByMemberId) {
-      const memberIds = [changes.paidByMemberId.from, changes.paidByMemberId.to].filter(Boolean) as string[]
+    // 成員名稱映射（付款人顯示用）
+    const memberNameMap: Record<string, string> = Object.fromEntries(
+      existingExpense.payers.map((p) => [p.memberId, p.member.displayName])
+    )
+    const missingPayerIds = validatedPayers.map((p) => p.memberId).filter((id) => !memberNameMap[id])
+    if (missingPayerIds.length > 0) {
       const members = await prisma.projectMember.findMany({
-        where: { id: { in: memberIds } },
+        where: { id: { in: missingPayerIds } },
         select: { id: true, displayName: true },
       })
-      memberNameMap = Object.fromEntries(members.map(m => [m.id, m.displayName]))
+      for (const m of members) memberNameMap[m.id] = m.displayName
     }
 
-    // 將 paidByMemberId 變更轉換為名稱顯示
-    let changesWithNames: Record<string, { from: unknown; to: unknown }> | null = changes ? {
-      ...changes,
-      ...(changes.paidByMemberId && {
-        paidByMemberId: {
-          from: memberNameMap[changes.paidByMemberId.from as string] || changes.paidByMemberId.from,
-          to: memberNameMap[changes.paidByMemberId.to as string] || changes.paidByMemberId.to,
-        }
-      })
-    } : null
+    const payerLabel = (list: { memberId: string; amount: number | string }[]) =>
+      list.map((p) => `${memberNameMap[p.memberId] ?? "未知"} $${Number(p.amount)}`).join("、")
+
+    const oldPayerKey = [...existingExpense.payers]
+      .map((p) => `${p.memberId}:${Number(p.amount)}`)
+      .sort()
+      .join(",")
+    const newPayerKey = validatedPayers
+      .map((p) => `${p.memberId}:${p.amount}`)
+      .sort()
+      .join(",")
+
+    let changesWithNames: Record<string, { from: unknown; to: unknown }> | null = changes ? { ...changes } : null
+
+    // 付款人（可多人）有變更時記錄串接名稱
+    if (oldPayerKey !== newPayerKey) {
+      const payerChange = {
+        from: payerLabel(existingExpense.payers),
+        to: payerLabel(validatedPayers),
+      }
+      if (changesWithNames) changesWithNames.payers = payerChange
+      else changesWithNames = { payers: payerChange }
+    }
 
     // 計算參與者變更（具體顯示加入/移除的成員名稱）
     if (participants && Array.isArray(participants)) {
@@ -331,17 +346,8 @@ export async function PUT(
       }
     }
 
-    // 獲取新的付款人名稱（如果有變更）
-    let newPayerName = existingExpense.payer.displayName
-    if (paidByMemberId && paidByMemberId !== existingExpense.paidByMemberId) {
-      const newPayer = await prisma.projectMember.findUnique({
-        where: { id: paidByMemberId },
-        select: { displayName: true },
-      })
-      if (newPayer) {
-        newPayerName = newPayer.displayName
-      }
-    }
+    // 取得新主要付款人名稱（活動紀錄 metadata）
+    const activityPayerName = memberNameMap[primaryPayer] ?? "未知"
 
     await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       if (participants && Array.isArray(participants)) {
@@ -362,13 +368,21 @@ export async function PUT(
         })
       }
 
+      // 重建付款人
+      await tx.expensePayer.deleteMany({ where: { expenseId } })
+      await tx.expensePayer.createMany({
+        data: validatedPayers.map((p) => ({
+          expenseId,
+          memberId: p.memberId,
+          amount: p.amount,
+        })),
+      })
+
       // 更新費用
-      if (Object.keys(updateData).length > 0) {
-        await tx.expense.update({
-          where: { id: expenseId },
-          data: updateData,
-        })
-      }
+      await tx.expense.update({
+        where: { id: expenseId },
+        data: updateData,
+      })
 
       // 記錄操作歷史（包含 metadata 快照）
       if (changesWithNames || (participants && Array.isArray(participants))) {
@@ -383,7 +397,7 @@ export async function PUT(
             description: updateData.description !== undefined ? updateData.description : existingExpense.description,
             amount: updateData.amount !== undefined ? updateData.amount : Number(existingExpense.amount),
             category: updateData.category !== undefined ? updateData.category : existingExpense.category,
-            payerName: newPayerName,
+            payerName: activityPayerName,
             expenseDate: (updateData.expenseDate || existingExpense.expenseDate).toISOString(),
           },
         })
@@ -394,20 +408,7 @@ export async function PUT(
     const expense = await prisma.expense.findUnique({
       where: { id: expenseId },
       include: {
-        payer: {
-          select: {
-            id: true,
-            displayName: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                image: true,
-              },
-            },
-          },
-        },
+        payers: expensePayersInclude,
         participants: {
           include: {
             member: {
@@ -473,9 +474,13 @@ export async function DELETE(
         deletedAt: null, // 只取未刪除的費用
       },
       include: {
-        payer: {
-          select: {
-            displayName: true,
+        payers: {
+          include: {
+            member: {
+              select: {
+                displayName: true,
+              },
+            },
           },
         },
         participants: true,
@@ -508,6 +513,13 @@ export async function DELETE(
       },
     })
 
+    const payerName = primaryPayerId(
+      expense.payers.map((p) => ({ memberId: p.memberId, amount: Number(p.amount) }))
+    )
+    const primaryName = expense.payers.find((p) => p.memberId === payerName)?.member.displayName
+      ?? expense.payers[0]?.member.displayName
+      ?? "未知"
+
     // 記錄操作歷史（包含被刪除費用的 metadata 快照）
     await createActivityLog({
       projectId: id,
@@ -520,7 +532,7 @@ export async function DELETE(
         description: expense.description,
         amount: Number(expense.amount),
         category: expense.category,
-        payerName: expense.payer.displayName,
+        payerName: primaryName,
         expenseDate: expense.expenseDate.toISOString(),
       },
     })
@@ -536,4 +548,3 @@ export async function DELETE(
     )
   }
 }
-

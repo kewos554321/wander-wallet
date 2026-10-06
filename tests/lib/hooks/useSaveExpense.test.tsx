@@ -19,7 +19,10 @@ vi.mock("@/lib/image-utils", () => ({ uploadImageToR2: (...args: unknown[]) => m
 import { useSaveExpense, type ExpensePayload } from "@/lib/hooks/useSaveExpense"
 
 const payload: ExpensePayload = {
-  paidByMemberId: "a",
+  payers: [
+    { memberId: "a", amount: 60 },
+    { memberId: "b", amount: 40 },
+  ],
   amount: 100,
   currency: "TWD",
   description: "午餐",
@@ -58,7 +61,12 @@ describe("useSaveExpense", () => {
     const [url, init] = mockAuthFetch.mock.calls[0]
     expect(url).toBe("/api/projects/p1/expenses")
     expect(init.method).toBe("POST")
-    expect(JSON.parse(init.body)).toEqual({ ...payload, image: null })
+    const body = JSON.parse(init.body)
+    expect(body).toEqual({ ...payload, image: null })
+    expect(body.payers).toEqual([
+      { memberId: "a", amount: 60 },
+      { memberId: "b", amount: 40 },
+    ])
     expect(mockNotify).toHaveBeenCalledWith(
       expect.objectContaining({ operationType: "create", projectId: "p1", payerName: "小美", participantCount: 2 })
     )
@@ -77,6 +85,7 @@ describe("useSaveExpense", () => {
     })
     expect(mockAuthFetch.mock.calls[0][0]).toBe("/api/projects/p1/expenses/e1")
     expect(mockAuthFetch.mock.calls[0][1].method).toBe("PUT")
+    expect(JSON.parse(mockAuthFetch.mock.calls[0][1].body).payers).toEqual(payload.payers)
     expect(mockNotify).not.toHaveBeenCalled()
   })
 

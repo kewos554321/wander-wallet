@@ -107,7 +107,7 @@ describe("ExportV2 container", () => {
     })
     mockProjectExpenses.mockReset().mockReturnValue({
       expenses: [
-        { id: "e1", amount: 1000, currency: "TWD", description: null, category: "food", image: null, location: null, latitude: null, longitude: null, expenseDate: "2026-10-18T00:00:00.000Z", createdAt: "2026-10-18T00:00:00.000Z", payer: { id: "m1", displayName: "志明", userId: null, user: null }, participants: [{ id: "x", shareAmount: 1000, member: { id: "m1", displayName: "志明", userId: null, user: null } }] },
+        { id: "e1", amount: 1000, currency: "TWD", description: null, category: "food", image: null, location: null, latitude: null, longitude: null, expenseDate: "2026-10-18T00:00:00.000Z", createdAt: "2026-10-18T00:00:00.000Z", payers: [{ id: "ep1", memberId: "m1", amount: 1000, member: { id: "m1", displayName: "志明", userId: null, user: null } }], participants: [{ id: "x", shareAmount: 1000, member: { id: "m1", displayName: "志明", userId: null, user: null } }] },
       ],
       loading: false,
     })
@@ -115,6 +115,38 @@ describe("ExportV2 container", () => {
   })
 
   it("renders the export page with the project summary", () => {
+    render(<ExportV2 projectId="p1" />)
+    expect(screen.getByRole("heading", { name: "匯出" })).toBeInTheDocument()
+    expect(screen.getByTestId("export-summary")).toHaveTextContent("京都")
+  })
+
+  it("renders with a multi-payer expense", () => {
+    mockProjectExpenses.mockReturnValue({
+      expenses: [
+        {
+          id: "e2",
+          amount: 1000,
+          currency: "TWD",
+          description: "共同晚餐",
+          category: "food",
+          image: null,
+          location: null,
+          latitude: null,
+          longitude: null,
+          expenseDate: "2026-10-18T00:00:00.000Z",
+          createdAt: "2026-10-18T00:00:00.000Z",
+          payers: [
+            { id: "ep1", memberId: "m1", amount: 600, member: { id: "m1", displayName: "志明", userId: null, user: null } },
+            { id: "ep2", memberId: "m2", amount: 400, member: { id: "m2", displayName: "小美", userId: null, user: null } },
+          ],
+          participants: [
+            { id: "x1", shareAmount: 500, member: { id: "m1", displayName: "志明", userId: null, user: null } },
+            { id: "x2", shareAmount: 500, member: { id: "m2", displayName: "小美", userId: null, user: null } },
+          ],
+        },
+      ],
+      loading: false,
+    })
     render(<ExportV2 projectId="p1" />)
     expect(screen.getByRole("heading", { name: "匯出" })).toBeInTheDocument()
     expect(screen.getByTestId("export-summary")).toHaveTextContent("京都")

@@ -15,13 +15,13 @@ import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
 import { MemberAvatar } from "@/components/member-avatar"
 import { LocationPicker } from "@/components/location-picker"
-import { Calculator as CalculatorIcon, CalendarIcon, Trash2, Plus, X, Pin, PinOff } from "lucide-react"
+import { Calculator as CalculatorIcon, CalendarIcon, Trash2, Plus, X, Pin, PinOff, CheckCircle2 } from "lucide-react"
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
 import { ImagePicker, type ImagePickerValue } from "@/components/ui/image-picker"
 import { Calculator } from "@/components/ui/calculator"
 import { CurrencySelect } from "@/components/ui/currency-select"
 import { CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
-import { type CurrencyCode, DEFAULT_CURRENCY, formatCurrency, getCurrencyInfo } from "@/lib/constants/currencies"
+import { type CurrencyCode, DEFAULT_CURRENCY, formatCurrency } from "@/lib/constants/currencies"
 import { mergePreferences } from "@/types/user-preferences"
 import {
   buildSplitDetail,
@@ -34,6 +34,7 @@ import {
   type SplitInput,
 } from "@/lib/expense-split"
 import { buildExpenseChanges, type ExpenseSnapshot } from "@/lib/expense-changes"
+import { derivePayerShares, primaryPayerId, PAYER_ERROR, type PayerShare } from "@/lib/expense-payers"
 import { useSaveExpense } from "@/lib/hooks/useSaveExpense"
 import { getCurrentLocation } from "@/lib/geolocation"
 
@@ -66,6 +67,24 @@ interface ExpenseParticipant {
   }
 }
 
+interface ExpensePayer {
+  id: string
+  expenseId: string
+  memberId: string
+  amount: number
+  member: {
+    id: string
+    displayName: string
+    userId: string | null
+    user: {
+      id: string
+      name: string | null
+      email: string
+      image: string | null
+    } | null
+  }
+}
+
 interface Expense {
   id: string
   amount: number
@@ -77,17 +96,7 @@ interface Expense {
   latitude: number | null
   longitude: number | null
   expenseDate: string
-  paidByMemberId: string
-  payer: {
-    id: string
-    displayName: string
-    user: {
-      id: string
-      name: string | null
-      email: string
-      image: string | null
-    } | null
-  }
+  payers: ExpensePayer[]
   participants: ExpenseParticipant[]
   splitDetail?: SplitDetail | null
 }
@@ -97,8 +106,8 @@ interface OriginalExpenseData {
   currency: string
   description: string | null
   category: string | null
-  paidByMemberId: string
-  payerName: string
+  payers: PayerShare[]
+  payerLabel: string
   expenseDate: Date
   location: string | null
   image: string | null
@@ -133,7 +142,9 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   const [amount, setAmount] = useState("")
   const [category, setCategory] = useState("")
   const [customCategory, setCustomCategory] = useState("")
-  const [paidBy, setPaidBy] = useState("")
+  // 付款人：多選（payerIds 含順序）+ 自訂（pin）金額（不存在 = 自動均分）
+  const [payerIds, setPayerIds] = useState<string[]>([])
+  const [pinnedPayerAmounts, setPinnedPayerAmounts] = useState<Record<string, string>>({})
   const [expenseDate, setExpenseDate] = useState<Date>(new Date())
   const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set())
   const [splitMode, setSplitMode] = useState<"equal" | "custom">("equal")
@@ -268,7 +279,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         const allMemberIds = new Set<string>(data.map((m: Member) => m.id))
         setSelectedParticipants(allMemberIds)
         if (data.length > 0) {
-          setPaidBy(data[0].id)
+          // 新增支出預設付款人為第一位成員（與既有行為一致）
+          setPayerIds([data[0].id])
         }
         // 設定分帳方式為用戶偏好
         setSplitMode(userPreferences.defaultSplitMode)
@@ -333,7 +345,23 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         } else {
           setCategory(expense.category || "")
         }
-        setPaidBy(expense.payer.id)
+        // 付款人：依成員順序載入；只有非「純均分」才 seed pin，確保再存檔不漂移
+        const loadedPayerIds = (expense.payers ?? []).map((p) => p.memberId)
+        setPayerIds(loadedPayerIds)
+        const equalPayers = derivePayerShares({
+          amount: Number(expense.amount) || 0,
+          payerIds: loadedPayerIds,
+          pinned: {},
+        }).shares
+        const isEqualPayerSplit =
+          loadedPayerIds.length > 0 &&
+          expense.payers.length === equalPayers.length &&
+          expense.payers.every((p, i) => Math.abs(Number(p.amount) - equalPayers[i].amount) <= 0.01)
+        const pinnedPayerAmountsMap: Record<string, string> = {}
+        if (!isEqualPayerSplit) {
+          for (const p of expense.payers) pinnedPayerAmountsMap[p.memberId] = String(Number(p.amount))
+        }
+        setPinnedPayerAmounts(pinnedPayerAmountsMap)
         setExpenseDate(expense.expenseDate ? new Date(expense.expenseDate) : new Date())
 
         const participantIds = new Set<string>(expense.participants.map(p => p.member.id))
@@ -462,8 +490,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           currency: expCurrency,
           description: expense.description,
           category: expense.category,
-          paidByMemberId: expense.payer.id,
-          payerName: expense.payer.displayName,
+          payers: (expense.payers ?? []).map((p) => ({ memberId: p.memberId, amount: Number(p.amount) })),
+          payerLabel: (expense.payers ?? []).map((p) => p.member.displayName).join("、") || "無",
           expenseDate: expense.expenseDate ? new Date(expense.expenseDate) : new Date(),
           location: expense.location,
           image: expense.image,
@@ -513,6 +541,70 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
   function selectAllParticipants() {
     const allMemberIds = new Set(members.map((m) => m.id))
     setSelectedParticipants(allMemberIds)
+  }
+
+  // ---- 付款人（多人）相關操作 ----
+  // 單一真實來源的推算邏輯在 lib/expense-payers.ts；此處只負責狀態/UI。
+  function getPayerResult() {
+    const pinned: Record<string, number> = {}
+    for (const [id, value] of Object.entries(pinnedPayerAmounts)) {
+      pinned[id] = Number(value) || 0
+    }
+    return derivePayerShares({ amount: Number(amount) || 0, payerIds, pinned })
+  }
+
+  function togglePayer(memberId: string) {
+    if (payerIds.includes(memberId)) {
+      setPayerIds(payerIds.filter((id) => id !== memberId))
+      // 移除付款人時連帶移除其 pin
+      const next = { ...pinnedPayerAmounts }
+      delete next[memberId]
+      setPinnedPayerAmounts(next)
+    } else {
+      setPayerIds([...payerIds, memberId])
+    }
+  }
+
+  function setAllPayers(selectAll: boolean) {
+    if (selectAll) {
+      setPayerIds(members.map((m) => m.id))
+    } else {
+      setPayerIds([])
+      setPinnedPayerAmounts({})
+    }
+  }
+
+  // 設值即 pin；清空即取消 pin
+  function setPayerAmount(memberId: string, value: string) {
+    setPinnedPayerAmounts((prev) => {
+      const next = { ...prev }
+      if (value.trim() === "") delete next[memberId]
+      else next[memberId] = value
+      return next
+    })
+  }
+
+  function clearPayerAmount(memberId: string) {
+    setPinnedPayerAmounts((prev) => {
+      const next = { ...prev }
+      delete next[memberId]
+      return next
+    })
+  }
+
+  function memberName(memberId: string): string {
+    return members.find((m) => m.id === memberId)?.displayName || ""
+  }
+
+  function payerLabel(payers: PayerShare[]): string {
+    return payers.map((p) => memberName(p.memberId)).join("、") || "無"
+  }
+
+  function payersKey(payers: PayerShare[]): string {
+    return [...payers]
+      .sort((a, b) => (a.memberId < b.memberId ? -1 : a.memberId > b.memberId ? 1 : 0))
+      .map((p) => `${p.memberId}:${p.amount}`)
+      .join(",")
   }
 
   // 個人項目模式：獲取單個成員的個人項目總額
@@ -672,8 +764,8 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     // 類別變更
     if (originalData.category !== finalCategory) return true
 
-    // 付款人變更
-    if (originalData.paidByMemberId !== paidBy) return true
+    // 付款人變更（多付款人；排序後比較成員與金額）
+    if (payersKey(originalData.payers) !== payersKey(getPayerResult().shares)) return true
 
     // 日期變更
     const originalDateStr = format(originalData.expenseDate, "yyyy/MM/dd")
@@ -718,8 +810,19 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       return
     }
 
-    if (!paidBy) {
-      alert("請選擇付款人")
+    // 付款人多人驗證：至少一位、pin 合計不可超過、合計必須等於支出金額
+    const payerResult = getPayerResult()
+    if (payerIds.length === 0) {
+      alert(PAYER_ERROR.none)
+      return
+    }
+    if (!payerResult.ok) {
+      alert(PAYER_ERROR.over)
+      return
+    }
+    const payerTotal = payerResult.shares.reduce((sum, p) => sum + p.amount, 0)
+    if (Math.abs(payerTotal - amountNum) > 0.01) {
+      alert(PAYER_ERROR.mismatch)
       return
     }
 
@@ -800,14 +903,14 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
     const finalCategory = category === "other" && customCategory.trim()
       ? customCategory.trim()
       : category || "other"
-    const payerName = members.find((m) => m.id === paidBy)?.displayName || "未知"
+    const payerName = members.find((m) => m.id === primaryPayerId(payerResult.shares))?.displayName || "未知"
     const nextSnapshot: ExpenseSnapshot = {
       amount: amountNum,
       currency,
       description: description.trim() || null,
       category: finalCategory,
-      paidByMemberId: paidBy,
-      payerName,
+      payers: payerResult.shares,
+      payerLabel: payerLabel(payerResult.shares),
       expenseDate,
       location: locationData.location,
       // A pending upload always yields an image URL once saved
@@ -827,7 +930,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
       mode,
       expenseId,
       payload: {
-        paidByMemberId: paidBy,
+        payers: payerResult.shares,
         amount: amountNum,
         currency,
         description: description.trim() || null,
@@ -860,7 +963,9 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
         requested: notifyLine && !!originalData,
         projectName,
         payerName:
-          members.find((m) => m.id === originalData?.paidByMemberId)?.displayName || originalData?.payerName || "",
+          members.find((m) => m.id === primaryPayerId(originalData?.payers ?? []))?.displayName ||
+          originalData?.payerLabel ||
+          "",
         amount: originalData?.amount ?? 0,
         description: originalData?.description ?? null,
         category: originalData?.category ?? null,
@@ -897,6 +1002,12 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
 
   const amountNum = Number(amount) || 0
   const sharePerPerson = selectedParticipants.size > 0 ? amountNum / selectedParticipants.size : 0
+
+  // 付款人推算（均分/pin），共用 lib/expense-payers.ts 的演算法
+  const payerResult = getPayerResult()
+  const payerShares = payerResult.shares
+  const payerTotal = payerShares.reduce((sum, p) => sum + p.amount, 0)
+  const payerMatches = payerResult.ok && Math.abs(payerTotal - amountNum) <= 0.01
 
   return (
     <AppLayout title={title} showBack backHref={backHref}>
@@ -1033,39 +1144,137 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           )}
         </div>
 
-        {/* 付款人 */}
-        <div>
-          <label className="block text-sm font-medium mb-3">誰付的錢？</label>
+        {/* 付款成員（多人） */}
+        <div role="group" aria-label="付款成員">
+          <div className="flex items-center justify-between mb-3">
+            <label className="text-sm font-medium">誰付的錢？</label>
+            {members.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setAllPayers(payerIds.length !== members.length)}
+                className="text-xs text-primary font-medium"
+              >
+                {payerIds.length === members.length ? "取消全選" : "全選"}
+              </button>
+            )}
+          </div>
           {members.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">
               沒有成員，請先新增成員
             </p>
           ) : (
-            <div className="flex flex-wrap gap-1.5">
-              {members.map((member) => {
-                const isSelected = paidBy === member.id
-                return (
-                  <button
-                    key={member.id}
-                    type="button"
-                    onClick={() => setPaidBy(member.id)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all ${
-                      isSelected
-                        ? "bg-primary text-primary-foreground shadow-md"
-                        : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-primary/50"
-                    }`}
-                  >
-                    <MemberAvatar
-                      image={member.user?.image}
-                      name={member.displayName}
-                      size="sm"
-                      selected={isSelected}
-                    />
-                    <span className="text-xs font-medium">{member.displayName}</span>
-                  </button>
-                )
-              })}
-            </div>
+            <>
+              {/* 成員 pills（多選） */}
+              <div className="flex flex-wrap gap-1.5">
+                {members.map((member) => {
+                  const isSelected = payerIds.includes(member.id)
+                  return (
+                    <button
+                      key={member.id}
+                      type="button"
+                      onClick={() => togglePayer(member.id)}
+                      aria-pressed={isSelected}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all ${
+                        isSelected
+                          ? "bg-primary text-primary-foreground shadow-md"
+                          : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-primary/50"
+                      }`}
+                    >
+                      <MemberAvatar
+                        image={member.user?.image}
+                        name={member.displayName}
+                        size="sm"
+                        selected={isSelected}
+                      />
+                      <span className="text-xs font-medium">{member.displayName}</span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* 付款明細：每人金額 + pin + 移除 */}
+              {payerShares.length > 0 && (
+                <div className="mt-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
+                  {payerShares.map((payer) => {
+                    const member = members.find((m) => m.id === payer.memberId)
+                    const isPinned = Object.prototype.hasOwnProperty.call(pinnedPayerAmounts, payer.memberId)
+                    const value = isPinned ? pinnedPayerAmounts[payer.memberId] : String(payer.amount)
+                    return (
+                      <div key={payer.memberId} className="flex items-center gap-2 p-3">
+                        <MemberAvatar
+                          image={member?.user?.image}
+                          name={member?.displayName || ""}
+                          size="sm"
+                        />
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                          {member?.displayName}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-muted-foreground">$</span>
+                          <Input
+                            inputMode="decimal"
+                            value={value}
+                            onChange={(e) => setPayerAmount(payer.memberId, e.target.value)}
+                            aria-label={`${member?.displayName}的付款金額`}
+                            className="w-20 h-8 text-right text-sm"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            isPinned
+                              ? clearPayerAmount(payer.memberId)
+                              : setPayerAmount(payer.memberId, String(payer.amount))
+                          }
+                          title={isPinned ? "還原均分" : "自訂金額"}
+                          aria-label={
+                            isPinned
+                              ? `${member?.displayName}的付款金額已自訂，點擊還原均分`
+                              : `${member?.displayName}的付款金額均分，點擊自訂`
+                          }
+                          className={`p-1.5 rounded-md transition-colors ${
+                            isPinned
+                              ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50"
+                              : "border border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                          }`}
+                        >
+                          {isPinned ? <Pin className="h-3.5 w-3.5" /> : <PinOff className="h-3.5 w-3.5" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => togglePayer(payer.memberId)}
+                          aria-label={`移除${member?.displayName}`}
+                          className="p-1.5 rounded-md text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-colors"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* 付款摘要 */}
+              <div className="mt-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">已選 {payerShares.length} 人</span>
+                  {payerMatches ? (
+                    <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
+                      金額相符
+                    </span>
+                  ) : (
+                    <span className="text-xs font-medium text-red-500">金額不符</span>
+                  )}
+                </div>
+                {payerShares.length > 0 && (
+                  <p className="mt-0.5 break-words text-xs text-muted-foreground">
+                    {payerShares.map((p) => `$${p.amount.toFixed(2)}`).join(" + ")} = ${payerTotal.toFixed(2)} / $
+                    {amountNum.toFixed(2)}
+                  </p>
+                )}
+              </div>
+            </>
           )}
         </div>
 

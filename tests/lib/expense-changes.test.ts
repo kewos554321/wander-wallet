@@ -6,8 +6,8 @@ const base: ExpenseSnapshot = {
   currency: "TWD",
   description: "午餐",
   category: "food",
-  paidByMemberId: "a",
-  payerName: "小美",
+  payers: [{ memberId: "a", amount: 100 }],
+  payerLabel: "小美",
   expenseDate: new Date(2026, 10, 16, 12),
   location: null,
   image: null,
@@ -27,8 +27,8 @@ describe("buildExpenseChanges", () => {
         amount: 200,
         description: null,
         category: "transport",
-        paidByMemberId: "b",
-        payerName: "志明",
+        payers: [{ memberId: "b", amount: 200 }],
+        payerLabel: "志明",
         expenseDate: new Date(2026, 10, 17, 12),
         location: "上野",
         image: "https://x/y.jpg",
@@ -40,7 +40,7 @@ describe("buildExpenseChanges", () => {
       { field: "amount", label: "金額", oldValue: "TWD 100", newValue: "TWD 200" },
       { field: "description", label: "描述", oldValue: "午餐", newValue: "無" },
       { field: "category", label: "類別", oldValue: "餐飲", newValue: "交通" },
-      { field: "payer", label: "付款人", oldValue: "小美", newValue: "志明" },
+      { field: "payer", label: "付款成員", oldValue: "小美", newValue: "志明" },
       { field: "date", label: "日期", oldValue: "2026/11/16", newValue: "2026/11/17" },
       { field: "location", label: "地點", oldValue: "無", newValue: "上野" },
       { field: "image", label: "圖片", oldValue: "無", newValue: "有圖片" },
@@ -51,5 +51,56 @@ describe("buildExpenseChanges", () => {
   it("reports a replaced image", () => {
     const changes = buildExpenseChanges({ ...base, image: "old" }, { ...base, image: "new" }, { imageReplaced: true })
     expect(changes).toEqual([{ field: "image", label: "圖片", oldValue: "有圖片", newValue: "已更換" }])
+  })
+
+  it("does not report a change when a 2-payer list is only reordered", () => {
+    const original: ExpenseSnapshot = {
+      ...base,
+      payers: [
+        { memberId: "a", amount: 60 },
+        { memberId: "b", amount: 40 },
+      ],
+      payerLabel: "小美、志明",
+    }
+    const reordered: ExpenseSnapshot = {
+      ...original,
+      payers: [
+        { memberId: "b", amount: 40 },
+        { memberId: "a", amount: 60 },
+      ],
+    }
+    expect(buildExpenseChanges(original, reordered, { imageReplaced: false })).toEqual([])
+  })
+
+  it("reports a change when a 2-payer list differs in members or amounts", () => {
+    const original: ExpenseSnapshot = {
+      ...base,
+      payers: [
+        { memberId: "a", amount: 60 },
+        { memberId: "b", amount: 40 },
+      ],
+      payerLabel: "小美、志明",
+    }
+
+    const amountChanged: ExpenseSnapshot = {
+      ...original,
+      payers: [
+        { memberId: "a", amount: 50 },
+        { memberId: "b", amount: 50 },
+      ],
+      payerLabel: "小美、志明",
+    }
+    expect(buildExpenseChanges(original, amountChanged, { imageReplaced: false })).toEqual([
+      { field: "payer", label: "付款成員", oldValue: "小美、志明", newValue: "小美、志明" },
+    ])
+
+    const memberChanged: ExpenseSnapshot = {
+      ...original,
+      payers: [{ memberId: "a", amount: 100 }],
+      payerLabel: "小美",
+    }
+    expect(buildExpenseChanges(original, memberChanged, { imageReplaced: false })).toEqual([
+      { field: "payer", label: "付款成員", oldValue: "小美、志明", newValue: "小美" },
+    ])
   })
 })

@@ -33,7 +33,7 @@ export interface ExpenseExportData {
   category: string
   categoryLabel: string
   amount: number
-  payer: string
+  payer: string // 付款人顯示名稱；多人以「、」串接
   participants: string[] // 分擔者名稱列表
   participantShares: { name: string; amount: number }[] // 分擔金額明細
 }

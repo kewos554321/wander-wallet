@@ -42,6 +42,20 @@ interface ExpenseParticipant {
   shareAmount: number
 }
 
+interface ExpensePayer {
+  id: string
+  memberId: string
+  amount: number
+  member: {
+    id: string
+    displayName: string
+    user: {
+      name: string | null
+      email: string
+    } | null
+  }
+}
+
 interface Expense {
   id: string
   amount: number
@@ -50,14 +64,7 @@ interface Expense {
   category: string | null
   createdAt: string
   expenseDate: string
-  payer: {
-    id: string
-    displayName: string
-    user: {
-      name: string | null
-      email: string
-    } | null
-  }
+  payers: ExpensePayer[]
   participants: ExpenseParticipant[]
 }
 
@@ -210,9 +217,11 @@ export function ExportV1({ projectId }: { projectId: string }) {
 
       filteredExpenses.forEach((expense) => {
         const convertedAmount = convertToProjectCurrency(Number(expense.amount), expense.currency)
-        if (expense.payer.id === member.id) {
-          paid += convertedAmount
-        }
+        expense.payers.forEach((payer) => {
+          if (payer.memberId === member.id) {
+            paid += convertToProjectCurrency(Number(payer.amount), expense.currency)
+          }
+        })
         const participant = expense.participants.find((p) => p.memberId === member.id)
         if (participant) {
           // 按比例轉換分擔金額
@@ -283,7 +292,9 @@ export function ExportV1({ projectId }: { projectId: string }) {
         category: expense.category || "other",
         categoryLabel: getCategoryLabel(expense.category || "other"),
         amount: convertedAmount,
-        payer: expense.payer.displayName,
+        payer: expense.payers
+          .map((p) => p.member?.displayName ?? memberNameMap.get(p.memberId) ?? "未知")
+          .join("、"),
         participants: expense.participants.map(
           (p) => memberNameMap.get(p.memberId) || "未知"
         ),

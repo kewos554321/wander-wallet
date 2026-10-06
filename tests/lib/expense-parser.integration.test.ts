@@ -55,9 +55,9 @@ describe.skipIf(SKIP_INTEGRATION)("parseExpenses Integration (multi-expense)", (
     })
 
     expect(result.expenses.length).toBeGreaterThanOrEqual(2)
-    // 每筆費用都應該有小華作為付款人
+    // 每筆費用都應該有小華作為唯一付款人（全額）
     result.expenses.forEach(expense => {
-      expect(expense.payerId).toBe("member-2") // 小華
+      expect(expense.payers).toEqual([{ memberId: "member-2", amount: expense.amount }])
       expect(expense.participantIds).toHaveLength(3) // 全部成員
     })
   }, 30000)
@@ -92,10 +92,10 @@ describe.skipIf(SKIP_INTEGRATION)("parseExpenses Integration (multi-expense)", (
     const dinner = result.expenses.find(e => e.amount === 100)
 
     // 早餐和午餐應該是小明付的
-    if (breakfast) expect(breakfast.payerId).toBe("member-1")
-    if (lunch) expect(lunch.payerId).toBe("member-1")
+    if (breakfast) expect(breakfast.payers).toEqual([{ memberId: "member-1", amount: 50 }])
+    if (lunch) expect(lunch.payers).toEqual([{ memberId: "member-1", amount: 60 }])
     // 晚餐應該是小華付的
-    if (dinner) expect(dinner.payerId).toBe("member-2")
+    if (dinner) expect(dinner.payers).toEqual([{ memberId: "member-2", amount: 100 }])
   }, 30000)
 
   it("should parse expenses with different participants per expense", async () => {
@@ -109,11 +109,26 @@ describe.skipIf(SKIP_INTEGRATION)("parseExpenses Integration (multi-expense)", (
 
     const transport = result.expenses.find(e => e.amount === 90)
     if (transport) {
-      expect(transport.payerId).toBe("member-3") // 小美
+      expect(transport.payers).toEqual([{ memberId: "member-3", amount: 90 }]) // 小美
       expect(transport.participantIds).toContain("member-3") // 小美
       expect(transport.participantIds).toContain("member-2") // 小華
       expect(transport.participantIds).not.toContain("member-1") // 不包含小明
     }
+  }, 30000)
+
+  it("should parse multiple payers with explicit amounts", async () => {
+    const result = await parseExpenses({
+      transcript: "超市 1280 我付 800、小華 480",
+      members,
+      currentUserName: "小明",
+    })
+
+    expect(result.expenses).toHaveLength(1)
+    expect(result.expenses[0].amount).toBe(1280)
+    expect(result.expenses[0].payers).toEqual([
+      { memberId: "member-1", amount: 800 },
+      { memberId: "member-2", amount: 480 },
+    ])
   }, 30000)
 })
 

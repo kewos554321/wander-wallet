@@ -15,7 +15,7 @@ import { fromParsed, type QuickItem } from "@/lib/quick-expense/draft"
 
 const members = [{ id: "a", displayName: "小雨" }, { id: "b", displayName: "志明" }, { id: "c", displayName: "阿凱" }]
 const mk = (id: string, o: Partial<QuickItem> = {}): QuickItem => ({
-  ...fromParsed([{ id, amount: 100, description: "d", category: "food", currency: "TWD", payerId: "a", participantIds: ["a", "b", "c"], selected: true }])[0],
+  ...fromParsed([{ id, amount: 100, description: "d", category: "food", currency: "TWD", payers: [{ memberId: "a", amount: 100 }], participantIds: ["a", "b", "c"], selected: true }])[0],
   ...o,
 })
 const ok = () => ({ ok: true, json: async () => ({}) })
@@ -36,10 +36,29 @@ describe("useQuickSave", () => {
     const body = JSON.parse(authFetch.mock.calls[0][1].body)
     expect(authFetch.mock.calls[0][0]).toBe("/api/projects/p1/expenses")
     expect(body.participants.map((p: { shareAmount: number }) => p.shareAmount)).toEqual([33.34, 33.33, 33.33])
-    expect(body).toMatchObject({ paidByMemberId: "a", amount: 100, currency: "TWD", image: null })
+    expect(body).toMatchObject({ payers: [{ memberId: "a", amount: 100 }], amount: 100, currency: "TWD", image: null })
     expect(body.splitDetail).toBeNull()
+    expect(body).not.toHaveProperty("paidByMemberId")
     expect(single).toHaveBeenCalledWith(expect.objectContaining({ operationType: "create", payerName: "小雨", participantCount: 3 }))
     expect(batch).not.toHaveBeenCalled()
+  })
+
+  it("posts multiple payers with their exact amounts", async () => {
+    authFetch.mockResolvedValue(ok())
+    const r = setup()
+    await act(async () => {
+      await r.current.save(
+        [mk("1", { amount: "1280", payerIds: ["a", "b"], pinnedPayerAmounts: { a: "800", b: "480" }, participantIds: ["a", "b"] })],
+        { notifyLine: true }
+      )
+    })
+    const body = JSON.parse(authFetch.mock.calls[0][1].body)
+    expect(body.payers).toEqual([
+      { memberId: "a", amount: 800 },
+      { memberId: "b", amount: 480 },
+    ])
+    // Primary payer (largest amount) drives the LINE notification name.
+    expect(single).toHaveBeenCalledWith(expect.objectContaining({ payerName: "小雨" }))
   })
 
   it("uploads pending images and still saves when upload fails", async () => {

@@ -11,6 +11,7 @@ vi.mock("@/lib/db", () => ({
     projectMember: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
+      findUnique: vi.fn(),
     },
     expense: {
       findMany: vi.fn(),
@@ -25,6 +26,12 @@ vi.mock("@/lib/db", () => ({
     expenseParticipant: {
       deleteMany: vi.fn(),
       createMany: vi.fn(),
+    },
+    expensePayer: {
+      deleteMany: vi.fn(),
+      createMany: vi.fn(),
+      create: vi.fn(),
+      count: vi.fn(),
     },
     activityLog: {
       create: vi.fn(),
@@ -83,7 +90,6 @@ const _mockMember2 = {
 const mockExpense = {
   id: "expense-123",
   projectId: "project-123",
-  paidByMemberId: "member-123",
   amount: 1000,
   description: "Test Expense",
   category: "food",
@@ -91,17 +97,25 @@ const mockExpense = {
   expenseDate: new Date("2024-12-01"),
   createdAt: new Date(),
   updatedAt: new Date(),
-  payer: {
-    id: "member-123",
-    displayName: "Test User",
-    userId: "user-123",
-    user: {
-      id: "user-123",
-      name: "Test User",
-      email: "test@example.com",
-      image: null,
+  payers: [
+    {
+      id: "payer-1",
+      expenseId: "expense-123",
+      memberId: "member-123",
+      amount: 1000,
+      member: {
+        id: "member-123",
+        displayName: "Test User",
+        userId: "user-123",
+        user: {
+          id: "user-123",
+          name: "Test User",
+          email: "test@example.com",
+          image: null,
+        },
+      },
     },
-  },
+  ],
   participants: [
     {
       id: "participant-1",
@@ -203,6 +217,9 @@ describe("GET /api/projects/[id]/expenses", () => {
     expect(data).toHaveLength(1)
     expect(data[0].id).toBe("expense-123")
     expect(data[0].amount).toBe(1000)
+    expect(data[0].payers).toHaveLength(1)
+    expect(data[0].payers[0].memberId).toBe("member-123")
+    expect(data[0].payer).toBeUndefined()
   })
 
   it("should return empty array when no expenses exist", async () => {
@@ -271,7 +288,7 @@ describe("POST /api/projects/[id]/expenses", () => {
       {
         method: "POST",
         body: JSON.stringify({
-          paidByMemberId: "member-123",
+          payers: [{ memberId: "member-123", amount: 1000 }],
           amount: 1000,
           participants: [{ memberId: "member-123", shareAmount: 1000 }],
         }),
@@ -301,7 +318,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("付款人、金額和參與者必填")
+    expect(data.error).toBe("金額和參與者必填")
   })
 
   it("should return 400 if amount is negative", async () => {
@@ -315,7 +332,7 @@ describe("POST /api/projects/[id]/expenses", () => {
       {
         method: "POST",
         body: JSON.stringify({
-          paidByMemberId: "member-123",
+          payers: [{ memberId: "member-123", amount: -100 }],
           amount: -100,
           participants: [{ memberId: "member-123", shareAmount: -100 }],
         }),
@@ -339,7 +356,7 @@ describe("POST /api/projects/[id]/expenses", () => {
       {
         method: "POST",
         body: JSON.stringify({
-          paidByMemberId: "member-123",
+          payers: [{ memberId: "member-123", amount: 1000 }],
           amount: 1000,
           participants: [],
         }),
@@ -366,7 +383,7 @@ describe("POST /api/projects/[id]/expenses", () => {
       {
         method: "POST",
         body: JSON.stringify({
-          paidByMemberId: "member-123",
+          payers: [{ memberId: "member-123", amount: 1000 }],
           amount: 1000,
           participants: [{ memberId: "invalid-member", shareAmount: 1000 }],
         }),
@@ -393,7 +410,7 @@ describe("POST /api/projects/[id]/expenses", () => {
       {
         method: "POST",
         body: JSON.stringify({
-          paidByMemberId: "invalid-payer",
+          payers: [{ memberId: "invalid-payer", amount: 1000 }],
           amount: 1000,
           participants: [{ memberId: "member-123", shareAmount: 1000 }],
         }),
@@ -404,6 +421,97 @@ describe("POST /api/projects/[id]/expenses", () => {
 
     expect(response.status).toBe(400)
     expect(data.error).toBe("付款人必須是專案成員")
+  })
+
+  it("should return 400 if payers array is empty", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(
+      mockMembership as never
+    )
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123" },
+    ] as never)
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          payers: [],
+          amount: 1000,
+          participants: [{ memberId: "member-123", shareAmount: 1000 }],
+        }),
+      }
+    )
+    const response = await POST(req, { params: createParams("project-123") })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe("至少需要一位付款人")
+    expect(prisma.expense.create).not.toHaveBeenCalled()
+  })
+
+  it("should return 400 if payer amounts do not sum to the expense amount", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(
+      mockMembership as never
+    )
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123" },
+      { id: "member-456" },
+    ] as never)
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          payers: [
+            { memberId: "member-123", amount: 300 },
+            { memberId: "member-456", amount: 300 },
+          ],
+          amount: 1000,
+          participants: [{ memberId: "member-123", shareAmount: 1000 }],
+        }),
+      }
+    )
+    const response = await POST(req, { params: createParams("project-123") })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe("付款金額合計必須等於費用總額")
+    expect(prisma.expense.create).not.toHaveBeenCalled()
+  })
+
+  it("should return 400 if the same payer is listed twice", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(
+      mockMembership as never
+    )
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123" },
+    ] as never)
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          payers: [
+            { memberId: "member-123", amount: 500 },
+            { memberId: "member-123", amount: 500 },
+          ],
+          amount: 1000,
+          participants: [{ memberId: "member-123", shareAmount: 1000 }],
+        }),
+      }
+    )
+    const response = await POST(req, { params: createParams("project-123") })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe("付款人不可重複")
+    expect(prisma.expense.create).not.toHaveBeenCalled()
   })
 
   it("should return 400 if share total does not equal amount", async () => {
@@ -421,7 +529,7 @@ describe("POST /api/projects/[id]/expenses", () => {
       {
         method: "POST",
         body: JSON.stringify({
-          paidByMemberId: "member-123",
+          payers: [{ memberId: "member-123", amount: 1000 }],
           amount: 1000,
           participants: [
             { memberId: "member-123", shareAmount: 400 },
@@ -453,7 +561,7 @@ describe("POST /api/projects/[id]/expenses", () => {
       {
         method: "POST",
         body: JSON.stringify({
-          paidByMemberId: "member-123",
+          payers: [{ memberId: "member-123", amount: 1000 }],
           amount: 1000,
           description: "Test Expense",
           category: "food",
@@ -469,7 +577,15 @@ describe("POST /api/projects/[id]/expenses", () => {
 
     expect(response.status).toBe(201)
     expect(data.id).toBe("expense-123")
-    expect(prisma.expense.create).toHaveBeenCalled()
+    expect(prisma.expense.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          payers: {
+            create: [{ memberId: "member-123", amount: 1000 }],
+          },
+        }),
+      })
+    )
   })
 
   it("should create activity log after creating expense", async () => {
@@ -487,7 +603,7 @@ describe("POST /api/projects/[id]/expenses", () => {
       {
         method: "POST",
         body: JSON.stringify({
-          paidByMemberId: "member-123",
+          payers: [{ memberId: "member-123", amount: 1000 }],
           amount: 1000,
           participants: [{ memberId: "member-123", shareAmount: 1000 }],
         }),
@@ -507,7 +623,7 @@ describe("POST /api/projects/[id]/expenses", () => {
         amount: mockExpense.amount,
         currency: undefined, // mockExpense doesn't have currency
         category: mockExpense.category,
-        payerName: mockExpense.payer.displayName,
+        payerName: mockExpense.payers[0].member.displayName,
         expenseDate: mockExpense.expenseDate.toISOString(),
       },
     })
@@ -528,7 +644,7 @@ describe("POST /api/projects/[id]/expenses", () => {
       {
         method: "POST",
         body: JSON.stringify({
-          paidByMemberId: "member-123",
+          payers: [{ memberId: "member-123", amount: 1000 }],
           amount: 1000,
           participants: [{ memberId: "member-123", shareAmount: 1000 }],
           expenseDate: "2024-12-01",
@@ -558,7 +674,7 @@ describe("POST /api/projects/[id]/expenses", () => {
       {
         method: "POST",
         body: JSON.stringify({
-          paidByMemberId: "member-123",
+          payers: [{ memberId: "member-123", amount: 1000 }],
           amount: 1000,
           participants: [{ memberId: "member-123", shareAmount: 1000 }],
         }),
@@ -582,7 +698,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     const req = new NextRequest("http://localhost:3000/api/projects/project-123/expenses", {
       method: "POST",
       body: JSON.stringify({
-        paidByMemberId: "member-123",
+        payers: [{ memberId: "member-123", amount: 1000 }],
         amount: 1000,
         participants: [
           { memberId: "member-123", shareAmount: 550 },
@@ -607,7 +723,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     const req = new NextRequest("http://localhost:3000/api/projects/project-123/expenses", {
       method: "POST",
       body: JSON.stringify({
-        paidByMemberId: "member-123",
+        payers: [{ memberId: "member-123", amount: 1000 }],
         amount: 1000,
         participants: [
           { memberId: "member-123", shareAmount: 500 },
@@ -631,7 +747,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     const req = new NextRequest("http://localhost:3000/api/projects/project-123/expenses", {
       method: "POST",
       body: JSON.stringify({
-        paidByMemberId: "member-123",
+        payers: [{ memberId: "member-123", amount: 1000 }],
         amount: 1000,
         participants: [
           { memberId: "member-123", shareAmount: 500 },
@@ -723,6 +839,8 @@ describe("GET /api/projects/[id]/expenses/[expenseId]", () => {
     expect(response.status).toBe(200)
     expect(data.id).toBe("expense-123")
     expect(data.amount).toBe(1000)
+    expect(data.payers).toHaveLength(1)
+    expect(data.payer).toBeUndefined()
   })
 
   it("should return 500 on database error", async () => {
@@ -934,6 +1052,12 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
           deleteMany: vi.fn(),
           createMany: vi.fn(),
         },
+        expensePayer: {
+          deleteMany: vi.fn(),
+          createMany: vi.fn(),
+          create: vi.fn(),
+          count: vi.fn(),
+        },
         expense: {
           update: vi.fn(),
         },
@@ -949,6 +1073,10 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
       {
         method: "PUT",
         body: JSON.stringify({
+          payers: [
+            { memberId: "member-123", amount: 500 },
+            { memberId: "member-456", amount: 1500 },
+          ],
           amount: 2000,
           participants: [
             { memberId: "member-123", shareAmount: 1000 },
@@ -972,11 +1100,20 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
       mockMembership as never
     )
     vi.mocked(prisma.expense.findFirst).mockResolvedValue(mockExpense as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123" },
+    ] as never)
     vi.mocked(prisma.$transaction).mockImplementation(async (cb) => {
       return cb({
         expenseParticipant: {
           deleteMany: vi.fn(),
           createMany: vi.fn(),
+        },
+        expensePayer: {
+          deleteMany: vi.fn(),
+          createMany: vi.fn(),
+          create: vi.fn(),
+          count: vi.fn(),
         },
         expense: {
           update: vi.fn(),
@@ -993,6 +1130,7 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
       {
         method: "PUT",
         body: JSON.stringify({
+          payers: [{ memberId: "member-123", amount: 1000 }],
           description: "Updated description",
         }),
       }
@@ -1033,6 +1171,12 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     vi.mocked(prisma.$transaction).mockImplementation(async (cb) =>
       cb({
         expenseParticipant: { deleteMany: vi.fn(), createMany: vi.fn() },
+        expensePayer: {
+          deleteMany: vi.fn(),
+          createMany: vi.fn(),
+          create: vi.fn(),
+          count: vi.fn(),
+        },
         expense: { update },
       } as never)
     )
@@ -1060,7 +1204,10 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     mockExisting(oldDetail)
     const update = mockUpdateTransaction()
     const response = await PUT_EXPENSE(
-      putRequest({ participants: [{ memberId: "member-123", shareAmount: 500 }, { memberId: "member-456", shareAmount: 500 }] }),
+      putRequest({
+        payers: [{ memberId: "member-123", amount: 1000 }],
+        participants: [{ memberId: "member-123", shareAmount: 500 }, { memberId: "member-456", shareAmount: 500 }],
+      }),
       { params: createExpenseParams("project-123", "expense-123") }
     )
     expect(response.status).toBe(200)
@@ -1070,9 +1217,12 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
   it("leaves splitDetail alone when only the description changes", async () => {
     mockExisting(oldDetail)
     const update = mockUpdateTransaction()
-    const response = await PUT_EXPENSE(putRequest({ description: "新描述" }), {
-      params: createExpenseParams("project-123", "expense-123"),
-    })
+    const response = await PUT_EXPENSE(
+      putRequest({ payers: [{ memberId: "member-123", amount: 1000 }], description: "新描述" }),
+      {
+        params: createExpenseParams("project-123", "expense-123"),
+      }
+    )
     expect(response.status).toBe(200)
     expect(update.mock.calls[0][0].data).not.toHaveProperty("splitDetail")
   })
@@ -1083,6 +1233,7 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     const splitDetail = { version: 1, personalItems: {}, customShares: { "member-456": 300 } }
     const response = await PUT_EXPENSE(
       putRequest({
+        payers: [{ memberId: "member-123", amount: 1000 }],
         participants: [{ memberId: "member-123", shareAmount: 700 }, { memberId: "member-456", shareAmount: 300 }],
         splitDetail,
       }),
@@ -1096,7 +1247,10 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     mockExisting(null)
     mockUpdateTransaction()
     const response = await PUT_EXPENSE(
-      putRequest({ splitDetail: { version: 1, personalItems: {}, customShares: { "member-456": 999 } } }),
+      putRequest({
+        payers: [{ memberId: "member-123", amount: 1000 }],
+        splitDetail: { version: 1, personalItems: {}, customShares: { "member-456": 999 } },
+      }),
       { params: createExpenseParams("project-123", "expense-123") }
     )
     expect(response.status).toBe(400)
@@ -1105,9 +1259,12 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
   it("clears splitDetail when null is sent", async () => {
     mockExisting(oldDetail)
     const update = mockUpdateTransaction()
-    const response = await PUT_EXPENSE(putRequest({ splitDetail: null }), {
-      params: createExpenseParams("project-123", "expense-123"),
-    })
+    const response = await PUT_EXPENSE(
+      putRequest({ payers: [{ memberId: "member-123", amount: 1000 }], splitDetail: null }),
+      {
+        params: createExpenseParams("project-123", "expense-123"),
+      }
+    )
     expect(response.status).toBe(200)
     expect(update.mock.calls[0][0].data.splitDetail).toBe(Prisma.DbNull)
   })
@@ -1117,6 +1274,7 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     const update = mockUpdateTransaction()
     const response = await PUT_EXPENSE(
       putRequest({
+        payers: [{ memberId: "member-123", amount: 1000 }],
         participants: [
           { memberId: "member-123", shareAmount: 500 },
           { memberId: "member-456", shareAmount: 500 },
@@ -1401,7 +1559,9 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
       category: "food",
       expenseDate: new Date("2024-12-01"),
       image: null,
-      payer: { displayName: "Test User" },
+      payers: [
+        { memberId: "member-123", amount: 100, member: { displayName: "Test User" } },
+      ],
     }
     const batchExpense2 = {
       id: "expense-456",
@@ -1410,7 +1570,9 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
       category: "transport",
       expenseDate: new Date("2024-12-02"),
       image: null,
-      payer: { displayName: "Test User" },
+      payers: [
+        { memberId: "member-123", amount: 100, member: { displayName: "Test User" } },
+      ],
     }
     vi.mocked(prisma.expense.findMany).mockResolvedValue([
       batchExpense1,
@@ -1457,7 +1619,9 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
       category: "food",
       expenseDate: new Date("2024-12-01"),
       image: null,
-      payer: { displayName: "Test User" },
+      payers: [
+        { memberId: "member-123", amount: 100, member: { displayName: "Test User" } },
+      ],
     }
     const batchExpense2 = {
       id: "expense-456",
@@ -1466,7 +1630,9 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
       category: "transport",
       expenseDate: new Date("2024-12-02"),
       image: null,
-      payer: { displayName: "Test User" },
+      payers: [
+        { memberId: "member-123", amount: 100, member: { displayName: "Test User" } },
+      ],
     }
     vi.mocked(prisma.expense.findMany).mockResolvedValue([
       batchExpense1,
@@ -1530,7 +1696,9 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
       category: "food",
       expenseDate: new Date("2024-12-01"),
       image: null,
-      payer: { displayName: "Test User" },
+      payers: [
+        { memberId: "member-123", amount: 100, member: { displayName: "Test User" } },
+      ],
     }
     vi.mocked(prisma.expense.findMany).mockResolvedValue([
       validExpense,

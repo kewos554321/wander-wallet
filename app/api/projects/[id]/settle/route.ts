@@ -13,17 +13,21 @@ interface Balance {
   totalShare: number // 總分攤金額
 }
 
+interface ExpensePayerDetail {
+  memberId: string
+  displayName: string
+  userImage: string | null
+  amount: number
+  convertedAmount: number
+}
+
 interface ExpenseDetail {
   id: string
   description: string
   amount: number
   currency: string
   convertedAmount: number // 轉換後的專案幣別金額
-  payer: {
-    memberId: string
-    displayName: string
-    userImage: string | null
-  }
+  payers: ExpensePayerDetail[]
   participants: {
     memberId: string
     displayName: string
@@ -158,13 +162,17 @@ export async function GET(
         deletedAt: null,
       },
       include: {
-        payer: {
-          select: {
-            id: true,
-            displayName: true,
-            user: {
+        payers: {
+          include: {
+            member: {
               select: {
-                image: true,
+                id: true,
+                displayName: true,
+                user: {
+                  select: {
+                    image: true,
+                  },
+                },
               },
             },
           },
@@ -247,15 +255,30 @@ export async function GET(
       const rate = expense.currency === projectCurrency
         ? 1
         : (exchangeRatesUsed[expense.currency] || 1)
-      const paidAmount = roundToPrecision(Number(expense.amount) * rate, precision)
+
+      const payerDetails: ExpensePayerDetail[] = []
+      let paidAmount = 0
+
+      if (expense.payers.length > 0) {
+        for (const payer of expense.payers) {
+          const converted = roundToPrecision(Number(payer.amount) * rate, precision)
+          paidAmount += converted
+          const payerBalance = balanceMap.get(payer.memberId)
+          if (payerBalance) {
+            payerBalance.balance += converted // 付了錢，餘額增加
+            payerBalance.totalPaid += converted // 記錄總付款
+          }
+          payerDetails.push({
+            memberId: payer.memberId,
+            displayName: payer.member.displayName,
+            userImage: payer.member.user?.image ?? null,
+            amount: Number(payer.amount),
+            convertedAmount: converted,
+          })
+        }
+      }
 
       totalPaid += paidAmount
-
-      const payerBalance = balanceMap.get(expense.paidByMemberId)
-      if (payerBalance) {
-        payerBalance.balance += paidAmount // 付了錢，餘額增加
-        payerBalance.totalPaid += paidAmount // 記錄總付款
-      }
 
       // 記錄支出詳情
       const expenseDetail: ExpenseDetail = {
@@ -264,11 +287,7 @@ export async function GET(
         amount: Number(expense.amount),
         currency: expense.currency,
         convertedAmount: paidAmount,
-        payer: {
-          memberId: expense.paidByMemberId,
-          displayName: expense.payer.displayName,
-          userImage: expense.payer.user?.image ?? null,
-        },
+        payers: payerDetails,
         participants: [],
       }
 

@@ -170,8 +170,11 @@ export async function DELETE(
 
     // 檢查成員是否有關聯的支出記錄（只計算未刪除的費用）
     const [paidExpenses, participatedExpenses] = await Promise.all([
-      prisma.expense.count({
-        where: { paidByMemberId: memberId, deletedAt: null },
+      prisma.expensePayer.count({
+        where: {
+          memberId: memberId,
+          expense: { deletedAt: null },
+        },
       }),
       prisma.expenseParticipant.count({
         where: {

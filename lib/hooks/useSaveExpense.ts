@@ -8,10 +8,11 @@ import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { uploadImageToR2 } from "@/lib/image-utils"
 import { sendDeleteNotificationToChat, sendExpenseNotificationToChat, type ExpenseChange } from "@/lib/liff"
 import type { ParticipantShare, SplitDetail } from "@/lib/expense-split"
+import type { PayerShare } from "@/lib/expense-payers"
 import { mergePreferences } from "@/types/user-preferences"
 
 export interface ExpensePayload {
-  paidByMemberId: string
+  payers: PayerShare[]
   amount: number
   currency: string
   description: string | null

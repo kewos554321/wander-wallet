@@ -40,6 +40,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { primaryPayerId } from "@/lib/expense-payers"
 import { useOnboarding } from "@/lib/hooks"
 import { useProjectOverview } from "@/lib/hooks/useProjectOverview"
 import { JoinProjectDialog } from "@/components/project/join-project-dialog"
@@ -80,6 +81,19 @@ function getCategoryColor(category: string | null) {
     default:
       return "bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
   }
+}
+
+// 付款人顯示：單一付款人顯示名稱，多人顯示「主要付款人等 N 人」
+function getPayerLabel(
+  expense: { payers: { memberId: string; amount: number }[] },
+  members: { id: string; displayName: string; user: { name: string | null } | null }[]
+): string {
+  const payers = expense.payers ?? []
+  if (payers.length === 0) return "未知"
+  const primaryId = primaryPayerId(payers)
+  const primary = members.find((m) => m.id === primaryId)
+  const name = primary?.user?.name || primary?.displayName || "未知"
+  return payers.length > 1 ? `${name}等 ${payers.length} 人` : name
 }
 
 export function ProjectOverviewV1({ projectId: id }: { projectId: string }) {
@@ -523,7 +537,7 @@ export function ProjectOverviewV1({ projectId: id }: { projectId: string }) {
                       {expense.description || "支出"}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {expense.payer?.user?.name || expense.payer?.displayName || "未知"} 付款 ·{" "}
+                      {getPayerLabel(expense, project.members)} 付款 ·{" "}
                       {expense.participants?.length || 0} 人分攤
                     </p>
                   </div>

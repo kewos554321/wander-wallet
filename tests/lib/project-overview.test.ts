@@ -15,7 +15,14 @@ const member = (id: string, userId: string | null) => ({
   user: userId ? { id: userId, name: id, email: `${id}@x.com`, image: null } : null,
 })
 
-function expense(id: string, payerId: string, amount: number, shares: Record<string, number>, extra: Partial<OverviewExpense> = {}): OverviewExpense {
+function expense(
+  id: string,
+  payer: string | { memberId: string; amount: number }[],
+  amount: number,
+  shares: Record<string, number>,
+  extra: Partial<OverviewExpense> = {}
+): OverviewExpense {
+  const payers = Array.isArray(payer) ? payer : [{ memberId: payer, amount }]
   return {
     id,
     amount,
@@ -23,7 +30,7 @@ function expense(id: string, payerId: string, amount: number, shares: Record<str
     description: id,
     category: "food",
     createdAt: "2026-11-12T10:00:00.000Z",
-    payer: { id: payerId, displayName: payerId, user: null },
+    payers,
     participants: Object.entries(shares).map(([memberId, shareAmount]) => ({ id: `${id}-${memberId}`, memberId, shareAmount })),
     ...extra,
   }
@@ -101,6 +108,26 @@ describe("computeProjectSummary", () => {
   it("gives 0 balance to a non-member viewer", () => {
     const p = project({ expenses: [expense("a", "me", 300, { me: 150, chi: 150 })] })
     expect(computeProjectSummary(p, identity, "stranger").userBalance).toBe(0)
+  })
+
+  it("sums each payer's share for a multi-payer expense", () => {
+    const p = project({
+      expenses: [
+        expense(
+          "a",
+          [
+            { memberId: "me", amount: 100 },
+            { memberId: "chi", amount: 200 },
+          ],
+          300,
+          { me: 150, chi: 150 }
+        ),
+      ],
+    })
+    // me paid 100 and owes 150
+    expect(computeProjectSummary(p, identity, "u1").userBalance).toBe(-50)
+    // chi paid 200 and owes 150
+    expect(computeProjectSummary(p, identity, "u2").userBalance).toBe(50)
   })
 })
 

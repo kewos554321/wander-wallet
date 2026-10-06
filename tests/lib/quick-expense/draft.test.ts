@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest"
-import { fromParsed, validateItems, itemTotals, type QuickItem } from "@/lib/quick-expense/draft"
+import { fromParsed, validateItems, itemTotals, itemDerivedPayers, type QuickItem } from "@/lib/quick-expense/draft"
 
-const base = { id: "x", amount: 100, description: "早餐", category: "food" as const, currency: "TWD", payerId: "a", participantIds: ["a", "b"], selected: true }
+const base = { id: "x", amount: 100, description: "早餐", category: "food" as const, currency: "TWD", payers: [{ memberId: "a", amount: 100 }], participantIds: ["a", "b"], selected: true }
 const item = (o: Partial<QuickItem> = {}): QuickItem => ({ ...fromParsed([base])[0], ...o })
 
 describe("fromParsed", () => {
@@ -12,6 +12,8 @@ describe("fromParsed", () => {
     expect(q.expenseDate).toEqual(today)
     expect(q.expenseDate).not.toBe(today)
     expect(q).toMatchObject({
+      payerIds: ["a"],
+      pinnedPayerAmounts: {},
       location: null,
       latitude: null,
       longitude: null,
@@ -22,6 +24,37 @@ describe("fromParsed", () => {
       customShares: {},
     })
     expect("selected" in q).toBe(false)
+  })
+
+  it("keeps an explicit multi-payer split as pinned amounts", () => {
+    const [q] = fromParsed([
+      { ...base, amount: 1280, payers: [{ memberId: "a", amount: 800 }, { memberId: "b", amount: 480 }] },
+    ])
+    expect(q.payerIds).toEqual(["a", "b"])
+    expect(q.pinnedPayerAmounts).toEqual({ a: "800", b: "480" })
+  })
+
+  it("leaves an equal multi-payer split unpinned", () => {
+    const [q] = fromParsed([
+      { ...base, amount: 100, payers: [{ memberId: "a", amount: 50 }, { memberId: "b", amount: 50 }] },
+    ])
+    expect(q.payerIds).toEqual(["a", "b"])
+    expect(q.pinnedPayerAmounts).toEqual({})
+  })
+})
+
+describe("itemDerivedPayers", () => {
+  it("derives an equal split for a single payer", () => {
+    expect(itemDerivedPayers(item()).payers).toEqual([{ memberId: "a", amount: 100 }])
+  })
+
+  it("derives pinned multi-payer amounts", () => {
+    const derived = itemDerivedPayers(item({ amount: "1280", payerIds: ["a", "b"], pinnedPayerAmounts: { a: "800", b: "480" } }))
+    expect(derived.payers).toEqual([
+      { memberId: "a", amount: 800 },
+      { memberId: "b", amount: 480 },
+    ])
+    expect(derived.payerMatches).toBe(true)
   })
 })
 
@@ -34,12 +67,22 @@ describe("validateItems", () => {
   it("returns null when valid", () => expect(validateItems([item()], members)).toBeNull())
   it("checks amount first", () => {
     for (const amount of ["", "0", "abc"]) {
-      expect(validateItems([item(), item({ amount, payerId: "" })], members)).toEqual({ index: 1, message: "第 2 筆請輸入有效金額" })
+      expect(validateItems([item(), item({ amount, payerIds: [] })], members)).toEqual({ index: 1, message: "第 2 筆請輸入有效金額" })
     }
   })
   it("checks payer then participants", () => {
-    expect(validateItems([item({ payerId: "" })], members)).toEqual({ index: 0, message: "第 1 筆請選擇付款成員" })
+    expect(validateItems([item({ payerIds: [] })], members)).toEqual({ index: 0, message: "第 1 筆請選擇付款成員" })
     expect(validateItems([item({ participantIds: [] })], members)).toEqual({ index: 0, message: "第 1 筆請選擇至少一位分攤成員" })
+  })
+  it("validates the payer sum against the amount", () => {
+    expect(validateItems([item({ amount: "100", payerIds: ["a", "b"], pinnedPayerAmounts: { a: "40", b: "40" } })], members)).toEqual({
+      index: 0,
+      message: "第 1 筆付款金額與支出金額不符",
+    })
+    expect(validateItems([item({ amount: "100", payerIds: ["a"], pinnedPayerAmounts: { a: "200" } })], members)).toEqual({
+      index: 0,
+      message: "第 1 筆付款金額合計超過支出金額",
+    })
   })
   it("validates the editable split like the expense form", () => {
     // A custom share that doesn't add up to the amount is rejected.

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { buildSplitDetail, computeShares, type SplitDetail } from "@/lib/expense-split"
+import { derivePayerShares, type PayerShare } from "@/lib/expense-payers"
 import {
   deriveSplit,
   newSplitItem,
@@ -25,24 +26,26 @@ export interface DraftMember {
   image?: string | null
 }
 
+export interface DraftExpense {
+  amount: number
+  currency: string
+  description: string | null
+  category: string | null
+  payers: { memberId: string; amount: number }[]
+  expenseDate: string
+  location: string | null
+  latitude: number | null
+  longitude: number | null
+  image: string | null
+  participants: { memberId: string; shareAmount: number }[]
+  splitDetail: SplitDetail | null
+}
+
 export interface DraftInit {
   members: DraftMember[]
   currency: string
   paidBy: string
-  expense?: {
-    amount: number
-    currency: string
-    description: string | null
-    category: string | null
-    paidByMemberId: string
-    expenseDate: string
-    location: string | null
-    latitude: number | null
-    longitude: number | null
-    image: string | null
-    participants: { memberId: string; shareAmount: number }[]
-    splitDetail: SplitDetail | null
-  }
+  expense?: DraftExpense
 }
 
 // Sequential ids for locally-created draft items come from lib/split-draft so
@@ -56,7 +59,8 @@ function initialState(init: DraftInit) {
       currency: init.currency,
       description: "",
       category: "",
-      paidBy: init.paidBy,
+      payerIds: init.paidBy ? [init.paidBy] : ([] as string[]),
+      pinnedPayerAmounts: {} as Record<string, string>,
       expenseDate: new Date(),
       location: { location: null as string | null, latitude: null as number | null, longitude: null as number | null },
       image: { image: null as string | null, pendingFile: null as File | null, preview: null as string | null },
@@ -68,6 +72,20 @@ function initialState(init: DraftInit) {
       customShares: {} as Record<string, string>,
     }
   }
+
+  const payerIds = e.payers.map((p) => p.memberId)
+  // Seed pinned amounts only when the stored split is not a plain equal split,
+  // so re-saving keeps custom amounts without pinning a plain equal split.
+  const equal = derivePayerShares({ amount: e.amount, payerIds, pinned: {} }).shares
+  const isEqualPayerSplit =
+    payerIds.length > 0 &&
+    e.payers.length === equal.length &&
+    e.payers.every((p, i) => Math.abs(Number(p.amount) - equal[i].amount) <= 0.01)
+  const pinnedPayerAmounts: Record<string, string> = {}
+  if (!isEqualPayerSplit) {
+    for (const p of e.payers) pinnedPayerAmounts[p.memberId] = String(Number(p.amount))
+  }
+
   const detail = e.splitDetail
   if (!detail) {
     // Legacy split with no stored splitDetail: a plain equal split also has no
@@ -89,7 +107,8 @@ function initialState(init: DraftInit) {
       currency: e.currency,
       description: e.description ?? "",
       category: e.category ?? "",
-      paidBy: e.paidByMemberId,
+      payerIds,
+      pinnedPayerAmounts,
       expenseDate: new Date(e.expenseDate),
       location: { location: e.location, latitude: e.latitude, longitude: e.longitude },
       image: { image: e.image, pendingFile: null, preview: null },
@@ -121,7 +140,8 @@ function initialState(init: DraftInit) {
     currency: e.currency,
     description: e.description ?? "",
     category: e.category ?? "",
-    paidBy: e.paidByMemberId,
+    payerIds,
+    pinnedPayerAmounts,
     expenseDate: new Date(e.expenseDate),
     location: { location: e.location, latitude: e.latitude, longitude: e.longitude },
     image: { image: e.image, pendingFile: null, preview: null },
@@ -144,12 +164,39 @@ export function useExpenseDraft(init: DraftInit) {
     setCurrency: set("currency"),
     setDescription: set("description"),
     setCategory: set("category"),
-    setPaidBy: set("paidBy"),
     setExpenseDate: set("expenseDate"),
     setLocation: set("location"),
     setImage: set("image"),
     setNotifyLine: set("notifyLine"),
     setPersonalMode: set("personalMode"),
+    // Payer actions: selection is multi-select; `pinnedPayerAmounts` holds
+    // manually-set amounts (absent = auto/equal).
+    togglePayer: (id: string) =>
+      setState((s) => {
+        const payerIds = s.payerIds.includes(id) ? s.payerIds.filter((x) => x !== id) : [...s.payerIds, id]
+        const pinnedPayerAmounts = { ...s.pinnedPayerAmounts }
+        if (!payerIds.includes(id)) delete pinnedPayerAmounts[id]
+        return { ...s, payerIds, pinnedPayerAmounts }
+      }),
+    setPayersAll: (selectAll: boolean) =>
+      setState((s) => ({
+        ...s,
+        payerIds: selectAll ? init.members.map((m) => m.id) : [],
+        pinnedPayerAmounts: selectAll ? s.pinnedPayerAmounts : {},
+      })),
+    setPayerAmount: (id: string, value: string) =>
+      setState((s) => {
+        const pinnedPayerAmounts = { ...s.pinnedPayerAmounts }
+        if (value.trim() === "") delete pinnedPayerAmounts[id]
+        else pinnedPayerAmounts[id] = value
+        return { ...s, pinnedPayerAmounts }
+      }),
+    clearPayerAmount: (id: string) =>
+      setState((s) => {
+        const pinnedPayerAmounts = { ...s.pinnedPayerAmounts }
+        delete pinnedPayerAmounts[id]
+        return { ...s, pinnedPayerAmounts }
+      }),
     togglePool: (id: string) => setState((s) => ({ ...s, ...withToggledPool(s, id) })),
     setPoolAll: (selectAll: boolean) => setState((s) => ({ ...s, ...withPoolAll(s, init.members.map((m) => m.id), selectAll) })),
     togglePersonalMember: (id: string) => setState((s) => ({ ...s, ...withToggledPersonalMember(s, id) })),
@@ -180,18 +227,40 @@ export function useExpenseDraft(init: DraftInit) {
     const amountNum = Number(state.amount)
     const base = deriveSplit(amountNum, participantOrder, state)
 
+    const pinnedNumbers: Record<string, number> = {}
+    for (const [id, value] of Object.entries(state.pinnedPayerAmounts)) {
+      pinnedNumbers[id] = Number(value) || 0
+    }
+    const payerResult = derivePayerShares({ amount: amountNum, payerIds: state.payerIds, pinned: pinnedNumbers })
+    const payers: PayerShare[] = payerResult.shares
+    const payerTotal = payers.reduce((s, p) => s + p.amount, 0)
+    const payerMatches = payerResult.ok && Math.abs(payerTotal - amountNum) <= 0.01
+    const primaryPayer = state.payerIds.length > 0
+      ? payers.reduce((best, p) => (p.amount > best.amount ? p : best), payers[0]).memberId
+      : ""
+
     let error: string | null = null
     const unnamed = base.splitInput.participantIds.find((id) =>
       (state.personalMode ? state.personalItems[id] ?? [] : []).some((i) => !i.name.trim())
     )
     if (state.amount.trim() === "" || !Number.isFinite(amountNum) || amountNum < 0) error = "請輸入有效金額"
-    else if (!state.paidBy) error = "請選擇付款成員"
+    else if (state.payerIds.length === 0) error = "請選擇付款成員"
+    else if (!payerResult.ok) error = "付款金額合計超過支出金額"
+    else if (!payerMatches) error = "付款金額與支出金額不符"
     else if (base.splitInput.participantIds.length === 0) error = "請選擇至少一位分擔者"
     else if (unnamed) error = `${init.members.find((m) => m.id === unnamed)?.displayName} 有個人項目未填寫名稱`
     else if (base.personalTotal > base.splitInput.amount) error = "個人項目總額不可超過支出總額"
     else if (!base.matches) error = "分攤金額與支出金額不符"
 
-    return { ...base, splitDetail: buildSplitDetail(base.splitInput), error }
+    return {
+      ...base,
+      splitDetail: buildSplitDetail(base.splitInput),
+      payers,
+      payerTotal,
+      payerMatches,
+      primaryPayerId: primaryPayer,
+      error,
+    }
   }, [state, init.members, participantOrder])
 
   return { state, actions, derived }

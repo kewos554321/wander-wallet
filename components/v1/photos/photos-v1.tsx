@@ -10,6 +10,16 @@ import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/constants/currencies"
 import { CATEGORIES, CATEGORY_COLORS, type ExpenseCategory } from "@/lib/constants/expenses"
 
+interface ExpensePayer {
+  id: string
+  memberId: string
+  amount: number
+  member: {
+    id: string
+    displayName: string
+  }
+}
+
 interface Expense {
   id: string
   amount: number
@@ -19,10 +29,7 @@ interface Expense {
   image: string | null
   location: string | null
   expenseDate: string
-  payer: {
-    id: string
-    displayName: string
-  }
+  payers: ExpensePayer[]
 }
 
 interface Project {
@@ -322,7 +329,7 @@ export function PhotosV1({ projectId }: { projectId: string }) {
                     <Calendar className="h-3 w-3" />
                     {new Date(selectedExpense.expenseDate).toLocaleDateString("zh-TW")}
                   </span>
-                  <span>👤 {selectedExpense.payer.displayName}</span>
+                  <span>👤 {selectedExpense.payers.map((p) => p.member.displayName).join("、") || "未知"}</span>
                   {selectedExpense.location && (
                     <span className="flex items-center gap-1">
                       <MapPin className="h-3 w-3" />

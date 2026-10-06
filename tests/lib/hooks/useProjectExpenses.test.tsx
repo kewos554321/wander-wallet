@@ -31,7 +31,7 @@ function expense(id: string): ProjectExpense {
     longitude: null,
     expenseDate: "2026-11-16T10:00:00.000Z",
     createdAt: "2026-11-16T10:01:00.000Z",
-    payer: member,
+    payers: [{ id: `${id}-pay`, memberId: member.id, amount: 100, member }],
     participants: [{ id: `${id}-p`, shareAmount: 100, member }],
   }
 }

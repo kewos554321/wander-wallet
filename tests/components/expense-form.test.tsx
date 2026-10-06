@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react"
 import { ExpenseForm } from "@/components/expense/expense-form"
 import { ThemeProvider } from "@/components/system/theme-provider"
 import { ReactNode } from "react"
@@ -104,12 +104,20 @@ const mockExpense = {
   latitude: 25.033,
   longitude: 121.5654,
   expenseDate: "2024-06-15T00:00:00.000Z",
-  paidByMemberId: "member-1",
-  payer: {
-    id: "member-1",
-    displayName: "Alice",
-    user: { id: "user-1", name: "Alice", email: "alice@test.com", image: null },
-  },
+  payers: [
+    {
+      id: "expense-payer-1",
+      expenseId: "expense-1",
+      memberId: "member-1",
+      amount: 300,
+      member: {
+        id: "member-1",
+        displayName: "Alice",
+        userId: "user-1",
+        user: { id: "user-1", name: "Alice", email: "alice@test.com", image: null },
+      },
+    },
+  ],
   participants: [
     {
       id: "participant-1",
@@ -399,8 +407,8 @@ describe("ExpenseForm Component", () => {
         expect(screen.queryByText("載入中...")).not.toBeInTheDocument()
       })
 
-      // Check amount is pre-filled
-      expect(screen.getByDisplayValue("300")).toBeInTheDocument()
+      // Check amount is pre-filled (also matches the single payer's amount input)
+      expect(screen.getAllByDisplayValue("300").length).toBeGreaterThan(0)
 
       // Check description is pre-filled
       expect(screen.getByDisplayValue("Lunch")).toBeInTheDocument()
@@ -1005,6 +1013,207 @@ describe("ExpenseForm Component", () => {
         expect(mockAuthFetch).toHaveBeenCalledWith("/api/projects/project-1/expenses/expense-1", { method: "DELETE" })
         expect(mockPush).toHaveBeenCalledWith("/projects/project-1/expenses")
       })
+    })
+  })
+
+  describe("Multi-payer", () => {
+    function findBody(method: string) {
+      const call = mockAuthFetch.mock.calls.find(
+        ([url, options]) => String(url).includes("/expenses") && (options as RequestInit | undefined)?.method === method
+      )
+      return call ? JSON.parse((call[1] as RequestInit).body as string) : undefined
+    }
+
+    async function waitLoaded() {
+      await waitFor(() => {
+        expect(screen.queryByText("載入中...")).not.toBeInTheDocument()
+      })
+    }
+
+    function payerGroup() {
+      return within(screen.getByRole("group", { name: "付款成員" }))
+    }
+
+    it("renders multi-select payer pills with a summary", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+      await waitLoaded()
+
+      expect(screen.getByRole("group", { name: "付款成員" })).toBeInTheDocument()
+      expect(payerGroup().getByText("全選")).toBeInTheDocument()
+
+      fireEvent.change(screen.getAllByPlaceholderText("0")[0], { target: { value: "300" } })
+      // Default single payer (first member) covers the whole amount
+      expect(payerGroup().getByText("已選 1 人")).toBeInTheDocument()
+      expect(payerGroup().getByText("金額相符")).toBeInTheDocument()
+      expect(payerGroup().getByText("$300.00 = $300.00 / $300.00")).toBeInTheDocument()
+
+      fireEvent.click(payerGroup().getByText("全選"))
+
+      expect(payerGroup().getByText("已選 3 人")).toBeInTheDocument()
+      expect(payerGroup().getByText("金額相符")).toBeInTheDocument()
+    })
+
+    it("splits equally across all selected payers and sends payers (no paidByMemberId)", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+      await waitLoaded()
+
+      fireEvent.change(screen.getAllByPlaceholderText("0")[0], { target: { value: "300" } })
+      fireEvent.click(payerGroup().getByText("全選"))
+
+      expect(payerGroup().getByText("金額相符")).toBeInTheDocument()
+      expect(payerGroup().getByText("已選 3 人")).toBeInTheDocument()
+      // $100.00 + $100.00 + $100.00 = $300.00 / $300.00
+      expect(payerGroup().getByText(/\$100\.00 \+ \$100\.00 \+ \$100\.00 = \$300\.00 \/ \$300\.00/)).toBeInTheDocument()
+
+      fireEvent.click(screen.getByText("儲存支出"))
+      await waitFor(() => {
+        expect(findBody("POST")).toBeDefined()
+      })
+      const body = findBody("POST")
+      expect(body.payers).toEqual([
+        { memberId: "member-1", amount: 100 },
+        { memberId: "member-2", amount: 100 },
+        { memberId: "member-3", amount: 100 },
+      ])
+      expect(body.paidByMemberId).toBeUndefined()
+    })
+
+    it("pinning one payer keeps its amount and auto-splits the rest", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+      await waitLoaded()
+
+      fireEvent.change(screen.getAllByPlaceholderText("0")[0], { target: { value: "300" } })
+      fireEvent.click(payerGroup().getByText("全選"))
+
+      // Pin Bob to 120; Alice and Charlie share the remaining 180 → 90 each
+      fireEvent.change(screen.getByLabelText("Bob的付款金額"), { target: { value: "120" } })
+
+      expect(screen.getByLabelText("Bob的付款金額")).toHaveValue("120")
+      expect(screen.getByLabelText("Alice的付款金額")).toHaveValue("90")
+      expect(screen.getByLabelText("Charlie的付款金額")).toHaveValue("90")
+      expect(screen.getByText("金額相符")).toBeInTheDocument()
+      // Pin toggles to "還原均分"; the untouched rows stay auto
+      expect(screen.getAllByTitle("還原均分")).toHaveLength(1)
+      expect(screen.getAllByTitle("自訂金額")).toHaveLength(2)
+
+      fireEvent.click(screen.getByText("儲存支出"))
+      await waitFor(() => {
+        expect(findBody("POST")).toBeDefined()
+      })
+      const body = findBody("POST")
+      expect(body.payers).toEqual([
+        { memberId: "member-1", amount: 90 },
+        { memberId: "member-2", amount: 120 },
+        { memberId: "member-3", amount: 90 },
+      ])
+    })
+
+    it("clearing a pin restores the equal split", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+      await waitLoaded()
+
+      fireEvent.change(screen.getAllByPlaceholderText("0")[0], { target: { value: "300" } })
+      fireEvent.click(payerGroup().getByText("全選"))
+      fireEvent.change(screen.getByLabelText("Bob的付款金額"), { target: { value: "120" } })
+      expect(screen.getAllByTitle("還原均分")).toHaveLength(1)
+
+      fireEvent.click(screen.getByRole("button", { name: "Bob的付款金額已自訂，點擊還原均分" }))
+
+      expect(screen.getByLabelText("Bob的付款金額")).toHaveValue("100")
+      expect(screen.queryAllByTitle("還原均分")).toHaveLength(0)
+    })
+
+    it("blocks submit when a pinned amount exceeds the total", async () => {
+      const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {})
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+      await waitLoaded()
+
+      fireEvent.change(screen.getAllByPlaceholderText("0")[0], { target: { value: "300" } })
+      fireEvent.click(payerGroup().getByText("全選"))
+      // Pin every payer above the total (200 + 100 + 100 = 400 > 300)
+      fireEvent.change(screen.getByLabelText("Alice的付款金額"), { target: { value: "200" } })
+      fireEvent.change(screen.getByLabelText("Bob的付款金額"), { target: { value: "100" } })
+      fireEvent.change(screen.getByLabelText("Charlie的付款金額"), { target: { value: "100" } })
+
+      expect(payerGroup().getByText("金額不符")).toBeInTheDocument()
+
+      fireEvent.click(screen.getByText("儲存支出"))
+
+      await waitFor(() => {
+        expect(alertSpy).toHaveBeenCalledWith("付款金額合計超過支出金額")
+      })
+      expect(findBody("POST")).toBeUndefined()
+      alertSpy.mockRestore()
+    })
+
+    it("blocks submit when all payer amounts are pinned but sum short of the total", async () => {
+      const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {})
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+      await waitLoaded()
+
+      fireEvent.change(screen.getAllByPlaceholderText("0")[0], { target: { value: "300" } })
+      // Default single payer: pin Alice to less than the total
+      fireEvent.change(screen.getByLabelText("Alice的付款金額"), { target: { value: "100" } })
+
+      expect(screen.getByText("金額不符")).toBeInTheDocument()
+
+      fireEvent.click(screen.getByText("儲存支出"))
+
+      await waitFor(() => {
+        expect(alertSpy).toHaveBeenCalledWith("付款金額與支出金額不符")
+      })
+      expect(findBody("POST")).toBeUndefined()
+      alertSpy.mockRestore()
+    })
+
+    it("removing a payer drops their pin and reassigns the remainder", async () => {
+      renderWithProviders(<ExpenseForm projectId="project-1" mode="create" />)
+      await waitLoaded()
+
+      fireEvent.change(screen.getAllByPlaceholderText("0")[0], { target: { value: "300" } })
+      fireEvent.click(payerGroup().getByText("全選"))
+      fireEvent.change(screen.getByLabelText("Bob的付款金額"), { target: { value: "120" } })
+
+      // Remove Bob via the row's remove control
+      fireEvent.click(screen.getByRole("button", { name: "移除Bob" }))
+
+      // Alice and Charlie now split 300 evenly
+      expect(screen.getByLabelText("Alice的付款金額")).toHaveValue("150")
+      expect(screen.getByLabelText("Charlie的付款金額")).toHaveValue("150")
+      expect(screen.getByText("已選 2 人")).toBeInTheDocument()
+      expect(screen.getByText("金額相符")).toBeInTheDocument()
+    })
+
+    it("loads multi-payer expense from payers into the editor", async () => {
+      setupMockFetch({
+        expense: {
+          ...mockExpense,
+          payers: [
+            { ...mockExpense.payers[0], amount: 200 },
+            {
+              id: "expense-payer-2",
+              expenseId: "expense-1",
+              memberId: "member-2",
+              amount: 100,
+              member: {
+                id: "member-2",
+                displayName: "Bob",
+                userId: "user-2",
+                user: { id: "user-2", name: "Bob", email: "bob@test.com", image: null },
+              },
+            },
+          ],
+        },
+      })
+      renderWithProviders(<ExpenseForm projectId="project-1" expenseId="expense-1" mode="edit" />)
+      await waitLoaded()
+
+      expect(screen.getByText("已選 2 人")).toBeInTheDocument()
+      expect(screen.getByText("金額相符")).toBeInTheDocument()
+      expect(screen.getByLabelText("Alice的付款金額")).toHaveValue("200")
+      expect(screen.getByLabelText("Bob的付款金額")).toHaveValue("100")
+      // Both amounts are pinned because the stored split is not an equal split
+      expect(screen.getAllByTitle("還原均分")).toHaveLength(2)
     })
   })
 })

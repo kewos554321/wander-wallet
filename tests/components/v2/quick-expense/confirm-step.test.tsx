@@ -10,8 +10,8 @@ import { fromParsed, type QuickItem } from "@/lib/quick-expense/draft"
 
 const members = [{ id: "a", displayName: "小雨" }, { id: "b", displayName: "志明" }, { id: "c", displayName: "阿凱" }]
 const items: QuickItem[] = fromParsed([
-  { id: "1", amount: 60, description: "早餐", category: "food", currency: "TWD", payerId: "a", participantIds: ["a", "b", "c"], selected: true },
-  { id: "2", amount: 150, description: "計程車", category: "transport", currency: "TWD", payerId: "b", participantIds: ["a", "b"], selected: true },
+  { id: "1", amount: 60, description: "早餐", category: "food", currency: "TWD", payers: [{ memberId: "a", amount: 60 }], participantIds: ["a", "b", "c"], selected: true },
+  { id: "2", amount: 150, description: "計程車", category: "transport", currency: "TWD", payers: [{ memberId: "b", amount: 150 }], participantIds: ["a", "b"], selected: true },
 ])
 const many = (n: number): QuickItem[] =>
   fromParsed(
@@ -21,7 +21,7 @@ const many = (n: number): QuickItem[] =>
       description: `d${i + 1}`,
       category: "food",
       currency: "TWD",
-      payerId: "a",
+      payers: [{ memberId: "a", amount: 10 * (i + 1) }],
       participantIds: ["a", "b"],
       selected: true,
     }))
@@ -94,8 +94,8 @@ describe("ConfirmStep", () => {
 
   it("changes payer and participants", () => {
     const p = setup()
-    fireEvent.click(within(screen.getByRole("group", { name: "付款成員" })).getByRole("radio", { name: "志明" }))
-    expect(p.onItemsChange).toHaveBeenLastCalledWith([{ ...items[0], payerId: "b" }, items[1]])
+    fireEvent.click(within(screen.getByRole("group", { name: "付款成員" })).getByRole("checkbox", { name: "志明" }))
+    expect(p.onItemsChange).toHaveBeenLastCalledWith([{ ...items[0], payerIds: ["a", "b"], pinnedPayerAmounts: {} }, items[1]])
     fireEvent.click(within(screen.getByRole("region", { name: "分攤成員" })).getByRole("button", { name: "阿凱" }))
     expect(p.onItemsChange).toHaveBeenLastCalledWith([expect.objectContaining({ participantIds: ["a", "b"] }), items[1]])
     fireEvent.click(screen.getByRole("button", { name: "取消全選" }))

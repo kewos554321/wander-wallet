@@ -20,7 +20,7 @@
 | 名詞 | 定義 |
 |---|---|
 | 付款人（payer） | 這筆支出實際出錢的成員，可多人，各有金額。存於 `ExpensePayer`。 |
-| 主要付款人（primary payer） | 金額最大者；平手取 `sortOrder` 較小者。**純計算值，不儲存**，供顯示／活動紀錄使用。 |
+| 主要付款人（primary payer） | 金額最大者；平手取付款清單中較前者（依成員順序）。**純計算值，不儲存**，供顯示／活動紀錄使用。 |
 | 分攤者（participant） | 這筆支出要分帳的成員；與付款人**互相獨立**（可幫別人代墊）。 |
 | 金額相符 | 付款金額合計 = 支出總額（容差 0.01）。 |
 
@@ -34,7 +34,7 @@
 | 合計驗證 | 儲存時付款金額合計**必須等於**支出總額 | 設計稿「金額相符 ✓」 |
 | 付款人 vs 分攤者 | **保持獨立**，不自動加入 | 支援代墊情境；與現行模型一致 |
 | v1 | **與 v2 功能對等**支援多人付款（共用同一套推算邏輯） | 使用者要求 |
-| 主要付款人 | 由付款人清單推導（金額最大、平手取 `sortOrder` 較小），不儲存、不使用者設定 | 單一真實來源 |
+| 主要付款人 | 由付款人清單推導（金額最大、平手取清單較前者），不儲存、不使用者設定 | 單一真實來源 |
 | 多幣別 | 付款金額一律以該筆支出的幣別為單位 | 與現行結算換算邏輯一致 |
 | AI 快速記帳 | 解析「我付 800、小明 480」為多位付款人 | 設計稿範例 chips 已含此情境 |
 
@@ -49,7 +49,6 @@ model ExpensePayer {
   expenseId String  @map("expense_id") @db.Uuid
   memberId  String  @map("member_id") @db.Uuid
   amount    Decimal @db.Decimal(10, 2)
-  sortOrder Int     @default(0) @map("sort_order")
 
   expense Expense       @relation(fields: [expenseId], references: [id], onDelete: Cascade)
   member  ProjectMember @relation("ExpensePayerMember", fields: [memberId], references: [id], onDelete: Cascade)
@@ -65,14 +64,14 @@ model ExpensePayer {
 
 **移除**（Phase 7 最終階段）：`Expense.paidByMemberId`、`Expense.payer` 關聯、`ProjectMember.paidExpenses` 關聯、相關索引 `@@index([paidByMemberId])`。
 
-`sortOrder` 保留付款人顯示／儲存順序（設計稿 小雨 在前、志明 在後，非依金額排序）。
+付款人順序依成員順序決定（與分攤者一致），**不另存排序欄位**（比照 `ExpenseParticipant`）。
 
 ### 4.1 既有資料補齊（backfill）
 
 `ExpensePayer` 為新表，採 schema-first（`prisma db push`）：
 
 1. `prisma db push` 建立 `expense_payers` 表。
-2. `scripts/backfill-expense-payers.mjs`：為每筆無付款列的支出插入 `{ expenseId, memberId: paidByMemberId, amount, sortOrder: 0 }`，**idempotent**。
+2. `scripts/backfill-expense-payers.mjs`：為每筆無付款列的支出插入 `{ expenseId, memberId: paidByMemberId, amount }`，**idempotent**。
 3. `package.json`：`db:backfill-expense-payers`（`.env`）、`:dev`（`.env.dev`）、`:main`（`.env.main`）。
 
 > 已於 dev 執行：97 筆支出 → 97 列，金額合計零誤差。
@@ -106,7 +105,7 @@ export function validatePayers(
   memberIds: Set<string>
 ): { ok: true; payers: PayerShare[] } | { ok: false; error: string }
 
-// 主要付款人：金額最大，平手取陣列（sortOrder）較前者
+// 主要付款人：金額最大，平手取陣列較前者（依成員順序）
 export function primaryPayerId(payers: PayerShare[]): string
 ```
 
@@ -136,7 +135,7 @@ export function primaryPayerId(payers: PayerShare[]): string
 ### 6.1 回應
 
 - 移除 `payer`（單一）。
-- `payers: [{ memberId, amount, sortOrder, member: { id, displayName, userId, user } }]`（依 `sortOrder`）。
+- `payers: [{ memberId, amount, member: { id, displayName, userId, user } }]`（與 `participants` 同形狀）。
 - GET（列表／單筆）皆 include `payers`。
 
 ## 7. 讀取與結算
@@ -172,7 +171,7 @@ export function primaryPayerId(payers: PayerShare[]): string
 - 衍生：`derived.payers`、`derived.payerTotal`、`derived.payerMatches`、`derived.primaryPayerId`、`derived.error`。
 - 驗證順序：有效金額 → 至少一位付款人 → 至少一位分攤者 → 個人項目名稱／上限 → **付款合計**與分攤合計。
 - 新增支出預設 `payerIds = [init.paidBy]`（目前使用者）。
-- 編輯：`payerIds` 依 `sortOrder`；以「存檔金額 vs 均分金額」比對決定是否 seed `pinnedPayerAmounts`，確保再存檔不漂移。
+- 編輯：`payerIds` 依成員順序；以「存檔金額 vs 均分金額」比對決定是否 seed `pinnedPayerAmounts`，確保再存檔不漂移。
 
 ## 9. UI：v2 支出表單（`AddExpense` / `EditExpense`）
 

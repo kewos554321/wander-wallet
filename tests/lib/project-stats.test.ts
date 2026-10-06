@@ -5,14 +5,22 @@ import { computeProjectStats, type StatsInput } from "@/lib/project-stats"
 const identity = (amount: number) => amount
 const day = (m: number, d: number) => new Date(2026, m - 1, d, 12).toISOString()
 
-function expense(amount: number, category: string | null, date: string, payer: string, shares: Record<string, number>, currency = "TWD") {
+function expense(
+  amount: number,
+  category: string | null,
+  date: string,
+  payer: string | { memberId: string; amount: number }[],
+  shares: Record<string, number>,
+  currency = "TWD"
+) {
+  const payers = Array.isArray(payer) ? payer : [{ memberId: payer, amount }]
   return {
     amount,
     currency,
     category,
     expenseDate: date,
     createdAt: date,
-    payer: { id: payer },
+    payers,
     participants: Object.entries(shares).map(([memberId, shareAmount]) => ({ memberId, shareAmount })),
   }
 }
@@ -81,5 +89,30 @@ describe("computeProjectStats", () => {
     const stats = computeProjectStats({ members, expenses: [expense(0, "food", day(11, 1), "me", { me: 0 })] }, identity)
     expect(stats.members[0].share).toBe(0)
     expect(stats.categories[0].percent).toBe(0)
+  })
+
+  it("credits each payer's own amount for a multi-payer expense", () => {
+    const stats = computeProjectStats(
+      {
+        members,
+        expenses: [
+          expense(
+            300,
+            "food",
+            day(11, 12),
+            [
+              { memberId: "me", amount: 100 },
+              { memberId: "chi", amount: 200 },
+            ],
+            { me: 150, chi: 150 }
+          ),
+        ],
+      },
+      identity
+    )
+    expect(stats.members).toEqual([
+      { id: "me", name: "Emma", paid: 100, share: 150, balance: -50 },
+      { id: "chi", name: "志明", paid: 200, share: 150, balance: 50 },
+    ])
   })
 })

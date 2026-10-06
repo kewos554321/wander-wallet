@@ -13,7 +13,7 @@ vi.mock("@/lib/ai/expense-parser", () => ({
 
 import { POST } from "@/app/api/voice/parse/route"
 import { getAuthUser } from "@/lib/auth"
-import { parseExpenses } from "@/lib/ai/expense-parser"
+import { parseExpenses, type ParseExpensesResult } from "@/lib/ai/expense-parser"
 
 const mockUser = {
   id: "user-123",
@@ -27,14 +27,17 @@ const mockMembers = [
   { id: "member-2", displayName: "小華" },
 ]
 
-const mockParseResult = {
+const mockParseResult: ParseExpensesResult = {
   expenses: [
     {
+      id: "temp-1",
       amount: 350,
       description: "午餐拉麵",
       category: "food",
-      payerName: "小明",
-      participantNames: ["小明", "小華"],
+      currency: "TWD",
+      payers: [{ memberId: "member-1", amount: 350 }],
+      participantIds: ["member-1", "member-2"],
+      selected: true,
     },
   ],
   confidence: 0.95,

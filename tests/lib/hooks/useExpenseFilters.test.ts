@@ -12,7 +12,7 @@ const mockExpenses: Expense[] = [
     category: "food",
     expenseDate: "2025-01-01",
     createdAt: "2025-01-01T10:00:00Z",
-    payer: { id: "user1", displayName: "Alice" },
+    payers: [{ member: { id: "user1", displayName: "Alice" } }],
     participants: [
       { id: "p1", member: { id: "user1", displayName: "Alice" } },
       { id: "p2", member: { id: "user2", displayName: "Bob" } },
@@ -26,7 +26,7 @@ const mockExpenses: Expense[] = [
     category: "transport",
     expenseDate: "2025-01-02",
     createdAt: "2025-01-02T11:00:00Z",
-    payer: { id: "user2", displayName: "Bob" },
+    payers: [{ member: { id: "user2", displayName: "Bob" } }],
     participants: [
       { id: "p3", member: { id: "user1", displayName: "Alice" } },
       { id: "p4", member: { id: "user2", displayName: "Bob" } },
@@ -41,7 +41,7 @@ const mockExpenses: Expense[] = [
     category: "accommodation",
     expenseDate: "2025-01-03",
     createdAt: "2025-01-03T12:00:00Z",
-    payer: { id: "user1", displayName: "Alice" },
+    payers: [{ member: { id: "user1", displayName: "Alice" } }],
     participants: [
       { id: "p6", member: { id: "user1", displayName: "Alice" } },
     ],
@@ -54,7 +54,7 @@ const mockExpenses: Expense[] = [
     category: "food",
     expenseDate: "2025-01-04",
     createdAt: "2025-01-04T18:00:00Z",
-    payer: { id: "user3", displayName: "Charlie" },
+    payers: [{ member: { id: "user3", displayName: "Charlie" } }],
     participants: [
       { id: "p7", member: { id: "user2", displayName: "Bob" } },
       { id: "p8", member: { id: "user3", displayName: "Charlie" } },
@@ -68,7 +68,7 @@ const mockExpenses: Expense[] = [
     category: null,
     expenseDate: "2025-01-05",
     createdAt: "2025-01-05T09:00:00Z",
-    payer: { id: "user2", displayName: "Bob" },
+    payers: [{ member: { id: "user2", displayName: "Bob" } }],
     participants: [
       { id: "p9", member: { id: "user2", displayName: "Bob" } },
     ],
@@ -229,8 +229,37 @@ describe("useExpenseFilters", () => {
 
       expect(result.current.filteredExpenses).toHaveLength(2)
       expect(
-        result.current.filteredExpenses.every((e) => e.payer.id === "user1")
+        result.current.filteredExpenses.every((e) =>
+          e.payers.some((p) => p.member.id === "user1")
+        )
       ).toBe(true)
+    })
+
+    it("should match an expense when any one of its payers is selected", () => {
+      const multiPayer: Expense[] = [
+        {
+          ...mockExpenses[0],
+          id: "multi",
+          payers: [
+            { member: { id: "user1", displayName: "Alice" } },
+            { member: { id: "user3", displayName: "Charlie" } },
+          ],
+        },
+      ]
+      const { result } = renderHook(() => useExpenseFilters(multiPayer))
+
+      act(() => {
+        result.current.togglePayer("user3")
+      })
+
+      expect(result.current.filteredExpenses.map((e) => e.id)).toEqual(["multi"])
+
+      act(() => {
+        result.current.togglePayer("user3")
+        result.current.togglePayer("user1")
+      })
+
+      expect(result.current.filteredExpenses.map((e) => e.id)).toEqual(["multi"])
     })
 
     it("should filter by multiple payers", () => {
@@ -437,7 +466,7 @@ describe("useExpenseFilters", () => {
             category: "other",
             expenseDate: "2025-01-06",
             createdAt: "2025-01-06T10:00:00Z",
-            payer: { id: "user1", displayName: "Alice" },
+            payers: [{ member: { id: "user1", displayName: "Alice" } }],
             participants: [
               { id: "p10", member: { id: "user1", displayName: "Alice" } },
             ],

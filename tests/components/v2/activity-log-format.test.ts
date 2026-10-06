@@ -48,6 +48,12 @@ describe("formatChanges", () => {
     ).toEqual([{ label: "分攤者", from: "2人", to: "3人（移除：小美；加入：阿明）" }])
   })
 
+  it("labels a payer change (multi-payer joined names)", () => {
+    expect(formatChanges({ payer: { from: "志明", to: "志明、小美" } }, "TWD")).toEqual([
+      { label: "付款成員", from: "志明", to: "志明、小美" },
+    ])
+  })
+
   it("translates category and null values", () => {
     expect(formatChanges({ category: { from: "food", to: "transport" } }, "TWD")).toEqual([
       { label: "類別", from: "餐飲", to: "交通" },

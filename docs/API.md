@@ -204,8 +204,13 @@ LINE LIFF 登入認證。
   "currency": "TWD",
   "description": "午餐",
   "category": "food",
-  "paidByMemberId": "uuid",
-  "participantIds": ["uuid1", "uuid2"],
+  "payers": [
+    { "memberId": "uuid1", "amount": 1000 }
+  ],
+  "participants": [
+    { "memberId": "uuid1", "shareAmount": 500 },
+    { "memberId": "uuid2", "shareAmount": 500 }
+  ],
   "expenseDate": "2025-01-01T12:00:00Z",
   "location": "台北市信義區",
   "latitude": 25.0330,
@@ -213,6 +218,8 @@ LINE LIFF 登入認證。
   "image": "data:image/jpeg;base64,..."
 }
 ```
+
+> `payers` 可為多位（多人付款），**金額合計必須等於 `amount`**；`participants` 的分攤金額合計亦須等於 `amount`。付款人與分攤者互相獨立。
 
 ---
 
@@ -276,7 +283,9 @@ LINE LIFF 登入認證。
     "description": "拉麵",
     "category": "food",
     "date": "2025-01-04",
-    "payer": "小明",
+    "payers": [
+      { "name": "小明", "amount": 280 }
+    ],
     "participants": ["小明", "小華", "小美"]
   }
 }

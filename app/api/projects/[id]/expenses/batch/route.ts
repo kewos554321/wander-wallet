@@ -3,6 +3,7 @@ import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { createActivityLog } from "@/lib/activity-log"
 import { deleteFile, extractKeyFromUrl } from "@/lib/r2"
+import { primaryPayerId } from "@/lib/expense-payers"
 
 // 批量刪除費用
 export async function DELETE(
@@ -49,9 +50,11 @@ export async function DELETE(
         amount: true,
         category: true,
         expenseDate: true,
-        payer: {
+        payers: {
           select: {
-            displayName: true,
+            memberId: true,
+            amount: true,
+            member: { select: { displayName: true } },
           },
         },
       },
@@ -105,7 +108,10 @@ export async function DELETE(
             description: expense.description,
             amount: Number(expense.amount),
             category: expense.category,
-            payerName: expense.payer.displayName,
+            payerName: (() => {
+              const id = primaryPayerId(expense.payers.map((p) => ({ memberId: p.memberId, amount: Number(p.amount) })))
+              return expense.payers.find((p) => p.memberId === id)?.member.displayName ?? "未知"
+            })(),
             expenseDate: expense.expenseDate.toISOString(),
           },
         })

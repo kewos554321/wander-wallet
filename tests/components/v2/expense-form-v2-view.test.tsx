@@ -19,7 +19,7 @@ interface SubmittedDraft {
   amount: number
   currency: string
   category: string
-  paidBy: string
+  payers: { memberId: string; amount: number }[]
   description: string
   participants: { memberId: string; shareAmount: number }[]
   splitDetail: SplitDetail | null
@@ -36,7 +36,7 @@ function renderForm(overrides: Partial<Parameters<typeof ExpenseFormV2View>[0]> 
       amount: derived.splitInput.amount,
       currency: state.currency,
       category: state.category,
-      paidBy: state.paidBy,
+      payers: derived.payers.map((p) => ({ ...p })),
       description: state.description,
       participants: derived.shares.map((s) => ({ ...s })),
       splitDetail: derived.splitDetail,
@@ -67,32 +67,107 @@ describe("ExpenseFormV2View", () => {
     rerender()
     expect(screen.getByLabelText("金額")).toHaveValue("1280")
     expect(screen.getByRole("button", { name: "餐飲" })).toBeInTheDocument()
-    expect(screen.getByRole("radio", { name: "小雨" })).toBeChecked()
+    expect(screen.getByRole("checkbox", { name: "小雨" })).toBeChecked()
     expect(screen.getByRole("button", { name: "新增支出 · TWD 1,280" })).toBeInTheDocument()
   })
 
-  it("selects a category and a payer", () => {
+  it("selects a category and toggles a payer on", () => {
     const { hook, rerender } = renderForm()
     fireEvent.click(screen.getByRole("button", { name: "交通" }))
-    fireEvent.click(screen.getByRole("radio", { name: "志明" }))
+    fireEvent.click(screen.getByRole("checkbox", { name: "志明" }))
     rerender()
     expect(hook.result.current.state.category).toBe("transport")
-    expect(hook.result.current.state.paidBy).toBe("b")
+    expect(hook.result.current.state.payerIds).toEqual(["a", "b"])
+    expect(screen.getByRole("checkbox", { name: "志明" })).toBeChecked()
     expect(screen.getByRole("button", { name: "交通" })).toHaveAttribute("aria-pressed", "true")
   })
 
-  it("renders a single read-only payer row and a payer summary with no select-all", () => {
+  it("renders the selected payer row and a matching payer summary with a select-all", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("1280"))
     rerender()
     const payer = screen.getByRole("group", { name: "付款成員" })
     expect(within(payer).getByText("付款明細")).toBeInTheDocument()
-    expect(within(payer).queryByText("全選")).not.toBeInTheDocument()
+    expect(within(payer).getByRole("button", { name: "全選" })).toBeInTheDocument()
     expect(within(payer).getAllByText("小雨")).toHaveLength(2)
-    expect(within(payer).getByText("$1,280")).toBeInTheDocument()
+    expect(within(payer).getByLabelText("小雨的付款金額")).toHaveValue("1280")
     expect(within(payer).getByText("已選 1 人")).toBeInTheDocument()
     expect(within(payer).getByText("金額相符")).toBeInTheDocument()
     expect(within(payer).getByText("$1,280 = $1,280 / $1,280")).toBeInTheDocument()
+  })
+
+  it("splits the amount equally between multiple selected payers", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    fireEvent.click(screen.getByRole("checkbox", { name: "志明" }))
+    rerender()
+    expect(hook.result.current.derived.payers).toEqual([
+      { memberId: "a", amount: 50 },
+      { memberId: "b", amount: 50 },
+    ])
+    const payer = screen.getByRole("group", { name: "付款成員" })
+    expect(within(payer).getByText("已選 2 人")).toBeInTheDocument()
+    expect(within(payer).getByText("金額相符")).toBeInTheDocument()
+    expect(within(payer).getByText("$50 + $50 = $100 / $100")).toBeInTheDocument()
+  })
+
+  it("pins a manual payer amount and re-splits the rest", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    fireEvent.click(screen.getByRole("checkbox", { name: "志明" }))
+    rerender()
+    fireEvent.change(screen.getByLabelText("志明的付款金額"), { target: { value: "70" } })
+    rerender()
+    expect(hook.result.current.state.pinnedPayerAmounts).toEqual({ b: "70" })
+    expect(hook.result.current.derived.payers).toEqual([
+      { memberId: "a", amount: 30 },
+      { memberId: "b", amount: 70 },
+    ])
+  })
+
+  it("removes a payer and gives their share to the rest", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    fireEvent.click(screen.getByRole("checkbox", { name: "志明" }))
+    rerender()
+    fireEvent.click(screen.getByRole("button", { name: "移除志明" }))
+    rerender()
+    expect(hook.result.current.state.payerIds).toEqual(["a"])
+    expect(hook.result.current.derived.payers).toEqual([{ memberId: "a", amount: 100 }])
+  })
+
+  it("selects every payer with 全選", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    fireEvent.click(screen.getByRole("button", { name: "全選" }))
+    rerender()
+    expect(hook.result.current.state.payerIds).toEqual(["a", "b"])
+    expect(hook.result.current.derived.payers).toEqual([
+      { memberId: "a", amount: 50 },
+      { memberId: "b", amount: 50 },
+    ])
+    const payer = screen.getByRole("group", { name: "付款成員" })
+    expect(within(payer).getByRole("button", { name: "取消全選" })).toBeInTheDocument()
+  })
+
+  it("shows the over-total error and blocks submit when pinned payer amounts exceed the amount", () => {
+    const { hook, rerender, onSubmit } = renderForm()
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    fireEvent.click(screen.getByRole("checkbox", { name: "志明" }))
+    rerender()
+    fireEvent.change(screen.getByLabelText("志明的付款金額"), { target: { value: "120" } })
+    rerender()
+    expect(hook.result.current.derived.error).toBe("付款金額合計超過支出金額")
+    expect(screen.getByRole("alert")).toHaveTextContent("付款金額合計超過支出金額")
+    const submit = screen.getByRole("button", { name: /新增支出/ })
+    expect(submit).toBeDisabled()
+    fireEvent.click(submit)
+    expect(onSubmit).not.toHaveBeenCalled()
   })
 
   it("keeps the 付款成員 title inside its section card", () => {
@@ -106,13 +181,15 @@ describe("ExpenseFormV2View", () => {
     expect(title.parentElement).toHaveClass("mx-4", "mb-4", "rounded-2xl", "border", "border-v2-line", "bg-v2-surface", "p-4")
   })
 
-  it("truncates the selected payer name and keeps the amount from shrinking", () => {
+  it("renders the selected payer row with an editable amount, a pin and a remove control", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("1280"))
     rerender()
     const payer = screen.getByRole("group", { name: "付款成員" })
-    expect(within(payer).getByText("小雨", { selector: "span.truncate" })).toBeInTheDocument()
-    expect(within(payer).getByText("$1,280")).toHaveClass("shrink-0")
+    expect(within(payer).getAllByText("小雨")).toHaveLength(2)
+    expect(within(payer).getByLabelText("小雨的付款金額")).toHaveValue("1280")
+    expect(within(payer).getByRole("button", { name: /小雨的付款金額均分/ })).toBeInTheDocument()
+    expect(within(payer).getByRole("button", { name: "移除小雨" })).toBeInTheDocument()
   })
 
   it("switches to the breakdown table as soon as the personal-items switch is on", () => {
@@ -491,7 +568,7 @@ describe("ExpenseFormV2View", () => {
         amount: 100,
         currency: "TWD",
         category: "",
-        paidBy: "a",
+        payers: [{ memberId: "a", amount: 100 }],
         description: "",
         participants: [
           { memberId: "a", shareAmount: 50 },

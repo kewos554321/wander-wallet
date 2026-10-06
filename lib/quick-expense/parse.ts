@@ -54,7 +54,9 @@ export function receiptToItem(
     description: r.description,
     category,
     currency: o.currency,
-    payerId: o.payerId,
+    // Receipts keep a single payer (the current user) covering the full amount.
+    payerIds: [o.payerId],
+    pinnedPayerAmounts: {},
     participantIds: [...o.memberIds],
     expenseDate: parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate : new Date(today),
     location: null,

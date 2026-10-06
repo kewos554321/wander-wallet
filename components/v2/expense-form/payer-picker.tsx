@@ -1,6 +1,7 @@
-import { CheckCircle2 } from "lucide-react"
+import { CheckCircle2, Pin, PinOff, UserMinus } from "lucide-react"
 import { formatAmount } from "@/lib/constants/currencies"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
+import type { PayerShare } from "@/lib/expense-payers"
 import type { DraftMember } from "./use-expense-draft"
 import { SECTION_CARD, SECTION_TITLE } from "./section-card"
 
@@ -19,39 +20,61 @@ export function memberTone(index: number) {
 
 export function PayerPicker({
   members,
-  value,
-  onChange,
+  payerIds,
+  pinned,
+  payers,
+  matches,
   amount,
   currency,
+  onTogglePayer,
+  onSetAll,
+  onSetAmount,
+  onClearAmount,
 }: {
   members: DraftMember[]
-  value: string
-  onChange: (id: string) => void
+  payerIds: string[]
+  pinned: Record<string, string>
+  payers: PayerShare[]
+  matches: boolean
   amount: number
   currency: string
+  onTogglePayer: (id: string) => void
+  onSetAll: (selectAll: boolean) => void
+  onSetAmount: (id: string, value: string) => void
+  onClearAmount: (id: string) => void
 }) {
-  const paid = members.filter((m) => m.id === value)
   const money = (n: number) => `$${formatAmount(Math.round(n * 100) / 100, currency)}`
   const nameOf = (id: string) => members.find((m) => m.id === id)?.displayName ?? ""
+  const derivedAmount = (id: string) => payers.find((p) => p.memberId === id)?.amount ?? 0
+  const allSelected = members.length > 0 && payerIds.length === members.length
+  const payerTotal = payers.reduce((sum, p) => sum + p.amount, 0)
 
   return (
     <div role="group" aria-label="付款成員" className={SECTION_CARD}>
       <p className={`mb-2.5 ${SECTION_TITLE}`}>付款成員</p>
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="m-0 text-xs font-semibold text-v2-ink-muted">付款明細</p>
+        {members.length > 1 && (
+          <button
+            type="button"
+            onClick={() => onSetAll(!allSelected)}
+            className="shrink-0 text-xs font-bold text-v2-lake"
+          >
+            {allSelected ? "取消全選" : "全選"}
+          </button>
+        )}
       </div>
 
       <div className="mb-2.5 flex flex-wrap gap-2">
         {members.map((m, i) => {
-          const checked = value === m.id
+          const checked = payerIds.includes(m.id)
           return (
             <label key={m.id} className={`cursor-pointer ${memberPillClass(checked)}`}>
               <input
-                type="radio"
-                name="v2-payer"
+                type="checkbox"
                 className="sr-only"
                 checked={checked}
-                onChange={() => onChange(m.id)}
+                onChange={() => onTogglePayer(m.id)}
                 aria-label={m.displayName}
               />
               <V2Avatar
@@ -66,35 +89,80 @@ export function PayerPicker({
         })}
       </div>
 
-      {value && (
+      {payerIds.length > 0 && (
         <div className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
-          <div className="flex items-center gap-2.5 bg-v2-lake-soft px-3.5 py-3">
-            <V2Avatar
-              image={paid[0]?.image ?? null}
-              name={nameOf(value)}
-              className="h-7 w-7 shrink-0 rounded-full"
-              fallbackClassName={`text-[11px] font-bold ${memberTone(members.findIndex((m) => m.id === value))}`}
-            />
-            <span className="flex flex-1 items-center justify-between gap-2">
-              <span className="min-w-0 truncate text-[13px] font-semibold">{nameOf(value)}</span>
-              <span className="shrink-0 rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-[13px] font-bold">
-                {money(amount)}
-              </span>
-            </span>
-          </div>
+          {payers.map((p, idx) => {
+            const isPinned = Object.prototype.hasOwnProperty.call(pinned, p.memberId)
+            const value = isPinned ? pinned[p.memberId] : String(derivedAmount(p.memberId))
+            return (
+              <div
+                key={p.memberId}
+                className={`flex items-center gap-2.5 bg-v2-lake-soft px-3.5 py-3 ${
+                  idx < payers.length - 1 ? "border-b border-v2-line-soft" : ""
+                }`}
+              >
+                <V2Avatar
+                  image={members.find((m) => m.id === p.memberId)?.image ?? null}
+                  name={nameOf(p.memberId)}
+                  className="h-7 w-7 shrink-0 rounded-full"
+                  fallbackClassName={`text-[11px] font-bold ${memberTone(members.findIndex((m) => m.id === p.memberId))}`}
+                />
+                <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                  <span className="min-w-0 truncate text-[13px] font-semibold">{nameOf(p.memberId)}</span>
+                  <label
+                    className={`flex w-24 shrink-0 items-center rounded-lg px-2.5 py-1.5 text-[13px] font-bold ${
+                      isPinned ? "border border-v2-lake-border bg-v2-surface" : "border border-v2-line bg-v2-surface"
+                    }`}
+                  >
+                    <span aria-hidden="true">$</span>
+                    <input
+                      aria-label={`${nameOf(p.memberId)}的付款金額`}
+                      value={value}
+                      inputMode="decimal"
+                      onChange={(e) => onSetAmount(p.memberId, e.target.value)}
+                      className="w-full min-w-0 bg-transparent text-right outline-none"
+                    />
+                  </label>
+                </span>
+                <button
+                  type="button"
+                  aria-label={isPinned ? `${nameOf(p.memberId)}的付款金額已自訂，點擊還原均分` : `${nameOf(p.memberId)}的付款金額均分，點擊自訂`}
+                  onClick={() => (isPinned ? onClearAmount(p.memberId) : onSetAmount(p.memberId, String(derivedAmount(p.memberId))))}
+                  className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md ${
+                    isPinned ? "bg-v2-lake text-v2-on-lake" : "border-[1.5px] border-v2-check text-v2-ink-muted"
+                  }`}
+                >
+                  {isPinned ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
+                </button>
+                <button
+                  type="button"
+                  aria-label={`移除${nameOf(p.memberId)}`}
+                  onClick={() => onTogglePayer(p.memberId)}
+                  className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md bg-v2-danger-soft text-v2-danger-strong"
+                >
+                  <UserMinus className="h-3 w-3" />
+                </button>
+              </div>
+            )
+          })}
         </div>
       )}
 
       <div className="mt-2">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs text-v2-ink-muted">已選 {paid.length} 人</span>
-          <span className="flex items-center gap-1 text-xs font-bold text-v2-link">
-            <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
-            金額相符
-          </span>
+          <span className="text-xs text-v2-ink-muted">已選 {payers.length} 人</span>
+          {matches ? (
+            <span className="flex items-center gap-1 text-xs font-bold text-v2-link">
+              <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
+              金額相符
+            </span>
+          ) : (
+            <span className="text-xs font-bold text-v2-danger">金額不符</span>
+          )}
         </div>
         <p className="mt-[3px] break-words text-xs leading-normal text-v2-ink-muted">
-          {money(amount)} = {money(amount)} / {money(amount)}
+          {payers.length > 0 ? `${payers.map((p) => money(p.amount)).join(" + ")} = ` : ""}
+          {money(payerTotal)} / {money(amount)}
         </p>
       </div>
     </div>

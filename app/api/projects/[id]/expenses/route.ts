@@ -5,6 +5,8 @@ import { createActivityLog } from "@/lib/activity-log"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { Prisma } from "@prisma/client"
 import { validateSplitDetail } from "@/lib/expense-split"
+import { primaryPayerId, validatePayers, type PayerShare } from "@/lib/expense-payers"
+import { expensePayersInclude } from "@/lib/expense-payers-include"
 
 interface Participant {
   memberId: string
@@ -41,21 +43,7 @@ export async function GET(
         deletedAt: null, // 只取未刪除的費用
       },
       include: {
-        payer: {
-          select: {
-            id: true,
-            displayName: true,
-            userId: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                image: true,
-              },
-            },
-          },
-        },
+        payers: expensePayersInclude,
         participants: {
           include: {
             member: {
@@ -116,7 +104,7 @@ export async function POST(
     }
 
     const body = await req.json()
-    const { paidByMemberId, amount, currency, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail } = body
+    const { payers, amount, currency, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail } = body
 
     // 獲取專案幣別
     const project = await prisma.project.findUnique({
@@ -131,9 +119,9 @@ export async function POST(
     const expenseCurrency = currency || project.currency || DEFAULT_CURRENCY
 
     // 驗證必填欄位
-    if (!paidByMemberId || amount === undefined || amount === null || !participants || !Array.isArray(participants)) {
+    if (amount === undefined || amount === null || !participants || !Array.isArray(participants)) {
       return NextResponse.json(
-        { error: "付款人、金額和參與者必填" },
+        { error: "金額和參與者必填" },
         { status: 400 }
       )
     }
@@ -171,13 +159,12 @@ export async function POST(
       }
     }
 
-    // 驗證付款人也是專案成員
-    if (!memberIdSet.has(paidByMemberId)) {
-      return NextResponse.json(
-        { error: "付款人必須是專案成員" },
-        { status: 400 }
-      )
+    // 驗證付款人（多人，金額合計須等於支出總額）
+    const payerValidation = validatePayers(payers, amountNum, memberIdSet)
+    if (!payerValidation.ok) {
+      return NextResponse.json({ error: payerValidation.error }, { status: 400 })
     }
+    const validatedPayers: PayerShare[] = payerValidation.payers
 
     // 計算分擔總額並驗證
     const totalShare = participants.reduce(
@@ -210,11 +197,12 @@ export async function POST(
       validatedSplitDetail = isEmpty ? null : result.detail
     }
 
+    const primaryPayer = primaryPayerId(validatedPayers)
+
     // 創建費用記錄（匯率轉換在結算時執行）
     const expense = await prisma.expense.create({
       data: {
         projectId: id,
-        paidByMemberId,
         amount: amountNum,
         currency: expenseCurrency,
         description: description?.trim() || null,
@@ -227,6 +215,12 @@ export async function POST(
         ...(validatedSplitDetail
           ? { splitDetail: validatedSplitDetail as unknown as Prisma.InputJsonValue }
           : {}),
+        payers: {
+          create: validatedPayers.map((p) => ({
+            memberId: p.memberId,
+            amount: p.amount,
+          })),
+        },
         participants: {
           create: participants.map((p: Participant) => ({
             memberId: p.memberId,
@@ -235,21 +229,7 @@ export async function POST(
         },
       },
       include: {
-        payer: {
-          select: {
-            id: true,
-            displayName: true,
-            userId: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                image: true,
-              },
-            },
-          },
-        },
+        payers: expensePayersInclude,
         participants: {
           include: {
             member: {
@@ -272,6 +252,10 @@ export async function POST(
       },
     })
 
+    const payerName = expense.payers.find((p) => p.memberId === primaryPayer)?.member.displayName
+      ?? expense.payers[0]?.member.displayName
+      ?? "未知"
+
     // 記錄操作歷史（包含 metadata 快照）
     await createActivityLog({
       projectId: id,
@@ -285,7 +269,7 @@ export async function POST(
         amount: Number(expense.amount),
         currency: expense.currency,
         category: expense.category,
-        payerName: expense.payer.displayName,
+        payerName,
         expenseDate: expense.expenseDate.toISOString(),
       },
     })
@@ -301,4 +285,3 @@ export async function POST(
     )
   }
 }
-

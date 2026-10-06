@@ -7,7 +7,7 @@ export interface StatsInput {
     category: string | null
     expenseDate?: string
     createdAt: string
-    payer: { id: string }
+    payers: { memberId: string; amount: number }[]
     participants: { memberId: string; shareAmount: number }[]
   }[]
 }
@@ -61,7 +61,9 @@ export function computeProjectStats(
       label: `${date.getMonth() + 1}/${date.getDate()}`,
     })
 
-    paid.set(expense.payer.id, (paid.get(expense.payer.id) ?? 0) + converted)
+    for (const payer of expense.payers) {
+      paid.set(payer.memberId, (paid.get(payer.memberId) ?? 0) + convert(Number(payer.amount), expense.currency))
+    }
     if (amount !== 0) {
       for (const p of expense.participants) {
         share.set(p.memberId, (share.get(p.memberId) ?? 0) + converted * (Number(p.shareAmount) / amount))

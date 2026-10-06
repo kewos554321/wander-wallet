@@ -71,7 +71,7 @@ const item = (over: Partial<QuickItem> = {}): QuickItem => ({
       description: "早餐",
       category: "food",
       currency: "TWD",
-      payerId: "a",
+      payers: [{ memberId: "a", amount: 60 }],
       participantIds: ["a", "b", "c"],
       selected: true,
     },
@@ -131,10 +131,28 @@ describe("QuickItemCard", () => {
     expect(p.onChange).toHaveBeenLastCalledWith({ category: "transport" })
   })
 
-  it("changes the payer", () => {
+  it("adds and removes payers", () => {
     const p = setup()
-    fireEvent.click(within(screen.getByRole("group", { name: "付款成員" })).getByRole("radio", { name: "志明" }))
-    expect(p.onChange).toHaveBeenLastCalledWith({ payerId: "b" })
+    const payer = screen.getByRole("group", { name: "付款成員" })
+    fireEvent.click(within(payer).getByRole("checkbox", { name: "志明" }))
+    expect(p.onChange).toHaveBeenLastCalledWith({ payerIds: ["a", "b"], pinnedPayerAmounts: {} })
+    fireEvent.click(within(payer).getByRole("checkbox", { name: "小雨" }))
+    expect(p.onChange).toHaveBeenLastCalledWith({ payerIds: [], pinnedPayerAmounts: {} })
+  })
+
+  it("edits and clears an individual payer amount", () => {
+    const p = setup({ amount: "1280", payerIds: ["a", "b"] })
+    const payer = screen.getByRole("group", { name: "付款成員" })
+    fireEvent.change(within(payer).getByLabelText("小雨的付款金額"), { target: { value: "800" } })
+    expect(p.onChange).toHaveBeenLastCalledWith({ pinnedPayerAmounts: { a: "800" } })
+    fireEvent.change(within(payer).getByLabelText("小雨的付款金額"), { target: { value: "" } })
+    expect(p.onChange).toHaveBeenLastCalledWith({ pinnedPayerAmounts: {} })
+  })
+
+  it("selects all payers", () => {
+    const p = setup({ payerIds: ["a"] })
+    fireEvent.click(within(screen.getByRole("group", { name: "付款成員" })).getByRole("button", { name: "全選" }))
+    expect(p.onChange).toHaveBeenLastCalledWith({ payerIds: ["a", "b", "c"], pinnedPayerAmounts: {} })
   })
 
   it("adds and removes individual participants", () => {
@@ -204,7 +222,7 @@ describe("QuickItemCard", () => {
     ]
     render(<QuickItemCard item={item()} members={withImage} onChange={vi.fn()} />)
     const payer = screen.getByRole("group", { name: "付款成員" })
-    const radio = within(payer).getByRole("radio", { name: "小雨" })
-    expect(radio.closest("label")!.querySelector('img[src="https://cdn.example/xiaoyu.jpg"]')).toBeInTheDocument()
+    const checkbox = within(payer).getByRole("checkbox", { name: "小雨" })
+    expect(checkbox.closest("label")!.querySelector('img[src="https://cdn.example/xiaoyu.jpg"]')).toBeInTheDocument()
   })
 })

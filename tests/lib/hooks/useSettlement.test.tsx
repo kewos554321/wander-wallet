@@ -15,7 +15,20 @@ const data: SettleData = {
       amount: 2400,
     },
   ],
-  expenseDetails: [],
+  expenseDetails: [
+    {
+      id: "e1",
+      description: "晚餐",
+      amount: 2400,
+      currency: "TWD",
+      convertedAmount: 2400,
+      payers: [
+        { memberId: "a", displayName: "小美", userImage: null, amount: 1200, convertedAmount: 1200 },
+        { memberId: "b", displayName: "Emma", userImage: null, amount: 1200, convertedAmount: 1200 },
+      ],
+      participants: [],
+    },
+  ],
   summary: {
     totalExpenses: 3,
     totalAmount: 60730,

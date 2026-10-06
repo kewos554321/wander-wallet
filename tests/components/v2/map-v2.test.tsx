@@ -38,9 +38,9 @@ vi.mock("@/components/auth/liff-provider", () => ({ useAuthFetch: () => vi.fn(),
 import { MapV2 } from "@/components/v2/map/map-v2"
 
 const expenses: MapExpense[] = [
-  { id: "e1", amount: 1280, currency: "TWD", description: "一蘭拉麵晚餐", category: "food", location: "新宿", latitude: 35.69, longitude: 139.7, expenseDate: "2026-10-18", payer: { displayName: "志明" } },
-  { id: "e2", amount: 14000, currency: "TWD", description: "溫泉旅館", category: "accommodation", location: "嵐山", latitude: 35.0, longitude: 135.7, expenseDate: "2026-10-19", payer: { displayName: "小美" } },
-  { id: "e3", amount: 100, currency: "TWD", description: null, category: "transport", location: null, latitude: null, longitude: null, expenseDate: "2026-10-20", payer: { displayName: "志明" } },
+  { id: "e1", amount: 1280, currency: "TWD", description: "一蘭拉麵晚餐", category: "food", location: "新宿", latitude: 35.69, longitude: 139.7, expenseDate: "2026-10-18", payers: [{ memberId: "m1", amount: 1280, member: { displayName: "志明" } }] },
+  { id: "e2", amount: 14000, currency: "TWD", description: "溫泉旅館", category: "accommodation", location: "嵐山", latitude: 35.0, longitude: 135.7, expenseDate: "2026-10-19", payers: [{ memberId: "m2", amount: 14000, member: { displayName: "小美" } }] },
+  { id: "e3", amount: 100, currency: "TWD", description: null, category: "transport", location: null, latitude: null, longitude: null, expenseDate: "2026-10-20", payers: [{ memberId: "m1", amount: 100, member: { displayName: "志明" } }] },
 ]
 
 function renderView(overrides: Partial<Parameters<typeof MapV2View>[0]> = {}) {
@@ -88,6 +88,20 @@ describe("MapV2View", () => {
     renderView()
     fireEvent.click(screen.getByRole("button", { name: /顯示列表/ }))
     expect(screen.getByText("一蘭拉麵晚餐")).toBeInTheDocument()
+  })
+
+  it("shows a compact multi-payer label in the list", () => {
+    const multi: MapExpense = {
+      ...expenses[0],
+      id: "e9",
+      payers: [
+        { memberId: "m1", amount: 280, member: { displayName: "志明" } },
+        { memberId: "m2", amount: 1000, member: { displayName: "小美" } },
+      ],
+    }
+    renderView({ expenses: [multi] })
+    fireEvent.click(screen.getByRole("button", { name: /顯示列表/ }))
+    expect(screen.getByText(/小美等 2 人付款/)).toBeInTheDocument()
   })
 
   it("changes the map style", async () => {

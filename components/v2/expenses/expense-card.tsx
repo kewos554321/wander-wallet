@@ -3,6 +3,7 @@ import { CalendarDays, ChevronRight, Image as ImageIcon, MapPin } from "lucide-r
 import { CATEGORY_ICONS, getCategoryLabel } from "@/lib/constants/expenses"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import type { ProjectExpense } from "@/lib/hooks/useProjectExpenses"
+import { primaryPayerId, primaryPayerName } from "@/lib/expense-payers"
 import { CATEGORY_TONES, categoryKey } from "@/components/v2/category-style"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import { NEUTRAL_AVATAR_TONE } from "./avatar-tone"
@@ -30,8 +31,16 @@ export function ExpenseCard({
 }: ExpenseCardProps) {
   const key = categoryKey(expense.category)
   const Icon = CATEGORY_ICONS[key]
-  const isMe = expense.payer.id === currentMemberId
-  const payerName = isMe ? "我" : expense.payer.displayName
+  const primaryId = primaryPayerId(expense.payers)
+  const isMe = primaryId === currentMemberId
+  const payerLabel = isMe ? "我" : primaryPayerName(expense.payers)
+  const primaryPayer = expense.payers.find((p) => p.memberId === primaryId)
+  const payerText =
+    expense.payers.length <= 1
+      ? isMe
+        ? "我付款"
+        : `${payerLabel}付款`
+      : `${payerLabel}等 ${expense.payers.length} 人付款`
   const title = expense.description || getCategoryLabel(key)
   const members = expense.participants.map((p) => p.member)
   const shown = members.slice(0, 3)
@@ -59,12 +68,12 @@ export function ExpenseCard({
         </div>
         <div className="mt-[5px] flex items-center gap-1.5 overflow-hidden whitespace-nowrap">
           <V2Avatar
-            image={expense.payer.user?.image ?? null}
-            name={payerName}
+            image={primaryPayer?.member.user?.image ?? null}
+            name={payerLabel}
             className="h-3.5 w-3.5 shrink-0 rounded-full"
             fallbackClassName={`text-[7px] font-bold ${NEUTRAL_AVATAR_TONE}`}
           />
-          <span className="shrink-0 text-[11px] font-medium">{isMe ? "我付款" : `${payerName}付款`}</span>
+          <span className="shrink-0 text-[11px] font-medium">{payerText}</span>
           <span className="h-px w-2 shrink-0 bg-v2-check" aria-hidden="true" />
           <span className="flex shrink-0" aria-hidden="true">
             {shown.map((m, i) => {

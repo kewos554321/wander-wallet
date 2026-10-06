@@ -59,7 +59,7 @@ describe("ExpenseFormV2", () => {
     await waitFor(() => expect(mockSave).toHaveBeenCalled())
     const req = mockSave.mock.calls[0][0]
     expect(req.mode).toBe("create")
-    expect(req.payload.paidByMemberId).toBe("a")
+    expect(req.payload.payers).toEqual([{ memberId: "a", amount: 100 }])
     expect(req.payload.participants).toEqual([
       { memberId: "a", shareAmount: 50 },
       { memberId: "b", shareAmount: 50 },
@@ -91,8 +91,7 @@ describe("ExpenseFormV2", () => {
         latitude: null,
         longitude: null,
         expenseDate: new Date(2026, 10, 16, 19).toISOString(),
-        paidByMemberId: "b",
-        payer: { id: "b", displayName: "志明" },
+        payers: [{ memberId: "b", amount: 100, member: { id: "b", displayName: "志明" } }],
         participants: [
           { memberId: "a", shareAmount: 60, member: { id: "a", displayName: "小雨" } },
           { memberId: "b", shareAmount: 40, member: { id: "b", displayName: "志明" } },
@@ -107,7 +106,44 @@ describe("ExpenseFormV2", () => {
     const req = mockSave.mock.calls[0][0]
     expect(req.mode).toBe("edit")
     expect(req.expenseId).toBe("e1")
+    expect(req.payload.payers).toEqual([{ memberId: "b", amount: 100 }])
     expect(req.payload.splitDetail).toEqual({ version: 1, personalItems: {}, customShares: { a: 60 } })
+  })
+
+  it("loads a multi-payer expense for edit and keeps the stored payer amounts on save", async () => {
+    mockAuthFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        id: "e2",
+        amount: 100,
+        currency: "TWD",
+        description: "共乘",
+        category: "transport",
+        image: null,
+        location: null,
+        latitude: null,
+        longitude: null,
+        expenseDate: new Date(2026, 10, 16, 19).toISOString(),
+        payers: [
+          { memberId: "a", amount: 30, member: { id: "a", displayName: "小雨" } },
+          { memberId: "b", amount: 70, member: { id: "b", displayName: "志明" } },
+        ],
+        participants: [
+          { memberId: "a", shareAmount: 50, member: { id: "a", displayName: "小雨" } },
+          { memberId: "b", shareAmount: 50, member: { id: "b", displayName: "志明" } },
+        ],
+        splitDetail: null,
+      }),
+    })
+    render(<ExpenseFormV2 projectId="p1" expenseId="e2" mode="edit" />)
+    expect(await screen.findByDisplayValue("共乘")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "儲存變更 · TWD 100" }))
+    await waitFor(() => expect(mockSave).toHaveBeenCalled())
+    const req = mockSave.mock.calls[0][0]
+    expect(req.payload.payers).toEqual([
+      { memberId: "a", amount: 30 },
+      { memberId: "b", amount: 70 },
+    ])
   })
 
   it("deletes after confirmation in edit mode", async () => {
@@ -124,8 +160,7 @@ describe("ExpenseFormV2", () => {
         latitude: null,
         longitude: null,
         expenseDate: new Date().toISOString(),
-        paidByMemberId: "a",
-        payer: { id: "a", displayName: "小雨" },
+        payers: [{ memberId: "a", amount: 100, member: { id: "a", displayName: "小雨" } }],
         participants: [{ memberId: "a", shareAmount: 100, member: { id: "a", displayName: "小雨" } }],
         splitDetail: null,
       }),
@@ -157,8 +192,7 @@ describe("ExpenseFormV2", () => {
         latitude: null,
         longitude: null,
         expenseDate: new Date().toISOString(),
-        paidByMemberId: "a",
-        payer: { id: "a", displayName: "小雨" },
+        payers: [{ memberId: "a", amount: 100, member: { id: "a", displayName: "小雨" } }],
         participants: [{ memberId: "a", shareAmount: 100, member: { id: "a", displayName: "小雨" } }],
         splitDetail: null,
       }),
@@ -206,8 +240,7 @@ describe("ExpenseFormV2", () => {
         latitude: null,
         longitude: null,
         expenseDate: new Date(2026, 10, 16, 19).toISOString(),
-        paidByMemberId: "a",
-        payer: { id: "a", displayName: "小雨" },
+        payers: [{ memberId: "a", amount: 100, member: { id: "a", displayName: "小雨" } }],
         participants: [
           { memberId: "a", shareAmount: 60, member: { id: "a", displayName: "小雨" } },
           { memberId: "b", shareAmount: 40, member: { id: "b", displayName: "志明" } },

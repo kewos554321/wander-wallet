@@ -85,7 +85,7 @@ describe("useExpenseDraft", () => {
 
   it.each([
     ["invalid amount", (d: ReturnType<typeof useExpenseDraft>) => d.actions.setAmount("abc"), "請輸入有效金額"],
-    ["no payer", (d: ReturnType<typeof useExpenseDraft>) => d.actions.setPaidBy(""), "請選擇付款成員"],
+    ["no payer", (d: ReturnType<typeof useExpenseDraft>) => d.actions.togglePayer("a"), "請選擇付款成員"],
     ["no participants", (d: ReturnType<typeof useExpenseDraft>) => d.actions.setPoolAll(false), "請選擇至少一位分擔者"],
   ])("reports %s", (_label, act_, message) => {
     const { result } = setup()
@@ -117,7 +117,7 @@ describe("useExpenseDraft", () => {
         currency: "JPY",
         description: "晚餐",
         category: "food",
-        paidByMemberId: "b",
+        payers: [{ memberId: "b", amount: 100 }],
         expenseDate: new Date(2026, 10, 16, 19).toISOString(),
         location: null,
         latitude: null,
@@ -153,7 +153,7 @@ describe("useExpenseDraft", () => {
         currency: "TWD",
         description: "計程車",
         category: "transport",
-        paidByMemberId: "a",
+        payers: [{ memberId: "a", amount: 100 }],
         expenseDate: new Date(2026, 10, 16, 19).toISOString(),
         location: null,
         latitude: null,
@@ -181,7 +181,7 @@ describe("useExpenseDraft", () => {
         currency: "TWD",
         description: "午餐",
         category: "food",
-        paidByMemberId: "a",
+        payers: [{ memberId: "a", amount: 90 }],
         expenseDate: new Date(2026, 10, 16, 19).toISOString(),
         location: null,
         latitude: null,
@@ -211,7 +211,7 @@ describe("useExpenseDraft", () => {
         currency: "TWD",
         description: "計程車",
         category: "transport",
-        paidByMemberId: "a",
+        payers: [{ memberId: "a", amount: 100 }],
         expenseDate: new Date(2026, 10, 16, 19).toISOString(),
         location: null,
         latitude: null,
@@ -242,7 +242,7 @@ describe("useExpenseDraft", () => {
         currency: "TWD",
         description: "住宿",
         category: "accommodation",
-        paidByMemberId: "a",
+        payers: [{ memberId: "a", amount: 100 }],
         expenseDate: new Date(2026, 10, 16, 19).toISOString(),
         location: null,
         latitude: null,

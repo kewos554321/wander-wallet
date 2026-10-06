@@ -3,11 +3,12 @@
 import { useCallback, useState } from "react"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { buildSplitDetail } from "@/lib/expense-split"
+import { primaryPayerId } from "@/lib/expense-payers"
 import { deriveSplit, type SplitState } from "@/lib/split-draft"
 import { uploadImageToR2 } from "@/lib/image-utils"
 import { sendBatchExpenseNotificationToChat, sendExpenseNotificationToChat } from "@/lib/liff"
 import { mergePreferences } from "@/types/user-preferences"
-import type { QuickItem } from "./draft"
+import { itemDerivedPayers, type QuickItem } from "./draft"
 
 export interface SaveResult {
   savedIds: string[]
@@ -21,7 +22,7 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
   const { isDevMode, canSendMessages, user } = useLiff()
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null)
   const canNotifyLine = canSendMessages && !isDevMode
-  const payerName = useCallback((id: string) => members.find((m) => m.id === id)?.displayName || "未知", [members])
+  const displayName = useCallback((id: string) => members.find((m) => m.id === id)?.displayName || "未知", [members])
 
   const save = useCallback(
     async (items: QuickItem[], { notifyLine }: { notifyLine: boolean }): Promise<SaveResult> => {
@@ -53,7 +54,7 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              paidByMemberId: item.payerId,
+              payers: itemDerivedPayers(item).payers,
               amount,
               currency: item.currency,
               description: item.description.trim() || null,
@@ -89,11 +90,12 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
             customShares: e.customShares,
           }
           const derived = deriveSplit(Number(e.amount), members.map((m) => m.id), state)
+          const primaryId = primaryPayerId(itemDerivedPayers(e).payers)
           return {
             amount: Number(e.amount),
             description: e.description || undefined,
             category: e.category || undefined,
-            payerName: payerName(e.payerId),
+            payerName: primaryId ? displayName(primaryId) : "未知",
             participantCount: derived.shares.length,
           }
         }
@@ -107,7 +109,7 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
       }
       return { savedIds: saved.map((s) => s.id), failed }
     },
-    [authFetch, canNotifyLine, payerName, projectId, projectName, members, user?.preferences]
+    [authFetch, canNotifyLine, displayName, projectId, projectName, members, user?.preferences]
   )
 
   return { save, progress, canNotifyLine }

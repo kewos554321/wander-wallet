@@ -35,9 +35,9 @@ describe("parseReceipt", () => {
 describe("receiptToItem", () => {
   const file = new File(["a"], "r.jpg")
   const o = { currency: "JPY", payerId: "a", memberIds: ["a", "b"], file, preview: "blob:1", today: new Date("2026-09-28T00:00:00Z") }
-  it("maps the receipt with payer, all members, image and date", () => {
+  it("maps the receipt with a single full-amount payer, all members, image and date", () => {
     const q = receiptToItem({ amount: 1200, description: "拉麵", category: "food", date: "2026-09-20", confidence: 0.9 }, o)
-    expect(q).toMatchObject({ amount: "1200", description: "拉麵", category: "food", currency: "JPY", payerId: "a", participantIds: ["a", "b"] })
+    expect(q).toMatchObject({ amount: "1200", description: "拉麵", category: "food", currency: "JPY", payerIds: ["a"], pinnedPayerAmounts: {}, participantIds: ["a", "b"] })
     expect(q.image).toEqual({ image: null, pendingFile: file, preview: "blob:1" })
     expect(q.expenseDate).toEqual(new Date("2026-09-20"))
     expect(q.id).toMatch(/^receipt-/)

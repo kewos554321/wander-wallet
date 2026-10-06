@@ -16,9 +16,10 @@ interface ExpenseLocation {
   latitude: number
   longitude: number
   expenseDate: string
-  payer: {
+  payers: {
+    memberId: string
     displayName: string
-  }
+  }[]
 }
 
 // 地圖風格類型
@@ -125,6 +126,7 @@ export function ExpenseMap({ expenses, mapStyle = "standard", onExpenseClick }: 
       const emoji = categoryEmojis[category] || categoryEmojis.other
       const color = CATEGORY_COLORS[category] || CATEGORY_COLORS.other
       const categoryName = CATEGORY_LABELS[category] || "其他"
+      const payerNames = (expense.payers ?? []).map((p) => p.displayName).join("、") || "—"
 
       // 可愛卡通風格標記
       const customIcon = L.divIcon({
@@ -211,7 +213,7 @@ export function ExpenseMap({ expenses, mapStyle = "standard", onExpenseClick }: 
                 ${expense.description || "無描述"}
               </div>
               <div style="font-size: 12px; color: #94a3b8; display: flex; align-items: center; gap: 4px;">
-                👤 ${expense.payer.displayName}
+                👤 ${payerNames}
                 <span style="color: #cbd5e1;">•</span>
                 📅 ${new Date(expense.expenseDate).toLocaleDateString("zh-TW")}
               </div>

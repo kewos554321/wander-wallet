@@ -59,7 +59,18 @@ export function SettlementCalcDialog({ open, onOpenChange, data, trigger }: Sett
                               <div className="text-xs text-muted-foreground space-y-1">
                                 <div>
                                   <span className="text-green-600">付款：</span>
-                                  {expense.payer.displayName}
+                                  {expense.payers.map((p) => (
+                                    <span key={p.memberId} className="mr-1 inline-flex items-center gap-1">
+                                      {p.userImage ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={p.userImage} alt={p.displayName} className="h-4 w-4 rounded-full object-cover" />
+                                      ) : null}
+                                      {p.displayName}
+                                      <span className="text-muted-foreground/70">
+                                        ({formatCurrency(p.convertedAmount, summary.currency || DEFAULT_CURRENCY)})
+                                      </span>
+                                    </span>
+                                  ))}
                                 </div>
                                 <div>
                                   <span className="text-amber-600">分攤：</span>

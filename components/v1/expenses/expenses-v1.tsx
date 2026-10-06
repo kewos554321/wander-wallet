@@ -21,6 +21,7 @@ import { format } from "date-fns"
 import { parseAvatarString, getAvatarIcon, getAvatarColor } from "@/components/avatar-picker"
 import { useLiff } from "@/components/auth/liff-provider"
 import { formatCurrency } from "@/lib/constants/currencies"
+import { primaryPayerId } from "@/lib/expense-payers"
 import { VoiceExpenseDialog } from "@/components/voice/voice-expense-dialog"
 import { useProjectData, useExpenseFilters, useCurrencyConversion } from "@/lib/hooks"
 import { AdContainer } from "@/components/ads/ad-container"
@@ -429,6 +430,10 @@ export function ExpensesV1({ projectId: id }: { projectId: string }) {
               const isSelected = selectedIds.has(expense.id)
               const categoryInfo = getCategoryInfo(expense.category)
               const CategoryIcon = categoryInfo?.icon || Receipt
+              const payers = expense.payers ?? []
+              const primaryPayer = payers.find((p) => p.memberId === primaryPayerId(payers))
+              const primaryPayerName = primaryPayer?.member.displayName || "未知"
+              const payerLabel = payers.length > 1 ? `${primaryPayerName}等 ${payers.length} 人` : primaryPayerName
 
               const cardContent = (
                   <div className={`bg-white dark:bg-slate-900 rounded-2xl overflow-hidden transition-all cursor-pointer border border-slate-100 dark:border-slate-800 ${
@@ -526,7 +531,7 @@ export function ExpensesV1({ projectId: id }: { projectId: string }) {
                           {/* 付款人 */}
                           <div className="flex items-center gap-1.5">
                             {(() => {
-                              const avatarData = parseAvatarString(expense.payer?.user?.image)
+                              const avatarData = parseAvatarString(primaryPayer?.member.user?.image)
                               if (avatarData) {
                                 const Icon = getAvatarIcon(avatarData.iconId)
                                 return (
@@ -538,13 +543,14 @@ export function ExpensesV1({ projectId: id }: { projectId: string }) {
                                   </div>
                                 )
                               }
-                              const hasExternalImage = expense.payer?.user?.image && !expense.payer.user.image.startsWith("avatar:")
+                              const primaryImage = primaryPayer?.member.user?.image
+                              const hasExternalImage = primaryImage && !primaryImage.startsWith("avatar:")
                               return (
                                 <div className="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
                                   {hasExternalImage ? (
                                     <Image
-                                      src={expense.payer!.user!.image!}
-                                      alt={expense.payer!.displayName}
+                                      src={primaryImage}
+                                      alt={primaryPayerName}
                                       width={24}
                                       height={24}
                                       className="rounded-full object-cover"
@@ -555,7 +561,7 @@ export function ExpensesV1({ projectId: id }: { projectId: string }) {
                                 </div>
                               )
                             })()}
-                            <span className="text-sm font-medium">{expense.payer.displayName}</span>
+                            <span className="text-sm font-medium">{payerLabel}</span>
                           </div>
 
                           <span className="text-slate-300 dark:text-slate-600">·</span>

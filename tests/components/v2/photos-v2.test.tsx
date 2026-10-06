@@ -24,9 +24,9 @@ vi.mock("@/components/auth/liff-provider", () => ({
 import { PhotosV2 } from "@/components/v2/photos/photos-v2"
 
 const expenses: PhotoExpense[] = [
-  { id: "e1", image: "/a.jpg", amount: 1280, currency: "TWD", description: "一蘭拉麵晚餐", category: "food", location: "新宿", expenseDate: "2026-10-18", payer: { id: "m1", displayName: "志明" } },
-  { id: "e2", image: "/b.jpg", amount: 14000, currency: "TWD", description: null, category: "accommodation", location: null, expenseDate: "2026-10-19", payer: { id: "m2", displayName: "小美" } },
-  { id: "e3", image: null, amount: 100, currency: "TWD", description: "無照片", category: "transport", location: null, expenseDate: "2026-10-20", payer: { id: "m1", displayName: "志明" } },
+  { id: "e1", image: "/a.jpg", amount: 1280, currency: "TWD", description: "一蘭拉麵晚餐", category: "food", location: "新宿", expenseDate: "2026-10-18", payers: [{ memberId: "m1", amount: 1280, member: { displayName: "志明" } }] },
+  { id: "e2", image: "/b.jpg", amount: 14000, currency: "TWD", description: null, category: "accommodation", location: null, expenseDate: "2026-10-19", payers: [{ memberId: "m2", amount: 14000, member: { displayName: "小美" } }] },
+  { id: "e3", image: null, amount: 100, currency: "TWD", description: "無照片", category: "transport", location: null, expenseDate: "2026-10-20", payers: [{ memberId: "m1", amount: 100, member: { displayName: "志明" } }] },
 ]
 
 function renderView(overrides: Partial<Parameters<typeof PhotosV2View>[0]> = {}) {
@@ -94,6 +94,21 @@ describe("PhotosV2View", () => {
     renderView()
     fireEvent.click(screen.getByTestId("photo-tile-e1"))
     expect(screen.getByText(/新宿/)).toBeInTheDocument()
+  })
+
+  it("shows a compact multi-payer label in the lightbox", () => {
+    const multi: PhotoExpense = {
+      ...expenses[0],
+      id: "e9",
+      image: "/c.jpg",
+      payers: [
+        { memberId: "m1", amount: 280, member: { displayName: "志明" } },
+        { memberId: "m2", amount: 1000, member: { displayName: "小美" } },
+      ],
+    }
+    renderView({ expenses: [multi] })
+    fireEvent.click(screen.getByTestId("photo-tile-e9"))
+    expect(screen.getByText(/小美等 2 人/)).toBeInTheDocument()
   })
 
   it("navigates with the on-screen arrows and closes", () => {

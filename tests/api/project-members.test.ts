@@ -22,6 +22,9 @@ vi.mock("@/lib/db", () => ({
     expense: {
       count: vi.fn(),
     },
+    expensePayer: {
+      count: vi.fn(),
+    },
     expenseParticipant: {
       count: vi.fn(),
     },
@@ -411,7 +414,7 @@ describe("DELETE /api/projects/[id]/members", () => {
       projectId: "project-123",
       userId: null,
     } as never)
-    vi.mocked(prisma.expense.count).mockResolvedValue(3)
+    vi.mocked(prisma.expensePayer.count).mockResolvedValue(3)
     vi.mocked(prisma.expenseParticipant.count).mockResolvedValue(0)
 
     const req = new NextRequest("http://localhost:3000/api/projects/project-123/members", {
@@ -436,7 +439,7 @@ describe("DELETE /api/projects/[id]/members", () => {
       projectId: "project-123",
       userId: null,
     } as never)
-    vi.mocked(prisma.expense.count).mockResolvedValue(0)
+    vi.mocked(prisma.expensePayer.count).mockResolvedValue(0)
     vi.mocked(prisma.expenseParticipant.count).mockResolvedValue(5)
 
     const req = new NextRequest("http://localhost:3000/api/projects/project-123/members", {
@@ -461,7 +464,7 @@ describe("DELETE /api/projects/[id]/members", () => {
       projectId: "project-123",
       userId: null,
     } as never)
-    vi.mocked(prisma.expense.count).mockResolvedValue(2)
+    vi.mocked(prisma.expensePayer.count).mockResolvedValue(2)
     vi.mocked(prisma.expenseParticipant.count).mockResolvedValue(4)
 
     const req = new NextRequest("http://localhost:3000/api/projects/project-123/members", {
@@ -487,7 +490,7 @@ describe("DELETE /api/projects/[id]/members", () => {
       projectId: "project-123",
       userId: null,
     } as never)
-    vi.mocked(prisma.expense.count).mockResolvedValue(0)
+    vi.mocked(prisma.expensePayer.count).mockResolvedValue(0)
     vi.mocked(prisma.expenseParticipant.count).mockResolvedValue(0)
     vi.mocked(prisma.projectMember.delete).mockResolvedValue({} as never)
 

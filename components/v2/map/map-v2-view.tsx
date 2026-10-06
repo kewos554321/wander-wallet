@@ -10,6 +10,7 @@ import { CategoryChips, type CategoryChipItem } from "@/components/v2/ui/categor
 import { CATEGORY_EMOJI, CATEGORY_TONES, categoryKey } from "@/components/v2/category-style"
 import { getCategoryLabel, type ExpenseCategory } from "@/lib/constants/expenses"
 import { formatCurrency } from "@/lib/constants/currencies"
+import { primaryPayerName } from "@/lib/expense-payers"
 import { cn } from "@/lib/utils"
 import type { MapStyle } from "@/components/map/expense-map"
 
@@ -35,7 +36,7 @@ export interface MapExpense {
   latitude: number | null
   longitude: number | null
   expenseDate: string
-  payer: { displayName: string }
+  payers: { memberId: string; amount: number; member: { displayName: string } }[]
 }
 
 export interface MapV2ViewProps {
@@ -67,6 +68,7 @@ export function MapV2View({ projectId, projectCurrency, expenses, loading }: Map
         latitude: Number(e.latitude),
         longitude: Number(e.longitude),
         currency: e.currency || projectCurrency,
+        payers: e.payers.map((p) => ({ memberId: p.memberId, displayName: p.member.displayName })),
       })),
     [filtered, projectCurrency]
   )
@@ -173,7 +175,9 @@ export function MapV2View({ projectId, projectCurrency, expenses, loading }: Map
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[14px]">{expense.description || "無描述"}</span>
                       <span className="block text-[12px] text-v2-ink-muted">
-                        {expense.payer.displayName}付款{expense.location ? ` · ${expense.location}` : ""}
+                        {primaryPayerName(expense.payers)}
+                        {expense.payers.length > 1 ? `等 ${expense.payers.length} 人` : ""}付款
+                        {expense.location ? ` · ${expense.location}` : ""}
                       </span>
                     </span>
                     <span className="shrink-0 text-[14px] font-bold">{formatCurrency(expense.amount, expense.currency || projectCurrency)}</span>

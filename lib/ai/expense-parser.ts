@@ -3,6 +3,7 @@ import { ChatPromptTemplate } from "@langchain/core/prompts"
 import { createDeepSeekModel } from "./deepseek"
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/lib/constants/expenses"
 import { SUPPORTED_CURRENCIES, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { derivePayerShares, primaryPayerId, type PayerShare } from "@/lib/expense-payers"
 
 export { EXPENSE_CATEGORIES, type ExpenseCategory }
 
@@ -21,9 +22,19 @@ const ExpenseItemSchema = z.object({
     .enum(CURRENCY_CODES)
     .optional()
     .describe("貨幣代碼：若有提到日圓/円/JPY=JPY, 韓元/韓幣/KRW=KRW, 美金/美元/USD=USD, 台幣/TWD=TWD, 等。若沒提到則不填"),
-  payerName: z
-    .string()
-    .describe("這筆費用的付款人名字，如果說「我付」「我先付」則填入目前用戶名字"),
+  payers: z
+    .array(
+      z.object({
+        name: z
+          .string()
+          .describe("付款人名字；如果說「我付」「我先付」則填入目前用戶名字"),
+        amount: z
+          .number()
+          .optional()
+          .describe("這位付款人出的金額；只有在對話中有明確說出該人金額時才填"),
+      })
+    )
+    .describe("這筆費用的付款人清單，可多人；未提及付款人時放入目前用戶一人"),
   participantNames: z
     .array(z.string())
     .describe("這筆費用的分擔者名字陣列，如果說「大家」「全部」則填入所有成員"),
@@ -72,7 +83,7 @@ export interface ExpenseItemResult {
   description: string
   category: ExpenseCategory
   currency: string // 幣別代碼
-  payerId: string // 這筆費用的付款人 ID
+  payers: PayerShare[] // 這筆費用的付款人與各自金額（合計 = amount）
   participantIds: string[] // 這筆費用的分擔者 ID 陣列
   selected: boolean // 是否選中要儲存
 }
@@ -125,14 +136,16 @@ const EXPENSES_PARSER_PROMPT = ChatPromptTemplate.fromMessages([
 
 4. 類別：根據內容判斷最適合的分類
 
-5. 每筆費用的付款人（payerName）：
-   - 特別注意：每筆費用可以有不同的付款人！
-   - 如果說「我付」「我先付」「我幫大家付」→ 填入目前用戶名字
-   - 如果說「XXX 付」「XXX 幫大家付」→ 填入 XXX
+5. 每筆費用的付款人（payers）：
+   - 特別注意：每筆費用可以有不同的付款人，而且同一筆可以有多位付款人！
+   - 「我付 800、小明 480」→ 兩位付款人：目前用戶 amount 800，小明 amount 480
+   - 只有「我付」「我先付」「我幫大家付」→ 一位付款人：目前用戶（不填 amount，代表全額）
+   - 「XXX 付」「XXX 幫大家付」→ 一位付款人：XXX（不填 amount）
+   - 多個名字但沒說各自金額，例如「小明、小華付」→ 多位付款人：小明、小華（都不填 amount，之後均分）
    - 若多筆費用連續出現且只有最後提到付款人，則這些費用共用該付款人
    - 例如「早餐50、午餐60，我幫大家先付」→ 兩筆費用，付款人都是目前用戶
    - 例如「晚餐100，tommy幫大家付」→ 一筆費用，付款人是 tommy
-   - 如果沒提到 → 預設為目前用戶
+   - 如果沒提到 → 預設為目前用戶一位（全額）
 
 6. 每筆費用的分擔者（participantNames）：
    - 特別注意：每筆費用可以有不同的分擔者！
@@ -187,19 +200,11 @@ export async function parseExpenses(
     currentUserName,
   })
 
-  // 找出目前用戶的 ID 作為預設付款人
-  const currentUserMember = members.find((m) => m.displayName === currentUserName)
-  const defaultPayerId = currentUserMember?.id || members[0]?.id || ""
-  const allMemberIds = members.map((m) => m.id)
-
   // 轉換費用項目，每筆費用有獨立的付款人和分擔者
+  const allMemberIds = members.map((m) => m.id)
   const expenses: ExpenseItemResult[] = parsed.expenses.map((expense, index) => {
-    // 將付款人名字轉換為 ID
-    const payerId = findMemberIdByName(
-      expense.payerName,
-      members,
-      currentUserName
-    ) || defaultPayerId
+    // 將付款人名字轉換為 ID 並推算各自金額
+    const payers = resolvePayers(expense.payers ?? [], expense.amount, members, currentUserName)
 
     // 將分擔者名字轉換為 ID
     const participantIds = mapNamesToIds(expense.participantNames, members)
@@ -215,7 +220,7 @@ export async function parseExpenses(
       description: expense.description,
       category: expense.category,
       currency: expenseCurrency,
-      payerId,
+      payers,
       participantIds: finalParticipantIds,
       selected: true, // 預設全部選中
     }
@@ -251,13 +256,71 @@ export async function parseExpense(
     amount: firstExpense.amount,
     description: firstExpense.description,
     category: firstExpense.category,
-    payerId: firstExpense.payerId,
+    payerId: primaryPayerId(firstExpense.payers) || null,
     participantIds: firstExpense.participantIds,
     splitMode: "equal",
     confidence: result.confidence,
   }
 }
 /* c8 ignore stop */
+
+/**
+ * 單一 parsed 付款人（AI 原始輸出，名字 + 選填金額）
+ */
+export interface ParsedPayer {
+  name: string
+  amount?: number
+}
+
+/**
+ * 將 AI 解析出的付款人名字對應到成員 ID 並推算金額。
+ *
+ * - 有提供金額者視為指定（pin），其餘付款人均分剩餘金額
+ * - 多位付款人都沒提供金額 → 全額均分
+ * - 完全沒提到付款人 → 目前用戶單獨付全額
+ * - 若 AI 提供的金額合計超過支出金額，退回全額均分，讓使用者可在確認步驟修正
+ *
+ * 金額運算重用 lib/expense-payers.ts，確保與表單／伺服器一致。
+ */
+export function resolvePayers(
+  parsed: ParsedPayer[],
+  amount: number,
+  members: MemberInfo[],
+  currentUserName: string
+): PayerShare[] {
+  const ordered: { memberId: string; amount?: number }[] = []
+  for (const payer of parsed) {
+    const memberId = findMemberIdByName(payer.name, members, currentUserName)
+    if (!memberId) continue
+    const existing = ordered.find((p) => p.memberId === memberId)
+    if (existing) {
+      // 同一位成員被提到兩次：補上遺漏的金額，順序以第一次為準。
+      if (existing.amount == null && payer.amount != null) existing.amount = payer.amount
+      continue
+    }
+    ordered.push({ memberId, amount: payer.amount })
+  }
+
+  let payerIds = ordered.map((p) => p.memberId)
+  if (payerIds.length === 0) {
+    // 完全沒提到付款人 → 目前用戶單獨付全額（找不到時退回第一位成員）。
+    const current = members.find((m) => m.displayName === currentUserName) ?? members[0]
+    if (!current) return []
+    payerIds = [current.id]
+  }
+
+  const pinned: Record<string, number> = {}
+  for (const payer of ordered) {
+    if (typeof payer.amount === "number" && Number.isFinite(payer.amount)) {
+      pinned[payer.memberId] = payer.amount
+    }
+  }
+
+  const result = derivePayerShares({ amount, payerIds, pinned })
+  if (result.ok) return result.shares
+  // 解析出的金額加總超過支出金額：退回均分，避免產生無法儲存的付款清單。
+  return derivePayerShares({ amount, payerIds, pinned: {} }).shares
+}
 
 /**
  * 根據名字查找成員 ID

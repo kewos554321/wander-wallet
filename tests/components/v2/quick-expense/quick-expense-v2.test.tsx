@@ -43,7 +43,7 @@ vi.mock("@/components/ui/currency-select", () => ({ CurrencySelect: () => null }
 import { QuickExpenseV2 } from "@/components/v2/quick-expense/quick-expense-v2"
 
 const members = [{ id: "a", displayName: "小雨" }, { id: "b", displayName: "志明" }]
-const parsed = (id: string, amount = 100) => ({ id, amount, description: `d${id}`, category: "food", currency: "TWD", payerId: "a", participantIds: ["a", "b"], selected: true })
+const parsed = (id: string, amount = 100) => ({ id, amount, description: `d${id}`, category: "food", currency: "TWD", payers: [{ memberId: "a", amount }], participantIds: ["a", "b"], selected: true })
 
 const setup = () => {
   const p = { open: true, onOpenChange: vi.fn(), projectId: "p1", projectName: "東京", members, currentUserMemberId: "a", onSuccess: vi.fn(), currency: "TWD" }

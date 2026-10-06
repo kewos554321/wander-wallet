@@ -9,6 +9,7 @@ import { MapPin, List, X, Receipt, Palette } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { CATEGORIES, CATEGORY_COLORS, type ExpenseCategory } from "@/lib/constants/expenses"
+import { primaryPayerName } from "@/lib/expense-payers"
 import { MAP_STYLES, type MapStyle } from "@/components/map/expense-map"
 
 // 動態載入地圖元件（Leaflet 不支援 SSR）
@@ -34,10 +35,11 @@ interface Expense {
   latitude: number | null
   longitude: number | null
   expenseDate: string
-  payer: {
-    id: string
-    displayName: string
-  }
+  payers: {
+    memberId: string
+    amount: number
+    member: { displayName: string }
+  }[]
 }
 
 interface Project {
@@ -214,6 +216,7 @@ export function MapV1({ projectId }: { projectId: string }) {
                 ...e,
                 latitude: Number(e.latitude),
                 longitude: Number(e.longitude),
+                payers: e.payers.map((p) => ({ memberId: p.memberId, displayName: p.member.displayName })),
               }))}
               projectCurrency={projectCurrency}
               mapStyle={mapStyle}
@@ -298,6 +301,10 @@ export function MapV1({ projectId }: { projectId: string }) {
                       <div>
                         <div className="font-medium text-sm">
                           {expense.description || "無描述"}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {primaryPayerName(expense.payers)}
+                          {expense.payers.length > 1 ? `等 ${expense.payers.length} 人` : ""}付款
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {expense.location

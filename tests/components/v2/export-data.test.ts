@@ -15,7 +15,7 @@ const expenses: ExportExpenseInput[] = [
     description: "拉麵",
     category: "food",
     expenseDate: "2026-10-18T00:00:00.000Z",
-    payer: { id: "m1", displayName: "志明" },
+    payers: [{ memberId: "m1", amount: 1000, member: { id: "m1", displayName: "志明" } }],
     participants: [
       { shareAmount: 500, member: { id: "m1", displayName: "志明" } },
       { shareAmount: 500, member: { id: "m2", displayName: "小美" } },
@@ -28,7 +28,7 @@ const expenses: ExportExpenseInput[] = [
     description: null,
     category: "accommodation",
     expenseDate: "2026-10-19T00:00:00.000Z",
-    payer: { id: "m2", displayName: "小美" },
+    payers: [{ memberId: "m2", amount: 10000, member: { id: "m2", displayName: "小美" } }],
     participants: [{ shareAmount: 10000, member: { id: "m2", displayName: "小美" } }],
   },
 ]
@@ -65,6 +65,7 @@ describe("buildExportData", () => {
     expect(data.projectName).toBe("Trip")
     expect(data.expenses).toHaveLength(2)
     expect(data.expenses[1].amount).toBe(2100)
+    expect(data.expenses[0].payer).toBe("志明")
     expect(data.expenses[0].participantShares).toEqual([
       { name: "志明", amount: 500 },
       { name: "小美", amount: 500 },
@@ -107,13 +108,41 @@ describe("buildExportData", () => {
       { id: "m2", displayName: "志明" },
     ]
     const dupExpenses: ExportExpenseInput[] = [
-      { id: "d1", amount: 1000, currency: "TWD", description: null, category: "food", expenseDate: "2026-10-18T00:00:00.000Z", payer: { id: "m1", displayName: "志明" }, participants: [{ shareAmount: 1000, member: { id: "m1", displayName: "志明" } }] },
-      { id: "d2", amount: 2000, currency: "TWD", description: null, category: "food", expenseDate: "2026-10-18T00:00:00.000Z", payer: { id: "m2", displayName: "志明" }, participants: [{ shareAmount: 2000, member: { id: "m2", displayName: "志明" } }] },
+      { id: "d1", amount: 1000, currency: "TWD", description: null, category: "food", expenseDate: "2026-10-18T00:00:00.000Z", payers: [{ memberId: "m1", amount: 1000, member: { id: "m1", displayName: "志明" } }], participants: [{ shareAmount: 1000, member: { id: "m1", displayName: "志明" } }] },
+      { id: "d2", amount: 2000, currency: "TWD", description: null, category: "food", expenseDate: "2026-10-18T00:00:00.000Z", payers: [{ memberId: "m2", amount: 2000, member: { id: "m2", displayName: "志明" } }], participants: [{ shareAmount: 2000, member: { id: "m2", displayName: "志明" } }] },
     ]
     const data = buildExportData({ projectName: "Trip", projectCurrency: "TWD", members: dupMembers, expenses: dupExpenses, filters: {}, ctx })
     expect(data.statistics.memberBreakdown).toEqual([
       { name: "志明", paid: 1000, share: 1000, balance: 0 },
       { name: "志明", paid: 2000, share: 2000, balance: 0 },
     ])
+  })
+
+  it("joins payer names and accumulates each payer's own amount (multi-payer)", () => {
+    const multiPayerExpenses: ExportExpenseInput[] = [
+      {
+        id: "mp1",
+        amount: 1000,
+        currency: "TWD",
+        description: "共同晚餐",
+        category: "food",
+        expenseDate: "2026-10-18T00:00:00.000Z",
+        payers: [
+          { memberId: "m1", amount: 600, member: { id: "m1", displayName: "志明" } },
+          { memberId: "m2", amount: 400, member: { id: "m2", displayName: "小美" } },
+        ],
+        participants: [
+          { shareAmount: 500, member: { id: "m1", displayName: "志明" } },
+          { shareAmount: 500, member: { id: "m2", displayName: "小美" } },
+        ],
+      },
+    ]
+    const data = buildExportData({ projectName: "Trip", projectCurrency: "TWD", members, expenses: multiPayerExpenses, filters: {}, ctx })
+    expect(data.expenses[0].payer).toBe("志明、小美")
+    expect(data.statistics.memberBreakdown).toEqual([
+      { name: "志明", paid: 600, share: 500, balance: 100 },
+      { name: "小美", paid: 400, share: 500, balance: -100 },
+    ])
+    expect(data.settlements).toEqual([{ from: "小美", to: "志明", amount: 100 }])
   })
 })

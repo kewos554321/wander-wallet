@@ -10,6 +10,14 @@ export interface ExpenseParticipant {
   }
 }
 
+/** 付款者介面 */
+export interface ExpensePayerRef {
+  member: {
+    id: string
+    displayName: string
+  }
+}
+
 /** 基本 Expense 介面，包含篩選所需的必要欄位 */
 export interface Expense {
   id: string
@@ -19,10 +27,7 @@ export interface Expense {
   category: string | null
   expenseDate: string
   createdAt: string
-  payer: {
-    id: string
-    displayName: string
-  }
+  payers: ExpensePayerRef[]
   participants: ExpenseParticipant[]
 }
 
@@ -130,11 +135,17 @@ export function useExpenseFilters<T extends Expense>(
     initialFilters?.expenseDateRange
   )
 
-  // 唯一付款者列表
+  // 唯一付款者列表（一筆支出可有多位付款人）
   const uniquePayers = useMemo(() => {
-    return Array.from(
-      new Map(expenses.map((e) => [e.payer.id, e.payer])).values()
-    )
+    const payerMap = new Map<string, { id: string; displayName: string }>()
+    expenses.forEach((expense) => {
+      expense.payers.forEach((p) => {
+        if (!payerMap.has(p.member.id)) {
+          payerMap.set(p.member.id, { id: p.member.id, displayName: p.member.displayName })
+        }
+      })
+    })
+    return Array.from(payerMap.values())
   }, [expenses])
 
   // 唯一參與者列表（從所有消費的 participants 中提取）
@@ -176,9 +187,9 @@ export function useExpenseFilters<T extends Expense>(
         selectedCategories.size === 0 ||
         (expense.category && selectedCategories.has(expense.category))
 
-      // 付款者篩選
+      // 付款者篩選（消費的任一付款人符合即可）
       const matchesPayer =
-        selectedPayers.size === 0 || selectedPayers.has(expense.payer.id)
+        selectedPayers.size === 0 || expense.payers.some((p) => selectedPayers.has(p.member.id))
 
       // 參與者篩選（消費的任一參與者符合即可）
       const matchesParticipant =

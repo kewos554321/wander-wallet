@@ -15,7 +15,7 @@ export interface ExportExpenseInput {
   description: string | null
   category: string | null
   expenseDate: string
-  payer: { id: string; displayName: string }
+  payers: { memberId: string; amount: number; member: { id: string; displayName: string } }[]
   participants: { shareAmount: number; member: { id: string; displayName: string } }[]
 }
 
@@ -106,7 +106,7 @@ export function buildExportData(input: BuildExportInput): ExportData {
       category: expense.category || "other",
       categoryLabel: getCategoryLabel(expense.category || "other"),
       amount,
-      payer: expense.payer.displayName,
+      payer: expense.payers.map((p) => p.member.displayName).join("、"),
       participants: expense.participants.map((p) => p.member.displayName),
       participantShares: expense.participants.map((p) => ({
         name: p.member.displayName,
@@ -121,7 +121,11 @@ export function buildExportData(input: BuildExportInput): ExportData {
     for (const expense of filtered) {
       const amount = convertToProjectCurrency(expense.amount, expense.currency, ctx)
       const ratio = expense.amount > 0 ? amount / expense.amount : 0
-      if (expense.payer.id === member.id) paid += amount
+      for (const payer of expense.payers) {
+        if (payer.memberId === member.id) {
+          paid += convertToProjectCurrency(Number(payer.amount), expense.currency, ctx)
+        }
+      }
       for (const participant of expense.participants) {
         if (participant.member.id === member.id) share += participant.shareAmount * ratio
       }

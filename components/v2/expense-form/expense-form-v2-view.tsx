@@ -94,10 +94,16 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
       <CategoryPicker value={state.category} onChange={actions.setCategory} />
       <PayerPicker
         members={props.members}
-        value={state.paidBy}
-        onChange={actions.setPaidBy}
+        payerIds={state.payerIds}
+        pinned={state.pinnedPayerAmounts}
+        payers={derived.payers}
+        matches={derived.payerMatches}
         amount={derived.splitInput.amount}
         currency={state.currency}
+        onTogglePayer={actions.togglePayer}
+        onSetAll={actions.setPayersAll}
+        onSetAmount={actions.setPayerAmount}
+        onClearAmount={actions.clearPayerAmount}
       />
       <SplitEditor members={props.members} draft={draft} currency={state.currency} />
 

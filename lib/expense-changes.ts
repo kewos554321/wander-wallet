@@ -10,12 +10,19 @@ export interface ExpenseSnapshot {
   currency: string
   description: string | null
   category: string | null
-  paidByMemberId: string
-  payerName: string
+  payers: { memberId: string; amount: number }[]
+  payerLabel: string
   expenseDate: Date
   location: string | null
   image: string | null
   participantIds: string[]
+}
+
+function payerKey(payers: { memberId: string; amount: number }[]): string {
+  return [...payers]
+    .sort((a, b) => (a.memberId < b.memberId ? -1 : a.memberId > b.memberId ? 1 : 0))
+    .map((p) => `${p.memberId}:${p.amount}`)
+    .join(",")
 }
 
 function categoryLabel(category: string | null): string {
@@ -54,8 +61,8 @@ export function buildExpenseChanges(
       newValue: categoryLabel(next.category),
     })
   }
-  if (original.paidByMemberId !== next.paidByMemberId) {
-    changes.push({ field: "payer", label: "付款人", oldValue: original.payerName, newValue: next.payerName })
+  if (payerKey(original.payers) !== payerKey(next.payers)) {
+    changes.push({ field: "payer", label: "付款成員", oldValue: original.payerLabel, newValue: next.payerLabel })
   }
   const oldDate = format(original.expenseDate, "yyyy/MM/dd")
   const newDate = format(next.expenseDate, "yyyy/MM/dd")

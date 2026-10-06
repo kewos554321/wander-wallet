@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { sendBatchDeleteNotificationToChat, sendDeleteNotificationToChat } from "@/lib/liff"
 import { mergePreferences } from "@/types/user-preferences"
+import { primaryPayerName } from "@/lib/expense-payers"
 
 export interface ExpenseMember {
   id: string
@@ -29,7 +30,7 @@ export interface ProjectExpense {
   longitude: number | null
   expenseDate: string
   createdAt: string
-  payer: ExpenseMember
+  payers: { id: string; memberId: string; amount: number; member: ExpenseMember }[]
   participants: { id: string; shareAmount: number; member: ExpenseMember }[]
 }
 
@@ -78,7 +79,7 @@ export function useProjectExpenses(projectId: string, options: { projectName: st
           sendDeleteNotificationToChat({
             projectName: options.projectName,
             projectId,
-            payerName: target.payer.displayName,
+            payerName: primaryPayerName(target.payers),
             amount: target.amount,
             description: target.description || undefined,
             category: target.category || undefined,
@@ -125,7 +126,7 @@ export function useProjectExpenses(projectId: string, options: { projectName: st
               amount: e.amount,
               description: e.description || undefined,
               category: e.category || undefined,
-              payerName: e.payer.displayName,
+              payerName: primaryPayerName(e.payers),
               participantCount: e.participants.length,
             })),
           }).catch(() => {

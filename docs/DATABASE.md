@@ -109,9 +109,9 @@ Wander Wallet 使用 PostgreSQL 資料庫，透過 Prisma ORM 進行資料存取
 **關聯:**
 - `project` - 所屬專案
 - `user` - 對應使用者 (可為 null)
-- `paidExpenses[]` - 支付的支出
 - `deletedExpenses[]` - 刪除的支出
 - `expenseParticipants[]` - 參與的支出
+- `paidPayers[]` - 支付支出的付款紀錄 (ExpensePayer)
 - `activityLogs[]` - 執行的活動
 
 ---
@@ -122,7 +122,6 @@ Wander Wallet 使用 PostgreSQL 資料庫，透過 Prisma ORM 進行資料存取
 |------|------|------|
 | `id` | UUID | 主鍵，自動產生 |
 | `projectId` | UUID | 所屬專案 ID |
-| `paidByMemberId` | UUID | 付款者成員 ID |
 | `amount` | Decimal(10,2) | 金額 |
 | `currency` | String | 幣別 (預設: TWD) |
 | `description` | String? | 描述 |
@@ -147,9 +146,30 @@ Wander Wallet 使用 PostgreSQL 資料庫，透過 Prisma ORM 進行資料存取
 
 **關聯:**
 - `project` - 所屬專案
-- `payer` - 付款者 (ProjectMember)
 - `deletedBy` - 刪除者 (ProjectMember)
 - `participants[]` - 分攤者 (ExpenseParticipant)
+- `payers[]` - 付款者 (ExpensePayer，可多人；金額合計須等於 `amount`)
+
+---
+
+### ExpensePayer (支出付款人)
+
+一筆支出可由多位成員共同出資；付款金額合計必須等於支出金額。
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| `id` | UUID | 主鍵，自動產生 |
+| `expenseId` | UUID | 所屬支出 ID |
+| `memberId` | UUID | 付款成員 ID |
+| `amount` | Decimal(10,2) | 該成員支付金額 |
+
+**索引:**
+- `@@unique([expenseId, memberId])` - 確保成員在支出中唯一
+- `@@index([memberId])`
+
+**關聯:**
+- `expense` - 所屬支出
+- `member` - 付款成員 (ProjectMember)
 
 ---
 

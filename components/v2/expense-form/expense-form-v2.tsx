@@ -10,6 +10,7 @@ import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { useProjectData } from "@/lib/hooks"
 import { useSaveExpense } from "@/lib/hooks/useSaveExpense"
 import { buildExpenseChanges, type ExpenseSnapshot } from "@/lib/expense-changes"
+import { primaryPayerId } from "@/lib/expense-payers"
 import { getCurrentLocation } from "@/lib/geolocation"
 import type { SplitDetail } from "@/lib/expense-split"
 import { ExpenseFormV2View } from "./expense-form-v2-view"
@@ -25,8 +26,7 @@ interface LoadedExpense {
   latitude: number | null
   longitude: number | null
   expenseDate: string
-  paidByMemberId?: string
-  payer: { id: string; displayName: string }
+  payers: { memberId: string; amount: number }[]
   participants: { memberId?: string; shareAmount: number; member?: { id: string } }[]
   splitDetail?: SplitDetail | null
 }
@@ -116,7 +116,7 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
           currency: expense.currency || projectCurrency,
           description: expense.description,
           category: expense.category,
-          paidByMemberId: expense.paidByMemberId ?? expense.payer.id,
+          payers: expense.payers.map((p) => ({ memberId: p.memberId, amount: Number(p.amount) })),
           expenseDate: expense.expenseDate,
           location: expense.location,
           latitude: expense.latitude,
@@ -176,6 +176,10 @@ function LoadedForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode])
   const nameOf = (id: string) => init.members.find((m) => m.id === id)?.displayName ?? "未知"
+  const payerLabel = (payers: { memberId: string; amount: number }[]) =>
+    payers.map((p) => nameOf(p.memberId)).join("、") || "無"
+  const primaryPayerNameOf = (payers: { memberId: string; amount: number }[]) =>
+    nameOf(primaryPayerId(payers.map((p) => ({ memberId: p.memberId, amount: Number(p.amount) }))))
 
   async function handleSubmit() {
     const { state, derived } = draft
@@ -188,8 +192,8 @@ function LoadedForm({
       currency: state.currency,
       description,
       category,
-      paidByMemberId: state.paidBy,
-      payerName: nameOf(state.paidBy),
+      payers: derived.payers,
+      payerLabel: payerLabel(derived.payers),
       expenseDate: state.expenseDate,
       location: state.location.location,
       image: state.image.pendingFile ? "pending" : state.image.image,
@@ -203,8 +207,8 @@ function LoadedForm({
               currency: original.currency ?? state.currency,
               description: original.description,
               category: original.category,
-              paidByMemberId: original.paidByMemberId ?? original.payer.id,
-              payerName: original.payer.displayName,
+              payers: original.payers,
+              payerLabel: payerLabel(original.payers),
               expenseDate: new Date(original.expenseDate),
               location: original.location,
               image: original.image,
@@ -218,7 +222,7 @@ function LoadedForm({
       mode,
       expenseId,
       payload: {
-        paidByMemberId: state.paidBy,
+        payers: derived.payers,
         amount: derived.splitInput.amount,
         currency: state.currency,
         description,
@@ -238,7 +242,7 @@ function LoadedForm({
         // differs from the one the expense was loaded with (removed or replaced).
         pendingDeleteUrl: original?.image && original.image !== state.image.image ? original.image : null,
       },
-      notification: { requested: state.notifyLine, projectName, payerName: nameOf(state.paidBy), changes },
+      notification: { requested: state.notifyLine, projectName, payerName: primaryPayerNameOf(derived.payers), changes },
     })
     if (!result.ok) {
       setSubmitError(result.error)
@@ -254,7 +258,7 @@ function LoadedForm({
       notification: {
         requested: draft.state.notifyLine,
         projectName,
-        payerName: original.payer.displayName,
+        payerName: primaryPayerNameOf(original.payers),
         amount: Number(original.amount),
         description: original.description,
         category: original.category,

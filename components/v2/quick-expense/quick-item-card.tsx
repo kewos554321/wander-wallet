@@ -23,7 +23,7 @@ import {
   type SplitDraft,
   type SplitState,
 } from "@/lib/split-draft"
-import type { QuickItem } from "@/lib/quick-expense/draft"
+import { itemDerivedPayers, type QuickItem } from "@/lib/quick-expense/draft"
 import { AmountCard } from "@/components/v2/expense-form/amount-card"
 import { CalculatorPad } from "@/components/v2/expense-form/calculator-pad"
 import { CategoryPicker } from "@/components/v2/expense-form/category-picker"
@@ -70,6 +70,31 @@ export function QuickItemCard({ item, members, onChange }: { item: QuickItem; me
   }
   const splitDraft: SplitDraft = { state: splitState, actions: splitActions, derived: deriveSplit(amount, memberIds, splitState) }
 
+  // Multi-payer state, mirroring the v2 expense form's PayerPicker wiring.
+  const payerDerived = itemDerivedPayers(item)
+  const togglePayer = (id: string) => {
+    const payerIds = item.payerIds.includes(id) ? item.payerIds.filter((x) => x !== id) : [...item.payerIds, id]
+    const pinnedPayerAmounts = { ...item.pinnedPayerAmounts }
+    if (!payerIds.includes(id)) delete pinnedPayerAmounts[id]
+    onChange({ payerIds, pinnedPayerAmounts })
+  }
+  const setPayersAll = (selectAll: boolean) =>
+    onChange({
+      payerIds: selectAll ? memberIds : [],
+      pinnedPayerAmounts: selectAll ? item.pinnedPayerAmounts : {},
+    })
+  const setPayerAmount = (id: string, value: string) => {
+    const pinnedPayerAmounts = { ...item.pinnedPayerAmounts }
+    if (value.trim() === "") delete pinnedPayerAmounts[id]
+    else pinnedPayerAmounts[id] = value
+    onChange({ pinnedPayerAmounts })
+  }
+  const clearPayerAmount = (id: string) => {
+    const pinnedPayerAmounts = { ...item.pinnedPayerAmounts }
+    delete pinnedPayerAmounts[id]
+    onChange({ pinnedPayerAmounts })
+  }
+
   return (
     <div>
       <AmountCard
@@ -109,7 +134,19 @@ export function QuickItemCard({ item, members, onChange }: { item: QuickItem; me
 
       <CategoryPicker value={item.category} onChange={(c) => onChange({ category: c as QuickItem["category"] })} />
 
-      <PayerPicker members={members} value={item.payerId} onChange={(id) => onChange({ payerId: id })} amount={amount} currency={item.currency} />
+      <PayerPicker
+        members={members}
+        payerIds={item.payerIds}
+        pinned={item.pinnedPayerAmounts}
+        payers={payerDerived.payers}
+        matches={payerDerived.payerMatches}
+        amount={amount}
+        currency={item.currency}
+        onTogglePayer={togglePayer}
+        onSetAll={setPayersAll}
+        onSetAmount={setPayerAmount}
+        onClearAmount={clearPayerAmount}
+      />
 
       <SplitEditor members={members} currency={item.currency} draft={splitDraft} />
 

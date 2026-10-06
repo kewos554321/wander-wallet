@@ -66,7 +66,7 @@ const project: OverviewProject = {
       description: "一蘭拉麵晚餐",
       category: "food",
       createdAt: local(11, 16),
-      payer: { id: "chi", displayName: "志明", user: null },
+      payers: [{ memberId: "chi", amount: 1280 }],
       participants: [
         { id: "p1", memberId: "me", shareAmount: 640 },
         { id: "p2", memberId: "chi", shareAmount: 640 },
@@ -79,7 +79,7 @@ const project: OverviewProject = {
       description: null,
       category: "shopping",
       createdAt: local(11, 15),
-      payer: { id: "me", displayName: "Emma", user: null },
+      payers: [{ memberId: "me", amount: 320 }],
       participants: [{ id: "p3", memberId: "me", shareAmount: 320 }],
     },
   ],
@@ -203,6 +203,34 @@ describe("ProjectOverviewV2View", () => {
     expect(screen.getByText("購物")).toBeInTheDocument() // description fallback to category label
   })
 
+  it("shows a compact multi-payer label with the primary payer and payer count", () => {
+    const multiPayer: OverviewProject["expenses"][number] = {
+      id: "e3",
+      amount: 1280,
+      currency: "TWD",
+      description: "共同出資",
+      category: "food",
+      createdAt: local(11, 16),
+      payers: [
+        { memberId: "me", amount: 280 },
+        { memberId: "chi", amount: 1000 },
+      ],
+      participants: [
+        { id: "r1", memberId: "me", shareAmount: 640 },
+        { id: "r2", memberId: "chi", shareAmount: 640 },
+      ],
+    }
+    render(
+      <ProjectOverviewV2View
+        project={{ ...project, expenses: [multiPayer] }}
+        summary={summary}
+        onShare={vi.fn()}
+        onVoice={vi.fn()}
+      />
+    )
+    expect(screen.getByText("志明等 2 人付款")).toBeInTheDocument()
+  })
+
   it("caps the participant avatars and shows the overflow count", () => {
     const fourMembers: OverviewProject["members"] = [
       { id: "me", role: "owner", displayName: "Emma", user: { id: "u1", name: "Emma", email: "e@x.com", image: null } },
@@ -217,7 +245,7 @@ describe("ProjectOverviewV2View", () => {
       description: "合菜",
       category: "food",
       createdAt: local(11, 16),
-      payer: { id: "me", displayName: "Emma", user: null },
+      payers: [{ memberId: "me", amount: 1000 }],
       participants: [
         { id: "q1", memberId: "me", shareAmount: 250 },
         { id: "q2", memberId: "m2", shareAmount: 250 },
@@ -253,7 +281,7 @@ describe("ProjectOverviewV2View", () => {
           description: "拉麵",
           category: "food",
           createdAt: local(11, 16),
-          payer: { id: "me", displayName: "Emma", user: null },
+          payers: [{ memberId: "me", amount: 1280 }],
           participants: [
             { id: "p1", memberId: "me", shareAmount: 640 },
             { id: "p2", memberId: "chi", shareAmount: 640 },

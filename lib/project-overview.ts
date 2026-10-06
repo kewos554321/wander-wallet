@@ -28,14 +28,10 @@ export interface OverviewExpense {
   category: string | null
   createdAt: string
   expenseDate?: string
-  payer: {
-    id: string
-    displayName: string
-    user: {
-      name: string | null
-      email: string
-    } | null
-  }
+  payers: {
+    memberId: string
+    amount: number
+  }[]
   participants: OverviewParticipant[]
 }
 
@@ -93,7 +89,9 @@ export function computeProjectSummary(
     for (const expense of project.expenses) {
       const amount = Number(expense.amount)
       const converted = convert(amount, expense.currency)
-      if (expense.payer.id === membership.id) paid += converted
+      for (const payer of expense.payers) {
+        if (payer.memberId === membership.id) paid += convert(Number(payer.amount), expense.currency)
+      }
       const participant = expense.participants.find((p) => p.memberId === membership.id)
       if (participant && amount !== 0) {
         owed += converted * (Number(participant.shareAmount) / amount)

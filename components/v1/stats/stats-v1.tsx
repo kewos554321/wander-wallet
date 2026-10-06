@@ -64,6 +64,20 @@ interface ExpenseParticipant {
   shareAmount: number
 }
 
+interface ExpensePayer {
+  id: string
+  memberId: string
+  amount: number
+  member: {
+    id: string
+    displayName: string
+    user: {
+      name: string | null
+      email: string
+    } | null
+  }
+}
+
 interface Expense {
   id: string
   amount: number
@@ -72,15 +86,13 @@ interface Expense {
   category: string | null
   createdAt: string
   expenseDate: string
-  payer: {
-    id: string
-    displayName: string
-    user: {
-      name: string | null
-      email: string
-    } | null
-  }
+  payers: ExpensePayer[]
   participants: ExpenseParticipant[]
+}
+
+function payerDisplayName(payers: Expense["payers"]): string {
+  if (!payers || payers.length === 0) return "未知"
+  return payers.map((p) => p.member?.user?.name || p.member?.displayName || "未知").join("、")
 }
 
 interface Project {
@@ -419,7 +431,7 @@ export function StatsV1({ projectId: id }: { projectId: string }) {
                               {highestExpense.description || "支出"}
                             </span>
                             <p className="text-xs text-slate-400">
-                              {highestExpense.payer?.user?.name || highestExpense.payer?.displayName || "未知"} · {new Date(highestExpense.expenseDate).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" })}
+                              {payerDisplayName(highestExpense.payers)} · {new Date(highestExpense.expenseDate).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" })}
                             </p>
                           </div>
                         </div>

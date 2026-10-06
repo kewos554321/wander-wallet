@@ -3,6 +3,7 @@ import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { Prisma } from "@prisma/client"
 import { isValidCover } from "@/lib/covers"
+import { expensePayersInclude } from "@/lib/expense-payers-include"
 
 // 獲取單個專案詳情
 export async function GET(
@@ -44,18 +45,7 @@ export async function GET(
             deletedAt: null, // 排除軟刪除的支出
           },
           include: {
-            payer: {
-              select: {
-                id: true,
-                displayName: true,
-                user: {
-                  select: {
-                    name: true,
-                    email: true,
-                  },
-                },
-              },
-            },
+            payers: expensePayersInclude,
             participants: {
               select: {
                 id: true,

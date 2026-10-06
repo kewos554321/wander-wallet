@@ -9,6 +9,7 @@ import { CategoryChips, type CategoryChipItem } from "@/components/v2/ui/categor
 import { CATEGORY_EMOJI, CATEGORY_TONES, categoryKey } from "@/components/v2/category-style"
 import { getCategoryLabel, type ExpenseCategory } from "@/lib/constants/expenses"
 import { formatCurrency } from "@/lib/constants/currencies"
+import { primaryPayerName } from "@/lib/expense-payers"
 import { cn } from "@/lib/utils"
 
 export interface PhotoExpense {
@@ -20,7 +21,7 @@ export interface PhotoExpense {
   category: string | null
   location: string | null
   expenseDate: string
-  payer: { id: string; displayName: string }
+  payers: { memberId: string; amount: number; member: { displayName: string } }[]
 }
 
 export interface PhotosV2ViewProps {
@@ -180,7 +181,10 @@ export function PhotosV2View({ projectId, currency, expenses, loading }: PhotosV
               <span className="font-v2-serif text-[15px] font-bold">{formatCurrency(selected.amount, selected.currency || currency)}</span>
               <span className="text-[13px]">{selected.description || "無描述"}</span>
               <span className="text-[12px] opacity-80">
-                {new Date(selected.expenseDate).toLocaleDateString("zh-TW")} · 👤 {selected.payer.displayName}
+                {new Date(selected.expenseDate).toLocaleDateString("zh-TW")} · 👤{" "}
+                {selected.payers.length > 1
+                  ? `${primaryPayerName(selected.payers)}等 ${selected.payers.length} 人`
+                  : primaryPayerName(selected.payers)}
                 {selected.location ? ` · 📍 ${selected.location}` : ""}
               </span>
               <div className="mt-1 flex items-center justify-between">

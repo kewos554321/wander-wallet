@@ -14,7 +14,7 @@ vi.mock("@/lib/db", () => ({
     project: {
       findUnique: vi.fn(),
     },
-    expense: {
+    expensePayer: {
       count: vi.fn(),
     },
     expenseParticipant: {
@@ -410,7 +410,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
     vi.mocked(prisma.projectMember.findUnique).mockResolvedValue(mockMember as never)
-    vi.mocked(prisma.expense.count).mockResolvedValue(2)
+    vi.mocked(prisma.expensePayer.count).mockResolvedValue(2)
     vi.mocked(prisma.expenseParticipant.count).mockResolvedValue(0)
 
     const req = new NextRequest(
@@ -425,9 +425,9 @@ describe("DELETE /api/projects/[id]/members", () => {
 
     expect(response.status).toBe(400)
     expect(data.error).toBe("無法移除此成員，尚有 2 筆付款記錄")
-    // Verify that deletedAt: null is used in the query
-    expect(prisma.expense.count).toHaveBeenCalledWith({
-      where: { paidByMemberId: "member-456", deletedAt: null },
+    // Only non-deleted payer rows count toward the guard.
+    expect(prisma.expensePayer.count).toHaveBeenCalledWith({
+      where: { memberId: "member-456", expense: { deletedAt: null } },
     })
   })
 
@@ -435,7 +435,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
     vi.mocked(prisma.projectMember.findUnique).mockResolvedValue(mockMember as never)
-    vi.mocked(prisma.expense.count).mockResolvedValue(0)
+    vi.mocked(prisma.expensePayer.count).mockResolvedValue(0)
     vi.mocked(prisma.expenseParticipant.count).mockResolvedValue(3)
 
     const req = new NextRequest(
@@ -460,7 +460,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
     vi.mocked(prisma.projectMember.findUnique).mockResolvedValue(mockMember as never)
-    vi.mocked(prisma.expense.count).mockResolvedValue(2)
+    vi.mocked(prisma.expensePayer.count).mockResolvedValue(2)
     vi.mocked(prisma.expenseParticipant.count).mockResolvedValue(3)
 
     const req = new NextRequest(
@@ -482,7 +482,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
     vi.mocked(prisma.projectMember.findUnique).mockResolvedValue(mockMember as never)
     // Returns 0 because deletedAt: null filter excludes soft-deleted expenses
-    vi.mocked(prisma.expense.count).mockResolvedValue(0)
+    vi.mocked(prisma.expensePayer.count).mockResolvedValue(0)
     vi.mocked(prisma.expenseParticipant.count).mockResolvedValue(0)
     vi.mocked(prisma.projectMember.delete).mockResolvedValue(mockMember as never)
 
@@ -507,7 +507,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
     vi.mocked(prisma.projectMember.findUnique).mockResolvedValue(mockMember as never)
-    vi.mocked(prisma.expense.count).mockResolvedValue(0)
+    vi.mocked(prisma.expensePayer.count).mockResolvedValue(0)
     vi.mocked(prisma.expenseParticipant.count).mockResolvedValue(0)
     vi.mocked(prisma.projectMember.delete).mockResolvedValue(mockMember as never)
 

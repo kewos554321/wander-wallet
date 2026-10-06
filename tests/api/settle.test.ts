@@ -62,17 +62,24 @@ const mockMembers = [
 const mockExpense = {
   id: "expense-123",
   projectId: "project-123",
-  paidByMemberId: "member-123",
   amount: 1000,
   currency: "TWD",
   description: "Test Expense",
   category: "food",
   deletedAt: null,
-  payer: {
-    id: "member-123",
-    displayName: "User 1",
-    user: { image: null },
-  },
+  payers: [
+    {
+      id: "payer-1",
+      expenseId: "expense-123",
+      memberId: "member-123",
+      amount: 1000,
+      member: {
+        id: "member-123",
+        displayName: "User 1",
+        user: { image: null },
+      },
+    },
+  ],
   participants: [
     {
       id: "participant-1",
@@ -160,6 +167,18 @@ describe("GET /api/projects/[id]/settle", () => {
     expect(data).toHaveProperty("summary")
     expect(data.summary.totalExpenses).toBe(1)
     expect(data.summary.totalAmount).toBe(1000)
+    // expenseDetails exposes the per-payer breakdown instead of a single payer
+    expect(data.expenseDetails).toHaveLength(1)
+    expect(data.expenseDetails[0].payer).toBeUndefined()
+    expect(data.expenseDetails[0].payers).toEqual([
+      {
+        memberId: "member-123",
+        displayName: "User 1",
+        userImage: null,
+        amount: 1000,
+        convertedAmount: 1000,
+      },
+    ])
   })
 
   it("should only fetch non-deleted expenses", async () => {
@@ -245,13 +264,83 @@ describe("GET /api/projects/[id]/settle", () => {
     expect(data.settlements[0].amount).toBe(500)
   })
 
+  it("should compute balances per payer for a two-payer expense", async () => {
+    const twoPayerExpense = {
+      ...mockExpense,
+      id: "expense-two-payers",
+      amount: 1000,
+      payers: [
+        {
+          id: "payer-a",
+          expenseId: "expense-two-payers",
+          memberId: "member-123",
+          amount: 300,
+          member: { id: "member-123", displayName: "User 1", user: { image: null } },
+        },
+        {
+          id: "payer-b",
+          expenseId: "expense-two-payers",
+          memberId: "member-456",
+          amount: 700,
+          member: { id: "member-456", displayName: "User 2", user: { image: "http://example.com/avatar.jpg" } },
+        },
+      ],
+      participants: [
+        { memberId: "member-123", shareAmount: 500, member: { id: "member-123", displayName: "User 1", user: { image: null } } },
+        { memberId: "member-456", shareAmount: 500, member: { id: "member-456", displayName: "User 2", user: { image: "http://example.com/avatar.jpg" } } },
+      ],
+    }
+
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.expense.findMany).mockResolvedValue([twoPayerExpense] as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue(mockMembers as never)
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/settle"
+    )
+    const response = await GET(req, { params: createParams("project-123") })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+
+    // member-123 paid 300, owes 500 → -200; member-456 paid 700, owes 500 → +200
+    const member123Balance = data.balances.find(
+      (b: { memberId: string }) => b.memberId === "member-123"
+    )
+    const member456Balance = data.balances.find(
+      (b: { memberId: string }) => b.memberId === "member-456"
+    )
+    expect(member123Balance.balance).toBe(-200)
+    expect(member123Balance.totalPaid).toBe(300)
+    expect(member456Balance.balance).toBe(200)
+    expect(member456Balance.totalPaid).toBe(700)
+
+    // settlement flows from the member who under-paid to the one who over-paid
+    expect(data.settlements).toHaveLength(1)
+    expect(data.settlements[0].from.memberId).toBe("member-123")
+    expect(data.settlements[0].to.memberId).toBe("member-456")
+    expect(data.settlements[0].amount).toBe(200)
+
+    // per-payer detail is exposed
+    expect(data.expenseDetails[0].payers).toEqual([
+      { memberId: "member-123", displayName: "User 1", userImage: null, amount: 300, convertedAmount: 300 },
+      {
+        memberId: "member-456",
+        displayName: "User 2",
+        userImage: "http://example.com/avatar.jpg",
+        amount: 700,
+        convertedAmount: 700,
+      },
+    ])
+  })
+
   it("should handle multiple expenses correctly", async () => {
     const expense1 = {
       ...mockExpense,
       id: "expense-1",
       amount: 1000,
       currency: "TWD",
-      paidByMemberId: "member-123",
       participants: [
         { memberId: "member-123", shareAmount: 500, member: { id: "member-123", displayName: "User 1", user: null } },
         { memberId: "member-456", shareAmount: 500, member: { id: "member-456", displayName: "User 2", user: null } },
@@ -262,12 +351,19 @@ describe("GET /api/projects/[id]/settle", () => {
       id: "expense-2",
       amount: 600,
       currency: "TWD",
-      paidByMemberId: "member-456",
-      payer: {
-        id: "member-456",
-        displayName: "User 2",
-        user: { image: "http://example.com/avatar.jpg" },
-      },
+      payers: [
+        {
+          id: "payer-2",
+          expenseId: "expense-2",
+          memberId: "member-456",
+          amount: 600,
+          member: {
+            id: "member-456",
+            displayName: "User 2",
+            user: { image: "http://example.com/avatar.jpg" },
+          },
+        },
+      ],
       participants: [
         { memberId: "member-123", shareAmount: 300, member: { id: "member-123", displayName: "User 1", user: null } },
         { memberId: "member-456", shareAmount: 300, member: { id: "member-456", displayName: "User 2", user: null } },

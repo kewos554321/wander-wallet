@@ -39,13 +39,21 @@ export interface SettleExpenseParticipant {
   customAmount?: number
 }
 
+export interface SettleExpensePayer {
+  memberId: string
+  displayName: string
+  userImage?: string | null
+  amount: number
+  convertedAmount: number
+}
+
 export interface SettleExpenseDetail {
   id: string
   description: string
   amount: number
   currency: string
   convertedAmount: number
-  payer: { memberId: string; displayName: string; userImage?: string | null }
+  payers: SettleExpensePayer[]
   participants: SettleExpenseParticipant[]
 }
 
