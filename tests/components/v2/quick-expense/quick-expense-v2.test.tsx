@@ -14,6 +14,8 @@ vi.mock("@/lib/quick-expense/parse", async (orig) => ({ ...(await orig<object>()
 const save = vi.fn()
 let canNotifyLine = false
 vi.mock("@/lib/quick-expense/use-quick-save", () => ({ useQuickSave: () => ({ save, progress: null, canNotifyLine }) }))
+const getCurrentLocation = vi.fn()
+vi.mock("@/lib/geolocation", () => ({ getCurrentLocation: (...a: unknown[]) => getCurrentLocation(...a) }))
 vi.mock("@/components/v2/quick-expense/camera-step", () => ({
   CameraStep: ({ onImage, onClose }: { onImage: (f: File) => void; onClose: () => void }) => (
     <div>
@@ -22,7 +24,19 @@ vi.mock("@/components/v2/quick-expense/camera-step", () => ({
     </div>
   ),
 }))
-vi.mock("@/components/v2/expense-form/location-picker-v2", () => ({ LocationPickerV2: () => null }))
+vi.mock("@/components/v2/expense-form/location-picker-v2", () => ({
+  LocationPickerV2: ({
+    value,
+    onChange,
+  }: {
+    value: { location: string | null }
+    onChange: (v: { location: string | null; latitude: number | null; longitude: number | null }) => void
+  }) => (
+    <button type="button" aria-label="地點" onClick={() => onChange({ location: "手動選的地點", latitude: 1, longitude: 2 })}>
+      {value.location ?? "無地點"}
+    </button>
+  ),
+}))
 vi.mock("@/components/v2/expense-form/v2-image-picker", () => ({ V2ImagePicker: () => null }))
 vi.mock("@/components/ui/currency-select", () => ({ CurrencySelect: () => null }))
 
@@ -47,6 +61,8 @@ let backMock: MockInstance
 
 beforeEach(() => {
   parseText.mockReset(); parseReceipt.mockReset(); save.mockReset()
+  getCurrentLocation.mockReset()
+  getCurrentLocation.mockResolvedValue(null)
   canNotifyLine = false
   globalThis.URL.createObjectURL = vi.fn(() => "blob:1")
   globalThis.URL.revokeObjectURL = vi.fn()
@@ -297,5 +313,56 @@ describe("QuickExpenseV2", () => {
     await waitFor(() => expect(save).toHaveBeenCalledTimes(2))
     expect(save.mock.calls[0][1]).toEqual({ notifyLine: false })
     expect(save.mock.calls[1][1]).toEqual({ notifyLine: false })
+  })
+
+  it("auto-fills every parsed item with the device location", async () => {
+    parseText.mockResolvedValue([parsed("1"), parsed("2")])
+    save.mockResolvedValue({ savedIds: ["1", "2"], failed: null })
+    getCurrentLocation.mockResolvedValue({ location: "京都車站", latitude: 34.9, longitude: 135.7 })
+    setup()
+    typeAndParse()
+    await screen.findByText("1 / 2")
+    expect(await screen.findByText("京都車站")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "新增 2 筆" }))
+    await waitFor(() => expect(save).toHaveBeenCalled())
+    const savedItems = save.mock.calls[0][0] as { location: string | null; latitude: number | null }[]
+    expect(savedItems.map((item) => item.location)).toEqual(["京都車站", "京都車站"])
+    expect(savedItems[0].latitude).toBe(34.9)
+  })
+
+  it("fills only items without a location, keeping the user's pick", async () => {
+    parseText.mockResolvedValue([parsed("1"), parsed("2")])
+    save.mockResolvedValue({ savedIds: ["1", "2"], failed: null })
+    let resolveGeo: (v: { location: string; latitude: number; longitude: number }) => void = () => {}
+    getCurrentLocation.mockReturnValue(
+      new Promise((resolve) => {
+        resolveGeo = resolve
+      })
+    )
+    setup()
+    typeAndParse()
+    await screen.findByText("1 / 2")
+    // The user picks a location for the visible item before the device fix lands.
+    fireEvent.click(screen.getByRole("button", { name: "地點" }))
+    expect(screen.getByText("手動選的地點")).toBeInTheDocument()
+
+    await act(async () => {
+      resolveGeo({ location: "京都車站", latitude: 34.9, longitude: 135.7 })
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "新增 2 筆" }))
+    await waitFor(() => expect(save).toHaveBeenCalled())
+    const savedItems = save.mock.calls[0][0] as { location: string | null }[]
+    expect(savedItems.map((item) => item.location)).toEqual(["手動選的地點", "京都車站"])
+  })
+
+  it("ignores a failed device-location lookup", async () => {
+    parseText.mockResolvedValue([parsed("1")])
+    getCurrentLocation.mockResolvedValue(null)
+    setup()
+    typeAndParse()
+    await screen.findByText("1 / 1")
+    await waitFor(() => expect(getCurrentLocation).toHaveBeenCalled())
+    expect(screen.getByText("無地點")).toBeInTheDocument()
   })
 })

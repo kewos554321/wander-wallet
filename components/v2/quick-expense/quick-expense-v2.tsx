@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { getCurrentLocation } from "@/lib/geolocation"
 import { fromParsed, validateItems, type QuickItem } from "@/lib/quick-expense/draft"
 import { parseReceipt, parseText, receiptToItem } from "@/lib/quick-expense/parse"
 import { useQuickSave } from "@/lib/quick-expense/use-quick-save"
@@ -48,6 +49,14 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
   const [notifyLine, setNotifyLine] = useState(true)
   const [inputImage, setInputImage] = useState<{ file: File; preview: string } | null>(null)
   const galleryInput = useRef<HTMLInputElement>(null)
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   const close = () => {
     // Pop the dialog entry we pushed so Back doesn't need an extra press later.
@@ -103,6 +112,18 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
     setIndex(0)
     setError(null)
     setStep("confirm")
+    // Silently prefill the device location on items that have none, matching the
+    // create-expense form and v1's voice dialog. A failed lookup is ignored.
+    getCurrentLocation().then((loc) => {
+      if (!loc || !mountedRef.current) return
+      setItems((prev) =>
+        prev.map((item) =>
+          item.location == null
+            ? { ...item, location: loc.location, latitude: loc.latitude, longitude: loc.longitude }
+            : item
+        )
+      )
+    })
   }
 
   const attachImage = (file: File) => {
