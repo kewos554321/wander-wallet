@@ -1,8 +1,11 @@
 import {
+  computeIdealShares,
   computeShares,
   type ParticipantShare,
   type SplitInput,
 } from "@/lib/expense-split"
+import { allocateBothCurrencies } from "@/lib/split-allocation"
+import { fromMinorUnits, roundMajorToMinor, toMinorUnits } from "@/lib/currency-conversion"
 
 // Editable split state shared by the expense form and the AI quick-expense
 // flow. Amounts stay strings so partially typed input ("12.") survives edits.
@@ -22,11 +25,22 @@ export interface SplitState {
 
 export interface SplitDerived {
   splitInput: SplitInput
+  /** Ideal (unrounded) weights; what the client sends to the server. */
+  weights: { memberId: string; weight: number }[]
   shares: ParticipantShare[]
+  /** Allocated settlement shares (minor-unit accurate); null without a context. */
+  sharesProject: ParticipantShare[] | null
   personalTotal: number
   itemCount: number
   autoRemaining: number
   matches: boolean
+}
+
+export interface SplitContext {
+  currency: string
+  projectCurrency: string
+  rate: number
+  discrepancy: Record<string, number>
 }
 
 export interface SplitActions {
@@ -57,7 +71,7 @@ const round2 = (n: number) => Math.round(n * 100) / 100
 // Split math shared by both flows, so the preview, validation and saved payload
 // always agree. `participantOrder` keeps the stored/member order stable so any
 // rounding remainder lands on the same person.
-export function deriveSplit(amount: number, participantOrder: string[], state: SplitState): SplitDerived {
+export function deriveSplit(amount: number, participantOrder: string[], state: SplitState, context?: SplitContext): SplitDerived {
   const withItems = (id: string) =>
     state.personalMode && state.personalMembers.includes(id) && (state.personalItems[id]?.length ?? 0) > 0
   const participantIds = participantOrder.filter((id) => state.pool.includes(id) || withItems(id))
@@ -81,7 +95,30 @@ export function deriveSplit(amount: number, participantOrder: string[], state: S
     personalItems,
     customShares,
   }
-  const shares = computeShares(splitInput)
+  const weights = computeIdealShares(splitInput)
+  let shares: ParticipantShare[]
+  let sharesProject: ParticipantShare[] | null = null
+  if (context && weights.length > 0) {
+    const dual = allocateBothCurrencies(
+      toMinorUnits(splitInput.amount, context.currency),
+      toMinorUnits(
+        roundMajorToMinor(splitInput.amount * context.rate, context.projectCurrency),
+        context.projectCurrency,
+      ),
+      weights.map((w) => ({ id: w.memberId, weight: w.weight })),
+      new Map(Object.entries(context.discrepancy)),
+    )
+    shares = weights.map((w) => ({
+      memberId: w.memberId,
+      shareAmount: fromMinorUnits(dual.original.get(w.memberId) ?? 0, context.currency),
+    }))
+    sharesProject = weights.map((w) => ({
+      memberId: w.memberId,
+      shareAmount: fromMinorUnits(dual.settlement.get(w.memberId) ?? 0, context.projectCurrency),
+    }))
+  } else {
+    shares = computeShares(splitInput)
+  }
   const personalTotal = Object.values(personalItems).flat().reduce((s, i) => s + i.amount, 0)
   const itemCount = Object.values(personalItems).flat().length
   const customTotal = Object.values(customShares).reduce((s, v) => s + v, 0)
@@ -89,7 +126,7 @@ export function deriveSplit(amount: number, participantOrder: string[], state: S
   const shareTotal = shares.reduce((s, x) => s + x.shareAmount, 0)
   const matches =
     shares.length > 0 && Math.abs(shareTotal - splitInput.amount) <= 0.01 && shares.every((s) => s.shareAmount >= 0)
-  return { splitInput, shares, personalTotal, itemCount, autoRemaining, matches }
+  return { splitInput, weights, shares, sharesProject, personalTotal, itemCount, autoRemaining, matches }
 }
 
 export function withPersonalMode(state: SplitState, personalMode: boolean): SplitState {

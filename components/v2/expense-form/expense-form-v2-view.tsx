@@ -43,18 +43,8 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
   const error = derived.error ?? props.submitError
   const amountLabel = formatCurrency(derived.splitInput.amount, state.currency)
   const submitLabel = props.mode === "create" ? `新增支出 · ${amountLabel}` : `儲存變更 · ${amountLabel}`
-  const isForeign = !!props.projectCurrency && state.currency !== props.projectCurrency
-  const rateInfo = isForeign
-    ? props.previewRateInfo?.(state.currency) ?? { rate: null, source: "none" as const }
-    : { rate: null, source: "same" as const }
-  const autoRate = rateInfo.rate
-  const exchangeRateInput = state.exchangeRate ?? ""
-  const manualRate = exchangeRateInput.trim() ? Number(exchangeRateInput) : null
-  const usableManual = manualRate != null && Number.isFinite(manualRate) && manualRate > 0 ? manualRate : null
-  const customRate = state.ratePinned ?? false
-  const rate = customRate ? usableManual ?? autoRate : autoRate
+  const { rate, autoRate, customRate, rateSource, rateInput: exchangeRateInput, rateEditable: isForeign } = derived
   const previewProjectAmount = rate != null ? derived.splitInput.amount * rate : null
-  const rateSource = customRate ? ("custom" as const) : rateInfo.source
 
   return (
     <form

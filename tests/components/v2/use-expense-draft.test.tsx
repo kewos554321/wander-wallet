@@ -259,9 +259,9 @@ describe("useExpenseDraft", () => {
       },
     })
     expect(result.current.derived.shares).toEqual([
-      { memberId: "c", shareAmount: 33.34 },
-      { memberId: "a", shareAmount: 33.33 },
-      { memberId: "b", shareAmount: 33.33 },
+      { memberId: "c", shareAmount: 34 },
+      { memberId: "a", shareAmount: 33 },
+      { memberId: "b", shareAmount: 33 },
     ])
   })
 })

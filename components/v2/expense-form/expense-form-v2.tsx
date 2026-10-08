@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
@@ -112,6 +112,7 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
   const init: DraftInit = {
     members: draftMembers,
     currency: projectCurrency,
+    projectCurrency,
     paidBy: currentMemberId,
     expense: expense
       ? {
@@ -171,21 +172,23 @@ function LoadedForm({
   customRates: Record<string, number> | null
 }) {
   const router = useRouter()
-  const draft = useExpenseDraft(init)
   const { save, remove, saving, uploadingImage, deleting, canNotifyLine } = useSaveExpense(projectId)
   const { exchangeRates, refetch: refetchRates } = useCurrencyConversion({
     projectCurrency,
     customRates,
     autoFetch: false,
   })
+  const previewRateInfo = useCallback(
+    (currency: string) => resolvePreviewRate(currency, projectCurrency, customRates, exchangeRates),
+    [projectCurrency, customRates, exchangeRates],
+  )
+  const draft = useExpenseDraft(init, previewRateInfo)
   const selectedCurrency = draft.state.currency
   useEffect(() => {
     if (selectedCurrency && selectedCurrency !== projectCurrency && !exchangeRates) {
       refetchRates()
     }
   }, [selectedCurrency, projectCurrency, exchangeRates, refetchRates])
-  const previewRateInfo = (currency: string) =>
-    resolvePreviewRate(currency, projectCurrency, customRates, exchangeRates)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [showDelete, setShowDelete] = useState(false)
 
@@ -262,7 +265,7 @@ function LoadedForm({
         latitude: state.location.latitude,
         longitude: state.location.longitude,
         expenseDate: state.expenseDate.toISOString(),
-        participants: derived.shares,
+        participants: derived.weights.map((w) => ({ memberId: w.memberId, shareAmount: w.weight })),
         splitDetail: derived.splitDetail,
       },
       image: {

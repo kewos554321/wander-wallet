@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react"
 import { buildSplitDetail, computeShares, type SplitDetail } from "@/lib/expense-split"
 import { derivePayerShares, type PayerShare } from "@/lib/expense-payers"
+import type { PreviewRateInfo } from "@/lib/currency-conversion"
 import {
   deriveSplit,
   newSplitItem,
@@ -24,6 +25,8 @@ export interface DraftMember {
   id: string
   displayName: string
   image?: string | null
+  /** Per-project remainder ledger; decides which member absorbs a rounding unit. */
+  remainderDiscrepancy?: number
 }
 
 export interface DraftExpense {
@@ -45,6 +48,8 @@ export interface DraftExpense {
 export interface DraftInit {
   members: DraftMember[]
   currency: string
+  /** Settlement currency; defaults to `currency` when omitted. */
+  projectCurrency?: string
   paidBy: string
   expense?: DraftExpense
 }
@@ -161,7 +166,7 @@ function initialState(init: DraftInit) {
   }
 }
 
-export function useExpenseDraft(init: DraftInit) {
+export function useExpenseDraft(init: DraftInit, previewRateInfo?: (currency: string) => PreviewRateInfo) {
   const [state, setState] = useState(() => initialState(init))
   const set = <K extends keyof typeof state>(key: K) => (value: (typeof state)[K]) =>
     setState((s) => ({ ...s, [key]: value }))
@@ -234,9 +239,29 @@ export function useExpenseDraft(init: DraftInit) {
     return [...stored, ...extra]
   }, [init.expense, init.members])
 
+  const projectCurrency = init.projectCurrency ?? init.currency
+  const selectedCurrency = state.currency
+  const isForeign = selectedCurrency !== projectCurrency
+  const rateInfo = isForeign
+    ? previewRateInfo?.(selectedCurrency) ?? { rate: null, source: "none" as const }
+    : { rate: null, source: "same" as const }
+  const autoRate = rateInfo.rate
+  const exchangeRateInput = state.exchangeRate ?? ""
+  const manualRate = exchangeRateInput.trim() ? Number(exchangeRateInput) : null
+  const usableManual = manualRate != null && Number.isFinite(manualRate) && manualRate > 0 ? manualRate : null
+  const customRate = state.ratePinned ?? false
+  const rate = customRate ? usableManual ?? autoRate : autoRate
+  const rateSource = customRate ? ("custom" as const) : rateInfo.source
+
   const derived = useMemo(() => {
     const amountNum = Number(state.amount)
-    const base = deriveSplit(amountNum, participantOrder, state)
+    const discrepancy = Object.fromEntries(init.members.map((m) => [m.id, m.remainderDiscrepancy ?? 0]))
+    // Same currency always allocates (rate 1); foreign needs a known rate.
+    const context =
+      rate != null || !isForeign
+        ? { currency: selectedCurrency, projectCurrency, rate: rate ?? 1, discrepancy }
+        : undefined
+    const base = deriveSplit(amountNum, participantOrder, state, context)
 
     const pinnedNumbers: Record<string, number> = {}
     for (const [id, value] of Object.entries(state.pinnedPayerAmounts)) {
@@ -271,8 +296,14 @@ export function useExpenseDraft(init: DraftInit) {
       payerMatches,
       primaryPayerId: primaryPayer,
       error,
+      rate,
+      autoRate,
+      customRate,
+      rateSource,
+      rateInput: exchangeRateInput,
+      rateEditable: isForeign,
     }
-  }, [state, init.members, participantOrder])
+  }, [state, init.members, participantOrder, rate, autoRate, customRate, rateSource, exchangeRateInput, isForeign, selectedCurrency, projectCurrency])
 
   return { state, actions, derived }
 }

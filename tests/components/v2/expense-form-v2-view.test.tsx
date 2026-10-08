@@ -26,7 +26,12 @@ interface SubmittedDraft {
 }
 
 function renderForm(overrides: Partial<Parameters<typeof ExpenseFormV2View>[0]> = {}) {
-  const hook = renderHook(() => useExpenseDraft({ members, currency: "TWD", paidBy: "a" }))
+  const hook = renderHook(() =>
+    useExpenseDraft(
+      { members, currency: "TWD", paidBy: "a", projectCurrency: overrides.projectCurrency },
+      overrides.previewRateInfo,
+    ),
+  )
   // Snapshot the draft at the moment submit fires so we assert the payload,
   // not just that the no-arg onSubmit callback ran.
   const submissions: SubmittedDraft[] = []
@@ -278,6 +283,15 @@ describe("ExpenseFormV2View", () => {
     const badge = within(breakdown).getByText("金額相符")
     expect(total.compareDocumentPosition(equation) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(equation.compareDocumentPosition(badge) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it("splits an amount that does not divide evenly into whole units that sum to the total", () => {
+    const { hook, rerender } = renderForm({ projectCurrency: "TWD" })
+    act(() => hook.result.current.actions.setAmount("1111"))
+    rerender()
+    const shares = hook.result.current.derived.shares
+    expect(shares.reduce((s, x) => s + x.shareAmount, 0)).toBe(1111)
+    expect(shares.every((s) => Number.isInteger(s.shareAmount))).toBe(true)
   })
 
   it("falls back to the count, text summary and match badge when the breakdown table has no rows", () => {
