@@ -47,12 +47,6 @@ export function computeProjectAmounts(input: ProjectAmountInput): ProjectAmountR
       new Map(input.previous.participants.map((p) => [p.memberId, p.shareAmountProject])),
       discrepancy,
     )
-    discrepancy = rollbackAllocation(
-      input.previous.totalMinor,
-      input.previous.payers.map((p) => ({ id: p.memberId, weight: p.amount })),
-      new Map(input.previous.payers.map((p) => [p.memberId, p.amountProject])),
-      discrepancy,
-    )
   }
 
   const totalMinor = toMinorUnits(
@@ -70,14 +64,14 @@ export function computeProjectAmounts(input: ProjectAmountInput): ProjectAmountR
     discrepancy.set(id, (discrepancy.get(id) ?? 0) + 1)
   }
 
+  // Payments are a record of who fronted cash, not a fair-share debt: allocate
+  // them deterministically (first payer absorbs the rounding unit) and never
+  // touch the fairness ledger.
   const payerResult = allocate(
     totalMinor,
     input.payers.map((p) => ({ id: p.memberId, weight: p.amount })),
-    discrepancy,
+    new Map(),
   )
-  for (const id of payerResult.bumped) {
-    discrepancy.set(id, (discrepancy.get(id) ?? 0) + 1)
-  }
 
   return {
     totalMinor,

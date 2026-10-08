@@ -72,6 +72,25 @@ describe("computeProjectAmounts", () => {
     expect(r.participants.reduce((s, p) => s + p.shareAmountProject, 0)).toBe(667)
   })
 
+  it("does not let payer remainders touch the fairness ledger", () => {
+    const r = computeProjectAmounts({
+      amount: 1000,
+      currency: "TWD",
+      projectCurrency: "USD",
+      rate: 0.031715,
+      participants: [{ memberId: "a", shareAmount: 1000 }],
+      payers: [
+        { memberId: "a", amount: 600 },
+        { memberId: "b", amount: 400 },
+      ],
+      discrepancy: new Map(),
+    })
+    // The payer split has a remainder, but it must not bump the ledger.
+    expect(r.discrepancy.get("a") ?? 0).toBe(0)
+    expect(r.discrepancy.get("b") ?? 0).toBe(0)
+    expect(r.payers.reduce((s, p) => s + p.amountProject, 0)).toBe(3172)
+  })
+
   it("does not double-count when recomputing the same split", () => {
     const first = computeProjectAmounts({
       amount: 1000,

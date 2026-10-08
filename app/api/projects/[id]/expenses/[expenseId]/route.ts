@@ -339,12 +339,6 @@ export async function PUT(
         new Map(existingExpense.participants.map((p) => [p.member.id, Number(p.shareAmountProject ?? 0)])),
         ledger,
       )
-      ledger = rollbackAllocation(
-        oldTotal,
-        existingExpense.payers.map((p) => ({ id: p.memberId, weight: Number(p.amount) })),
-        new Map(existingExpense.payers.map((p) => [p.memberId, Number(p.amountProject ?? 0)])),
-        ledger,
-      )
     }
 
     const projectAmounts = computeProjectAmounts({
@@ -659,12 +653,6 @@ export async function DELETE(
         oldTotal,
         expense.participants.map((p) => ({ id: p.memberId, weight: Number(p.shareAmount) })),
         new Map(expense.participants.map((p) => [p.memberId, Number(p.shareAmountProject ?? 0)])),
-        ledger,
-      )
-      ledger = rollbackAllocation(
-        oldTotal,
-        expense.payers.map((p) => ({ id: p.memberId, weight: Number(p.amount) })),
-        new Map(expense.payers.map((p) => [p.memberId, Number(p.amountProject ?? 0)])),
         ledger,
       )
       for (const [memberId, value] of ledger) {
