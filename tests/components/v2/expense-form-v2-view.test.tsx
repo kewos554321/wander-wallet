@@ -500,6 +500,22 @@ describe("ExpenseFormV2View", () => {
     expect(hook.result.current.state.customShares.a).toBe(pinned)
   })
 
+  it("blocks submit when custom shares do not add up to the amount", () => {
+    const { hook, rerender } = renderForm({ projectCurrency: "TWD" })
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    fireEvent.click(screen.getByRole("button", { name: "小雨固定金額" }))
+    rerender()
+    fireEvent.change(screen.getByLabelText("小雨的分攤金額"), { target: { value: "10" } })
+    rerender()
+    fireEvent.click(screen.getByRole("button", { name: "志明固定金額" }))
+    rerender()
+    fireEvent.change(screen.getByLabelText("志明的分攤金額"), { target: { value: "10" } })
+    rerender()
+    expect(hook.result.current.derived.matches).toBe(false)
+    expect(screen.getByRole("button", { name: /新增支出/ })).toBeDisabled()
+  })
+
   it("shows a dashed hint when nobody is in the shared pool", () => {
     const { hook, rerender } = renderForm()
     expect(screen.queryByText(/目前沒有人參與共同分攤/)).not.toBeInTheDocument()

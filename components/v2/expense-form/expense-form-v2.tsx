@@ -107,7 +107,7 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
     )
   }
 
-  const draftMembers = members.map((m) => ({ id: m.id, displayName: m.displayName }))
+  const draftMembers = members.map((m) => ({ id: m.id, displayName: m.displayName, remainderDiscrepancy: m.remainderDiscrepancy ?? 0 }))
   const currentMemberId = members.find((m) => m.user?.id === user?.id)?.id ?? draftMembers[0]?.id ?? ""
   const init: DraftInit = {
     members: draftMembers,

@@ -12,6 +12,8 @@ export interface ProjectMember {
   role: string
   displayName: string
   userId: string | null
+  /** Per-project remainder ledger; drives which member absorbs a rounding unit. */
+  remainderDiscrepancy?: number
   user: {
     id: string
     name: string | null

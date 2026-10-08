@@ -123,9 +123,9 @@ export function deriveSplit(amount: number, participantOrder: string[], state: S
   const itemCount = Object.values(personalItems).flat().length
   const customTotal = Object.values(customShares).reduce((s, v) => s + v, 0)
   const autoRemaining = round2(splitInput.amount - personalTotal - customTotal)
-  const shareTotal = shares.reduce((s, x) => s + x.shareAmount, 0)
+  const weightTotal = weights.reduce((s, w) => s + w.weight, 0)
   const matches =
-    shares.length > 0 && Math.abs(shareTotal - splitInput.amount) <= 0.01 && shares.every((s) => s.shareAmount >= 0)
+    weights.length > 0 && Math.abs(weightTotal - splitInput.amount) <= 0.01 && shares.every((s) => s.shareAmount >= 0)
   return { splitInput, weights, shares, sharesProject, personalTotal, itemCount, autoRemaining, matches }
 }
 
