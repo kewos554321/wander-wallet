@@ -87,7 +87,6 @@ export function AmountCard({
             <CurrencySelect
               value={currency as CurrencyCode}
               onChange={(v) => onCurrency(v)}
-              showName={false}
               className="border-v2-paper bg-v2-paper text-v2-lake [&_svg:not([class*='text-'])]:text-v2-lake"
             />
           </div>

@@ -6,8 +6,8 @@ import { render, screen, fireEvent } from "@testing-library/react"
 // its onChange, so it is stubbed with a native select here for a deterministic
 // interaction (test-only stub; no product code changed).
 vi.mock("@/components/ui/currency-select", () => ({
-  CurrencySelect: ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
-    <select aria-label="幣別" value={value} onChange={(e) => onChange(e.target.value)}>
+  CurrencySelect: ({ value, onChange, showName }: { value: string; onChange: (v: string) => void; showName?: boolean }) => (
+    <select aria-label="幣別" data-showname={String(showName)} value={value} onChange={(e) => onChange(e.target.value)}>
       <option value="TWD">TWD</option>
       <option value="JPY">JPY</option>
     </select>
@@ -53,6 +53,13 @@ describe("AmountCard", () => {
     fireEvent.change(screen.getByLabelText("幣別"), { target: { value: "JPY" } })
     expect(onCurrency).toHaveBeenCalledTimes(1)
     expect(onCurrency).toHaveBeenCalledWith("JPY")
+  })
+
+  it("keeps currency names in the dropdown list (showName not disabled)", () => {
+    setup()
+    // The expandable list shows 代碼＋名稱, like the project settings; AmountCard
+    // must not pass showName={false}.
+    expect(screen.getByLabelText("幣別")).not.toHaveAttribute("data-showname", "false")
   })
 
   it("calls onToggleCalculator when the calculator toggle is pressed", () => {
