@@ -157,6 +157,23 @@ describe("PayerPicker", () => {
     expect(within(group).getByText("$30 + $30 = $60 / $100")).toBeInTheDocument()
   })
 
+  it("shows each payer's settlement estimate on its own line for a foreign expense", () => {
+    setup({
+      currency: "JPY",
+      projectCurrency: "USD",
+      rate: 0.05,
+      payers: [{ memberId: "a", amount: 1000 }],
+    })
+    const estimate = screen.getByTestId("payer-project-estimate")
+    expect(estimate).toHaveTextContent("≈ USD 50.00")
+    expect(estimate).not.toHaveClass("truncate")
+  })
+
+  it("hides the payer settlement estimate for a same-currency expense", () => {
+    setup({ currency: "TWD", projectCurrency: "TWD" })
+    expect(screen.queryByTestId("payer-project-estimate")).not.toBeInTheDocument()
+  })
+
   it("renders the member image in the payer options when present, else the initial", () => {
     setup({
       members: [

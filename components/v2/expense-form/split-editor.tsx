@@ -1,7 +1,7 @@
 "use client"
 
 import { CornerRightDown, Pin, PinOff, Plus, UserMinus, X } from "lucide-react"
-import { formatAmount } from "@/lib/constants/currencies"
+import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
 import { toMoneyInput } from "@/lib/money-input"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import type { DraftMember } from "./use-expense-draft"
@@ -43,6 +43,7 @@ export function SplitEditor({
   // The breakdown table is shown only when personal items make its 個人項目
   // column meaningful; otherwise the header text summary stands alone.
   const showBreakdown = shouldShowBreakdown(members, draft)
+  const showEstimate = !!projectCurrency && rate != null && currency !== projectCurrency
 
   return (
     <section aria-label="分攤成員" className={SECTION_CARD}>
@@ -129,6 +130,14 @@ export function SplitEditor({
                         <UserMinus className="h-3 w-3" />
                       </button>
                     </div>
+                    {showEstimate && (
+                      <p
+                        data-testid="personal-project-estimate"
+                        className="mt-1 break-words pl-[34px] text-[10px] text-v2-ink-muted"
+                      >
+                        ≈ {formatCurrency(sum * rate!, projectCurrency!)}
+                      </p>
+                    )}
                     <div className="ml-[34px] mt-1 border-l border-v2-check pl-2.5">
                       {items.map((item, idx) => (
                         <div key={item.id} className="mt-1.5 flex items-center gap-1.5">
@@ -209,47 +218,57 @@ export function SplitEditor({
             const custom = state.customShares[id]
             const isCustom = custom !== undefined
             return (
-              <div key={id} className="flex items-center gap-2.5 border-b border-v2-line-soft bg-v2-lake-soft px-3.5 py-3 last:border-b-0">
-                <V2Avatar
-                  image={members.find((m) => m.id === id)?.image ?? null}
-                  name={name(id)}
-                  className="h-7 w-7 rounded-full"
-                  fallbackClassName={`text-[11px] font-bold ${tone(id)}`}
-                />
-                <span className="flex-1 text-[13px] font-semibold">{name(id)}</span>
-                {isCustom ? (
-                  // An emptied input keeps the pinned state; the draft treats "" as auto.
-                  <label className="flex w-24 items-center rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-[13px] font-bold">
-                    <span aria-hidden="true">$</span>
-                    <input
-                      aria-label={`${name(id)}的分攤金額`}
-                      inputMode="decimal"
-                      value={custom}
-                      placeholder={String(poolShareOf(id))}
-                      onChange={(e) => {
-                        const v = toMoneyInput(e.target.value)
-                        if (v !== null) actions.setCustomShare(id, v)
-                      }}
-                      className="w-full min-w-0 bg-transparent text-right outline-none"
-                    />
-                  </label>
-                ) : (
-                  <span aria-label={`${name(id)}的分攤金額`} className="text-right text-[13px] font-bold">
-                    ${num(poolShareOf(id))}
-                  </span>
+              <div key={id} className="border-b border-v2-line-soft bg-v2-lake-soft px-3.5 py-3 last:border-b-0">
+                <div className="flex items-center gap-2.5">
+                  <V2Avatar
+                    image={members.find((m) => m.id === id)?.image ?? null}
+                    name={name(id)}
+                    className="h-7 w-7 rounded-full"
+                    fallbackClassName={`text-[11px] font-bold ${tone(id)}`}
+                  />
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{name(id)}</span>
+                  {isCustom ? (
+                    // An emptied input keeps the pinned state; the draft treats "" as auto.
+                    <label className="flex w-24 items-center rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-[13px] font-bold">
+                      <span aria-hidden="true">$</span>
+                      <input
+                        aria-label={`${name(id)}的分攤金額`}
+                        inputMode="decimal"
+                        value={custom}
+                        placeholder={String(poolShareOf(id))}
+                        onChange={(e) => {
+                          const v = toMoneyInput(e.target.value)
+                          if (v !== null) actions.setCustomShare(id, v)
+                        }}
+                        className="w-full min-w-0 bg-transparent text-right outline-none"
+                      />
+                    </label>
+                  ) : (
+                    <span aria-label={`${name(id)}的分攤金額`} className="shrink-0 text-right text-[13px] font-bold">
+                      ${num(poolShareOf(id))}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    aria-label={isCustom ? `${name(id)}取消固定金額` : `${name(id)}固定金額`}
+                    aria-pressed={isCustom}
+                    onClick={() => (isCustom ? actions.clearCustomShare(id) : actions.setCustomShare(id, String(poolShareOf(id))))}
+                    className={`${smallButton} ${isCustom ? "bg-v2-lake text-v2-on-lake" : "border-[1.5px] border-v2-check text-v2-ink-muted"}`}
+                  >
+                    {isCustom ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
+                  </button>
+                  <button type="button" aria-label={`${name(id)}不參與共同分攤`} onClick={() => actions.togglePool(id)} className={`${smallButton} bg-v2-danger-soft text-v2-danger-strong`}>
+                    <UserMinus className="h-3 w-3" />
+                  </button>
+                </div>
+                {showEstimate && (
+                  <p
+                    data-testid="pool-project-estimate"
+                    className="mt-1 break-words pl-[38px] text-[10px] text-v2-ink-muted"
+                  >
+                    ≈ {formatCurrency(poolShareOf(id) * rate!, projectCurrency!)}
+                  </p>
                 )}
-                <button
-                  type="button"
-                  aria-label={isCustom ? `${name(id)}取消固定金額` : `${name(id)}固定金額`}
-                  aria-pressed={isCustom}
-                  onClick={() => (isCustom ? actions.clearCustomShare(id) : actions.setCustomShare(id, String(poolShareOf(id))))}
-                  className={`${smallButton} ${isCustom ? "bg-v2-lake text-v2-on-lake" : "border-[1.5px] border-v2-check text-v2-ink-muted"}`}
-                >
-                  {isCustom ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
-                </button>
-                <button type="button" aria-label={`${name(id)}不參與共同分攤`} onClick={() => actions.togglePool(id)} className={`${smallButton} bg-v2-danger-soft text-v2-danger-strong`}>
-                  <UserMinus className="h-3 w-3" />
-                </button>
               </div>
             )
           })}

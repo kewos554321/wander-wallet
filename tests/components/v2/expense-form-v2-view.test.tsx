@@ -93,6 +93,44 @@ describe("ExpenseFormV2View", () => {
     expect(screen.queryByLabelText("匯率換算")).not.toBeInTheDocument()
   })
 
+  it("shows a settlement estimate on each shared-pool and personal-item row for a foreign expense", () => {
+    const { hook, rerender } = renderForm({
+      projectCurrency: "USD",
+      previewRateInfo: () => ({ rate: 0.05, source: "live" as const }),
+    })
+    act(() => {
+      hook.result.current.actions.setAmount("1000")
+      hook.result.current.actions.setCurrency("JPY")
+      hook.result.current.actions.setPersonalMode(true)
+      hook.result.current.actions.togglePersonalMember("a")
+    })
+    const itemId = hook.result.current.state.personalItems.a[0].id
+    act(() => {
+      hook.result.current.actions.updateItem("a", itemId, "name", "咖啡")
+      hook.result.current.actions.updateItem("a", itemId, "amount", "100")
+    })
+    rerender()
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    // Personal items total 100 JPY → USD 5.00.
+    expect(within(split).getByTestId("personal-project-estimate")).toHaveTextContent("≈ USD 5.00")
+    // Remaining 900 split over 2 members → 450 JPY each → USD 22.50.
+    for (const estimate of within(split).getAllByTestId("pool-project-estimate")) {
+      expect(estimate).toHaveTextContent("≈ USD 22.50")
+    }
+  })
+
+  it("hides the split settlement estimates for a same-currency expense", () => {
+    const { hook, rerender } = renderForm({ projectCurrency: "TWD" })
+    act(() => {
+      hook.result.current.actions.setAmount("100")
+      hook.result.current.actions.setPersonalMode(true)
+      hook.result.current.actions.togglePersonalMember("a")
+    })
+    rerender()
+    expect(screen.queryByTestId("personal-project-estimate")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("pool-project-estimate")).not.toBeInTheDocument()
+  })
+
   it("selects a category and toggles a payer on", () => {
     const { hook, rerender } = renderForm()
     fireEvent.click(screen.getByRole("button", { name: "交通" }))

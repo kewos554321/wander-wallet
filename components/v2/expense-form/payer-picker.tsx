@@ -98,28 +98,22 @@ export function PayerPicker({
           {payers.map((p, idx) => {
             const isPinned = Object.prototype.hasOwnProperty.call(pinned, p.memberId)
             const value = isPinned ? pinned[p.memberId] : String(derivedAmount(p.memberId))
+            const showEstimate = !!projectCurrency && rate != null && currency !== projectCurrency
             return (
               <div
                 key={p.memberId}
-                className={`flex items-center gap-2.5 bg-v2-lake-soft px-3.5 py-3 ${
+                className={`bg-v2-lake-soft px-3.5 py-3 ${
                   idx < payers.length - 1 ? "border-b border-v2-line-soft" : ""
                 }`}
               >
-                <V2Avatar
-                  image={members.find((m) => m.id === p.memberId)?.image ?? null}
-                  name={nameOf(p.memberId)}
-                  className="h-7 w-7 shrink-0 rounded-full"
-                  fallbackClassName={`text-[11px] font-bold ${memberTone(members.findIndex((m) => m.id === p.memberId))}`}
-                />
-                <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="min-w-0 truncate text-[13px] font-semibold">{nameOf(p.memberId)}</span>
-                    {projectCurrency && rate != null && currency !== projectCurrency && (
-                      <span className="truncate text-[10px] text-v2-ink-muted">
-                        ≈ {formatCurrency(p.amount * rate, projectCurrency)}
-                      </span>
-                    )}
-                  </span>
+                <div className="flex items-center gap-2.5">
+                  <V2Avatar
+                    image={members.find((m) => m.id === p.memberId)?.image ?? null}
+                    name={nameOf(p.memberId)}
+                    className="h-7 w-7 shrink-0 rounded-full"
+                    fallbackClassName={`text-[11px] font-bold ${memberTone(members.findIndex((m) => m.id === p.memberId))}`}
+                  />
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{nameOf(p.memberId)}</span>
                   {isPinned ? (
                     <label className="flex w-24 shrink-0 items-center rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-[13px] font-bold">
                       <span aria-hidden="true">$</span>
@@ -139,25 +133,33 @@ export function PayerPicker({
                       {money(derivedAmount(p.memberId))}
                     </span>
                   )}
-                </span>
-                <button
-                  type="button"
-                  aria-label={isPinned ? `${nameOf(p.memberId)}的付款金額已自訂，點擊還原均分` : `${nameOf(p.memberId)}的付款金額均分，點擊自訂`}
-                  onClick={() => (isPinned ? onClearAmount(p.memberId) : onSetAmount(p.memberId, String(derivedAmount(p.memberId))))}
-                  className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md ${
-                    isPinned ? "bg-v2-lake text-v2-on-lake" : "border-[1.5px] border-v2-check text-v2-ink-muted"
-                  }`}
-                >
-                  {isPinned ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
-                </button>
-                <button
-                  type="button"
-                  aria-label={`移除${nameOf(p.memberId)}`}
-                  onClick={() => onTogglePayer(p.memberId)}
-                  className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md bg-v2-danger-soft text-v2-danger-strong"
-                >
-                  <UserMinus className="h-3 w-3" />
-                </button>
+                  <button
+                    type="button"
+                    aria-label={isPinned ? `${nameOf(p.memberId)}的付款金額已自訂，點擊還原均分` : `${nameOf(p.memberId)}的付款金額均分，點擊自訂`}
+                    onClick={() => (isPinned ? onClearAmount(p.memberId) : onSetAmount(p.memberId, String(derivedAmount(p.memberId))))}
+                    className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md ${
+                      isPinned ? "bg-v2-lake text-v2-on-lake" : "border-[1.5px] border-v2-check text-v2-ink-muted"
+                    }`}
+                  >
+                    {isPinned ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`移除${nameOf(p.memberId)}`}
+                    onClick={() => onTogglePayer(p.memberId)}
+                    className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md bg-v2-danger-soft text-v2-danger-strong"
+                  >
+                    <UserMinus className="h-3 w-3" />
+                  </button>
+                </div>
+                {showEstimate && (
+                  <p
+                    data-testid="payer-project-estimate"
+                    className="mt-1 break-words pl-[38px] text-[10px] text-v2-ink-muted"
+                  >
+                    ≈ {formatCurrency(p.amount * rate, projectCurrency!)}
+                  </p>
+                )}
               </div>
             )
           })}
