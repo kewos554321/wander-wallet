@@ -41,11 +41,14 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
   const error = derived.error ?? props.submitError
   const amountLabel = formatCurrency(derived.splitInput.amount, state.currency)
   const submitLabel = props.mode === "create" ? `新增支出 · ${amountLabel}` : `儲存變更 · ${amountLabel}`
-  const rate =
-    props.projectCurrency && state.currency !== props.projectCurrency
-      ? props.previewRateFor?.(state.currency) ?? null
-      : null
+  const isForeign = !!props.projectCurrency && state.currency !== props.projectCurrency
+  const autoRate = isForeign ? props.previewRateFor?.(state.currency) ?? null : null
+  const exchangeRateInput = state.exchangeRate ?? ""
+  const manualRate = exchangeRateInput.trim() ? Number(exchangeRateInput) : null
+  const usableManual = manualRate != null && Number.isFinite(manualRate) && manualRate > 0 ? manualRate : null
+  const rate = usableManual ?? autoRate
   const previewProjectAmount = rate != null ? derived.splitInput.amount * rate : null
+  const customRate = usableManual != null && autoRate != null && usableManual !== autoRate
 
   return (
     <form
@@ -78,7 +81,10 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
         projectCurrency={props.projectCurrency}
         previewProjectAmount={previewProjectAmount}
         rate={rate}
-        rateEditable={false}
+        rateInput={exchangeRateInput !== "" ? exchangeRateInput : autoRate != null ? String(autoRate) : ""}
+        rateEditable={isForeign}
+        onRate={actions.setExchangeRate}
+        customRate={customRate}
         calculatorOpen={showCalculator}
         onToggleCalculator={() => setShowCalculator((v) => !v)}
         calculator={
@@ -113,12 +119,20 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
         matches={derived.payerMatches}
         amount={derived.splitInput.amount}
         currency={state.currency}
+        projectCurrency={props.projectCurrency}
+        rate={rate}
         onTogglePayer={actions.togglePayer}
         onSetAll={actions.setPayersAll}
         onSetAmount={actions.setPayerAmount}
         onClearAmount={actions.clearPayerAmount}
       />
-      <SplitEditor members={props.members} draft={draft} currency={state.currency} />
+      <SplitEditor
+        members={props.members}
+        draft={draft}
+        currency={state.currency}
+        projectCurrency={props.projectCurrency}
+        rate={rate}
+      />
 
       <div className={SECTION_CARD}>
         <p className={`mb-2 ${SECTION_TITLE}`}>支出日期</p>

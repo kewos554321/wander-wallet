@@ -1,7 +1,7 @@
 "use client"
 
 import { CheckCircle2 } from "lucide-react"
-import { formatAmount } from "@/lib/constants/currencies"
+import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import type { SplitDraft } from "@/lib/split-draft"
 import type { DraftMember } from "./use-expense-draft"
@@ -79,7 +79,19 @@ export function SplitEquation({ draft, currency }: { draft: SplitDraft; currency
 
 // Per-member breakdown (design A3d, deliberately deviating): members whose
 // subtotal is 0 are hidden instead of rendering as 0/0 rows.
-export function SplitSummary({ members, draft, currency }: { members: DraftMember[]; draft: SplitDraft; currency: string }) {
+export function SplitSummary({
+  members,
+  draft,
+  currency,
+  projectCurrency,
+  rate,
+}: {
+  members: DraftMember[]
+  draft: SplitDraft
+  currency: string
+  projectCurrency?: string
+  rate?: number | null
+}) {
   const { derived } = draft
   if (derived.shares.length === 0) return null
 
@@ -117,7 +129,14 @@ export function SplitSummary({ members, draft, currency }: { members: DraftMembe
               </span>
               <span role="cell" className={`${cell} ${r.personal ? "" : "text-v2-ink-subtle"}`}>{money(r.personal)}</span>
               <span role="cell" className={`${cell} ${r.pool ? "" : "text-v2-ink-subtle"}`}>{money(r.pool)}</span>
-              <span role="cell" className={`${cell} font-bold`}>{money(r.total)}</span>
+              <span role="cell" className={`${cell} font-bold`}>
+                <span className="block">{money(r.total)}</span>
+                {projectCurrency && rate != null && currency !== projectCurrency && (
+                  <span className="block text-[10px] font-normal text-v2-ink-muted">
+                    ≈ {formatCurrency(r.total * rate, projectCurrency)}
+                  </span>
+                )}
+              </span>
             </div>
           ))}
           <div role="row" className={`${cols} border-t border-v2-lake-border bg-v2-lake-tint py-2.5 font-bold`}>

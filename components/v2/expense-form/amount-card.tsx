@@ -15,6 +15,8 @@ interface AmountCardProps {
   previewProjectAmount?: number | null
   /** The bound rate for this expense. */
   rate?: number | null
+  /** Controlled text for the rate input (kept while typing, may be invalid/empty). */
+  rateInput?: string
   /** Whether the rate can be edited for this expense. */
   rateEditable?: boolean
   onRate?: (value: string) => void
@@ -36,6 +38,7 @@ export function AmountCard({
   projectCurrency,
   previewProjectAmount,
   rate,
+  rateInput,
   rateEditable = false,
   onRate,
   customRate = false,
@@ -92,26 +95,26 @@ export function AmountCard({
           />
         </div>
       )}
-      {showConversion && previewProjectAmount != null && (
+      {showConversion && (
         <div className="mt-2 flex items-center justify-between gap-2 text-[12px] text-v2-paper/85">
-          <span data-testid="amount-conversion">≈ {formatCurrency(previewProjectAmount, projectCurrency!)}</span>
-          {rate != null && (
-            <span className="inline-flex items-center gap-1">
-              {customRate && (
-                <span className="rounded-full bg-v2-paper/15 px-2 py-0.5 text-[10px] font-bold">自訂</span>
-              )}
-              <span>1 {currency} =</span>
-              <input
-                aria-label="匯率"
-                inputMode="decimal"
-                value={String(rate)}
-                readOnly={!rateEditable}
-                onChange={(e) => onRate?.(e.target.value)}
-                className="w-24 rounded bg-v2-paper/10 px-1.5 py-0.5 text-right tabular-nums text-v2-paper outline-none"
-              />
-              <span>{projectCurrency}</span>
-            </span>
-          )}
+          <span data-testid="amount-conversion">
+            {previewProjectAmount != null ? `≈ ${formatCurrency(previewProjectAmount, projectCurrency!)}` : "≈ —"}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            {customRate && (
+              <span className="rounded-full bg-v2-paper/15 px-2 py-0.5 text-[10px] font-bold">自訂</span>
+            )}
+            <span>1 {currency} =</span>
+            <input
+              aria-label="匯率"
+              inputMode="decimal"
+              value={rateInput ?? (rate != null ? String(rate) : "")}
+              readOnly={!rateEditable}
+              onChange={(e) => onRate?.(e.target.value)}
+              className="w-24 rounded bg-v2-paper/10 px-1.5 py-0.5 text-right tabular-nums text-v2-paper outline-none disabled:opacity-70"
+            />
+            <span>{projectCurrency}</span>
+          </span>
         </div>
       )}
     </div>

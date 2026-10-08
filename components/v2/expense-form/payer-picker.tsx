@@ -1,5 +1,5 @@
 import { CheckCircle2, Pin, PinOff, UserMinus } from "lucide-react"
-import { formatAmount } from "@/lib/constants/currencies"
+import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import type { PayerShare } from "@/lib/expense-payers"
 import type { DraftMember } from "./use-expense-draft"
@@ -26,6 +26,8 @@ export function PayerPicker({
   matches,
   amount,
   currency,
+  projectCurrency,
+  rate,
   onTogglePayer,
   onSetAll,
   onSetAmount,
@@ -38,6 +40,8 @@ export function PayerPicker({
   matches: boolean
   amount: number
   currency: string
+  projectCurrency?: string
+  rate?: number | null
   onTogglePayer: (id: string) => void
   onSetAll: (selectAll: boolean) => void
   onSetAmount: (id: string, value: string) => void
@@ -108,7 +112,14 @@ export function PayerPicker({
                   fallbackClassName={`text-[11px] font-bold ${memberTone(members.findIndex((m) => m.id === p.memberId))}`}
                 />
                 <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                  <span className="min-w-0 truncate text-[13px] font-semibold">{nameOf(p.memberId)}</span>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="min-w-0 truncate text-[13px] font-semibold">{nameOf(p.memberId)}</span>
+                    {projectCurrency && rate != null && currency !== projectCurrency && (
+                      <span className="truncate text-[10px] text-v2-ink-muted">
+                        ≈ {formatCurrency(p.amount * rate, projectCurrency)}
+                      </span>
+                    )}
+                  </span>
                   <label
                     className={`flex w-24 shrink-0 items-center rounded-lg px-2.5 py-1.5 text-[13px] font-bold ${
                       isPinned ? "border border-v2-lake-border bg-v2-surface" : "border border-v2-line bg-v2-surface"

@@ -29,6 +29,7 @@ export interface DraftMember {
 export interface DraftExpense {
   amount: number
   currency: string
+  exchangeRate?: number | null
   description: string | null
   category: string | null
   payers: { memberId: string; amount: number }[]
@@ -57,6 +58,7 @@ function initialState(init: DraftInit) {
     return {
       amount: "",
       currency: init.currency,
+      exchangeRate: "",
       description: "",
       category: "",
       payerIds: init.paidBy ? [init.paidBy] : ([] as string[]),
@@ -105,6 +107,7 @@ function initialState(init: DraftInit) {
     return {
       amount: String(e.amount),
       currency: e.currency,
+      exchangeRate: e.exchangeRate != null ? String(e.exchangeRate) : "",
       description: e.description ?? "",
       category: e.category ?? "",
       payerIds,
@@ -138,6 +141,7 @@ function initialState(init: DraftInit) {
   return {
     amount: String(e.amount),
     currency: e.currency,
+    exchangeRate: e.exchangeRate != null ? String(e.exchangeRate) : "",
     description: e.description ?? "",
     category: e.category ?? "",
     payerIds,
@@ -161,7 +165,10 @@ export function useExpenseDraft(init: DraftInit) {
 
   const actions = {
     setAmount: set("amount"),
-    setCurrency: set("currency"),
+    setCurrency: (code: string) =>
+      // Changing currency invalidates a previously-bound rate for this expense.
+      setState((s) => ({ ...s, currency: code, exchangeRate: "" })),
+    setExchangeRate: set("exchangeRate"),
     setDescription: set("description"),
     setCategory: set("category"),
     setExpenseDate: set("expenseDate"),

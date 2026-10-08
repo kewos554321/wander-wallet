@@ -16,7 +16,19 @@ const MAX_PERSONAL_ITEM_NAME = 30
 const smallButton = "flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
 const itemInput = "min-w-0 rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-xs outline-none"
 
-export function SplitEditor({ members, draft, currency }: { members: DraftMember[]; draft: SplitDraft; currency: string }) {
+export function SplitEditor({
+  members,
+  draft,
+  currency,
+  projectCurrency,
+  rate,
+}: {
+  members: DraftMember[]
+  draft: SplitDraft
+  currency: string
+  projectCurrency?: string
+  rate?: number | null
+}) {
   const { state, actions, derived } = draft
   // Currency code only on totals; per-member amounts show the number alone.
   const num = (n: number) => formatAmount(Math.round(n * 100) / 100, currency)
@@ -254,7 +266,7 @@ export function SplitEditor({ members, draft, currency }: { members: DraftMember
         </div>
       )}
 
-      {showBreakdown && <SplitSummary members={members} draft={draft} currency={currency} />}
+      {showBreakdown && <SplitSummary members={members} draft={draft} currency={currency} projectCurrency={projectCurrency} rate={rate} />}
     </section>
   )
 }

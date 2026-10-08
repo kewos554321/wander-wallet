@@ -21,6 +21,7 @@ import { useExpenseDraft, type DraftInit } from "./use-expense-draft"
 interface LoadedExpense {
   amount: number
   currency: string | null
+  exchangeRate?: number | null
   description: string | null
   category: string | null
   image: string | null
@@ -116,6 +117,7 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
       ? {
           amount: Number(expense.amount),
           currency: expense.currency || projectCurrency,
+          exchangeRate: expense.exchangeRate ?? null,
           description: expense.description,
           category: expense.category,
           payers: expense.payers.map((p) => ({ memberId: p.memberId, amount: Number(p.amount) })),
@@ -250,6 +252,7 @@ function LoadedForm({
         payers: derived.payers,
         amount: derived.splitInput.amount,
         currency: state.currency,
+        exchangeRate: state.exchangeRate?.trim() ? Number(state.exchangeRate) : undefined,
         description,
         category,
         location: state.location.location,
