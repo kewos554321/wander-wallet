@@ -224,4 +224,13 @@ describe("PayerPicker", () => {
     expect(group.querySelector('img[src="https://cdn.example/xiaoyu.jpg"]')).toBeInTheDocument()
     expect(within(group).getAllByText("志").length).toBeGreaterThan(0)
   })
+
+  it("keeps a long member name in the DOM but truncates it visually", () => {
+    setup({ members: [{ id: "a", displayName: "非常非常長的名字測試" }], payerIds: ["a"] })
+    const name = screen
+      .getAllByText("非常非常長的名字測試")
+      .find((el) => el.classList.contains("truncate"))
+    expect(name).toBeDefined()
+    expect(name).toHaveAttribute("title", "非常非常長的名字測試")
+  })
 })

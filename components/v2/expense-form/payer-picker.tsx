@@ -12,7 +12,7 @@ const AVATAR_TONES = ["bg-v2-lake-tint text-v2-lake", "bg-v2-coral-soft text-v2-
 
 // Shared member pill look for the payer, personal-item and shared-pool pickers.
 export function memberPillClass(selected: boolean) {
-  return `inline-flex items-center gap-1.5 rounded-full px-3.5 py-[5px] ${
+  return `inline-flex items-center gap-1 rounded-full px-2.5 py-1 ${
     selected ? "border border-v2-lake bg-v2-lake text-v2-on-lake" : "border border-v2-lake-border bg-v2-lake-soft text-v2-ink opacity-50"
   }`
 }
@@ -131,10 +131,12 @@ export function PayerPicker({
                 <V2Avatar
                   image={m.image ?? null}
                   name={m.displayName}
-                  className="h-5 w-5 rounded-full"
-                  fallbackClassName={`text-[9px] font-bold ${memberTone(i)}`}
+                  className="h-4 w-4 rounded-full"
+                  fallbackClassName={`text-[8px] font-bold ${memberTone(i)}`}
                 />
-                <span className="text-xs font-semibold">{m.displayName}</span>
+                <span className="max-w-[5.5em] truncate text-[11px] font-semibold" title={m.displayName}>
+                  {m.displayName}
+                </span>
               </label>
             )
           })}

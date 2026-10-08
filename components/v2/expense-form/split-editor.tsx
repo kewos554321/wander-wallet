@@ -127,10 +127,12 @@ export function SplitEditor({
                     <V2Avatar
                       image={m.image ?? null}
                       name={m.displayName}
-                      className="h-5 w-5 rounded-full"
-                      fallbackClassName={`text-[9px] font-bold ${tone(m.id)}`}
+                      className="h-4 w-4 rounded-full"
+                      fallbackClassName={`text-[8px] font-bold ${tone(m.id)}`}
                     />
-                    <span className="text-xs font-semibold">{m.displayName}</span>
+                    <span className="max-w-[5.5em] truncate text-[11px] font-semibold" title={m.displayName}>
+                      {m.displayName}
+                    </span>
                   </button>
                 )
               })}
@@ -273,10 +275,12 @@ export function SplitEditor({
                 <V2Avatar
                   image={m.image ?? null}
                   name={m.displayName}
-                  className={`h-5 w-5 rounded-full ${on ? "" : "opacity-40"}`}
-                  fallbackClassName={`text-[9px] font-bold ${tone(m.id)}`}
+                  className={`h-4 w-4 rounded-full ${on ? "" : "opacity-40"}`}
+                  fallbackClassName={`text-[8px] font-bold ${tone(m.id)}`}
                 />
-                <span className="text-xs font-semibold">{m.displayName}</span>
+                <span className="max-w-[5.5em] truncate text-[11px] font-semibold" title={m.displayName}>
+                  {m.displayName}
+                </span>
               </button>
             )
           })}
