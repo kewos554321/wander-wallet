@@ -93,9 +93,7 @@ describe("ExpenseFormV2View", () => {
     const { hook, rerender } = renderForm({}, { seedPool: false })
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
-    const split = screen.getByRole("region", { name: "分攤成員" })
     expect(hook.result.current.state.pool).toEqual(["a"])
-    expect(within(split).getByText("已選 1 人")).toBeInTheDocument()
   })
 
   it("shows the conversion checkpoint before the payer section for a foreign expense", () => {
@@ -336,9 +334,7 @@ describe("ExpenseFormV2View", () => {
     expect(within(payer).getByRole("button", { name: "全選" })).toBeInTheDocument()
     expect(within(payer).getAllByText("小雨")).toHaveLength(2)
     expect(within(payer).getByLabelText("小雨的付款金額")).toHaveTextContent("$1,280")
-    expect(within(payer).getByText("已選 1 人")).toBeInTheDocument()
     expect(within(payer).getByText("金額相符")).toBeInTheDocument()
-    expect(within(payer).getByText("$1,280 = $1,280 / $1,280")).toBeInTheDocument()
   })
 
   it("splits the amount equally between multiple selected payers", () => {
@@ -352,9 +348,7 @@ describe("ExpenseFormV2View", () => {
       { memberId: "b", amount: 50 },
     ])
     const payer = screen.getByRole("group", { name: "付款成員" })
-    expect(within(payer).getByText("已選 2 人")).toBeInTheDocument()
     expect(within(payer).getByText("金額相符")).toBeInTheDocument()
-    expect(within(payer).getByText("$50 + $50 = $100 / $100")).toBeInTheDocument()
   })
 
   it("pins a manual payer amount and re-splits the rest", () => {
@@ -448,13 +442,11 @@ describe("ExpenseFormV2View", () => {
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
     const split = screen.getByRole("region", { name: "分攤成員" })
-    // Switch off: the table is hidden, so the header summary stands alone.
+    // Switch off: the breakdown table is hidden.
     expect(within(split).queryByRole("region", { name: "分攤明細" })).not.toBeInTheDocument()
-    expect(within(split).getByText("已選 2 人")).toBeInTheDocument()
     // Turning the switch on switches to the table immediately, before picking a member.
     fireEvent.click(screen.getByRole("switch", { name: "先扣個人項目" }))
     rerender()
-    expect(within(split).queryByText("已選 2 人")).not.toBeInTheDocument()
     const breakdown = within(split).getByRole("region", { name: "分攤明細" })
     expect(within(breakdown).getByText("（TWD）")).toBeInTheDocument()
     // The table carries the summary now, so the text equation is gone; only the
@@ -474,12 +466,11 @@ describe("ExpenseFormV2View", () => {
     expect(shares.every((s) => Number.isInteger(s.shareAmount))).toBe(true)
   })
 
-  it("falls back to the count and match badge when the breakdown table has no rows", () => {
+  it("falls back to the match badge when the breakdown table has no rows", () => {
     renderForm()
     // No amount yet: every share is $0, so the breakdown table is hidden.
     expect(screen.queryByRole("region", { name: "分攤明細" })).not.toBeInTheDocument()
     const split = screen.getByRole("region", { name: "分攤成員" })
-    expect(within(split).getByText("已選 2 人")).toBeInTheDocument()
     expect(within(split).getByText("金額相符")).toBeInTheDocument()
   })
 
@@ -606,10 +597,9 @@ describe("ExpenseFormV2View", () => {
     fireEvent.click(screen.getByRole("button", { name: "志明的個人項目" }))
     rerender()
     const split = screen.getByRole("region", { name: "分攤成員" })
-    // The table replaces the text summary, and the header count is gone too.
+    // The table replaces the text summary.
     expect(within(split).getByRole("region", { name: "分攤明細" })).toBeInTheDocument()
     expect(within(split).queryByText(/＋ 共同分攤 \$.*= \$/)).not.toBeInTheDocument()
-    expect(within(split).queryByText("已選 2 人")).not.toBeInTheDocument()
   })
 
   it("selects and clears all personal-item members", () => {

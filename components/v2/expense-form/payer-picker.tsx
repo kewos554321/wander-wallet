@@ -26,7 +26,6 @@ export function PayerPicker({
   pinned,
   payers,
   matches,
-  amount,
   currency,
   projectCurrency,
   rate,
@@ -42,7 +41,6 @@ export function PayerPicker({
   pinned: Record<string, string>
   payers: PayerShare[]
   matches: boolean
-  amount: number
   currency: string
   projectCurrency?: string
   rate?: number | null
@@ -58,7 +56,6 @@ export function PayerPicker({
   const nameOf = (id: string) => members.find((m) => m.id === id)?.displayName ?? ""
   const derivedAmount = (id: string) => payers.find((p) => p.memberId === id)?.amount ?? 0
   const allSelected = members.length > 0 && payerIds.length === members.length
-  const payerTotal = payers.reduce((sum, p) => sum + p.amount, 0)
   // A set `displayCurrency` means the section is a glance view: amounts show in
   // that currency and every field becomes read-only (edits stay in the expense
   // currency, reached by flipping back).
@@ -200,8 +197,7 @@ export function PayerPicker({
       )}
 
       <div className="mt-2">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs text-v2-ink-muted">已選 {payers.length} 人</span>
+        <div className="flex items-center justify-end gap-2">
           {matches ? (
             <span className="flex items-center gap-1 text-xs font-bold text-v2-link">
               <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
@@ -211,10 +207,6 @@ export function PayerPicker({
             <span className="text-xs font-bold text-v2-danger">金額不符</span>
           )}
         </div>
-        <p className="mt-[3px] break-words text-xs leading-normal text-v2-ink-muted">
-          {payers.length > 0 ? `${payers.map((p) => money(p.amount)).join(" + ")} = ` : ""}
-          {money(payerTotal)} / {money(amount)}
-        </p>
       </div>
     </div>
   )

@@ -358,11 +358,8 @@ export function SplitEditor({
       )}
 
       {!showBreakdown && (
-        <div className="mt-2">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs text-v2-ink-muted">已選 {derived.splitInput.participantIds.length} 人</span>
-            <MatchBadge matches={derived.matches} />
-          </div>
+        <div className="mt-2 flex justify-end">
+          <MatchBadge matches={derived.matches} />
         </div>
       )}
 

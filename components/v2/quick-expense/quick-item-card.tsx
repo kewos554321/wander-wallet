@@ -185,7 +185,6 @@ export function QuickItemCard({ item, members, onChange, projectCurrency, previe
         pinned={item.pinnedPayerAmounts}
         payers={payerDerived.payers}
         matches={payerDerived.payerMatches}
-        amount={amount}
         currency={item.currency}
         projectCurrency={projectCurrency}
         rate={rate}

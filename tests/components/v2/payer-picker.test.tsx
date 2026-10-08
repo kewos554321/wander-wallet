@@ -16,7 +16,6 @@ function setup(overrides: Partial<Props> = {}) {
     pinned: {},
     payers: [{ memberId: "a", amount: 100 }],
     matches: true,
-    amount: 100,
     currency: "TWD",
     onTogglePayer: vi.fn(),
     onSetAll: vi.fn(),
@@ -60,7 +59,6 @@ describe("PayerPicker", () => {
   it("does not render payer rows when nobody is selected", () => {
     setup({ payerIds: [], payers: [] })
     expect(screen.queryByLabelText(/的付款金額/)).not.toBeInTheDocument()
-    expect(screen.getByText("已選 0 人")).toBeInTheDocument()
   })
 
   it("renders an editable input with the pinned amount once a payer is pinned", () => {
@@ -126,7 +124,7 @@ describe("PayerPicker", () => {
     expect(screen.queryByRole("button", { name: "取消全選" })).not.toBeInTheDocument()
   })
 
-  it("summarizes the count, the match state and the equation when the total matches", () => {
+  it("shows 金額相符 when the payer total matches", () => {
     setup({
       payerIds: ["a", "b"],
       payers: [
@@ -134,12 +132,9 @@ describe("PayerPicker", () => {
         { memberId: "b", amount: 50 },
       ],
       matches: true,
-      amount: 100,
     })
     const group = screen.getByRole("group", { name: "付款成員" })
-    expect(within(group).getByText("已選 2 人")).toBeInTheDocument()
     expect(within(group).getByText("金額相符")).toBeInTheDocument()
-    expect(within(group).getByText("$50 + $50 = $100 / $100")).toBeInTheDocument()
   })
 
   it("shows 金額不符 when the payer total does not match", () => {
@@ -150,11 +145,9 @@ describe("PayerPicker", () => {
         { memberId: "b", amount: 30 },
       ],
       matches: false,
-      amount: 100,
     })
     const group = screen.getByRole("group", { name: "付款成員" })
     expect(within(group).getByText("金額不符")).toBeInTheDocument()
-    expect(within(group).getByText("$30 + $30 = $60 / $100")).toBeInTheDocument()
   })
 
   it("shows each payer's settlement estimate on its own line for a foreign expense", () => {

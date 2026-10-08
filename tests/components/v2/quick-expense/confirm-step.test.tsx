@@ -45,7 +45,7 @@ describe("ConfirmStep", () => {
     expect(screen.getByRole("button", { name: "第 1 筆" })).toHaveClass("w-6", "bg-v2-lake")
     expect(screen.getByRole("button", { name: "第 1 筆" })).toHaveAttribute("aria-current", "true")
     expect(screen.getByRole("button", { name: "第 2 筆" })).toHaveClass("w-2", "bg-v2-line")
-    expect(within(screen.getByRole("region", { name: "分攤成員" })).getByText("已選 3 人")).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "分攤成員" })).toBeInTheDocument()
     expect(screen.getByText("共 2 筆")).toBeInTheDocument()
     expect(screen.getByText("TWD 210")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "新增 2 筆" })).toBeInTheDocument()
