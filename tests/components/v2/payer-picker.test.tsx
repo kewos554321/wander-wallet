@@ -92,6 +92,18 @@ describe("PayerPicker", () => {
     expect(onSetAmount).toHaveBeenCalledWith("a", "100")
   })
 
+  it("pins a negative auto payer amount at zero so the field stays editable", () => {
+    const { onSetAmount } = setup({
+      payerIds: ["a", "b"],
+      payers: [
+        { memberId: "a", amount: 120 },
+        { memberId: "b", amount: -20 },
+      ],
+    })
+    fireEvent.click(screen.getByRole("button", { name: /志明的付款金額均分/ }))
+    expect(onSetAmount).toHaveBeenCalledWith("b", "0")
+  })
+
   it("clears a pinned payer back to an equal share", () => {
     const { onClearAmount } = setup({
       pinned: { a: "40" },

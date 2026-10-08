@@ -341,7 +341,7 @@ export function SplitEditor({
                       type="button"
                       aria-label={isCustom ? `${name(id)}取消固定金額` : `${name(id)}固定金額`}
                       aria-pressed={isCustom}
-                      onClick={() => (isCustom ? actions.clearCustomShare(id) : actions.setCustomShare(id, String(poolShareOf(id))))}
+                      onClick={() => (isCustom ? actions.clearCustomShare(id) : actions.setCustomShare(id, String(Math.max(0, poolShareOf(id)))))}
                       className={`${smallButton} ${isCustom ? "bg-v2-lake text-v2-on-lake" : "border-[1.5px] border-v2-check text-v2-ink-muted"}`}
                     >
                       {isCustom ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}

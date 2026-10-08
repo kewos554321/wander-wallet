@@ -200,7 +200,7 @@ export function PayerPicker({
                     <button
                       type="button"
                       aria-label={isPinned ? `${nameOf(p.memberId)}的付款金額已自訂，點擊還原均分` : `${nameOf(p.memberId)}的付款金額均分，點擊自訂`}
-                      onClick={() => (isPinned ? onClearAmount(p.memberId) : onSetAmount(p.memberId, String(derivedAmount(p.memberId))))}
+                      onClick={() => (isPinned ? onClearAmount(p.memberId) : onSetAmount(p.memberId, String(Math.max(0, derivedAmount(p.memberId)))))}
                       className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md ${
                         isPinned ? "bg-v2-lake text-v2-on-lake" : "border-[1.5px] border-v2-check text-v2-ink-muted"
                       }`}

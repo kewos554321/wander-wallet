@@ -761,6 +761,23 @@ describe("ExpenseFormV2View", () => {
     expect(screen.getByLabelText("志明的分攤金額")).toHaveValue("50")
   })
 
+  it("pins an over-allocated member at zero, not an uneditable negative", () => {
+    const { hook, rerender } = renderForm({ projectCurrency: "TWD" })
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    fireEvent.click(screen.getByRole("button", { name: "小雨固定金額" }))
+    rerender()
+    fireEvent.change(screen.getByLabelText("小雨的分攤金額"), { target: { value: "200" } })
+    rerender()
+    // 志明's auto share is now -100; pinning it must not freeze the field.
+    fireEvent.click(screen.getByRole("button", { name: "志明固定金額" }))
+    rerender()
+    expect(hook.result.current.state.customShares).toEqual({ a: "200", b: "0" })
+    const b = screen.getByLabelText("志明的分攤金額")
+    expect(b.tagName).toBe("INPUT")
+    expect(b).toHaveValue("0")
+  })
+
   it("shows only the shared-pool portion, separate from personal items", () => {
     const { hook, rerender } = renderForm()
     act(() => {
