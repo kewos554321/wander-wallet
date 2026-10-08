@@ -456,27 +456,25 @@ export async function PUT(
           },
         })
 
-        // 創建新的參與者（含結算幣別金額）
+        // 創建新的參與者（含結算幣別金額）。`shareAmount` keeps the submitted
+        // allocation weight; only the settlement amount is derived.
         await tx.expenseParticipant.createMany({
-          data: participants.map((p: Participant) => {
-            const allocated = projectAmounts.participants.find((x) => x.memberId === p.memberId)
-            return {
-              expenseId: expenseId,
-              memberId: p.memberId,
-              shareAmount: allocated?.shareAmount ?? Number(p.shareAmount),
-              shareAmountProject: allocated?.shareAmountProject,
-            }
-          }),
+          data: participants.map((p: Participant) => ({
+            expenseId: expenseId,
+            memberId: p.memberId,
+            shareAmount: Number(p.shareAmount),
+            shareAmountProject: projectAmounts.participants.find((x) => x.memberId === p.memberId)
+              ?.shareAmountProject,
+          })),
         })
       } else {
-        // 參與者未提供：重算原幣與結算幣別金額
+        // 參與者未提供：重算結算幣別金額
         for (const p of existingExpense.participants) {
-          const allocated = projectAmounts.participants.find((x) => x.memberId === p.member.id)
           await tx.expenseParticipant.update({
             where: { id: p.id },
             data: {
-              shareAmount: allocated?.shareAmount,
-              shareAmountProject: allocated?.shareAmountProject,
+              shareAmountProject: projectAmounts.participants.find((x) => x.memberId === p.member.id)
+                ?.shareAmountProject,
             },
           })
         }
@@ -636,14 +634,18 @@ export async function DELETE(
       }
     }
 
-    // 外幣費用刪除：回滾尾差帳
+    // 刪除費用：回滾尾差帳（外幣或任何已寫入結算金額的費用）
     const deleteProject = await prisma.project.findUnique({
       where: { id },
       select: { currency: true },
     })
     const deleteProjectCurrency = deleteProject?.currency || expense.currency || DEFAULT_CURRENCY
     const deleteExpenseCurrency = expense.currency || deleteProjectCurrency
-    if (deleteExpenseCurrency !== deleteProjectCurrency) {
+    const deleteHadAllocation =
+      deleteExpenseCurrency !== deleteProjectCurrency ||
+      expense.participants.some((p) => p.shareAmountProject != null) ||
+      expense.payers.some((p) => p.amountProject != null)
+    if (deleteHadAllocation) {
       const oldTotal =
         expense.participants.reduce((s, p) => s + Number(p.shareAmountProject ?? 0), 0) ||
         expense.payers.reduce((s, p) => s + Number(p.amountProject ?? 0), 0)

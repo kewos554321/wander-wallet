@@ -289,14 +289,12 @@ export async function POST(
             })),
           },
           participants: {
-            create: participants.map((p: Participant) => {
-              const allocated = projectAmounts.participants.find((x) => x.memberId === p.memberId)
-              return {
-                memberId: p.memberId,
-                shareAmount: allocated?.shareAmount ?? Number(p.shareAmount),
-                shareAmountProject: allocated?.shareAmountProject,
-              }
-            }),
+            create: participants.map((p: Participant) => ({
+              memberId: p.memberId,
+              shareAmount: Number(p.shareAmount),
+              shareAmountProject: projectAmounts.participants.find((x) => x.memberId === p.memberId)
+                ?.shareAmountProject,
+            })),
           },
         },
         include: {

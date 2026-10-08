@@ -683,7 +683,8 @@ describe("POST /api/projects/[id]/expenses", () => {
     }[]
     // member-456 has the lowest ledger, so the remainder lands on them in both.
     expect(created.map((p) => p.shareAmountProject)).toEqual([333, 334, 333])
-    expect(created.map((p) => p.shareAmount)).toEqual([333, 334, 333])
+    // shareAmount stays the submitted weight (not the allocation), so rollback and v1 reads keep working.
+    expect(created.map((p) => p.shareAmount)).toEqual([333.33, 333.33, 333.34])
     expect(prisma.projectMember.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: "member-456" }, data: { remainderDiscrepancy: 1 } }),
     )
@@ -1197,6 +1198,45 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     )
   })
 
+  it("rolls back the ledger when deleting a same-currency expense that carries a settlement allocation", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue({ currency: "TWD" } as never)
+    vi.mocked(prisma.expense.findFirst).mockResolvedValue({
+      ...mockExpense,
+      currency: "TWD",
+      participants: [
+        { id: "pa", memberId: "member-123", shareAmount: 333.33, shareAmountProject: 333 },
+        { id: "pb", memberId: "member-456", shareAmount: 333.33, shareAmountProject: 334 },
+        { id: "pc", memberId: "member-789", shareAmount: 333.34, shareAmountProject: 333 },
+      ],
+      payers: [
+        { id: "payer-1", memberId: "member-123", amount: 1000, amountProject: 1000, member: { displayName: "Test User" } },
+      ],
+    } as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123", remainderDiscrepancy: 0 },
+      { id: "member-456", remainderDiscrepancy: 1 },
+      { id: "member-789", remainderDiscrepancy: 0 },
+    ] as never)
+    vi.mocked(prisma.expense.update).mockResolvedValue({} as never)
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses/expense-123",
+      { method: "DELETE" },
+    )
+    const response = await DELETE_EXPENSE(req, {
+      params: createExpenseParams("project-123", "expense-123"),
+    })
+    expect(response.status).toBe(200)
+    expect(prisma.projectMember.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "member-456" },
+        data: { remainderDiscrepancy: 0 },
+      }),
+    )
+  })
+
   it("should return 400 if participants array is empty", async () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(
@@ -1386,7 +1426,7 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
       shareAmountProject: number
     }[]
     // member-456 has the lowest ledger → gets the extra unit in both currencies.
-    expect(created.map((p) => p.shareAmount)).toEqual([333, 334])
+    expect(created.map((p) => p.shareAmount)).toEqual([333.5, 333.5])
     expect(created.map((p) => p.shareAmountProject)).toEqual([333, 334])
     expect(memberUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: "member-456" }, data: { remainderDiscrepancy: 1 } }),
