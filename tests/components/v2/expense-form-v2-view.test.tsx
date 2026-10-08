@@ -516,6 +516,23 @@ describe("ExpenseFormV2View", () => {
     expect(screen.getByRole("button", { name: /新增支出/ })).toBeDisabled()
   })
 
+  it("notes the rounding remainder on the shared pool when it does not divide evenly", () => {
+    const { hook, rerender } = renderForm({ projectCurrency: "TWD" })
+    act(() => hook.result.current.actions.setAmount("101"))
+    rerender()
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    expect(within(split).getByText(/除不盡，尾差 \$1 由 小雨 承擔/)).toBeInTheDocument()
+    expect(within(split).getByText("尾差")).toBeInTheDocument()
+  })
+
+  it("does not note a remainder when the pool divides evenly", () => {
+    const { hook, rerender } = renderForm({ projectCurrency: "TWD" })
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    expect(screen.queryByText(/除不盡/)).not.toBeInTheDocument()
+    expect(screen.queryByText("尾差")).not.toBeInTheDocument()
+  })
+
   it("shows a dashed hint when nobody is in the shared pool", () => {
     const { hook, rerender } = renderForm()
     expect(screen.queryByText(/目前沒有人參與共同分攤/)).not.toBeInTheDocument()

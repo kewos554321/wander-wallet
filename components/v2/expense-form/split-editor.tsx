@@ -2,6 +2,7 @@
 
 import { CornerRightDown, Pin, PinOff, Plus, UserMinus, X } from "lucide-react"
 import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
+import { fromMinorUnits } from "@/lib/currency-conversion"
 import { toMoneyInput } from "@/lib/money-input"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import type { DraftMember } from "./use-expense-draft"
@@ -227,6 +228,9 @@ export function SplitEditor({
                     fallbackClassName={`text-[11px] font-bold ${tone(id)}`}
                   />
                   <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{name(id)}</span>
+                  {derived.remainderMembers.includes(id) && (
+                    <span className="shrink-0 rounded bg-v2-lake-tint px-1 text-[10px] font-bold text-v2-lake">尾差</span>
+                  )}
                   {isCustom ? (
                     // An emptied input keeps the pinned state; the draft treats "" as auto.
                     <label className="flex w-24 items-center rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-[13px] font-bold">
@@ -273,6 +277,13 @@ export function SplitEditor({
             )
           })}
         </div>
+      )}
+
+      {derived.remainderMembers.length > 0 && (
+        <p className="mt-2 text-[11px] text-v2-ink-muted">
+          除不盡，尾差 ${formatAmount(fromMinorUnits(derived.remainderMinor, currency), currency)} 由{" "}
+          {derived.remainderMembers.map((id) => name(id)).join("、")} 承擔
+        </p>
       )}
 
       {!showBreakdown && (

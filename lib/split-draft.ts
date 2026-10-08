@@ -30,6 +30,10 @@ export interface SplitDerived {
   shares: ParticipantShare[]
   /** Allocated settlement shares (minor-unit accurate); null without a context. */
   sharesProject: ParticipantShare[] | null
+  /** Members who absorbed an original-currency rounding unit (empty when it divides evenly). */
+  remainderMembers: string[]
+  /** Total original-currency rounding units handed out, in minor units. */
+  remainderMinor: number
   personalTotal: number
   itemCount: number
   autoRemaining: number
@@ -98,9 +102,12 @@ export function deriveSplit(amount: number, participantOrder: string[], state: S
   const weights = computeIdealShares(splitInput)
   let shares: ParticipantShare[]
   let sharesProject: ParticipantShare[] | null = null
+  let remainderMembers: string[] = []
+  let remainderMinor = 0
   if (context && weights.length > 0) {
+    const originalTotalMinor = toMinorUnits(splitInput.amount, context.currency)
     const dual = allocateBothCurrencies(
-      toMinorUnits(splitInput.amount, context.currency),
+      originalTotalMinor,
       toMinorUnits(
         roundMajorToMinor(splitInput.amount * context.rate, context.projectCurrency),
         context.projectCurrency,
@@ -116,6 +123,13 @@ export function deriveSplit(amount: number, participantOrder: string[], state: S
       memberId: w.memberId,
       shareAmount: fromMinorUnits(dual.settlement.get(w.memberId) ?? 0, context.projectCurrency),
     }))
+    remainderMembers = dual.originalBumped
+    const totalWeight = weights.reduce((s, w) => s + w.weight, 0)
+    remainderMinor =
+      totalWeight > 0
+        ? originalTotalMinor -
+          weights.reduce((s, w) => s + Math.floor((originalTotalMinor * w.weight) / totalWeight), 0)
+        : 0
   } else {
     shares = computeShares(splitInput)
   }
@@ -126,7 +140,7 @@ export function deriveSplit(amount: number, participantOrder: string[], state: S
   const weightTotal = weights.reduce((s, w) => s + w.weight, 0)
   const matches =
     weights.length > 0 && Math.abs(weightTotal - splitInput.amount) <= 0.01 && shares.every((s) => s.shareAmount >= 0)
-  return { splitInput, weights, shares, sharesProject, personalTotal, itemCount, autoRemaining, matches }
+  return { splitInput, weights, shares, sharesProject, remainderMembers, remainderMinor, personalTotal, itemCount, autoRemaining, matches }
 }
 
 export function withPersonalMode(state: SplitState, personalMode: boolean): SplitState {

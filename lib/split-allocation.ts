@@ -10,6 +10,8 @@ export interface DualAllocation {
   original: Map<string, number>
   /** Allocated amounts in integer minor units of the SETTLEMENT currency. */
   settlement: Map<string, number>
+  /** Members whose ORIGINAL share took a rounding unit (+1 minor unit). */
+  originalBumped: string[]
   /** Members who received a settlement remainder unit; the only ledger update. */
   bumped: string[]
 }
@@ -32,6 +34,7 @@ export function allocateBothCurrencies(
   return {
     original: original.allocations,
     settlement: settlement.allocations,
+    originalBumped: original.bumped,
     bumped: settlement.bumped,
   }
 }
