@@ -83,6 +83,34 @@ describe("buildExportData", () => {
     expect(data.settlements).toEqual([{ from: "小美", to: "志明", amount: 500 }])
   })
 
+  it("prefers stored settlement amounts over conversion", () => {
+    const usdCtx = { projectCurrency: "USD", customRates: null, exchangeRates: null }
+    const stored: ExportExpenseInput[] = [
+      {
+        id: "e1",
+        amount: 1000,
+        currency: "TWD",
+        amountProject: 3172,
+        description: "d",
+        category: "food",
+        expenseDate: "2026-10-18T00:00:00.000Z",
+        payers: [{ memberId: "m1", amount: 1000, amountProject: 3172, member: { id: "m1", displayName: "志明" } }],
+        participants: [{ shareAmount: 1000, shareAmountProject: 3172, member: { id: "m1", displayName: "志明" } }],
+      },
+    ]
+    const data = buildExportData({
+      projectName: "T",
+      projectCurrency: "USD",
+      members,
+      expenses: stored,
+      filters: {},
+      ctx: usdCtx,
+    })
+    expect(data.expenses[0].amount).toBeCloseTo(31.72)
+    expect(data.expenses[0].participantShares[0].amount).toBeCloseTo(31.72)
+    expect(data.statistics.totalAmount).toBeCloseTo(31.72)
+  })
+
   it("breaks down categories with percentages", () => {
     const data = build()
     const food = data.statistics.categoryBreakdown.find((c) => c.category === "food")!

@@ -1,4 +1,5 @@
 import { getCategoryLabel } from "@/lib/constants/expenses"
+import { fromMinorUnits } from "@/lib/currency-conversion"
 import type {
   ExportData,
   ExportFilterOptions,
@@ -12,11 +13,12 @@ export interface ExportExpenseInput {
   id: string
   amount: number
   currency: string
+  amountProject?: number | null
   description: string | null
   category: string | null
   expenseDate: string
-  payers: { memberId: string; amount: number; member: { id: string; displayName: string } }[]
-  participants: { shareAmount: number; member: { id: string; displayName: string } }[]
+  payers: { memberId: string; amount: number; amountProject?: number | null; member: { id: string; displayName: string } }[]
+  participants: { shareAmount: number; shareAmountProject?: number | null; member: { id: string; displayName: string } }[]
 }
 
 export interface ExportContext {
@@ -52,6 +54,18 @@ export function convertToProjectCurrency(amount: number, fromCurrency: string, c
   const fromRate = ctx.exchangeRates[fromCurrency] || 1
   const toRate = ctx.exchangeRates[ctx.projectCurrency] || 1
   return round2(amount * (toRate / fromRate))
+}
+
+/** Prefer the stored settlement amount (integer minor units); fall back to conversion. */
+function projectAmount(
+  amountProject: number | null | undefined,
+  amount: number,
+  fromCurrency: string,
+  ctx: ExportContext,
+): number {
+  return amountProject != null
+    ? fromMinorUnits(amountProject, ctx.projectCurrency)
+    : convertToProjectCurrency(amount, fromCurrency, ctx)
 }
 
 function buildSettlements(balances: MemberBalanceData[]): SettlementExportData[] {
@@ -97,7 +111,7 @@ export function buildExportData(input: BuildExportInput): ExportData {
   })
 
   const exportExpenses: ExpenseExportData[] = filtered.map((expense) => {
-    const amount = convertToProjectCurrency(expense.amount, expense.currency, ctx)
+    const amount = projectAmount(expense.amountProject, expense.amount, expense.currency, ctx)
     const ratio = expense.amount > 0 ? amount / expense.amount : 0
     return {
       id: expense.id,
@@ -110,7 +124,10 @@ export function buildExportData(input: BuildExportInput): ExportData {
       participants: expense.participants.map((p) => p.member.displayName),
       participantShares: expense.participants.map((p) => ({
         name: p.member.displayName,
-        amount: round2(p.shareAmount * ratio),
+        amount:
+          p.shareAmountProject != null
+            ? fromMinorUnits(p.shareAmountProject, ctx.projectCurrency)
+            : round2(p.shareAmount * ratio),
       })),
     }
   })
@@ -119,15 +136,20 @@ export function buildExportData(input: BuildExportInput): ExportData {
     let paid = 0
     let share = 0
     for (const expense of filtered) {
-      const amount = convertToProjectCurrency(expense.amount, expense.currency, ctx)
+      const amount = projectAmount(expense.amountProject, expense.amount, expense.currency, ctx)
       const ratio = expense.amount > 0 ? amount / expense.amount : 0
       for (const payer of expense.payers) {
         if (payer.memberId === member.id) {
-          paid += convertToProjectCurrency(Number(payer.amount), expense.currency, ctx)
+          paid += projectAmount(payer.amountProject, Number(payer.amount), expense.currency, ctx)
         }
       }
       for (const participant of expense.participants) {
-        if (participant.member.id === member.id) share += participant.shareAmount * ratio
+        if (participant.member.id === member.id) {
+          share +=
+            participant.shareAmountProject != null
+              ? fromMinorUnits(participant.shareAmountProject, ctx.projectCurrency)
+              : participant.shareAmount * ratio
+        }
       }
     }
     paid = round2(paid)
