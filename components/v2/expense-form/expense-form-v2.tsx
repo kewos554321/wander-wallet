@@ -142,6 +142,8 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
           projectName={project?.name ?? ""}
           init={init}
           original={expense}
+          projectCurrency={projectCurrency}
+          projectRates={(project?.customRates as Record<string, number> | null) ?? null}
         />
       </div>
     </UiV2Scope>
@@ -155,7 +157,15 @@ function LoadedForm({
   projectName,
   init,
   original,
-}: Props & { projectName: string; init: DraftInit; original: LoadedExpense | null }) {
+  projectCurrency,
+  projectRates,
+}: Props & {
+  projectName: string
+  init: DraftInit
+  original: LoadedExpense | null
+  projectCurrency: string
+  projectRates: Record<string, number> | null
+}) {
   const router = useRouter()
   const draft = useExpenseDraft(init)
   const { save, remove, saving, uploadingImage, deleting, canNotifyLine } = useSaveExpense(projectId)
@@ -285,6 +295,8 @@ function LoadedForm({
         submitError={submitError}
         onSubmit={handleSubmit}
         onRequestDelete={mode === "edit" ? () => setShowDelete(true) : undefined}
+        projectCurrency={projectCurrency}
+        projectRates={projectRates}
       />
       <ConfirmDeleteDialog
         open={showDelete}

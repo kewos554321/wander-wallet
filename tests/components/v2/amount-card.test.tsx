@@ -111,4 +111,27 @@ describe("AmountCard", () => {
     expect(caption).not.toHaveAttribute("for")
     expect(screen.queryByLabelText("金額")).not.toBeInTheDocument()
   })
+
+  it("shows the converted settlement amount and bound rate for a foreign currency", () => {
+    setup({
+      currency: "TWD",
+      projectCurrency: "USD",
+      previewProjectAmount: 31.72,
+      rate: 0.031715,
+      rateEditable: true,
+      onRate: vi.fn(),
+    })
+    expect(screen.getByTestId("amount-conversion")).toHaveTextContent("≈ USD 31.72")
+    expect(screen.getByLabelText("匯率")).toHaveValue("0.031715")
+  })
+
+  it("hides the rate row for the project currency", () => {
+    setup({ currency: "TWD", projectCurrency: "TWD" })
+    expect(screen.queryByLabelText("匯率")).not.toBeInTheDocument()
+  })
+
+  it("marks a rate that differs from the project fixed rate as 自訂", () => {
+    setup({ currency: "TWD", projectCurrency: "USD", previewProjectAmount: 31.72, rate: 0.0317, customRate: true })
+    expect(screen.getByText("自訂")).toBeInTheDocument()
+  })
 })

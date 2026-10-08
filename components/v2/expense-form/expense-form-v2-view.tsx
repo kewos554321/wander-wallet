@@ -28,6 +28,10 @@ export interface ExpenseFormV2ViewProps {
   submitError: string | null
   onSubmit: () => void
   onRequestDelete?: () => void
+  /** Settlement currency; enables the ≈ conversion preview for foreign expenses. */
+  projectCurrency?: string
+  /** Project fixed rates keyed by currency (used for the preview only). */
+  projectRates?: Record<string, number> | null
 }
 
 export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
@@ -37,6 +41,11 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
   const error = derived.error ?? props.submitError
   const amountLabel = formatCurrency(derived.splitInput.amount, state.currency)
   const submitLabel = props.mode === "create" ? `新增支出 · ${amountLabel}` : `儲存變更 · ${amountLabel}`
+  const rate =
+    props.projectCurrency && state.currency !== props.projectCurrency
+      ? props.projectRates?.[state.currency] ?? null
+      : null
+  const previewProjectAmount = rate != null ? derived.splitInput.amount * rate : null
 
   return (
     <form
@@ -66,6 +75,10 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
         currency={state.currency}
         onAmount={actions.setAmount}
         onCurrency={actions.setCurrency}
+        projectCurrency={props.projectCurrency}
+        previewProjectAmount={previewProjectAmount}
+        rate={rate}
+        rateEditable={false}
         calculatorOpen={showCalculator}
         onToggleCalculator={() => setShowCalculator((v) => !v)}
         calculator={

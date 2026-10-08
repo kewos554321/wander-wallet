@@ -2,13 +2,24 @@
 
 import { Calculator as CalculatorIcon } from "lucide-react"
 import { CurrencySelect } from "@/components/ui/currency-select"
-import type { CurrencyCode } from "@/lib/constants/currencies"
+import { formatCurrency, type CurrencyCode } from "@/lib/constants/currencies"
 
 interface AmountCardProps {
   amount: string
   currency: string
   onAmount: (value: string) => void
   onCurrency: (code: string) => void
+  /** Settlement currency; when it differs, a converted preview + rate row show. */
+  projectCurrency?: string
+  /** Approximate settlement amount for the current input (server value wins on save). */
+  previewProjectAmount?: number | null
+  /** The bound rate for this expense. */
+  rate?: number | null
+  /** Whether the rate can be edited for this expense. */
+  rateEditable?: boolean
+  onRate?: (value: string) => void
+  /** True when the bound rate differs from the project's fixed rate. */
+  customRate?: boolean
   /** Whether the in-card calculator slot is open. Defaults to closed. */
   calculatorOpen?: boolean
   /** Toggles the in-card calculator slot. */
@@ -22,11 +33,18 @@ export function AmountCard({
   currency,
   onAmount,
   onCurrency,
+  projectCurrency,
+  previewProjectAmount,
+  rate,
+  rateEditable = false,
+  onRate,
+  customRate = false,
   calculatorOpen = false,
   onToggleCalculator,
   calculator,
 }: AmountCardProps) {
   const open = calculatorOpen
+  const showConversion = !open && !!projectCurrency && currency !== projectCurrency
   return (
     // The amount card shares the calculator's dark lake face in both states so
     // opening the calculator reads as a continuation of the same surface.
@@ -72,6 +90,28 @@ export function AmountCard({
             placeholder="0"
             className="min-w-0 flex-1 bg-transparent font-v2-serif text-[36px] font-bold leading-[44px] tabular-nums text-v2-paper outline-none placeholder:text-v2-paper/50"
           />
+        </div>
+      )}
+      {showConversion && previewProjectAmount != null && (
+        <div className="mt-2 flex items-center justify-between gap-2 text-[12px] text-v2-paper/85">
+          <span data-testid="amount-conversion">≈ {formatCurrency(previewProjectAmount, projectCurrency!)}</span>
+          {rate != null && (
+            <span className="inline-flex items-center gap-1">
+              {customRate && (
+                <span className="rounded-full bg-v2-paper/15 px-2 py-0.5 text-[10px] font-bold">自訂</span>
+              )}
+              <span>1 {currency} =</span>
+              <input
+                aria-label="匯率"
+                inputMode="decimal"
+                value={String(rate)}
+                readOnly={!rateEditable}
+                onChange={(e) => onRate?.(e.target.value)}
+                className="w-24 rounded bg-v2-paper/10 px-1.5 py-0.5 text-right tabular-nums text-v2-paper outline-none"
+              />
+              <span>{projectCurrency}</span>
+            </span>
+          )}
         </div>
       )}
     </div>
