@@ -78,20 +78,30 @@ export function PayerPicker({
   const showCurrencyToggle =
     onDisplayCurrencyChange != null && !!projectCurrency && rate != null && currency !== projectCurrency
   const showLegacyEstimate = displayCurrency == null && !!projectCurrency && rate != null && currency !== projectCurrency
+  // A one-line note under the title: the split below runs on the converted
+  // settlement amount. Shown only for foreign expenses.
+  const showConversionNote = !!projectCurrency && currency !== projectCurrency
 
   return (
     <div role="group" aria-label="付款成員" className={SECTION_CARD}>
-      <p className={`mb-2.5 flex items-center gap-2 ${SECTION_TITLE}`}>
-        付款成員
-        {showCurrencyToggle && (
-          <CurrencyToggle
-            currency={currency}
-            projectCurrency={projectCurrency!}
-            displayCurrency={viewCurrency}
-            onChange={onDisplayCurrencyChange!}
-          />
+      <div className="mb-2.5">
+        <p className={`flex items-center gap-2 ${SECTION_TITLE}`}>
+          付款成員
+          {showCurrencyToggle && (
+            <CurrencyToggle
+              currency={currency}
+              projectCurrency={projectCurrency!}
+              displayCurrency={viewCurrency}
+              onChange={onDisplayCurrencyChange!}
+            />
+          )}
+        </p>
+        {showConversionNote && (
+          <p data-testid="conversion-note" className="mt-1 text-[11px] font-normal text-v2-ink-muted">
+            結算會先換匯，再以 {projectCurrency} 分攤
+          </p>
         )}
-      </p>
+      </div>
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="m-0 text-xs font-semibold text-v2-ink-muted">付款明細</p>
         {!settleView && members.length > 1 && (

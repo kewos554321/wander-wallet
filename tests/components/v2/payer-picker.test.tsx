@@ -203,6 +203,16 @@ describe("PayerPicker", () => {
     expect(screen.queryByTestId("payer-project-estimate")).not.toBeInTheDocument()
   })
 
+  it("shows the conversion note under the title for a foreign expense", () => {
+    setup({ currency: "JPY", projectCurrency: "USD", rate: 0.05 })
+    expect(screen.getByTestId("conversion-note")).toHaveTextContent("結算會先換匯，再以 USD 分攤")
+  })
+
+  it("hides the conversion note for a same-currency expense", () => {
+    setup({ currency: "TWD", projectCurrency: "TWD" })
+    expect(screen.queryByTestId("conversion-note")).not.toBeInTheDocument()
+  })
+
   it("renders the member image in the payer options when present, else the initial", () => {
     setup({
       members: [

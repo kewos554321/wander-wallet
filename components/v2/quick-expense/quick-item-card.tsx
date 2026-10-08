@@ -28,7 +28,6 @@ import { roundRateForDisplay, type PreviewRateInfo } from "@/lib/currency-conver
 import { AmountCard } from "@/components/v2/expense-form/amount-card"
 import { CalculatorPad } from "@/components/v2/expense-form/calculator-pad"
 import { CategoryPicker } from "@/components/v2/expense-form/category-picker"
-import { ConversionCheckpoint } from "@/components/v2/expense-form/conversion-checkpoint"
 import { LocationPickerV2 } from "@/components/v2/expense-form/location-picker-v2"
 import { PayerPicker } from "@/components/v2/expense-form/payer-picker"
 import { SECTION_CARD, SECTION_TITLE } from "@/components/v2/expense-form/section-card"
@@ -172,10 +171,6 @@ export function QuickItemCard({ item, members, onChange, projectCurrency, previe
       </div>
 
       <CategoryPicker value={item.category} onChange={(c) => onChange({ category: c as QuickItem["category"] })} />
-
-      {isForeign && (
-        <ConversionCheckpoint projectCurrency={projectCurrency!} />
-      )}
 
       <PayerPicker
         members={members}

@@ -214,21 +214,21 @@ describe("QuickItemCard", () => {
     createObjectURL.mockRestore()
   })
 
-  it("shows the conversion checkpoint for a foreign item", () => {
+  it("shows the conversion note under the payer title for a foreign item", () => {
     setup(
       { currency: "JPY", amount: "1000" },
       { projectCurrency: "USD", previewRateInfo: () => ({ rate: 0.0067, source: "live" as const }) }
     )
     expect(screen.getByTestId("amount-conversion")).toHaveTextContent("≈ USD 6.70")
     expect(screen.getByTestId("rate-source")).toHaveTextContent("即時匯率")
-    const note = screen.getByLabelText("匯率換算")
+    const note = screen.getByTestId("conversion-note")
     expect(note).toHaveTextContent("結算會先換匯，再以 USD 分攤")
   })
 
   it("hides the conversion UI for a same-currency item", () => {
     setup({ currency: "TWD" }, { projectCurrency: "TWD" })
     expect(screen.queryByTestId("amount-conversion")).not.toBeInTheDocument()
-    expect(screen.queryByLabelText("匯率換算")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("conversion-note")).not.toBeInTheDocument()
   })
 
   it("pins the automatic rate as a custom rate", () => {

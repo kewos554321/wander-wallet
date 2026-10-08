@@ -96,7 +96,7 @@ describe("ExpenseFormV2View", () => {
     expect(hook.result.current.state.pool).toEqual(["a"])
   })
 
-  it("shows the conversion checkpoint before the payer section for a foreign expense", () => {
+  it("shows the conversion note under the payer title for a foreign expense", () => {
     const { hook, rerender } = renderForm({
       projectCurrency: "TWD",
       previewRateInfo: () => ({ rate: 0.2135, source: "live" as const }),
@@ -106,15 +106,15 @@ describe("ExpenseFormV2View", () => {
       hook.result.current.actions.setCurrency("JPY")
     })
     rerender()
-    const note = screen.getByLabelText("匯率換算")
+    const note = screen.getByTestId("conversion-note")
     expect(note).toHaveTextContent("結算會先換匯，再以 TWD 分攤")
   })
 
-  it("hides the conversion checkpoint when the expense currency is the settlement currency", () => {
+  it("hides the conversion note when the expense currency is the settlement currency", () => {
     const { hook, rerender } = renderForm({ projectCurrency: "TWD" })
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
-    expect(screen.queryByLabelText("匯率換算")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("conversion-note")).not.toBeInTheDocument()
   })
 
   it("replaces the settlement estimates with a linked currency toggle for a foreign expense", () => {
@@ -443,7 +443,8 @@ describe("ExpenseFormV2View", () => {
     expect(payer.tagName).not.toBe("FIELDSET")
     const title = screen.getByText("付款成員")
     expect(title.tagName).toBe("P")
-    expect(title.parentElement).toHaveClass("mx-4", "mb-4", "rounded-2xl", "border", "border-v2-line", "bg-v2-surface", "p-4")
+    expect(payer).toHaveClass("mx-4", "mb-4", "rounded-2xl", "border", "border-v2-line", "bg-v2-surface", "p-4")
+    expect(payer).toContainElement(title)
   })
 
   it("renders the selected payer row with a read-only amount, a pin and a remove control", () => {
