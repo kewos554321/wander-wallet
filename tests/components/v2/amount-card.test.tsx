@@ -112,26 +112,66 @@ describe("AmountCard", () => {
     expect(screen.queryByLabelText("金額")).not.toBeInTheDocument()
   })
 
-  it("shows the converted settlement amount and bound rate for a foreign currency", () => {
+  it("shows the converted amount and the automatic rate (read-only) with its source", () => {
     setup({
       currency: "TWD",
       projectCurrency: "USD",
       previewProjectAmount: 31.72,
       rate: 0.031715,
       rateEditable: true,
-      onRate: vi.fn(),
+      rateSource: "fixed",
+      onToggleCustomRate: vi.fn(),
     })
     expect(screen.getByTestId("amount-conversion")).toHaveTextContent("≈ USD 31.72")
-    expect(screen.getByLabelText("匯率")).toHaveValue("0.031715")
+    expect(screen.getByText("0.031715")).toBeInTheDocument()
+    expect(screen.getByTestId("rate-source")).toHaveTextContent("專案固定匯率")
+    expect(screen.queryByLabelText("匯率")).not.toBeInTheDocument()
+  })
+
+  it("shows 即時匯率 as the source when derived from live rates", () => {
+    setup({
+      currency: "TWD",
+      projectCurrency: "USD",
+      rate: 0.0317,
+      rateEditable: true,
+      rateSource: "live",
+      onToggleCustomRate: vi.fn(),
+    })
+    expect(screen.getByTestId("rate-source")).toHaveTextContent("即時匯率")
+  })
+
+  it("shows an editable input and the 自訂匯率 label when pinned", () => {
+    setup({
+      currency: "TWD",
+      projectCurrency: "USD",
+      previewProjectAmount: 50,
+      rate: 0.05,
+      rateInput: "0.05",
+      rateEditable: true,
+      customRate: true,
+      onRate: vi.fn(),
+      onToggleCustomRate: vi.fn(),
+    })
+    expect(screen.getByText("自訂匯率")).toBeInTheDocument()
+    expect(screen.getByLabelText("匯率")).toHaveValue("0.05")
+  })
+
+  it("calls onToggleCustomRate when the pin is pressed", () => {
+    const onToggleCustomRate = vi.fn()
+    setup({
+      currency: "TWD",
+      projectCurrency: "USD",
+      rate: 0.0317,
+      rateEditable: true,
+      rateSource: "live",
+      onToggleCustomRate,
+    })
+    fireEvent.click(screen.getByRole("button", { name: "匯率自動，點擊自訂匯率" }))
+    expect(onToggleCustomRate).toHaveBeenCalledTimes(1)
   })
 
   it("hides the rate row for the project currency", () => {
     setup({ currency: "TWD", projectCurrency: "TWD" })
-    expect(screen.queryByLabelText("匯率")).not.toBeInTheDocument()
-  })
-
-  it("marks a rate that differs from the project fixed rate as 自訂", () => {
-    setup({ currency: "TWD", projectCurrency: "USD", previewProjectAmount: 31.72, rate: 0.0317, customRate: true })
-    expect(screen.getByText("自訂")).toBeInTheDocument()
+    expect(screen.queryByTestId("amount-conversion")).not.toBeInTheDocument()
   })
 })

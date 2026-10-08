@@ -30,8 +30,8 @@ export interface ExpenseFormV2ViewProps {
   onRequestDelete?: () => void
   /** Settlement currency; enables the ≈ conversion preview for foreign expenses. */
   projectCurrency?: string
-  /** Resolve a display-only rate (currency → settlement); null hides the preview. */
-  previewRateFor?: (currency: string) => number | null
+  /** Resolve a display-only rate + its source (currency → settlement). */
+  previewRateInfo?: (currency: string) => { rate: number | null; source: "same" | "fixed" | "live" | "none" }
 }
 
 export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
@@ -42,13 +42,17 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
   const amountLabel = formatCurrency(derived.splitInput.amount, state.currency)
   const submitLabel = props.mode === "create" ? `新增支出 · ${amountLabel}` : `儲存變更 · ${amountLabel}`
   const isForeign = !!props.projectCurrency && state.currency !== props.projectCurrency
-  const autoRate = isForeign ? props.previewRateFor?.(state.currency) ?? null : null
+  const rateInfo = isForeign
+    ? props.previewRateInfo?.(state.currency) ?? { rate: null, source: "none" as const }
+    : { rate: null, source: "same" as const }
+  const autoRate = rateInfo.rate
   const exchangeRateInput = state.exchangeRate ?? ""
   const manualRate = exchangeRateInput.trim() ? Number(exchangeRateInput) : null
   const usableManual = manualRate != null && Number.isFinite(manualRate) && manualRate > 0 ? manualRate : null
-  const rate = usableManual ?? autoRate
+  const customRate = state.ratePinned ?? false
+  const rate = customRate ? usableManual ?? autoRate : autoRate
   const previewProjectAmount = rate != null ? derived.splitInput.amount * rate : null
-  const customRate = usableManual != null && autoRate != null && usableManual !== autoRate
+  const rateSource = customRate ? ("custom" as const) : rateInfo.source
 
   return (
     <form
@@ -81,10 +85,20 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
         projectCurrency={props.projectCurrency}
         previewProjectAmount={previewProjectAmount}
         rate={rate}
-        rateInput={exchangeRateInput !== "" ? exchangeRateInput : autoRate != null ? String(autoRate) : ""}
+        rateInput={exchangeRateInput}
         rateEditable={isForeign}
         onRate={actions.setExchangeRate}
         customRate={customRate}
+        rateSource={rateSource}
+        onToggleCustomRate={() => {
+          if (customRate) {
+            actions.setExchangeRate("")
+            actions.setRatePinned(false)
+          } else {
+            actions.setExchangeRate(autoRate != null ? String(autoRate) : "")
+            actions.setRatePinned(true)
+          }
+        }}
         calculatorOpen={showCalculator}
         onToggleCalculator={() => setShowCalculator((v) => !v)}
         calculator={

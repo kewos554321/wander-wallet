@@ -9,7 +9,7 @@ import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { useProjectData } from "@/lib/hooks"
 import { useCurrencyConversion } from "@/lib/hooks/useCurrencyConversion"
-import { previewRate } from "@/lib/currency-conversion"
+import { resolvePreviewRate } from "@/lib/currency-conversion"
 import { useSaveExpense } from "@/lib/hooks/useSaveExpense"
 import { buildExpenseChanges, type ExpenseSnapshot } from "@/lib/expense-changes"
 import { primaryPayerId } from "@/lib/expense-payers"
@@ -184,8 +184,8 @@ function LoadedForm({
       refetchRates()
     }
   }, [selectedCurrency, projectCurrency, exchangeRates, refetchRates])
-  const previewRateFor = (currency: string) =>
-    previewRate(currency, projectCurrency, customRates, exchangeRates)
+  const previewRateInfo = (currency: string) =>
+    resolvePreviewRate(currency, projectCurrency, customRates, exchangeRates)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [showDelete, setShowDelete] = useState(false)
 
@@ -252,7 +252,10 @@ function LoadedForm({
         payers: derived.payers,
         amount: derived.splitInput.amount,
         currency: state.currency,
-        exchangeRate: state.exchangeRate?.trim() ? Number(state.exchangeRate) : undefined,
+        exchangeRate:
+          state.ratePinned && state.exchangeRate?.trim() && Number(state.exchangeRate) > 0
+            ? Number(state.exchangeRate)
+            : undefined,
         description,
         category,
         location: state.location.location,
@@ -314,7 +317,7 @@ function LoadedForm({
         onSubmit={handleSubmit}
         onRequestDelete={mode === "edit" ? () => setShowDelete(true) : undefined}
         projectCurrency={projectCurrency}
-        previewRateFor={previewRateFor}
+        previewRateInfo={previewRateInfo}
       />
       <ConfirmDeleteDialog
         open={showDelete}

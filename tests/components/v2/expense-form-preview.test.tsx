@@ -75,19 +75,28 @@ describe("ExpenseFormV2 conversion preview", () => {
     expect(conv).toHaveTextContent("≈ USD 31.75")
   })
 
+  it("labels the automatic rate source as 即時匯率 before pinning", async () => {
+    render(<ExpenseFormV2 projectId="p1" mode="create" />)
+    fireEvent.change(await screen.findByLabelText("金額"), { target: { value: "1000" } })
+    fireEvent.change(screen.getByLabelText("幣別"), { target: { value: "TWD" } })
+    expect(await screen.findByTestId("rate-source")).toHaveTextContent("即時匯率")
+  })
+
   it("does not show a preview while the currency equals the settlement currency", async () => {
     render(<ExpenseFormV2 projectId="p1" mode="create" />)
     fireEvent.change(await screen.findByLabelText("金額"), { target: { value: "1000" } })
     expect(screen.queryByTestId("amount-conversion")).not.toBeInTheDocument()
   })
 
-  it("lets you override the per-expense rate (方案 A) and flags it 自訂", async () => {
+  it("lets you override the per-expense rate (方案 A) and flags it 自訂匯率", async () => {
     render(<ExpenseFormV2 projectId="p1" mode="create" />)
     fireEvent.change(await screen.findByLabelText("金額"), { target: { value: "1000" } })
     fireEvent.change(screen.getByLabelText("幣別"), { target: { value: "TWD" } })
-    fireEvent.change(await screen.findByLabelText("匯率"), { target: { value: "0.05" } })
+    // Pin the rate, then type a custom value.
+    fireEvent.click(await screen.findByRole("button", { name: "匯率自動，點擊自訂匯率" }))
+    fireEvent.change(screen.getByLabelText("匯率"), { target: { value: "0.05" } })
     await waitFor(() => expect(screen.getByTestId("amount-conversion")).toHaveTextContent("≈ USD 50.00"))
-    expect(screen.getByText("自訂")).toBeInTheDocument()
+    expect(screen.getByText("自訂匯率")).toBeInTheDocument()
   })
 
   it("shows a per-payer ≈ settlement estimate in the payer section", async () => {

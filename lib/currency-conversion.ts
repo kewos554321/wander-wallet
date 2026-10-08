@@ -136,25 +136,41 @@ export function resolveRate(input: {
   return { rate: liveRate ?? 1, source: "seeded", shouldSeedFixed: liveRate != null }
 }
 
+export interface PreviewRateInfo {
+  rate: number | null
+  source: "same" | "fixed" | "live" | "none"
+}
+
 /**
- * Resolve a display-only conversion rate (1 unit of `currency` = ? `projectCurrency`).
- * Prefers the project's fixed rate, else derives from live USD-based rates.
- * Returns null when no rate is known (so callers can hide the preview instead of
- * showing a misleading 1:1).
+ * Resolve a display-only conversion rate and its source. `source` is
+ * "same" (no conversion), "fixed" (project custom rate), "live" (derived from
+ * live rates) or "none" (unknown). `rate` is null when unknown, so callers can
+ * hide the preview instead of showing a misleading 1:1.
  */
+export function resolvePreviewRate(
+  currency: string,
+  projectCurrency: string,
+  customRates: Record<string, number> | null | undefined,
+  exchangeRates: Record<string, number> | null | undefined,
+): PreviewRateInfo {
+  if (!currency || currency === projectCurrency) return { rate: null, source: "same" }
+  const custom = customRates?.[currency]
+  if (typeof custom === "number" && custom > 0) return { rate: custom, source: "fixed" }
+  if (!exchangeRates) return { rate: null, source: "none" }
+  const fromRate = exchangeRates[currency]
+  const toRate = exchangeRates[projectCurrency]
+  if (!fromRate || !toRate) return { rate: null, source: "none" }
+  const rate = toRate / fromRate
+  if (!(rate > 0 && Number.isFinite(rate))) return { rate: null, source: "none" }
+  return { rate, source: "live" }
+}
+
+/** Convenience wrapper returning only the numeric rate (or null). */
 export function previewRate(
   currency: string,
   projectCurrency: string,
   customRates: Record<string, number> | null | undefined,
   exchangeRates: Record<string, number> | null | undefined,
 ): number | null {
-  if (!currency || currency === projectCurrency) return null
-  const custom = customRates?.[currency]
-  if (typeof custom === "number" && custom > 0) return custom
-  if (!exchangeRates) return null
-  const fromRate = exchangeRates[currency]
-  const toRate = exchangeRates[projectCurrency]
-  if (!fromRate || !toRate) return null
-  const rate = toRate / fromRate
-  return rate > 0 && Number.isFinite(rate) ? rate : null
+  return resolvePreviewRate(currency, projectCurrency, customRates, exchangeRates).rate
 }
