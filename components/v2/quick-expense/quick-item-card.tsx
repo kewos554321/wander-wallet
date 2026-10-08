@@ -113,10 +113,8 @@ export function QuickItemCard({ item, members, onChange, projectCurrency, previe
       pinnedPayerAmounts: selectAll ? item.pinnedPayerAmounts : {},
     })
   const setPayerAmount = (id: string, value: string) => {
-    const pinnedPayerAmounts = { ...item.pinnedPayerAmounts }
-    if (value.trim() === "") delete pinnedPayerAmounts[id]
-    else pinnedPayerAmounts[id] = value
-    onChange({ pinnedPayerAmounts })
+    // Keep the key when emptied so the input stays open (an empty value = auto).
+    onChange({ pinnedPayerAmounts: { ...item.pinnedPayerAmounts, [id]: value } })
   }
   const clearPayerAmount = (id: string) => {
     const pinnedPayerAmounts = { ...item.pinnedPayerAmounts }

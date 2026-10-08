@@ -80,6 +80,12 @@ describe("PayerPicker", () => {
     expect(onSetAmount).toHaveBeenCalledWith("a", "35")
   })
 
+  it("ignores non-numeric payer input", () => {
+    const { onSetAmount } = setup({ pinned: { a: "40" }, payers: [{ memberId: "a", amount: 40 }] })
+    fireEvent.change(screen.getByLabelText("小雨的付款金額"), { target: { value: "abc" } })
+    expect(onSetAmount).not.toHaveBeenCalled()
+  })
+
   it("pins an auto payer at its derived amount", () => {
     const { onSetAmount } = setup({ payers: [{ memberId: "a", amount: 100 }] })
     fireEvent.click(screen.getByRole("button", { name: /小雨的付款金額均分/ }))

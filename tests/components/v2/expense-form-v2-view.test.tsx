@@ -368,6 +368,27 @@ describe("ExpenseFormV2View", () => {
     ])
   })
 
+  it("keeps the payer field open and back to auto when its amount is cleared", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    fireEvent.click(screen.getByRole("checkbox", { name: "志明" }))
+    rerender()
+    fireEvent.click(screen.getByRole("button", { name: /志明的付款金額均分/ }))
+    rerender()
+    fireEvent.change(screen.getByLabelText("志明的付款金額"), { target: { value: "" } })
+    rerender()
+    // The field stays an input (not reverted to read-only text) and reads auto.
+    const input = screen.getByLabelText("志明的付款金額")
+    expect(input.tagName).toBe("INPUT")
+    expect(input).toHaveValue("")
+    expect(hook.result.current.state.pinnedPayerAmounts).toEqual({ b: "" })
+    expect(hook.result.current.derived.payers).toEqual([
+      { memberId: "a", amount: 50 },
+      { memberId: "b", amount: 50 },
+    ])
+  })
+
   it("removes a payer and gives their share to the rest", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))

@@ -82,7 +82,10 @@ const amountOf = (item: QuickItem) => {
 
 const pinnedNumbersOf = (item: QuickItem): Record<string, number> => {
   const pinned: Record<string, number> = {}
-  for (const [id, value] of Object.entries(item.pinnedPayerAmounts)) pinned[id] = Number(value) || 0
+  for (const [id, value] of Object.entries(item.pinnedPayerAmounts)) {
+    // An emptied pinned field stays in the map (input open) but counts as auto.
+    if (value.trim() !== "") pinned[id] = Number(value) || 0
+  }
   return pinned
 }
 

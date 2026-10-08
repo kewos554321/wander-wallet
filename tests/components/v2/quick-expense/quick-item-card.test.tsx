@@ -144,8 +144,9 @@ describe("QuickItemCard", () => {
     const payer = screen.getByRole("group", { name: "付款成員" })
     fireEvent.change(within(payer).getByLabelText("小雨的付款金額"), { target: { value: "800" } })
     expect(p.onChange).toHaveBeenLastCalledWith({ pinnedPayerAmounts: { a: "800" } })
+    // Clearing keeps the key so the field stays open; the empty value is auto.
     fireEvent.change(within(payer).getByLabelText("小雨的付款金額"), { target: { value: "" } })
-    expect(p.onChange).toHaveBeenLastCalledWith({ pinnedPayerAmounts: {} })
+    expect(p.onChange).toHaveBeenLastCalledWith({ pinnedPayerAmounts: { a: "" } })
   })
 
   it("selects all payers", () => {

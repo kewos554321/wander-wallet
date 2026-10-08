@@ -1,6 +1,7 @@
 import { CheckCircle2, Pin, PinOff, UserMinus } from "lucide-react"
 import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
 import { roundMajorToMinor } from "@/lib/currency-conversion"
+import { toMoneyInput } from "@/lib/money-input"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import type { PayerShare } from "@/lib/expense-payers"
 import type { DraftMember } from "./use-expense-draft"
@@ -164,7 +165,11 @@ export function PayerPicker({
                         aria-label={`${nameOf(p.memberId)}的付款金額`}
                         value={value}
                         inputMode="decimal"
-                        onChange={(e) => onSetAmount(p.memberId, e.target.value)}
+                        placeholder={String(derivedAmount(p.memberId))}
+                        onChange={(e) => {
+                          const v = toMoneyInput(e.target.value)
+                          if (v !== null) onSetAmount(p.memberId, v)
+                        }}
                         className="w-full min-w-0 bg-transparent text-right outline-none"
                       />
                     </label>

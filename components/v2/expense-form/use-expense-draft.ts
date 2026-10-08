@@ -203,13 +203,10 @@ export function useExpenseDraft(init: DraftInit, previewRateInfo?: (currency: st
         payerIds: selectAll ? init.members.map((m) => m.id) : [],
         pinnedPayerAmounts: selectAll ? s.pinnedPayerAmounts : {},
       })),
+    // Keep the key even when emptied so the input stays open; an empty value
+    // reads as auto below. Mirrors the shared-split custom amount.
     setPayerAmount: (id: string, value: string) =>
-      setState((s) => {
-        const pinnedPayerAmounts = { ...s.pinnedPayerAmounts }
-        if (value.trim() === "") delete pinnedPayerAmounts[id]
-        else pinnedPayerAmounts[id] = value
-        return { ...s, pinnedPayerAmounts }
-      }),
+      setState((s) => ({ ...s, pinnedPayerAmounts: { ...s.pinnedPayerAmounts, [id]: value } })),
     clearPayerAmount: (id: string) =>
       setState((s) => {
         const pinnedPayerAmounts = { ...s.pinnedPayerAmounts }
@@ -268,7 +265,8 @@ export function useExpenseDraft(init: DraftInit, previewRateInfo?: (currency: st
 
     const pinnedNumbers: Record<string, number> = {}
     for (const [id, value] of Object.entries(state.pinnedPayerAmounts)) {
-      pinnedNumbers[id] = Number(value) || 0
+      // An emptied pinned field keeps its input open but counts as auto.
+      if (value.trim() !== "") pinnedNumbers[id] = Number(value) || 0
     }
     const payerResult = derivePayerShares({ amount: amountNum, payerIds: state.payerIds, pinned: pinnedNumbers, currency: state.currency })
     const payers: PayerShare[] = payerResult.shares
