@@ -10,7 +10,7 @@ import type { DraftMember } from "./use-expense-draft"
 import { memberPillClass, memberTone } from "./payer-picker"
 import { CurrencyToggle } from "./currency-toggle"
 import { SECTION_CARD, SECTION_TITLE } from "./section-card"
-import { MatchBadge, SplitEquation, SplitSummary, shouldShowBreakdown } from "./split-summary"
+import { MatchBadge, SplitSummary, shouldShowBreakdown } from "./split-summary"
 import type { SplitDraft } from "@/lib/split-draft"
 
 // Must match the server-enforced splitDetail limit (lib/expense-split.ts).
@@ -363,7 +363,6 @@ export function SplitEditor({
             <span className="text-xs text-v2-ink-muted">已選 {derived.splitInput.participantIds.length} 人</span>
             <MatchBadge matches={derived.matches} />
           </div>
-          <SplitEquation draft={draft} currency={currency} displayCurrency={displayCurrency} rate={rate} />
         </div>
       )}
 

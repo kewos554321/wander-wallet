@@ -62,37 +62,6 @@ export function MatchBadge({ matches }: { matches: boolean }) {
   return <span className="text-xs font-bold text-v2-danger">金額不符</span>
 }
 
-// Textual summary of the two pools (personal items + shared) and the
-// reconciliation against the expense amount. The personal-items part only
-// applies once the switch turns that pool on.
-export function SplitEquation({
-  draft,
-  currency,
-  displayCurrency,
-  rate,
-}: {
-  draft: SplitDraft
-  currency: string
-  displayCurrency?: string
-  rate?: number | null
-}) {
-  const { state, derived } = draft
-  const viewCurrency = displayCurrency ?? currency
-  const settleView = displayCurrency != null && displayCurrency !== currency && rate != null
-  const num = (n: number) => formatAmount(settleView ? roundMajorToMinor(n * rate!, viewCurrency) : n, viewCurrency)
-  const money = (n: number) => `$${num(n)}`
-  // Only the reconciled result is an approximation worth flagging.
-  const approx = (n: number) => `${settleView ? "≈" : ""}$${num(n)}`
-  const sharedTotal = Math.round((derived.splitInput.amount - derived.personalTotal) * 100) / 100
-  const sharesSum = derived.shares.reduce((s, x) => s + x.shareAmount, 0)
-  const personalPart = state.personalMode ? `個人項目 ${money(derived.personalTotal)}（${derived.itemCount} 項）＋ ` : ""
-  return (
-    <p className="mt-2 break-words text-xs leading-normal text-v2-ink-muted">
-      {personalPart}共同分攤 {money(sharedTotal)}（{state.pool.length} 人）= {approx(sharesSum)} / {approx(derived.splitInput.amount)}
-    </p>
-  )
-}
-
 // Per-member breakdown (design A3d, deliberately deviating): members whose
 // subtotal is 0 are hidden instead of rendering as 0/0 rows.
 export function SplitSummary({
@@ -172,7 +141,6 @@ export function SplitSummary({
           </div>
         </div>
       </div>
-      <SplitEquation draft={draft} currency={currency} displayCurrency={displayCurrency} rate={rate} />
       <div className="mt-2 flex justify-end">
         <MatchBadge matches={derived.matches} />
       </div>

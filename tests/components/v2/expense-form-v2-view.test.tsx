@@ -457,12 +457,12 @@ describe("ExpenseFormV2View", () => {
     expect(within(split).queryByText("已選 2 人")).not.toBeInTheDocument()
     const breakdown = within(split).getByRole("region", { name: "分攤明細" })
     expect(within(breakdown).getByText("（TWD）")).toBeInTheDocument()
-    // Below the 合計 row: the text summary, then the match status.
+    // The table carries the summary now, so the text equation is gone; only the
+    // match status remains below the 合計 row.
+    expect(within(breakdown).queryByText(/共同分攤 \$.*= \$/)).not.toBeInTheDocument()
     const total = within(breakdown).getByRole("row", { name: /^合計/ })
-    const equation = within(breakdown).getByText(/個人項目 \$0（0 項）＋ 共同分攤 \$100（2 人）= \$100 \/ \$100/)
     const badge = within(breakdown).getByText("金額相符")
-    expect(total.compareDocumentPosition(equation) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(equation.compareDocumentPosition(badge) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(total.compareDocumentPosition(badge) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it("splits an amount that does not divide evenly into whole units that sum to the total", () => {
@@ -474,23 +474,21 @@ describe("ExpenseFormV2View", () => {
     expect(shares.every((s) => Number.isInteger(s.shareAmount))).toBe(true)
   })
 
-  it("falls back to the count, text summary and match badge when the breakdown table has no rows", () => {
+  it("falls back to the count and match badge when the breakdown table has no rows", () => {
     renderForm()
-    // No amount yet: every share is $0, so the breakdown table is hidden and the
-    // summary stays in the split header.
+    // No amount yet: every share is $0, so the breakdown table is hidden.
     expect(screen.queryByRole("region", { name: "分攤明細" })).not.toBeInTheDocument()
     const split = screen.getByRole("region", { name: "分攤成員" })
     expect(within(split).getByText("已選 2 人")).toBeInTheDocument()
     expect(within(split).getByText("金額相符")).toBeInTheDocument()
-    expect(screen.getByText("共同分攤 $0（2 人）= $0 / $0")).toBeInTheDocument()
   })
 
-  it("omits the personal-items part of the summary while the switch is off", () => {
+  it("no longer renders a text summary under the split header", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
     const split = screen.getByRole("region", { name: "分攤成員" })
-    expect(within(split).getByText("共同分攤 $100（2 人）= $100 / $100")).toBeInTheDocument()
+    expect(within(split).queryByText(/共同分攤 \$.*= \$/)).not.toBeInTheDocument()
     expect(within(split).queryByText(/個人項目 \$/)).not.toBeInTheDocument()
   })
 
@@ -599,7 +597,7 @@ describe("ExpenseFormV2View", () => {
     expect(screen.getByLabelText("志明的品項金額 1").closest("label")).toHaveTextContent("$")
   })
 
-  it("shows the split summary exactly once when the breakdown table is present", () => {
+  it("shows no text summary when the breakdown table is present", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
@@ -608,9 +606,9 @@ describe("ExpenseFormV2View", () => {
     fireEvent.click(screen.getByRole("button", { name: "志明的個人項目" }))
     rerender()
     const split = screen.getByRole("region", { name: "分攤成員" })
-    // The summary lives below the table, and the header count is gone.
+    // The table replaces the text summary, and the header count is gone too.
     expect(within(split).getByRole("region", { name: "分攤明細" })).toBeInTheDocument()
-    expect(within(split).getAllByText(/個人項目 \$.*＋ 共同分攤 \$.*= \$/)).toHaveLength(1)
+    expect(within(split).queryByText(/＋ 共同分攤 \$.*= \$/)).not.toBeInTheDocument()
     expect(within(split).queryByText("已選 2 人")).not.toBeInTheDocument()
   })
 
