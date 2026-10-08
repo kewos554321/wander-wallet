@@ -64,6 +64,7 @@ export function ProjectOverviewV2({ projectId }: { projectId: string }) {
             id: m.id,
             displayName: m.displayName,
             image: m.user?.image ?? null,
+            isPlaceholder: !m.user,
             remainderDiscrepancy: m.remainderDiscrepancy ?? 0,
           }))}
           currentUserMemberId={summary.currentMemberId || ""}

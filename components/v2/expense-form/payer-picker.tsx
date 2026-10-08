@@ -2,7 +2,7 @@ import { CheckCircle2, Pin, PinOff, UserMinus } from "lucide-react"
 import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
 import { roundMajorToMinor } from "@/lib/currency-conversion"
 import { toMoneyInput } from "@/lib/money-input"
-import { V2Avatar } from "@/components/v2/ui/v2-avatar"
+import { MemberAvatar } from "@/components/v2/ui/member-avatar"
 import type { PayerShare } from "@/lib/expense-payers"
 import type { DraftMember } from "./use-expense-draft"
 import { CurrencyToggle } from "./currency-toggle"
@@ -128,9 +128,10 @@ export function PayerPicker({
                   onChange={() => onTogglePayer(m.id)}
                   aria-label={m.displayName}
                 />
-                <V2Avatar
+                <MemberAvatar
                   image={m.image ?? null}
                   name={m.displayName}
+                  placeholder={m.isPlaceholder}
                   className="h-4 w-4 rounded-full"
                   fallbackClassName={`text-[8px] font-bold ${memberTone(i)}`}
                 />
@@ -163,11 +164,13 @@ export function PayerPicker({
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <V2Avatar
+                  <MemberAvatar
                     image={members.find((m) => m.id === p.memberId)?.image ?? null}
                     name={nameOf(p.memberId)}
+                    placeholder={members.find((m) => m.id === p.memberId)?.isPlaceholder}
                     className="h-7 w-7 shrink-0 rounded-full"
                     fallbackClassName={`text-[11px] font-bold ${memberTone(members.findIndex((m) => m.id === p.memberId))}`}
+                    iconClassName="h-[14px] w-[14px]"
                   />
                   <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{nameOf(p.memberId)}</span>
                   {editable ? (

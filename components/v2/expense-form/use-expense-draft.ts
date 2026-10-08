@@ -25,6 +25,8 @@ export interface DraftMember {
   id: string
   displayName: string
   image?: string | null
+  /** True for a member with no linked account (成員頁面的「佔位成員」). */
+  isPlaceholder?: boolean
   /** Per-project remainder ledger; decides which member absorbs a rounding unit. */
   remainderDiscrepancy?: number
 }

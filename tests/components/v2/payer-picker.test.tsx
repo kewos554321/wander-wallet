@@ -233,4 +233,25 @@ describe("PayerPicker", () => {
     expect(name).toBeDefined()
     expect(name).toHaveAttribute("title", "非常非常長的名字測試")
   })
+
+  it("uses the neutral avatar for a placeholder member", () => {
+    setup({
+      members: [
+        { id: "a", displayName: "小雨", isPlaceholder: true },
+        { id: "b", displayName: "志明" },
+      ],
+      payerIds: ["a", "b"],
+      payers: [
+        { memberId: "a", amount: 50 },
+        { memberId: "b", amount: 50 },
+      ],
+    })
+    // The placeholder's pill and row both render the neutral badge.
+    expect(screen.getAllByTestId("placeholder-avatar")).toHaveLength(2)
+  })
+
+  it("does not use the neutral avatar for members with an account", () => {
+    setup({ payerIds: ["a"] })
+    expect(screen.queryByTestId("placeholder-avatar")).not.toBeInTheDocument()
+  })
 })

@@ -5,7 +5,7 @@ import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
 import { fromMinorUnits, roundMajorToMinor } from "@/lib/currency-conversion"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { toMoneyInput } from "@/lib/money-input"
-import { V2Avatar } from "@/components/v2/ui/v2-avatar"
+import { MemberAvatar } from "@/components/v2/ui/member-avatar"
 import type { DraftMember } from "./use-expense-draft"
 import { memberPillClass, memberTone } from "./payer-picker"
 import { CurrencyToggle } from "./currency-toggle"
@@ -124,9 +124,10 @@ export function SplitEditor({
                     onClick={() => actions.togglePersonalMember(m.id)}
                     className={memberPillClass(on)}
                   >
-                    <V2Avatar
+                    <MemberAvatar
                       image={m.image ?? null}
                       name={m.displayName}
+                      placeholder={m.isPlaceholder}
                       className="h-4 w-4 rounded-full"
                       fallbackClassName={`text-[8px] font-bold ${tone(m.id)}`}
                     />
@@ -150,11 +151,13 @@ export function SplitEditor({
                 return (
                   <div key={id} className="border-b border-v2-line-soft bg-v2-lake-soft px-3.5 py-2 last:border-b-0">
                     <div className="flex items-center gap-2.5">
-                      <V2Avatar
+                      <MemberAvatar
                         image={members.find((m) => m.id === id)?.image ?? null}
                         name={name(id)}
+                        placeholder={members.find((m) => m.id === id)?.isPlaceholder}
                         className="h-6 w-6 rounded-full"
                         fallbackClassName={`text-[10px] font-bold ${tone(id)}`}
+                        iconClassName="h-3 w-3"
                       />
                       <span className="flex flex-1 items-center justify-between gap-2 text-[13px]">
                         <span className="font-semibold">{name(id)}</span>
@@ -272,9 +275,10 @@ export function SplitEditor({
                 onClick={() => actions.togglePool(m.id)}
                 className={memberPillClass(on)}
               >
-                <V2Avatar
+                <MemberAvatar
                   image={m.image ?? null}
                   name={m.displayName}
+                  placeholder={m.isPlaceholder}
                   className={`h-4 w-4 rounded-full ${on ? "" : "opacity-40"}`}
                   fallbackClassName={`text-[8px] font-bold ${tone(m.id)}`}
                 />
@@ -299,11 +303,13 @@ export function SplitEditor({
             return (
               <div key={id} className="border-b border-v2-line-soft bg-v2-lake-soft px-3.5 py-3 last:border-b-0">
                 <div className="flex items-center gap-2.5">
-                  <V2Avatar
+                  <MemberAvatar
                     image={members.find((m) => m.id === id)?.image ?? null}
                     name={name(id)}
+                    placeholder={members.find((m) => m.id === id)?.isPlaceholder}
                     className="h-7 w-7 rounded-full"
                     fallbackClassName={`text-[11px] font-bold ${tone(id)}`}
+                    iconClassName="h-[14px] w-[14px]"
                   />
                   <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{name(id)}</span>
                   {!settleView && derived.remainderMembers.includes(id) && (

@@ -3,7 +3,7 @@
 import { CheckCircle2 } from "lucide-react"
 import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
 import { roundMajorToMinor } from "@/lib/currency-conversion"
-import { V2Avatar } from "@/components/v2/ui/v2-avatar"
+import { MemberAvatar } from "@/components/v2/ui/member-avatar"
 import type { SplitDraft } from "@/lib/split-draft"
 import type { DraftMember } from "./use-expense-draft"
 import { memberTone } from "./payer-picker"
@@ -12,6 +12,7 @@ export interface SummaryRow {
   id: string
   name: string
   image: string | null
+  isPlaceholder: boolean
   tone: string
   personal: number
   pool: number
@@ -32,6 +33,7 @@ export function buildSummaryRows(members: DraftMember[], draft: SplitDraft): Sum
       id: m.id,
       name: m.displayName,
       image: m.image ?? null,
+      isPlaceholder: m.isPlaceholder ?? false,
       tone: memberTone(index),
       personal,
       pool: Math.round((total - personal) * 100) / 100,
@@ -140,11 +142,13 @@ export function SplitSummary({
           {visibleRows.map((r) => (
             <div key={r.id} role="row" className={`${cols} border-t border-v2-line-soft bg-v2-lake-soft py-2.5 first:border-t-0`}>
               <span role="rowheader" className="flex min-w-0 items-center gap-2 text-left text-[13px] font-semibold">
-                <V2Avatar
+                <MemberAvatar
                   image={r.image}
                   name={r.name}
+                  placeholder={r.isPlaceholder}
                   className="h-[22px] w-[22px] shrink-0 rounded-full"
                   fallbackClassName={`text-[9px] font-bold ${r.tone}`}
+                  iconClassName="h-[11px] w-[11px]"
                 />
                 <span className="truncate">{r.name}</span>
               </span>

@@ -16,7 +16,7 @@ import { ConfirmStep } from "./confirm-step"
 import { QuickInputStep, type QuickInputMode } from "./quick-input-step"
 
 type Step = "input" | "camera" | "parsing" | "confirm" | "saving"
-type Member = { id: string; displayName: string; image?: string | null; remainderDiscrepancy?: number }
+type Member = { id: string; displayName: string; image?: string | null; isPlaceholder?: boolean; remainderDiscrepancy?: number }
 
 type QuickExpenseV2Props = {
   open: boolean
