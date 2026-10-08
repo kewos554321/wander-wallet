@@ -239,11 +239,11 @@ export function SplitEditor({
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  aria-label="尾差說明"
+                  aria-label="零頭說明"
                   className="inline-flex items-center gap-0.5 rounded-full bg-v2-lake-tint px-1.5 py-px text-[10px] font-bold text-v2-lake"
                 >
                   <Info className="h-3 w-3" aria-hidden="true" />
-                  尾差 ${formatAmount(fromMinorUnits(derived.remainderMinor, currency), currency)}
+                  零頭 ${formatAmount(fromMinorUnits(derived.remainderMinor, currency), currency)}
                 </button>
               </PopoverTrigger>
               <PopoverContent
@@ -313,7 +313,7 @@ export function SplitEditor({
                   />
                   <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{name(id)}</span>
                   {!settleView && derived.remainderMembers.includes(id) && (
-                    <span className="shrink-0 rounded bg-v2-lake-tint px-1 text-[10px] font-bold text-v2-lake">尾差</span>
+                    <span className="shrink-0 rounded bg-v2-lake-tint px-1 text-[10px] font-bold text-v2-lake">零頭</span>
                   )}
                   {isCustom && !settleView ? (
                     // An emptied input keeps the pinned state; the draft treats "" as auto.

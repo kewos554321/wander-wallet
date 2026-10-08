@@ -204,10 +204,10 @@ describe("ExpenseFormV2View", () => {
     })
     rerender()
     const split = screen.getByRole("region", { name: "分攤成員" })
-    expect(within(split).getByText("尾差")).toBeInTheDocument()
+    expect(within(split).getByText("零頭")).toBeInTheDocument()
     fireEvent.click(within(split).getByRole("button", { name: "顯示 USD" }))
     rerender()
-    expect(within(split).queryByText("尾差")).not.toBeInTheDocument()
+    expect(within(split).queryByText("零頭")).not.toBeInTheDocument()
   })
 
   it("renders personal items read-only while the settlement currency is shown", () => {
@@ -724,15 +724,15 @@ describe("ExpenseFormV2View", () => {
     act(() => hook.result.current.actions.setAmount("101"))
     rerender()
     const split = screen.getByRole("region", { name: "分攤成員" })
-    expect(within(split).getByText(/尾差 \$1/)).toBeInTheDocument()
-    expect(within(split).getByText("尾差")).toBeInTheDocument()
+    expect(within(split).getByText(/零頭 \$1/)).toBeInTheDocument()
+    expect(within(split).getByText("零頭")).toBeInTheDocument()
   })
 
   it("explains the remainder rule when the chip is opened", async () => {
     const { hook, rerender } = renderForm({ projectCurrency: "TWD" })
     act(() => hook.result.current.actions.setAmount("101"))
     rerender()
-    fireEvent.click(screen.getByRole("button", { name: "尾差說明" }))
+    fireEvent.click(screen.getByRole("button", { name: "零頭說明" }))
     expect(await screen.findByText(/除不盡的零頭會依公平原則輪替/)).toBeInTheDocument()
   })
 
@@ -740,7 +740,7 @@ describe("ExpenseFormV2View", () => {
     const { hook, rerender } = renderForm({ projectCurrency: "TWD" })
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
-    expect(screen.queryByText(/尾差/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/零頭/)).not.toBeInTheDocument()
   })
 
   it("shows a dashed hint when nobody is in the shared pool", () => {
