@@ -54,6 +54,8 @@ export function receiptToItem(
     description: r.description,
     category,
     currency: o.currency,
+    exchangeRate: null,
+    ratePinned: false,
     // Receipts keep a single payer (the current user) covering the full amount.
     payerIds: [o.payerId],
     pinnedPayerAmounts: {},

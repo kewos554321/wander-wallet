@@ -14,6 +14,20 @@ vi.mock("@/lib/quick-expense/parse", async (orig) => ({ ...(await orig<object>()
 const save = vi.fn()
 let canNotifyLine = false
 vi.mock("@/lib/quick-expense/use-quick-save", () => ({ useQuickSave: () => ({ save, progress: null, canNotifyLine }) }))
+// Rate resolution is covered by the QuickItemCard unit tests; stub it here so
+// the flow test never hits the network.
+const cc = { exchangeRates: null as Record<string, number> | null, refetch: vi.fn() }
+vi.mock("@/lib/hooks/useCurrencyConversion", () => ({
+  useCurrencyConversion: () => ({
+    convert: (a: number) => a,
+    getRate: () => 1,
+    exchangeRates: cc.exchangeRates,
+    loading: false,
+    usingFallback: false,
+    ratesTimestamp: null,
+    refetch: cc.refetch,
+  }),
+}))
 const getCurrentLocation = vi.fn()
 vi.mock("@/lib/geolocation", () => ({ getCurrentLocation: (...a: unknown[]) => getCurrentLocation(...a) }))
 vi.mock("@/components/v2/quick-expense/camera-step", () => ({
@@ -61,6 +75,7 @@ let backMock: MockInstance
 
 beforeEach(() => {
   parseText.mockReset(); parseReceipt.mockReset(); save.mockReset()
+  cc.exchangeRates = null; cc.refetch.mockReset()
   getCurrentLocation.mockReset()
   getCurrentLocation.mockResolvedValue(null)
   canNotifyLine = false

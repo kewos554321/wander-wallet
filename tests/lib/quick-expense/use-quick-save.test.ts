@@ -61,6 +61,24 @@ describe("useQuickSave", () => {
     expect(single).toHaveBeenCalledWith(expect.objectContaining({ payerName: "小雨" }))
   })
 
+  it("binds a pinned exchange rate into the payload", async () => {
+    authFetch.mockResolvedValue(ok())
+    const r = setup()
+    await act(async () => {
+      await r.current.save([mk("1", { currency: "JPY", exchangeRate: "0.0067", ratePinned: true })], { notifyLine: false })
+    })
+    expect(JSON.parse(authFetch.mock.calls[0][1].body).exchangeRate).toBe(0.0067)
+  })
+
+  it("omits exchangeRate when the rate is not pinned or empty", async () => {
+    authFetch.mockResolvedValue(ok())
+    const r = setup()
+    await act(async () => {
+      await r.current.save([mk("1", { currency: "JPY", exchangeRate: "", ratePinned: true })], { notifyLine: false })
+    })
+    expect(JSON.parse(authFetch.mock.calls[0][1].body)).not.toHaveProperty("exchangeRate")
+  })
+
   it("uploads pending images and still saves when upload fails", async () => {
     authFetch.mockResolvedValue(ok())
     upload.mockResolvedValueOnce({ url: "https://img/1" }).mockRejectedValueOnce(new Error("x"))

@@ -24,9 +24,11 @@ import {
   type SplitState,
 } from "@/lib/split-draft"
 import { itemDerivedPayers, type QuickItem } from "@/lib/quick-expense/draft"
+import { roundRateForDisplay, type PreviewRateInfo } from "@/lib/currency-conversion"
 import { AmountCard } from "@/components/v2/expense-form/amount-card"
 import { CalculatorPad } from "@/components/v2/expense-form/calculator-pad"
 import { CategoryPicker } from "@/components/v2/expense-form/category-picker"
+import { ConversionCheckpoint } from "@/components/v2/expense-form/conversion-checkpoint"
 import { LocationPickerV2 } from "@/components/v2/expense-form/location-picker-v2"
 import { PayerPicker } from "@/components/v2/expense-form/payer-picker"
 import { SECTION_CARD, SECTION_TITLE } from "@/components/v2/expense-form/section-card"
@@ -34,9 +36,31 @@ import { SplitEditor } from "@/components/v2/expense-form/split-editor"
 import { V2ImagePicker } from "@/components/v2/expense-form/v2-image-picker"
 
 type Member = { id: string; displayName: string; image?: string | null }
-export function QuickItemCard({ item, members, onChange }: { item: QuickItem; members: Member[]; onChange: (patch: Partial<QuickItem>) => void }) {
+export function QuickItemCard({ item, members, onChange, projectCurrency, previewRateInfo }: {
+  item: QuickItem
+  members: Member[]
+  onChange: (patch: Partial<QuickItem>) => void
+  /** Settlement currency; enables the ≈ conversion preview + rate row. */
+  projectCurrency?: string
+  /** Resolve a display-only rate + its source (currency → settlement). */
+  previewRateInfo?: (currency: string) => PreviewRateInfo
+}) {
   const [showCalculator, setShowCalculator] = useState(false)
   const amount = Number(item.amount) || 0
+  // Mirrors the expense form's per-expense rate wiring: automatic rate by
+  // default, pinned custom rate once the user toggles the pin.
+  const isForeign = !!projectCurrency && item.currency !== projectCurrency
+  const rateInfo = isForeign
+    ? previewRateInfo?.(item.currency) ?? { rate: null, source: "none" as const }
+    : { rate: null, source: "same" as const }
+  const autoRate = rateInfo.rate
+  const exchangeRateInput = item.exchangeRate ?? ""
+  const manualRate = exchangeRateInput.trim() ? Number(exchangeRateInput) : null
+  const usableManual = manualRate != null && Number.isFinite(manualRate) && manualRate > 0 ? manualRate : null
+  const customRate = item.ratePinned ?? false
+  const rate = customRate ? usableManual ?? autoRate : autoRate
+  const previewProjectAmount = rate != null ? amount * rate : null
+  const rateSource = customRate ? ("custom" as const) : rateInfo.source
 
   // Drive the shared SplitEditor from the item's own split state so the AI
   // result card matches the expense form exactly.
@@ -105,6 +129,18 @@ export function QuickItemCard({ item, members, onChange }: { item: QuickItem; me
           if (m !== null) onChange({ amount: m })
         }}
         onCurrency={(c) => onChange({ currency: c })}
+        projectCurrency={projectCurrency}
+        previewProjectAmount={previewProjectAmount}
+        rate={rate}
+        rateInput={exchangeRateInput}
+        rateEditable={isForeign}
+        onRate={(v) => onChange({ exchangeRate: v })}
+        customRate={customRate}
+        rateSource={rateSource}
+        onToggleCustomRate={() => {
+          if (customRate) onChange({ exchangeRate: "", ratePinned: false })
+          else onChange({ exchangeRate: autoRate != null ? String(roundRateForDisplay(autoRate)) : "", ratePinned: true })
+        }}
         calculatorOpen={showCalculator}
         onToggleCalculator={() => setShowCalculator((v) => !v)}
         calculator={
@@ -134,6 +170,10 @@ export function QuickItemCard({ item, members, onChange }: { item: QuickItem; me
 
       <CategoryPicker value={item.category} onChange={(c) => onChange({ category: c as QuickItem["category"] })} />
 
+      {isForeign && (
+        <ConversionCheckpoint currency={item.currency} projectCurrency={projectCurrency!} rate={rate} />
+      )}
+
       <PayerPicker
         members={members}
         payerIds={item.payerIds}
@@ -142,13 +182,15 @@ export function QuickItemCard({ item, members, onChange }: { item: QuickItem; me
         matches={payerDerived.payerMatches}
         amount={amount}
         currency={item.currency}
+        projectCurrency={projectCurrency}
+        rate={rate}
         onTogglePayer={togglePayer}
         onSetAll={setPayersAll}
         onSetAmount={setPayerAmount}
         onClearAmount={clearPayerAmount}
       />
 
-      <SplitEditor members={members} currency={item.currency} draft={splitDraft} />
+      <SplitEditor members={members} currency={item.currency} projectCurrency={projectCurrency} rate={rate} draft={splitDraft} />
 
       <div className={SECTION_CARD}>
         <p className={`mb-2 ${SECTION_TITLE}`}>支出日期</p>

@@ -79,8 +79,8 @@ const item = (over: Partial<QuickItem> = {}): QuickItem => ({
   ...over,
 })
 
-const setup = (over: Partial<QuickItem> = {}) => {
-  const p = { item: item(over), members, onChange: vi.fn() }
+const setup = (over: Partial<QuickItem> = {}, extra: Partial<Parameters<typeof QuickItemCard>[0]> = {}) => {
+  const p = { item: item(over), members, onChange: vi.fn(), ...extra }
   const utils = render(<QuickItemCard {...p} />)
   return { ...p, ...utils }
 }
@@ -212,6 +212,43 @@ describe("QuickItemCard", () => {
     expect(patch.image.pendingFile).toBeInstanceOf(File)
     expect(patch.image.preview).toBe("blob:preview")
     createObjectURL.mockRestore()
+  })
+
+  it("shows the two-line rate explanation and the conversion checkpoint for a foreign item", () => {
+    setup(
+      { currency: "JPY", amount: "1000" },
+      { projectCurrency: "USD", previewRateInfo: () => ({ rate: 0.0067, source: "live" as const }) }
+    )
+    expect(screen.getByTestId("amount-conversion")).toHaveTextContent("≈ USD 6.70")
+    expect(screen.getByTestId("rate-source")).toHaveTextContent("即時匯率")
+    const note = screen.getByLabelText("匯率換算")
+    expect(note).toHaveTextContent("1 JPY = 0.0067 USD")
+    expect(note).toHaveTextContent("以下以結算幣別 USD 分攤與付款")
+  })
+
+  it("hides the conversion UI for a same-currency item", () => {
+    setup({ currency: "TWD" }, { projectCurrency: "TWD" })
+    expect(screen.queryByTestId("amount-conversion")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText("匯率換算")).not.toBeInTheDocument()
+  })
+
+  it("pins the automatic rate as a custom rate", () => {
+    const p = setup(
+      { currency: "JPY", amount: "1000" },
+      { projectCurrency: "USD", previewRateInfo: () => ({ rate: 0.0067, source: "live" as const }) }
+    )
+    fireEvent.click(screen.getByRole("button", { name: "匯率自動，點擊自訂匯率" }))
+    expect(p.onChange).toHaveBeenLastCalledWith({ exchangeRate: "0.0067", ratePinned: true })
+  })
+
+  it("clears a pinned rate back to the automatic one", () => {
+    const p = setup(
+      { currency: "JPY", amount: "1000", exchangeRate: "0.01", ratePinned: true },
+      { projectCurrency: "USD", previewRateInfo: () => ({ rate: 0.0067, source: "live" as const }) }
+    )
+    expect(screen.getByLabelText("匯率")).toHaveValue("0.01")
+    fireEvent.click(screen.getByRole("button", { name: "匯率使用自訂，點擊還原自動" }))
+    expect(p.onChange).toHaveBeenLastCalledWith({ exchangeRate: "", ratePinned: false })
   })
 
   it("renders the member image in the payer option when present", () => {

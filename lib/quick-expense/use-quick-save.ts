@@ -57,6 +57,10 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
               payers: itemDerivedPayers(item).payers,
               amount,
               currency: item.currency,
+              exchangeRate:
+                item.ratePinned && item.exchangeRate?.trim() && Number(item.exchangeRate) > 0
+                  ? Number(item.exchangeRate)
+                  : undefined,
               description: item.description.trim() || null,
               category: item.category,
               image,

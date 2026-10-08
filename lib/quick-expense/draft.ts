@@ -11,6 +11,10 @@ import { deriveSplit, newSplitItem, type SplitDraftItem, type SplitState } from 
 // `pinnedPayerAmounts` for manually-set amounts (absent = auto/equal).
 export interface QuickItem extends Omit<ExpenseItemResult, "amount" | "selected" | "payers" | "personalItems"> {
   amount: string
+  /** Manual exchange rate text when pinned; null means the automatic rate. */
+  exchangeRate: string | null
+  /** True when the user pinned a custom rate instead of the automatic one. */
+  ratePinned: boolean
   payerIds: string[]
   pinnedPayerAmounts: Record<string, string>
   expenseDate: Date
@@ -54,6 +58,8 @@ export function fromParsed(results: ExpenseItemResult[], today: Date = new Date(
     return {
       ...rest,
       amount: String(amount),
+      exchangeRate: null,
+      ratePinned: false,
       payerIds,
       pinnedPayerAmounts,
       expenseDate: new Date(today),

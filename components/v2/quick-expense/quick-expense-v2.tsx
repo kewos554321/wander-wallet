@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { resolvePreviewRate } from "@/lib/currency-conversion"
 import { getCurrentLocation } from "@/lib/geolocation"
+import { useCurrencyConversion } from "@/lib/hooks/useCurrencyConversion"
 import { fromParsed, validateItems, type QuickItem } from "@/lib/quick-expense/draft"
 import { parseReceipt, parseText, receiptToItem } from "@/lib/quick-expense/parse"
 import { useQuickSave } from "@/lib/quick-expense/use-quick-save"
@@ -25,6 +27,8 @@ type QuickExpenseV2Props = {
   currentUserMemberId: string
   onSuccess: () => void
   currency?: string
+  // Project custom rates, used to resolve a per-expense preview rate.
+  customRates?: Record<string, number> | null
   // Which step the flow opens on; "camera" skips straight to the viewfinder.
   initialStep?: "input" | "camera"
 }
@@ -36,10 +40,15 @@ export function QuickExpenseV2(props: QuickExpenseV2Props) {
   return props.open ? <QuickExpenseFlow {...props} /> : null
 }
 
-function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, currentUserMemberId, onSuccess, currency = DEFAULT_CURRENCY, initialStep = "input" }: QuickExpenseV2Props) {
+function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, currentUserMemberId, onSuccess, currency = DEFAULT_CURRENCY, customRates = null, initialStep = "input" }: QuickExpenseV2Props) {
   const authFetch = useAuthFetch()
   const plainMembers = members.map((m) => ({ id: m.id, displayName: m.displayName }))
   const { save, progress, canNotifyLine } = useQuickSave({ projectId, projectName, members: plainMembers })
+  // The settlement currency is the project currency; the AI result card
+  // resolves each item's preview rate against it (mirrors the expense form).
+  const projectCurrency = currency
+  const { exchangeRates, refetch: refetchRates } = useCurrencyConversion({ projectCurrency, customRates, autoFetch: false })
+  const previewRateInfo = (c: string) => resolvePreviewRate(c, projectCurrency, customRates, exchangeRates)
   const [step, setStep] = useState<Step>(initialStep)
   const [mode, setMode] = useState<QuickInputMode>("text")
   const [text, setText] = useState("")
@@ -57,6 +66,17 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
       mountedRef.current = false
     }
   }, [])
+
+  // Fetch live rates once when an item needs a conversion (mirrors the expense
+  // form). The ref guard keeps a failed fetch from re-firing on every render.
+  const hasForeignItems = items.some((i) => i.currency !== projectCurrency)
+  const ratesFetchedRef = useRef(false)
+  useEffect(() => {
+    if (hasForeignItems && !exchangeRates && !ratesFetchedRef.current) {
+      ratesFetchedRef.current = true
+      refetchRates()
+    }
+  }, [hasForeignItems, exchangeRates, refetchRates])
 
   const close = () => {
     // Pop the dialog entry we pushed so Back doesn't need an extra press later.
@@ -236,6 +256,8 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
             notifyLine={notifyLine}
             onNotifyLineChange={setNotifyLine}
             error={error}
+            projectCurrency={projectCurrency}
+            previewRateInfo={previewRateInfo}
           />
         )}
       </div>

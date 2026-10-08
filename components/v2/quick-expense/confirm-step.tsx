@@ -3,6 +3,7 @@
 import { useRef, useState } from "react"
 import { Check, ChevronLeft, ChevronRight, RotateCcw, Send, Trash2, X } from "lucide-react"
 import { formatCurrency } from "@/lib/constants/currencies"
+import type { PreviewRateInfo } from "@/lib/currency-conversion"
 import { itemTotals, type QuickItem } from "@/lib/quick-expense/draft"
 import { QuickItemCard } from "./quick-item-card"
 
@@ -12,7 +13,7 @@ const SWIPE_THRESHOLD = 50
 // the gesture to an axis so a vertical scroll never switches cards.
 const AXIS_SLOP = 10
 
-export function ConfirmStep({ items, members, index, onIndexChange, onItemsChange, onReinput, onSubmit, onClose, canNotifyLine, notifyLine, onNotifyLineChange, error }: {
+export function ConfirmStep({ items, members, index, onIndexChange, onItemsChange, onReinput, onSubmit, onClose, canNotifyLine, notifyLine, onNotifyLineChange, error, projectCurrency, previewRateInfo }: {
   items: QuickItem[]
   members: Member[]
   index: number
@@ -25,6 +26,8 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
   notifyLine: boolean
   onNotifyLineChange: (notifyLine: boolean) => void
   error: string | null
+  projectCurrency?: string
+  previewRateInfo?: (currency: string) => PreviewRateInfo
 }) {
   const touchStart = useRef<{ x: number; y: number } | null>(null)
   const axis = useRef<"x" | "y" | null>(null)
@@ -144,7 +147,7 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
         className="mt-2"
         style={{ transform: dragX ? `translateX(${dragX}px)` : undefined, transition: dragX ? "none" : "transform 200ms ease" }}
       >
-        <QuickItemCard key={current.id} item={current} members={members} onChange={patch} />
+        <QuickItemCard key={current.id} item={current} members={members} onChange={patch} projectCurrency={projectCurrency} previewRateInfo={previewRateInfo} />
       </div>
       {/* Reserve room for the fixed action bar below. It can stack the LINE
           toggle, an error line, the totals card and the buttons (~224px), so a
