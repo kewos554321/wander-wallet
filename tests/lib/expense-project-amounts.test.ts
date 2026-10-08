@@ -38,6 +38,40 @@ describe("computeProjectAmounts", () => {
     expect(r.payers[0].amountProject).toBe(1000)
   })
 
+  it("returns the allocated original share alongside the settlement share", () => {
+    const r = computeProjectAmounts({
+      amount: 1000,
+      currency: "JPY",
+      projectCurrency: "TWD",
+      rate: 0.1,
+      participants,
+      payers: [{ memberId: "a", amount: 1000 }],
+      discrepancy: new Map([["a", 5], ["b", 0], ["c", 0]]),
+    })
+    expect(r.originalTotalMinor).toBe(1000)
+    expect(r.participants.map((p) => p.shareAmount)).toEqual([333, 334, 333])
+    expect(r.participants.map((p) => p.shareAmountProject)).toEqual([33, 34, 33])
+  })
+
+  it("gives identical original and settlement shares for the same currency", () => {
+    const r = computeProjectAmounts({
+      amount: 667,
+      currency: "TWD",
+      projectCurrency: "TWD",
+      rate: 1,
+      participants: [
+        { memberId: "a", shareAmount: 222.33 },
+        { memberId: "b", shareAmount: 222.33 },
+        { memberId: "c", shareAmount: 222.34 },
+      ],
+      payers: [],
+      discrepancy: new Map(),
+    })
+    expect(r.participants.map((p) => p.shareAmount)).toEqual(r.participants.map((p) => p.shareAmountProject))
+    expect(r.participants.reduce((s, p) => s + p.shareAmount, 0)).toBe(667)
+    expect(r.participants.reduce((s, p) => s + p.shareAmountProject, 0)).toBe(667)
+  })
+
   it("does not double-count when recomputing the same split", () => {
     const first = computeProjectAmounts({
       amount: 1000,

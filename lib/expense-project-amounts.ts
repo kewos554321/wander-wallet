@@ -1,9 +1,11 @@
 import {
   allocate,
+  fromMinorUnits,
   rollbackAllocation,
   roundMajorToMinor,
   toMinorUnits,
 } from "@/lib/currency-conversion"
+import { allocateBothCurrencies } from "@/lib/split-allocation"
 
 export interface ProjectAmountInput {
   amount: number
@@ -22,7 +24,9 @@ export interface ProjectAmountInput {
 
 export interface ProjectAmountResult {
   totalMinor: number
-  participants: { memberId: string; shareAmountProject: number }[]
+  /** Integer minor units of the ORIGINAL currency (reconciliation). */
+  originalTotalMinor: number
+  participants: { memberId: string; shareAmount: number; shareAmountProject: number }[]
   payers: { memberId: string; amountProject: number }[]
   discrepancy: Map<string, number>
 }
@@ -56,7 +60,8 @@ export function computeProjectAmounts(input: ProjectAmountInput): ProjectAmountR
     input.projectCurrency,
   )
 
-  const participantResult = allocate(
+  const participantResult = allocateBothCurrencies(
+    toMinorUnits(input.amount, input.currency),
     totalMinor,
     input.participants.map((p) => ({ id: p.memberId, weight: p.shareAmount })),
     discrepancy,
@@ -76,9 +81,11 @@ export function computeProjectAmounts(input: ProjectAmountInput): ProjectAmountR
 
   return {
     totalMinor,
+    originalTotalMinor: toMinorUnits(input.amount, input.currency),
     participants: input.participants.map((p) => ({
       memberId: p.memberId,
-      shareAmountProject: participantResult.allocations.get(p.memberId) ?? 0,
+      shareAmount: fromMinorUnits(participantResult.original.get(p.memberId) ?? 0, input.currency),
+      shareAmountProject: participantResult.settlement.get(p.memberId) ?? 0,
     })),
     payers: input.payers.map((p) => ({
       memberId: p.memberId,
