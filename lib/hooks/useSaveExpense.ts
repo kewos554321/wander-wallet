@@ -15,6 +15,7 @@ export interface ExpensePayload {
   payers: PayerShare[]
   amount: number
   currency: string
+  exchangeRate?: number | null
   description: string | null
   category: string
   location: string | null

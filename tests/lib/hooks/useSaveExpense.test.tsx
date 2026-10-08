@@ -72,6 +72,21 @@ describe("useSaveExpense", () => {
     )
   })
 
+  it("serializes the bound exchange rate when provided", async () => {
+    mockAuthFetch.mockResolvedValueOnce(ok())
+    const { result } = renderHook(() => useSaveExpense("p1"))
+    await act(async () => {
+      await result.current.save({
+        mode: "create",
+        payload: { ...payload, currency: "TWD", exchangeRate: 0.0317 },
+        image: noImage,
+        notification: { ...notify, requested: false },
+      })
+    })
+    const body = JSON.parse(mockAuthFetch.mock.calls[0][1].body)
+    expect(body.exchangeRate).toBe(0.0317)
+  })
+
   it("updates with PUT and skips notification when the user disabled update notices", async () => {
     mockUseLiff.mockReturnValue({
       isDevMode: false,
