@@ -1,4 +1,5 @@
 import { Calculator, Receipt, TrendingUp, Users, type LucideIcon } from "lucide-react"
+import { formatAmount } from "@/lib/constants/currencies"
 
 interface Tile {
   label: string
@@ -22,14 +23,14 @@ interface SettleSummaryGridProps {
   currencySelect?: React.ReactNode
 }
 
-const n = (value: number) => Math.round(value).toLocaleString()
+const n = (value: number, currencyCode: string) => formatAmount(value, currencyCode)
 
 export function SettleSummaryGrid({ count, total, dailyAverage, perPerson, currencyCode, currencySelect }: SettleSummaryGridProps) {
   const tiles: Tile[] = [
     { label: "支出筆數", value: String(count), icon: Receipt, tone: LAKE },
-    { label: `總金額 (${currencyCode})`, value: n(total), icon: Calculator, tone: CORAL },
-    { label: `日均花費 (${currencyCode})`, value: n(dailyAverage), icon: TrendingUp, tone: SKY, testId: "settle-tile-daily" },
-    { label: `人均 (${currencyCode})`, value: n(perPerson), icon: Users, tone: PLUM },
+    { label: `總金額 (${currencyCode})`, value: n(total, currencyCode), icon: Calculator, tone: CORAL },
+    { label: `日均花費 (${currencyCode})`, value: n(dailyAverage, currencyCode), icon: TrendingUp, tone: SKY, testId: "settle-tile-daily" },
+    { label: `人均 (${currencyCode})`, value: n(perPerson, currencyCode), icon: Users, tone: PLUM },
   ]
 
   return (
