@@ -245,6 +245,36 @@ describe("ExpenseFormV2View", () => {
     expect(within(split).getByText("咖啡")).toBeInTheDocument()
   })
 
+  it("hides every editing control while the settlement currency is shown", () => {
+    const { hook, rerender } = renderForm({
+      projectCurrency: "USD",
+      previewRateInfo: () => ({ rate: 0.05, source: "live" as const }),
+    })
+    act(() => {
+      hook.result.current.actions.setAmount("1000")
+      hook.result.current.actions.setCurrency("JPY")
+    })
+    rerender()
+    const payer = screen.getByRole("group", { name: "付款成員" })
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    // Edit view: member selection and the personal-items switch are present.
+    expect(within(payer).getByRole("checkbox", { name: "小雨" })).toBeInTheDocument()
+    expect(within(split).getByRole("button", { name: "小雨" })).toBeInTheDocument()
+    expect(within(split).getByRole("switch", { name: "先扣個人項目" })).toBeInTheDocument()
+
+    fireEvent.click(within(payer).getByRole("button", { name: "顯示 USD" }))
+    rerender()
+    // Settlement view: nothing that mutates the draft is left, but the numbers stay.
+    expect(within(payer).queryByRole("checkbox")).not.toBeInTheDocument()
+    expect(within(payer).queryByRole("button", { name: "全選" })).not.toBeInTheDocument()
+    expect(within(split).queryByRole("button", { name: "小雨" })).not.toBeInTheDocument()
+    expect(within(split).queryByRole("switch", { name: "先扣個人項目" })).not.toBeInTheDocument()
+    expect(within(split).queryByRole("button", { name: "小雨不參與共同分攤" })).not.toBeInTheDocument()
+    expect(within(payer).getByLabelText("小雨的付款金額")).toHaveTextContent("$50.00")
+    // The flip-back control stays, so the preview is not a dead end.
+    expect(within(split).getByRole("button", { name: "顯示 JPY" })).toBeInTheDocument()
+  })
+
   it("hides the split settlement estimates for a same-currency expense", () => {
     const { hook, rerender } = renderForm({ projectCurrency: "TWD" })
     act(() => {

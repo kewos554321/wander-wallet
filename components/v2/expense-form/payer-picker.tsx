@@ -85,7 +85,7 @@ export function PayerPicker({
       </p>
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="m-0 text-xs font-semibold text-v2-ink-muted">付款明細</p>
-        {members.length > 1 && (
+        {!settleView && members.length > 1 && (
           <button
             type="button"
             onClick={() => onSetAll(!allSelected)}
@@ -96,29 +96,31 @@ export function PayerPicker({
         )}
       </div>
 
-      <div className="mb-2.5 flex flex-wrap gap-2">
-        {members.map((m, i) => {
-          const checked = payerIds.includes(m.id)
-          return (
-            <label key={m.id} className={`cursor-pointer ${memberPillClass(checked)}`}>
-              <input
-                type="checkbox"
-                className="sr-only"
-                checked={checked}
-                onChange={() => onTogglePayer(m.id)}
-                aria-label={m.displayName}
-              />
-              <V2Avatar
-                image={m.image ?? null}
-                name={m.displayName}
-                className="h-5 w-5 rounded-full"
-                fallbackClassName={`text-[9px] font-bold ${memberTone(i)}`}
-              />
-              <span className="text-xs font-semibold">{m.displayName}</span>
-            </label>
-          )
-        })}
-      </div>
+      {!settleView && (
+        <div className="mb-2.5 flex flex-wrap gap-2">
+          {members.map((m, i) => {
+            const checked = payerIds.includes(m.id)
+            return (
+              <label key={m.id} className={`cursor-pointer ${memberPillClass(checked)}`}>
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={checked}
+                  onChange={() => onTogglePayer(m.id)}
+                  aria-label={m.displayName}
+                />
+                <V2Avatar
+                  image={m.image ?? null}
+                  name={m.displayName}
+                  className="h-5 w-5 rounded-full"
+                  fallbackClassName={`text-[9px] font-bold ${memberTone(i)}`}
+                />
+                <span className="text-xs font-semibold">{m.displayName}</span>
+              </label>
+            )
+          })}
+        </div>
+      )}
 
       {payerIds.length > 0 && (
         <div className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
@@ -172,14 +174,16 @@ export function PayerPicker({
                       {isPinned ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
                     </button>
                   )}
-                  <button
-                    type="button"
-                    aria-label={`移除${nameOf(p.memberId)}`}
-                    onClick={() => onTogglePayer(p.memberId)}
-                    className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md bg-v2-danger-soft text-v2-danger-strong"
-                  >
-                    <UserMinus className="h-3 w-3" />
-                  </button>
+                  {!settleView && (
+                    <button
+                      type="button"
+                      aria-label={`移除${nameOf(p.memberId)}`}
+                      onClick={() => onTogglePayer(p.memberId)}
+                      className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md bg-v2-danger-soft text-v2-danger-strong"
+                    >
+                      <UserMinus className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
                 {showLegacyEstimate && (
                   <p

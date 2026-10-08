@@ -77,62 +77,68 @@ export function SplitEditor({
             />
           )}
         </p>
-        <label className="flex items-center gap-1.5">
-          <span className="text-[13px] font-bold text-v2-lake">先扣個人項目</span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={state.personalMode}
-            aria-label="先扣個人項目"
-            onClick={() => actions.setPersonalMode(!state.personalMode)}
-            className={`relative inline-block h-[14px] w-6 shrink-0 rounded-full ${state.personalMode ? "bg-v2-link" : "bg-v2-check"}`}
-          >
-            <span className={`absolute top-0.5 h-[10px] w-[10px] rounded-full bg-v2-knob transition-[left] ${state.personalMode ? "left-[12px]" : "left-0.5"}`} />
-          </button>
-        </label>
+        {!settleView && (
+          <label className="flex items-center gap-1.5">
+            <span className="text-[13px] font-bold text-v2-lake">先扣個人項目</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={state.personalMode}
+              aria-label="先扣個人項目"
+              onClick={() => actions.setPersonalMode(!state.personalMode)}
+              className={`relative inline-block h-[14px] w-6 shrink-0 rounded-full ${state.personalMode ? "bg-v2-link" : "bg-v2-check"}`}
+            >
+              <span className={`absolute top-0.5 h-[10px] w-[10px] rounded-full bg-v2-knob transition-[left] ${state.personalMode ? "left-[12px]" : "left-0.5"}`} />
+            </button>
+          </label>
+        )}
       </div>
 
       {state.personalMode && (
         <div className="mb-3">
           <div className="mb-2 flex items-center justify-between gap-2">
             <p className="m-0 text-xs font-semibold text-v2-ink-muted">個人項目</p>
-            <button
-              type="button"
-              aria-label={allPersonal ? "取消全選個人項目" : "全選個人項目"}
-              onClick={() => actions.setPersonalAll(!allPersonal)}
-              className="shrink-0 text-xs font-bold text-v2-lake"
-            >
-              {allPersonal ? "取消全選" : "全選"}
-            </button>
+            {!settleView && (
+              <button
+                type="button"
+                aria-label={allPersonal ? "取消全選個人項目" : "全選個人項目"}
+                onClick={() => actions.setPersonalAll(!allPersonal)}
+                className="shrink-0 text-xs font-bold text-v2-lake"
+              >
+                {allPersonal ? "取消全選" : "全選"}
+              </button>
+            )}
           </div>
-          <div className="mb-2.5 flex flex-wrap gap-2">
-            {members.map((m) => {
-              const on = state.personalMembers.includes(m.id)
-              return (
-                <button
-                  key={m.id}
-                  type="button"
-                  aria-label={`${m.displayName}的個人項目`}
-                  aria-pressed={on}
-                  onClick={() => actions.togglePersonalMember(m.id)}
-                  className={memberPillClass(on)}
-                >
-                  <V2Avatar
-                    image={m.image ?? null}
-                    name={m.displayName}
-                    className="h-5 w-5 rounded-full"
-                    fallbackClassName={`text-[9px] font-bold ${tone(m.id)}`}
-                  />
-                  <span className="text-xs font-semibold">{m.displayName}</span>
-                </button>
-              )
-            })}
-          </div>
-          {state.personalMembers.length === 0 ? (
+          {!settleView && (
+            <div className="mb-2.5 flex flex-wrap gap-2">
+              {members.map((m) => {
+                const on = state.personalMembers.includes(m.id)
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    aria-label={`${m.displayName}的個人項目`}
+                    aria-pressed={on}
+                    onClick={() => actions.togglePersonalMember(m.id)}
+                    className={memberPillClass(on)}
+                  >
+                    <V2Avatar
+                      image={m.image ?? null}
+                      name={m.displayName}
+                      className="h-5 w-5 rounded-full"
+                      fallbackClassName={`text-[9px] font-bold ${tone(m.id)}`}
+                    />
+                    <span className="text-xs font-semibold">{m.displayName}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          {!settleView && state.personalMembers.length === 0 ? (
             <p className="rounded-[14px] border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
               目前沒有人有個人項目，點上面的名字挑一位。
             </p>
-          ) : (
+          ) : state.personalMembers.length > 0 ? (
             <div className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
               {state.personalMembers.map((id) => {
                 const items = state.personalItems[id] ?? []
@@ -156,9 +162,11 @@ export function SplitEditor({
                           <Plus className="h-3 w-3" aria-hidden="true" />
                         </button>
                       )}
-                      <button type="button" aria-label={`移除${name(id)}的個人項目`} onClick={() => actions.togglePersonalMember(id)} className={`${smallButton} bg-v2-danger-soft text-v2-danger-strong`}>
-                        <UserMinus className="h-3 w-3" />
-                      </button>
+                      {!settleView && (
+                        <button type="button" aria-label={`移除${name(id)}的個人項目`} onClick={() => actions.togglePersonalMember(id)} className={`${smallButton} bg-v2-danger-soft text-v2-danger-strong`}>
+                          <UserMinus className="h-3 w-3" />
+                        </button>
+                      )}
                     </div>
                     {showLegacyEstimate && (
                       <p
@@ -212,7 +220,7 @@ export function SplitEditor({
                 )
               })}
             </div>
-          )}
+          ) : null}
         </div>
       )}
 
@@ -242,33 +250,37 @@ export function SplitEditor({
             </Popover>
           )}
         </p>
-        <button type="button" onClick={() => actions.setPoolAll(!allInPool)} className="shrink-0 text-xs font-bold text-v2-lake">
-          {allInPool ? "取消全選" : "全選"}
-        </button>
+        {!settleView && (
+          <button type="button" onClick={() => actions.setPoolAll(!allInPool)} className="shrink-0 text-xs font-bold text-v2-lake">
+            {allInPool ? "取消全選" : "全選"}
+          </button>
+        )}
       </div>
-      <div className="flex flex-wrap gap-2">
-        {members.map((m) => {
-          const on = state.pool.includes(m.id)
-          return (
-            <button
-              key={m.id}
-              type="button"
-              aria-pressed={on}
-              onClick={() => actions.togglePool(m.id)}
-              className={memberPillClass(on)}
-            >
-              <V2Avatar
-                image={m.image ?? null}
-                name={m.displayName}
-                className={`h-5 w-5 rounded-full ${on ? "" : "opacity-40"}`}
-                fallbackClassName={`text-[9px] font-bold ${tone(m.id)}`}
-              />
-              <span className="text-xs font-semibold">{m.displayName}</span>
-            </button>
-          )
-        })}
-      </div>
-      {state.pool.length === 0 && (
+      {!settleView && (
+        <div className="flex flex-wrap gap-2">
+          {members.map((m) => {
+            const on = state.pool.includes(m.id)
+            return (
+              <button
+                key={m.id}
+                type="button"
+                aria-pressed={on}
+                onClick={() => actions.togglePool(m.id)}
+                className={memberPillClass(on)}
+              >
+                <V2Avatar
+                  image={m.image ?? null}
+                  name={m.displayName}
+                  className={`h-5 w-5 rounded-full ${on ? "" : "opacity-40"}`}
+                  fallbackClassName={`text-[9px] font-bold ${tone(m.id)}`}
+                />
+                <span className="text-xs font-semibold">{m.displayName}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+      {!settleView && state.pool.length === 0 && (
         <p className="mt-2.5 rounded-[14px] border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
           目前沒有人參與共同分攤，點上面的名字挑選分攤的人。
         </p>
@@ -323,9 +335,11 @@ export function SplitEditor({
                       {isCustom ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
                     </button>
                   )}
-                  <button type="button" aria-label={`${name(id)}不參與共同分攤`} onClick={() => actions.togglePool(id)} className={`${smallButton} bg-v2-danger-soft text-v2-danger-strong`}>
-                    <UserMinus className="h-3 w-3" />
-                  </button>
+                  {!settleView && (
+                    <button type="button" aria-label={`${name(id)}不參與共同分攤`} onClick={() => actions.togglePool(id)} className={`${smallButton} bg-v2-danger-soft text-v2-danger-strong`}>
+                      <UserMinus className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
                 {showLegacyEstimate && (
                   <p
