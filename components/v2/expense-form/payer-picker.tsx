@@ -61,6 +61,12 @@ export function PayerPicker({
   // Signed gap between the payer total and the expense amount, for the mismatch
   // badge (positive = over, negative = short). Expense currency, never converted.
   const payerDiff = Math.round((payers.reduce((sum, p) => sum + p.amount, 0) - amount) * 100) / 100
+  // The badge text for a mismatch. A negative auto share (from over-pinned
+  // payers) reads as a plain mismatch otherwise, so call it out first.
+  let payerStatus = "金額不符"
+  if (payers.some((p) => p.amount < 0)) payerStatus = "含負數金額"
+  else if (payerDiff > 0) payerStatus = `超出 $${formatAmount(payerDiff, currency)}`
+  else if (payerDiff < 0) payerStatus = `尚差 $${formatAmount(Math.abs(payerDiff), currency)}`
   // A set `displayCurrency` means the section is a glance view: amounts show in
   // that currency and every field becomes read-only (edits stay in the expense
   // currency, reached by flipping back).
@@ -201,22 +207,20 @@ export function PayerPicker({
         </div>
       )}
 
-      <div className="mt-2">
-        <div className="flex items-center justify-end gap-2">
-          {matches ? (
-            <span className="flex items-center gap-1 text-xs font-bold text-v2-link">
-              <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
-              金額相符
-            </span>
-          ) : (
-            <span className="text-xs font-bold text-v2-danger">
-              {payerDiff !== 0
-                ? `${payerDiff > 0 ? "超出" : "尚差"} $${formatAmount(Math.abs(payerDiff), currency)}`
-                : "金額不符"}
-            </span>
-          )}
+      {amount !== 0 && (
+        <div className="mt-2">
+          <div className="flex items-center justify-end gap-2">
+            {matches ? (
+              <span className="flex items-center gap-1 text-xs font-bold text-v2-link">
+                <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
+                金額相符
+              </span>
+            ) : (
+              <span className="text-xs font-bold text-v2-danger">{payerStatus}</span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

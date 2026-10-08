@@ -166,6 +166,19 @@ describe("PayerPicker", () => {
     expect(within(group).getByText("超出 $20")).toBeInTheDocument()
   })
 
+  it("calls out a negative payer amount instead of a plain mismatch", () => {
+    setup({
+      payerIds: ["a", "b"],
+      payers: [
+        { memberId: "a", amount: -20 },
+        { memberId: "b", amount: 120 },
+      ],
+      matches: false,
+    })
+    const group = screen.getByRole("group", { name: "付款成員" })
+    expect(within(group).getByText("含負數金額")).toBeInTheDocument()
+  })
+
   it("shows each payer's settlement estimate on its own line for a foreign expense", () => {
     setup({
       currency: "JPY",

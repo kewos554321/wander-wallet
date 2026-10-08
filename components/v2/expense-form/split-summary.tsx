@@ -55,9 +55,25 @@ export function splitGap(draft: SplitDraft): number {
   return Math.round((derived.weights.reduce((s, w) => s + w.weight, 0) - derived.splitInput.amount) * 100) / 100
 }
 
-// Match status for the split. On a mismatch it shows the signed gap from the
-// expense amount (expense currency), e.g. 尚差 $40 / 超出 $20.
-export function MatchBadge({ matches, diff, currency }: { matches: boolean; diff: number; currency: string }) {
+// Whether any member is allocated a negative amount (an invalid split).
+export function splitHasNegative(draft: SplitDraft): boolean {
+  const { derived } = draft
+  return derived.weights.some((w) => w.weight < 0) || derived.shares.some((s) => s.shareAmount < 0)
+}
+
+// Match status for the split. A mismatch shows the signed gap from the expense
+// amount (e.g. 尚差 $40 / 超出 $20), or 含負數金額 when a share went negative.
+export function MatchBadge({
+  matches,
+  diff,
+  currency,
+  hasNegative,
+}: {
+  matches: boolean
+  diff: number
+  currency: string
+  hasNegative: boolean
+}) {
   if (matches) {
     return (
       <span className="flex items-center gap-1 text-xs font-bold text-v2-link">
@@ -66,13 +82,11 @@ export function MatchBadge({ matches, diff, currency }: { matches: boolean; diff
       </span>
     )
   }
-  return (
-    <span className="text-xs font-bold text-v2-danger">
-      {diff !== 0
-        ? `${diff > 0 ? "超出" : "尚差"} $${formatAmount(Math.abs(diff), currency)}`
-        : "金額不符"}
-    </span>
-  )
+  let text = "金額不符"
+  if (hasNegative) text = "含負數金額"
+  else if (diff > 0) text = `超出 $${formatAmount(diff, currency)}`
+  else if (diff < 0) text = `尚差 $${formatAmount(Math.abs(diff), currency)}`
+  return <span className="text-xs font-bold text-v2-danger">{text}</span>
 }
 
 // Per-member breakdown (design A3d, deliberately deviating): members whose
@@ -154,9 +168,11 @@ export function SplitSummary({
           </div>
         </div>
       </div>
-      <div className="mt-2 flex justify-end">
-        <MatchBadge matches={derived.matches} diff={splitGap(draft)} currency={currency} />
-      </div>
+      {derived.splitInput.amount !== 0 && (
+        <div className="mt-2 flex justify-end">
+          <MatchBadge matches={derived.matches} diff={splitGap(draft)} hasNegative={splitHasNegative(draft)} currency={currency} />
+        </div>
+      )}
     </section>
   )
 }

@@ -407,6 +407,8 @@ describe("ExpenseFormV2View", () => {
     rerender()
     expect(hook.result.current.derived.error).toBe("付款金額合計超過支出金額")
     expect(screen.getByRole("alert")).toHaveTextContent("付款金額合計超過支出金額")
+    // The auto payer goes negative; the badge names that rather than a plain mismatch.
+    expect(within(screen.getByRole("group", { name: "付款成員" })).getByText("含負數金額")).toBeInTheDocument()
     const submit = screen.getByRole("button", { name: /新增支出/ })
     expect(submit).toBeDisabled()
     fireEvent.click(submit)
@@ -466,12 +468,13 @@ describe("ExpenseFormV2View", () => {
     expect(shares.every((s) => Number.isInteger(s.shareAmount))).toBe(true)
   })
 
-  it("falls back to the match badge when the breakdown table has no rows", () => {
+  it("hides the match badge while the amount is zero", () => {
     renderForm()
-    // No amount yet: every share is $0, so the breakdown table is hidden.
+    // No amount yet: the breakdown table is hidden and so is the match badge,
+    // in both the payer and the split sections.
     expect(screen.queryByRole("region", { name: "分攤明細" })).not.toBeInTheDocument()
-    const split = screen.getByRole("region", { name: "分攤成員" })
-    expect(within(split).getByText("金額相符")).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "分攤成員" })).queryByText("金額相符")).not.toBeInTheDocument()
+    expect(within(screen.getByRole("group", { name: "付款成員" })).queryByText("金額相符")).not.toBeInTheDocument()
   })
 
   it("shows how far short the split is when nobody is in the pool", () => {

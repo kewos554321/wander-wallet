@@ -10,7 +10,7 @@ import type { DraftMember } from "./use-expense-draft"
 import { memberPillClass, memberTone } from "./payer-picker"
 import { CurrencyToggle } from "./currency-toggle"
 import { SECTION_CARD, SECTION_TITLE } from "./section-card"
-import { MatchBadge, SplitSummary, shouldShowBreakdown, splitGap } from "./split-summary"
+import { MatchBadge, SplitSummary, shouldShowBreakdown, splitGap, splitHasNegative } from "./split-summary"
 import type { SplitDraft } from "@/lib/split-draft"
 
 // Must match the server-enforced splitDetail limit (lib/expense-split.ts).
@@ -357,9 +357,9 @@ export function SplitEditor({
         </div>
       )}
 
-      {!showBreakdown && (
+      {!showBreakdown && derived.splitInput.amount !== 0 && (
         <div className="mt-2 flex justify-end">
-          <MatchBadge matches={derived.matches} diff={splitGap(draft)} currency={currency} />
+          <MatchBadge matches={derived.matches} diff={splitGap(draft)} hasNegative={splitHasNegative(draft)} currency={currency} />
         </div>
       )}
 
