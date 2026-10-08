@@ -73,14 +73,14 @@ model Expense {
 
 model ExpenseParticipant {
   // ...既有
-  shareAmount        Decimal  @db.Decimal(10, 2)              // 原幣（對帳）
-  shareAmountProject Decimal? @db.Decimal(18, 8) @map("share_amount_project") // 專案幣別（權威）
+  shareAmount        Decimal @db.Decimal(10, 2)            // 原幣（對帳）
+  shareAmountProject Int?    @map("share_amount_project")  // 結算幣別（權威，最小單位整數）
 }
 
 model ExpensePayer {
   // ...既有
-  amount        Decimal  @db.Decimal(10, 2)             // 原幣
-  amountProject Decimal? @db.Decimal(18, 8) @map("amount_project") // 專案幣別（權威）
+  amount        Decimal @db.Decimal(10, 2)            // 原幣
+  amountProject Int?    @map("amount_project")        // 結算幣別（權威，最小單位整數）
 }
 
 model ProjectMember {
@@ -90,11 +90,12 @@ model ProjectMember {
 ```
 
 - `exchangeRate`：同幣別支出為 `null`；外幣支出**必為快照值**（不再有「null = 引用專案匯率」語意）。
-- 專案幣別金額（`*Project`）為**權威**；原幣欄位維持不變（對帳用）。
+- 專案幣別金額（`*Project`）為**權威**，以**結算幣別最小單位整數**儲存（US$10.57 → `1057`）；原幣欄位維持不變（對帳用）。
+- 型別用 `Int`（單人最小單位上限約 21 億，實務足夠）；顯示時才除以 `10^decimals` 還原（見 §12）。
 
 ### 4.1 既有資料 backfill
 
-- 既有外幣支出：以當下 `Project.customRates[currency]`（或即時匯率）回填 `exchangeRate` 與 `*Project` 金額；`remainderDiscrepancy` 起始 0。
+- 既有外幣支出：以當下 `Project.customRates[currency]`（或即時匯率）回填 `exchangeRate` 與 `*Project`（換算後取整成最小單位整數）；`remainderDiscrepancy` 起始 0。
 - 同幣別支出：`exchangeRate = null`、`*Project` 可留 `null`（讀取時視為原幣＝專案幣別）。
 
 ## 5. 建立／更新支出的計算流程
@@ -287,16 +288,18 @@ export function allocate(
 - 顯示統一（TWD 無小數、USD 保留美分）；長名稱不跑版。
 - `npm run test:run` 全綠；`npm run lint` 無錯誤。
 
-## 18. 已採建議、可調整的決策
+## 18. 已定案的決策
 
-| 項目 | 目前採納 | 可改為 |
-|---|---|---|
-| 事後改該筆匯率 | **A：允許**（回滾＋重算） | B：建立後不可改 |
-| 「自訂」徽章 | 保留（純顯示） | 移除 |
-| 原幣每人分攤顯示 | 顯示（由輸入重建） | 只顯示原幣總額 |
-| CNY / THB `decimals` | 2 | 0 |
-| `*Project` 欄位精度 | `Decimal(18,8)` | 更低位數 |
-| v1 範圍 | 功能對等（Phase 6） | 僅 v2 |
+| 項目 | 決定 |
+|---|---|
+| 事後改該筆匯率 | **允許**（回滾＋重算） |
+| 「自訂」徽章 | 保留（純顯示） |
+| 原幣每人分攤顯示 | 顯示（由輸入重建） |
+| CNY / THB `decimals` | 2 |
+| `*Project` 欄位 | **最小單位整數**（`Int`；US$10.57 → `1057`） |
+| 支出整筆結算幣別金額 | 不另存，用各人金額加總 |
+| v1 範圍 | 功能對等（Phase 6） |
+| 預設匯率來源 | 固定；**整個專案一個開關** |
 
 ## 19. UX 流程（從建立專案到結算）
 
