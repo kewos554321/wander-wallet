@@ -1,5 +1,7 @@
 // Pure helpers for the v2 "全部支出" (A6) expense list screen.
 
+import { fromMinorUnits } from "@/lib/currency-conversion"
+
 function localDayKey(date: Date): string {
   return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
 }
@@ -38,10 +40,16 @@ export function formatMonthDayTime(iso: string): string {
 }
 
 export function summarizeExpenses(
-  expenses: { amount: number; currency: string }[],
-  convert: (amount: number, currency: string) => number
+  expenses: { amount: number; currency: string; amountProject?: number | null }[],
+  convert?: (amount: number, currency: string) => number,
+  projectCurrency?: string
 ): { total: number; count: number; average: number } {
-  const total = expenses.reduce((sum, e) => sum + convert(Number(e.amount), e.currency), 0)
+  const total = expenses.reduce((sum, e) => {
+    if (e.amountProject != null && projectCurrency) {
+      return sum + fromMinorUnits(e.amountProject, projectCurrency)
+    }
+    return sum + (convert ? convert(Number(e.amount), e.currency) : Number(e.amount))
+  }, 0)
   const count = expenses.length
   return { total, count, average: count > 0 ? total / count : 0 }
 }

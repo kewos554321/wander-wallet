@@ -93,7 +93,7 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
             dateRangeLabel={dateRange && dateRange !== "尚未設定日期" ? dateRange : null}
             allCount={expenses.length}
             expenses={f.filteredExpenses}
-            summary={summarizeExpenses(f.filteredExpenses, convert)}
+            summary={summarizeExpenses(f.filteredExpenses, convert, projectCurrency)}
             currentMemberId={currentMemberId}
             now={new Date()}
             filterBar={

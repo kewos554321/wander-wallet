@@ -49,6 +49,20 @@ describe("summarizeExpenses", () => {
     ).toEqual({ total: 300, count: 2, average: 150 })
   })
 
+  it("uses stored settlement amounts without a converter", () => {
+    const result = summarizeExpenses(
+      [
+        { amount: 1000, currency: "TWD", amountProject: 3172 },
+        { amount: 500, currency: "TWD", amountProject: 1586 },
+      ],
+      undefined,
+      "USD"
+    )
+    expect(result.count).toBe(2)
+    expect(result.total).toBeCloseTo(47.58)
+    expect(result.average).toBeCloseTo(23.79)
+  })
+
   it("returns zeros for an empty list", () => {
     expect(summarizeExpenses([], (a) => a)).toEqual({ total: 0, count: 0, average: 0 })
   })
