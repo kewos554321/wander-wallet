@@ -2,6 +2,7 @@
 
 import { CheckCircle2 } from "lucide-react"
 import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
+import { roundMajorToMinor } from "@/lib/currency-conversion"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import type { SplitDraft } from "@/lib/split-draft"
 import type { DraftMember } from "./use-expense-draft"
@@ -64,9 +65,21 @@ export function MatchBadge({ matches }: { matches: boolean }) {
 // Textual summary of the two pools (personal items + shared) and the
 // reconciliation against the expense amount. The personal-items part only
 // applies once the switch turns that pool on.
-export function SplitEquation({ draft, currency }: { draft: SplitDraft; currency: string }) {
+export function SplitEquation({
+  draft,
+  currency,
+  displayCurrency,
+  rate,
+}: {
+  draft: SplitDraft
+  currency: string
+  displayCurrency?: string
+  rate?: number | null
+}) {
   const { state, derived } = draft
-  const num = (n: number) => formatAmount(Math.round(n * 100) / 100, currency)
+  const viewCurrency = displayCurrency ?? currency
+  const settleView = displayCurrency != null && displayCurrency !== currency && rate != null
+  const num = (n: number) => formatAmount(settleView ? roundMajorToMinor(n * rate!, viewCurrency) : n, viewCurrency)
   const sharedTotal = Math.round((derived.splitInput.amount - derived.personalTotal) * 100) / 100
   const sharesSum = derived.shares.reduce((s, x) => s + x.shareAmount, 0)
   const personalPart = state.personalMode ? `個人項目 $${num(derived.personalTotal)}（${derived.itemCount} 項）＋ ` : ""
@@ -85,17 +98,22 @@ export function SplitSummary({
   currency,
   projectCurrency,
   rate,
+  displayCurrency,
 }: {
   members: DraftMember[]
   draft: SplitDraft
   currency: string
   projectCurrency?: string
   rate?: number | null
+  /** When set, every cell renders in this currency instead of the expense currency. */
+  displayCurrency?: string
 }) {
   const { derived } = draft
   if (derived.shares.length === 0) return null
 
-  const money = (n: number) => `$${formatAmount(Math.round(n * 100) / 100, currency)}`
+  const viewCurrency = displayCurrency ?? currency
+  const settleView = displayCurrency != null && displayCurrency !== currency && rate != null
+  const money = (n: number) => `$${formatAmount(settleView ? roundMajorToMinor(n * rate!, viewCurrency) : n, viewCurrency)}`
   const rows = buildSummaryRows(members, draft)
   const visibleRows = rows.filter((r) => r.total !== 0)
   if (visibleRows.length === 0) return null
@@ -106,7 +124,7 @@ export function SplitSummary({
   return (
     <section aria-label="分攤明細" className="mt-3">
       <p className="mb-2 text-xs font-semibold text-v2-ink-muted">
-        分攤明細<span className="text-v2-lake">（{currency}）</span>
+        分攤明細<span className="text-v2-lake">（{viewCurrency}）</span>
       </p>
       <div role="table">
         <div role="row" className={`${cols} pb-1.5 text-[11px] text-v2-ink-subtle`}>
@@ -131,7 +149,7 @@ export function SplitSummary({
               <span role="cell" className={`${cell} ${r.pool ? "" : "text-v2-ink-subtle"}`}>{money(r.pool)}</span>
               <span role="cell" className={`${cell} font-bold`}>
                 <span className="block">{money(r.total)}</span>
-                {projectCurrency && rate != null && currency !== projectCurrency && (
+                {displayCurrency == null && projectCurrency && rate != null && currency !== projectCurrency && (
                   <span className="block text-[10px] font-normal text-v2-ink-muted">
                     ≈ {formatCurrency(r.total * rate, projectCurrency)}
                   </span>
@@ -147,7 +165,7 @@ export function SplitSummary({
           </div>
         </div>
       </div>
-      <SplitEquation draft={draft} currency={currency} />
+      <SplitEquation draft={draft} currency={currency} displayCurrency={displayCurrency} rate={rate} />
       <div className="mt-2 flex justify-end">
         <MatchBadge matches={derived.matches} />
       </div>

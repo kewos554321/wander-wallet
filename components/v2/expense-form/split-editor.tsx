@@ -2,12 +2,13 @@
 
 import { CornerRightDown, Info, Pin, PinOff, Plus, UserMinus, X } from "lucide-react"
 import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
-import { fromMinorUnits } from "@/lib/currency-conversion"
+import { fromMinorUnits, roundMajorToMinor } from "@/lib/currency-conversion"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { toMoneyInput } from "@/lib/money-input"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import type { DraftMember } from "./use-expense-draft"
 import { memberPillClass, memberTone } from "./payer-picker"
+import { CurrencyToggle } from "./currency-toggle"
 import { SECTION_CARD, SECTION_TITLE } from "./section-card"
 import { MatchBadge, SplitEquation, SplitSummary, shouldShowBreakdown } from "./split-summary"
 import type { SplitDraft } from "@/lib/split-draft"
@@ -24,16 +25,29 @@ export function SplitEditor({
   currency,
   projectCurrency,
   rate,
+  displayCurrency,
+  onDisplayCurrencyChange,
 }: {
   members: DraftMember[]
   draft: SplitDraft
   currency: string
   projectCurrency?: string
   rate?: number | null
+  /** When set, the section renders in this currency (see `onDisplayCurrencyChange`). */
+  displayCurrency?: string
+  /** When set, a currency toggle is shown; selecting the settlement currency flips the section. */
+  onDisplayCurrencyChange?: (currency: string) => void
 }) {
   const { state, actions, derived } = draft
+  // In a settlement flip the section is a glance view: amounts show converted,
+  // every amount field becomes read-only and the tail-account annotation (an
+  // expense-currency artefact) is hidden. Edits still happen in the expense
+  // currency, reached by flipping back.
+  const viewCurrency = displayCurrency ?? currency
+  const settleView = displayCurrency != null && displayCurrency !== currency && rate != null
+  const view = (n: number) => (settleView ? roundMajorToMinor(n * rate!, viewCurrency) : n)
   // Currency code only on totals; per-member amounts show the number alone.
-  const num = (n: number) => formatAmount(Math.round(n * 100) / 100, currency)
+  const num = (n: number) => formatAmount(view(n), viewCurrency)
   const tone = (id: string) => memberTone(members.findIndex((m) => m.id === id))
   const name = (id: string) => members.find((m) => m.id === id)?.displayName ?? ""
   // Shared-pool portion only: personal items are shown in their own section.
@@ -45,12 +59,24 @@ export function SplitEditor({
   // The breakdown table is shown only when personal items make its 個人項目
   // column meaningful; otherwise the header text summary stands alone.
   const showBreakdown = shouldShowBreakdown(members, draft)
-  const showEstimate = !!projectCurrency && rate != null && currency !== projectCurrency
+  const showLegacyEstimate = displayCurrency == null && !!projectCurrency && rate != null && currency !== projectCurrency
+  const showCurrencyToggle =
+    onDisplayCurrencyChange != null && !!projectCurrency && rate != null && currency !== projectCurrency
 
   return (
     <section aria-label="分攤成員" className={SECTION_CARD}>
-      <div className="mb-2.5 flex items-center justify-between">
-        <p className={`m-0 ${SECTION_TITLE}`}>分攤成員</p>
+      <div className="mb-2.5 flex items-center justify-between gap-2">
+        <p className={`m-0 flex items-center gap-2 ${SECTION_TITLE}`}>
+          分攤成員
+          {showCurrencyToggle && (
+            <CurrencyToggle
+              currency={currency}
+              projectCurrency={projectCurrency!}
+              displayCurrency={viewCurrency}
+              onChange={onDisplayCurrencyChange!}
+            />
+          )}
+        </p>
         <label className="flex items-center gap-1.5">
           <span className="text-[13px] font-bold text-v2-lake">先扣個人項目</span>
           <button
@@ -59,9 +85,9 @@ export function SplitEditor({
             aria-checked={state.personalMode}
             aria-label="先扣個人項目"
             onClick={() => actions.setPersonalMode(!state.personalMode)}
-            className={`relative inline-block h-[19px] w-8 shrink-0 rounded-full ${state.personalMode ? "bg-v2-link" : "bg-v2-check"}`}
+            className={`relative inline-block h-[14px] w-6 shrink-0 rounded-full ${state.personalMode ? "bg-v2-link" : "bg-v2-check"}`}
           >
-            <span className={`absolute top-0.5 h-[15px] w-[15px] rounded-full bg-v2-knob transition-[left] ${state.personalMode ? "left-[15px]" : "left-0.5"}`} />
+            <span className={`absolute top-0.5 h-[10px] w-[10px] rounded-full bg-v2-knob transition-[left] ${state.personalMode ? "left-[12px]" : "left-0.5"}`} />
           </button>
         </label>
       </div>
@@ -132,7 +158,7 @@ export function SplitEditor({
                         <UserMinus className="h-3 w-3" />
                       </button>
                     </div>
-                    {showEstimate && (
+                    {showLegacyEstimate && (
                       <p
                         data-testid="personal-project-estimate"
                         className="mt-1 break-words pl-[34px] text-[10px] text-v2-ink-muted"
@@ -151,20 +177,29 @@ export function SplitEditor({
                             onChange={(e) => actions.updateItem(id, item.id, "name", e.target.value)}
                             className={`${itemInput} flex-[2]`}
                           />
-                          <label className={`${itemInput} flex flex-1 items-center gap-1`}>
-                            <span aria-hidden="true">$</span>
-                            <input
+                          {settleView ? (
+                            <span
                               aria-label={`${name(id)}的品項金額 ${idx + 1}`}
-                              placeholder="金額"
-                              inputMode="decimal"
-                              value={item.amount}
-                              onChange={(e) => {
-                                const v = toMoneyInput(e.target.value)
-                                if (v !== null) actions.updateItem(id, item.id, "amount", v)
-                              }}
-                              className="w-full min-w-0 bg-transparent text-right outline-none"
-                            />
-                          </label>
+                              className={`${itemInput} flex flex-1 items-center justify-end font-bold`}
+                            >
+                              ${num(Number(item.amount) || 0)}
+                            </span>
+                          ) : (
+                            <label className={`${itemInput} flex flex-1 items-center gap-1`}>
+                              <span aria-hidden="true">$</span>
+                              <input
+                                aria-label={`${name(id)}的品項金額 ${idx + 1}`}
+                                placeholder="金額"
+                                inputMode="decimal"
+                                value={item.amount}
+                                onChange={(e) => {
+                                  const v = toMoneyInput(e.target.value)
+                                  if (v !== null) actions.updateItem(id, item.id, "amount", v)
+                                }}
+                                className="w-full min-w-0 bg-transparent text-right outline-none"
+                              />
+                            </label>
+                          )}
                           <button type="button" aria-label="刪除項目" onClick={() => actions.removeItem(id, item.id)} className="flex h-5 w-5 shrink-0 items-center justify-center text-v2-danger-strong">
                             <X className="h-3 w-3" />
                           </button>
@@ -182,7 +217,7 @@ export function SplitEditor({
       <div className="mb-2.5 mt-3 flex items-center justify-between gap-2">
         <p className="m-0 flex items-center gap-1.5 text-xs font-semibold text-v2-ink-muted">
           共同分攤 <span className="font-bold text-v2-ink">（{state.personalMode ? "剩餘 " : ""}${num(Math.max(0, derived.splitInput.amount - derived.personalTotal))}）</span>
-          {derived.remainderMembers.length > 0 && (
+          {!settleView && derived.remainderMembers.length > 0 && (
             <Popover>
               <PopoverTrigger asChild>
                 <button
@@ -251,10 +286,10 @@ export function SplitEditor({
                     fallbackClassName={`text-[11px] font-bold ${tone(id)}`}
                   />
                   <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{name(id)}</span>
-                  {derived.remainderMembers.includes(id) && (
+                  {!settleView && derived.remainderMembers.includes(id) && (
                     <span className="shrink-0 rounded bg-v2-lake-tint px-1 text-[10px] font-bold text-v2-lake">尾差</span>
                   )}
-                  {isCustom ? (
+                  {isCustom && !settleView ? (
                     // An emptied input keeps the pinned state; the draft treats "" as auto.
                     <label className="flex w-24 items-center rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-[13px] font-bold">
                       <span aria-hidden="true">$</span>
@@ -275,20 +310,22 @@ export function SplitEditor({
                       ${num(poolShareOf(id))}
                     </span>
                   )}
-                  <button
-                    type="button"
-                    aria-label={isCustom ? `${name(id)}取消固定金額` : `${name(id)}固定金額`}
-                    aria-pressed={isCustom}
-                    onClick={() => (isCustom ? actions.clearCustomShare(id) : actions.setCustomShare(id, String(poolShareOf(id))))}
-                    className={`${smallButton} ${isCustom ? "bg-v2-lake text-v2-on-lake" : "border-[1.5px] border-v2-check text-v2-ink-muted"}`}
-                  >
-                    {isCustom ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
-                  </button>
+                  {!settleView && (
+                    <button
+                      type="button"
+                      aria-label={isCustom ? `${name(id)}取消固定金額` : `${name(id)}固定金額`}
+                      aria-pressed={isCustom}
+                      onClick={() => (isCustom ? actions.clearCustomShare(id) : actions.setCustomShare(id, String(poolShareOf(id))))}
+                      className={`${smallButton} ${isCustom ? "bg-v2-lake text-v2-on-lake" : "border-[1.5px] border-v2-check text-v2-ink-muted"}`}
+                    >
+                      {isCustom ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
+                    </button>
+                  )}
                   <button type="button" aria-label={`${name(id)}不參與共同分攤`} onClick={() => actions.togglePool(id)} className={`${smallButton} bg-v2-danger-soft text-v2-danger-strong`}>
                     <UserMinus className="h-3 w-3" />
                   </button>
                 </div>
-                {showEstimate && (
+                {showLegacyEstimate && (
                   <p
                     data-testid="pool-project-estimate"
                     className="mt-1 break-words pl-[38px] text-[10px] text-v2-ink-muted"
@@ -308,11 +345,20 @@ export function SplitEditor({
             <span className="text-xs text-v2-ink-muted">已選 {derived.splitInput.participantIds.length} 人</span>
             <MatchBadge matches={derived.matches} />
           </div>
-          <SplitEquation draft={draft} currency={currency} />
+          <SplitEquation draft={draft} currency={currency} displayCurrency={displayCurrency} rate={rate} />
         </div>
       )}
 
-      {showBreakdown && <SplitSummary members={members} draft={draft} currency={currency} projectCurrency={projectCurrency} rate={rate} />}
+      {showBreakdown && (
+        <SplitSummary
+          members={members}
+          draft={draft}
+          currency={currency}
+          projectCurrency={projectCurrency}
+          rate={rate}
+          displayCurrency={displayCurrency}
+        />
+      )}
     </section>
   )
 }

@@ -45,6 +45,13 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
   const submitLabel = props.mode === "create" ? `新增支出 · ${amountLabel}` : `儲存變更 · ${amountLabel}`
   const { rate, autoRate, customRate, rateSource, rateInput: exchangeRateInput, rateEditable: isForeign } = derived
   const previewProjectAmount = rate != null ? derived.splitInput.amount * rate : null
+  // Display-only currency flip for the payer and split sections. The draft and
+  // the save payload never change; the user just glances at the settlement
+  // amounts and flips back to edit. The two sections share this state.
+  const [showSettlement, setShowSettlement] = useState(false)
+  const canConvert = props.projectCurrency != null && rate != null && state.currency !== props.projectCurrency
+  const displayCurrency = canConvert && showSettlement ? props.projectCurrency! : state.currency
+  const onDisplayCurrencyChange = (next: string) => setShowSettlement(next === props.projectCurrency)
 
   return (
     <form
@@ -130,6 +137,8 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
         currency={state.currency}
         projectCurrency={props.projectCurrency}
         rate={rate}
+        displayCurrency={displayCurrency}
+        onDisplayCurrencyChange={onDisplayCurrencyChange}
         onTogglePayer={actions.togglePayer}
         onSetAll={actions.setPayersAll}
         onSetAmount={actions.setPayerAmount}
@@ -141,6 +150,8 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
         currency={state.currency}
         projectCurrency={props.projectCurrency}
         rate={rate}
+        displayCurrency={displayCurrency}
+        onDisplayCurrencyChange={onDisplayCurrencyChange}
       />
 
       <div className={SECTION_CARD}>

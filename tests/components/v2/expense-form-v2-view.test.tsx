@@ -120,7 +120,7 @@ describe("ExpenseFormV2View", () => {
     expect(screen.queryByLabelText("匯率換算")).not.toBeInTheDocument()
   })
 
-  it("shows a settlement estimate on each shared-pool and personal-item row for a foreign expense", () => {
+  it("replaces the settlement estimates with a linked currency toggle for a foreign expense", () => {
     const { hook, rerender } = renderForm({
       projectCurrency: "USD",
       previewRateInfo: () => ({ rate: 0.05, source: "live" as const }),
@@ -137,13 +137,79 @@ describe("ExpenseFormV2View", () => {
       hook.result.current.actions.updateItem("a", itemId, "amount", "100")
     })
     rerender()
+    // The ≈ lines give way to a per-section currency toggle.
+    expect(screen.queryByTestId("personal-project-estimate")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("pool-project-estimate")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("payer-project-estimate")).not.toBeInTheDocument()
+    const payer = screen.getByRole("group", { name: "付款成員" })
     const split = screen.getByRole("region", { name: "分攤成員" })
-    // Personal items total 100 JPY → USD 5.00.
-    expect(within(split).getByTestId("personal-project-estimate")).toHaveTextContent("≈ USD 5.00")
-    // Remaining 900 split over 2 members → 450 JPY each → USD 22.50.
-    for (const estimate of within(split).getAllByTestId("pool-project-estimate")) {
-      expect(estimate).toHaveTextContent("≈ USD 22.50")
-    }
+    expect(within(payer).getByRole("group", { name: "顯示幣別" })).toBeInTheDocument()
+    expect(within(split).getByRole("group", { name: "顯示幣別" })).toBeInTheDocument()
+  })
+
+  it("switches both sections to the settlement currency when either toggle is used", () => {
+    const { hook, rerender } = renderForm({
+      projectCurrency: "USD",
+      previewRateInfo: () => ({ rate: 0.05, source: "live" as const }),
+    })
+    act(() => {
+      hook.result.current.actions.setAmount("1000")
+      hook.result.current.actions.setCurrency("JPY")
+    })
+    rerender()
+    const payer = screen.getByRole("group", { name: "付款成員" })
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    // Original currency by default: JPY has no decimals.
+    expect(within(payer).getByLabelText("小雨的付款金額")).toHaveTextContent("$1,000")
+    expect(within(split).getByLabelText("小雨的分攤金額")).toHaveTextContent("$500")
+    // Flipping the split toggle also flips the payer section (they are linked).
+    fireEvent.click(within(split).getByRole("button", { name: "顯示 USD" }))
+    rerender()
+    // 1000 JPY × 0.05 = 50 USD; each of the two members holds 25 USD.
+    expect(within(payer).getByLabelText("小雨的付款金額")).toHaveTextContent("$50.00")
+    expect(within(split).getByLabelText("小雨的分攤金額")).toHaveTextContent("$25.00")
+    // Flipping back restores the original currency.
+    fireEvent.click(within(payer).getByRole("button", { name: "顯示 JPY" }))
+    rerender()
+    expect(within(split).getByLabelText("小雨的分攤金額")).toHaveTextContent("$500")
+  })
+
+  it("makes amount fields read-only while the settlement currency is shown", () => {
+    const { hook, rerender } = renderForm({
+      projectCurrency: "USD",
+      previewRateInfo: () => ({ rate: 0.05, source: "live" as const }),
+    })
+    act(() => {
+      hook.result.current.actions.setAmount("1000")
+      hook.result.current.actions.setCurrency("JPY")
+    })
+    rerender()
+    const payer = screen.getByRole("group", { name: "付款成員" })
+    fireEvent.click(within(payer).getByRole("button", { name: /小雨的付款金額均分/ }))
+    rerender()
+    expect(within(payer).getByLabelText("小雨的付款金額").tagName).toBe("INPUT")
+    fireEvent.click(within(payer).getByRole("button", { name: "顯示 USD" }))
+    rerender()
+    expect(within(payer).getByLabelText("小雨的付款金額").tagName).toBe("SPAN")
+    expect(within(payer).getByLabelText("小雨的付款金額")).toHaveTextContent("$50.00")
+    expect(within(payer).queryByRole("button", { name: /小雨的付款金額/ })).not.toBeInTheDocument()
+  })
+
+  it("hides the remainder annotation while the settlement currency is shown", () => {
+    const { hook, rerender } = renderForm({
+      projectCurrency: "USD",
+      previewRateInfo: () => ({ rate: 0.05, source: "live" as const }),
+    })
+    act(() => {
+      hook.result.current.actions.setAmount("1001")
+      hook.result.current.actions.setCurrency("JPY")
+    })
+    rerender()
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    expect(within(split).getByText("尾差")).toBeInTheDocument()
+    fireEvent.click(within(split).getByRole("button", { name: "顯示 USD" }))
+    rerender()
+    expect(within(split).queryByText("尾差")).not.toBeInTheDocument()
   })
 
   it("hides the split settlement estimates for a same-currency expense", () => {

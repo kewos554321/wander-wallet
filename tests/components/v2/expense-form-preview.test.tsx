@@ -99,11 +99,13 @@ describe("ExpenseFormV2 conversion preview", () => {
     expect(screen.getByText("自訂匯率")).toBeInTheDocument()
   })
 
-  it("shows a per-payer ≈ settlement estimate in the payer section", async () => {
+  it("switches the payer section to the settlement currency", async () => {
     render(<ExpenseFormV2 projectId="p1" mode="create" />)
     fireEvent.change(await screen.findByLabelText("金額"), { target: { value: "1000" } })
     fireEvent.change(screen.getByLabelText("幣別"), { target: { value: "TWD" } })
     const group = await screen.findByRole("group", { name: "付款成員" })
-    await waitFor(() => expect(within(group).getByText("≈ USD 31.75")).toBeInTheDocument())
+    // 1000 TWD / 31.5 = 31.746 → 31.75 USD.
+    fireEvent.click(await within(group).findByRole("button", { name: "顯示 USD" }))
+    await waitFor(() => expect(within(group).getByLabelText("小雨的付款金額")).toHaveTextContent("$31.75"))
   })
 })
