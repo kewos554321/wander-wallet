@@ -2,15 +2,16 @@
 
 import { ChevronDown } from "lucide-react"
 import { CurrencySelect } from "@/components/ui/currency-select"
-import { SUPPORTED_CURRENCIES, type CurrencyCode } from "@/lib/constants/currencies"
-
-// A9b shows the short name (台幣); A13/A14 show the full name (新台幣) (D22).
-const SHORT_NAMES: Record<string, string> = { TWD: "台幣" }
+import {
+  SUPPORTED_CURRENCIES,
+  CURRENCY_SHORT_NAMES,
+  type CurrencyCode,
+} from "@/lib/constants/currencies"
 
 export function currencyLabel(code: string, short = false): string {
   const info = SUPPORTED_CURRENCIES.find((c) => c.code === code)
   if (!info) return code
-  if (short) return `${info.code} ${SHORT_NAMES[info.code] ?? info.name}`
+  if (short) return `${info.code} ${CURRENCY_SHORT_NAMES[info.code] ?? info.name}`
   return `${info.code} ${info.name}`
 }
 

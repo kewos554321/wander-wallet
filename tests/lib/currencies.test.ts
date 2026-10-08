@@ -5,6 +5,7 @@ import {
   getCurrencyInfo,
   formatCurrency,
   getCurrencyDecimals,
+  CURRENCY_SHORT_NAMES,
 } from "@/lib/constants/currencies"
 
 describe("SUPPORTED_CURRENCIES", () => {
@@ -17,8 +18,8 @@ describe("SUPPORTED_CURRENCIES", () => {
     expect(codes).toContain("KRW")
   })
 
-  it("should have 13 supported currencies", () => {
-    expect(SUPPORTED_CURRENCIES).toHaveLength(13)
+  it("should have 19 supported currencies", () => {
+    expect(SUPPORTED_CURRENCIES).toHaveLength(19)
   })
 
   it("should have correct structure for each currency", () => {
@@ -33,14 +34,31 @@ describe("SUPPORTED_CURRENCIES", () => {
   })
 
   it("should mark zero-decimal currencies correctly", () => {
-    const zeroDecimalCurrencies = ["TWD", "JPY", "KRW", "CNY", "THB", "VND"]
+    const zeroDecimalCurrencies = ["TWD", "JPY", "KRW", "VND"]
     zeroDecimalCurrencies.forEach((code) => {
-      const currency = SUPPORTED_CURRENCIES.find((c) => c.code === code)
-      expect(currency).toBeDefined()
-      if (currency && "decimals" in currency) {
-        expect(currency.decimals).toBe(0)
-      }
+      expect(getCurrencyDecimals(code)).toBe(0)
     })
+  })
+
+  it("should include the added common currencies", () => {
+    const codes = SUPPORTED_CURRENCIES.map((c) => c.code)
+    expect(codes).toEqual(
+      expect.arrayContaining(["CHF", "NZD", "MYR", "PHP", "AED", "TRY"]),
+    )
+  })
+})
+
+describe("CURRENCY_SHORT_NAMES", () => {
+  it("provides short names for common currencies", () => {
+    expect(CURRENCY_SHORT_NAMES.CHF).toBe("瑞郎")
+    expect(CURRENCY_SHORT_NAMES.TWD).toBe("台幣")
+  })
+})
+
+describe("CNY/THB decimals", () => {
+  it("displays 2 decimals for CNY and THB", () => {
+    expect(getCurrencyDecimals("CNY")).toBe(2)
+    expect(getCurrencyDecimals("THB")).toBe(2)
   })
 })
 
