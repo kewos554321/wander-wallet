@@ -3,6 +3,7 @@
 import { CornerRightDown, Info, Pin, PinOff, Plus, UserMinus, X } from "lucide-react"
 import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
 import { fromMinorUnits } from "@/lib/currency-conversion"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { toMoneyInput } from "@/lib/money-input"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import type { DraftMember } from "./use-expense-draft"
@@ -182,13 +183,21 @@ export function SplitEditor({
         <p className="m-0 flex items-center gap-1.5 text-xs font-semibold text-v2-ink-muted">
           共同分攤 <span className="font-bold text-v2-ink">（{state.personalMode ? "剩餘 " : ""}${num(Math.max(0, derived.splitInput.amount - derived.personalTotal))}）</span>
           {derived.remainderMembers.length > 0 && (
-            <span
-              title="無法整除之尾差，依公平原則輪替承擔"
-              className="inline-flex items-center gap-0.5 rounded-full bg-v2-lake-tint px-1.5 py-px text-[10px] font-bold text-v2-lake"
-            >
-              <Info className="h-3 w-3" aria-hidden="true" />
-              尾差 ${formatAmount(fromMinorUnits(derived.remainderMinor, currency), currency)}
-            </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="尾差說明"
+                  className="inline-flex items-center gap-0.5 rounded-full bg-v2-lake-tint px-1.5 py-px text-[10px] font-bold text-v2-lake"
+                >
+                  <Info className="h-3 w-3" aria-hidden="true" />
+                  尾差 ${formatAmount(fromMinorUnits(derived.remainderMinor, currency), currency)}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-60 text-xs leading-relaxed">
+                除不盡的零頭會依公平原則輪替，由不同成員承擔，長期平均。
+              </PopoverContent>
+            </Popover>
           )}
         </p>
         <button type="button" onClick={() => actions.setPoolAll(!allInPool)} className="shrink-0 text-xs font-bold text-v2-lake">

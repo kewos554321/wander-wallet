@@ -525,6 +525,14 @@ describe("ExpenseFormV2View", () => {
     expect(within(split).getByText("尾差")).toBeInTheDocument()
   })
 
+  it("explains the remainder rule when the chip is opened", async () => {
+    const { hook, rerender } = renderForm({ projectCurrency: "TWD" })
+    act(() => hook.result.current.actions.setAmount("101"))
+    rerender()
+    fireEvent.click(screen.getByRole("button", { name: "尾差說明" }))
+    expect(await screen.findByText(/除不盡的零頭會依公平原則輪替/)).toBeInTheDocument()
+  })
+
   it("does not note a remainder when the pool divides evenly", () => {
     const { hook, rerender } = renderForm({ projectCurrency: "TWD" })
     act(() => hook.result.current.actions.setAmount("100"))
