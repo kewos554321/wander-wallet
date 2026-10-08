@@ -194,7 +194,12 @@ export function SplitEditor({
                   尾差 ${formatAmount(fromMinorUnits(derived.remainderMinor, currency), currency)}
                 </button>
               </PopoverTrigger>
-              <PopoverContent align="start" className="w-60 text-xs leading-relaxed">
+              <PopoverContent
+                align="center"
+                sideOffset={6}
+                collisionPadding={12}
+                className="w-auto max-w-[15rem] text-xs leading-relaxed"
+              >
                 除不盡的零頭會依公平原則輪替，由不同成員承擔，長期平均。
               </PopoverContent>
             </Popover>
