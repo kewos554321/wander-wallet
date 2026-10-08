@@ -71,6 +71,28 @@ describe("ExpenseFormV2View", () => {
     expect(screen.getByRole("button", { name: "新增支出 · TWD 1,280" })).toBeInTheDocument()
   })
 
+  it("shows the conversion checkpoint before the payer section for a foreign expense", () => {
+    const { hook, rerender } = renderForm({
+      projectCurrency: "TWD",
+      previewRateInfo: () => ({ rate: 0.2135, source: "live" as const }),
+    })
+    act(() => {
+      hook.result.current.actions.setAmount("1000")
+      hook.result.current.actions.setCurrency("JPY")
+    })
+    rerender()
+    const note = screen.getByLabelText("匯率換算")
+    expect(note).toHaveTextContent("1 JPY = 0.2135 TWD")
+    expect(note).toHaveTextContent("以下以結算幣別 TWD 分攤與付款")
+  })
+
+  it("hides the conversion checkpoint when the expense currency is the settlement currency", () => {
+    const { hook, rerender } = renderForm({ projectCurrency: "TWD" })
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    expect(screen.queryByLabelText("匯率換算")).not.toBeInTheDocument()
+  })
+
   it("selects a category and toggles a payer on", () => {
     const { hook, rerender } = renderForm()
     fireEvent.click(screen.getByRole("button", { name: "交通" }))

@@ -15,6 +15,7 @@ import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { AmountCard } from "./amount-card"
 import { CalculatorPad } from "./calculator-pad"
 import { CategoryPicker } from "./category-picker"
+import { ConversionCheckpoint } from "./conversion-checkpoint"
 import { PayerPicker } from "./payer-picker"
 import { SplitEditor } from "./split-editor"
 import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
@@ -126,6 +127,9 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
         />
       </div>
       <CategoryPicker value={state.category} onChange={actions.setCategory} />
+      {isForeign && (
+        <ConversionCheckpoint currency={state.currency} projectCurrency={props.projectCurrency!} rate={rate} />
+      )}
       <PayerPicker
         members={props.members}
         payerIds={state.payerIds}
