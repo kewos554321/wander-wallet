@@ -52,7 +52,7 @@ describe("ExpenseFormV2", () => {
     mockGetCurrentLocation.mockReset().mockResolvedValue(null)
   })
 
-  it("creates with the current user as payer and an equal split", async () => {
+  it("creates with the current user as the sole payer and participant", async () => {
     render(<ExpenseFormV2 projectId="p1" mode="create" />)
     fireEvent.change(await screen.findByLabelText("金額"), { target: { value: "100" } })
     fireEvent.click(screen.getByRole("button", { name: "新增支出 · TWD 100" }))
@@ -60,10 +60,9 @@ describe("ExpenseFormV2", () => {
     const req = mockSave.mock.calls[0][0]
     expect(req.mode).toBe("create")
     expect(req.payload.payers).toEqual([{ memberId: "a", amount: 100 }])
-    expect(req.payload.participants).toEqual([
-      { memberId: "a", shareAmount: 50 },
-      { memberId: "b", shareAmount: 50 },
-    ])
+    // A new expense starts with only the current user sharing it; co-splitters
+    // are added explicitly.
+    expect(req.payload.participants).toEqual([{ memberId: "a", shareAmount: 100 }])
     expect(req.payload.splitDetail).toBeNull()
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/projects/p1/expenses"))
   })

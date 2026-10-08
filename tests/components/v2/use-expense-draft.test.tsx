@@ -14,20 +14,27 @@ function setup(extra: Partial<DraftInit> = {}) {
 }
 
 describe("useExpenseDraft", () => {
-  it("starts with everyone in the pool and an equal split", () => {
+  it("starts with only the current user in the pool and split", () => {
     const { result } = setup()
     act(() => result.current.actions.setAmount("300"))
-    expect(result.current.state.pool).toEqual(["a", "b", "c"])
-    expect(result.current.derived.shares.map((s) => s.shareAmount)).toEqual([100, 100, 100])
+    expect(result.current.state.pool).toEqual(["a"])
+    expect(result.current.derived.shares.map((s) => s.shareAmount)).toEqual([300])
     expect(result.current.derived.splitDetail).toBeNull()
     expect(result.current.derived.matches).toBe(true)
     expect(result.current.derived.error).toBeNull()
+  })
+
+  it("falls back to the first member for the pool when no payer is given", () => {
+    const { result } = setup({ paidBy: "" })
+    expect(result.current.state.pool).toEqual(["a"])
   })
 
   it("adds personal items and builds splitDetail", () => {
     const { result } = setup()
     act(() => {
       result.current.actions.setAmount("300")
+      result.current.actions.togglePool("b")
+      result.current.actions.togglePool("c")
       result.current.actions.setPersonalMode(true)
       result.current.actions.togglePersonalMember("b")
     })
@@ -54,7 +61,7 @@ describe("useExpenseDraft", () => {
     const { result } = setup()
     act(() => {
       result.current.actions.setAmount("100")
-      result.current.actions.togglePool("c")
+      result.current.actions.togglePool("b")
       result.current.actions.setPersonalMode(true)
       result.current.actions.togglePersonalMember("c")
     })
@@ -75,6 +82,8 @@ describe("useExpenseDraft", () => {
     const { result } = setup()
     act(() => {
       result.current.actions.setAmount("100")
+      result.current.actions.togglePool("b")
+      result.current.actions.togglePool("c")
       result.current.actions.setCustomShare("a", "40")
     })
     expect(result.current.derived.autoRemaining).toBe(60)

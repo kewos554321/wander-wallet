@@ -73,7 +73,10 @@ function initialState(init: DraftInit) {
       location: { location: null as string | null, latitude: null as number | null, longitude: null as number | null },
       image: { image: null as string | null, pendingFile: null as File | null, preview: null as string | null },
       notifyLine: true,
-      pool: init.members.map((m) => m.id),
+      // Start aligned with the payer (only the current user) so a new expense
+      // is not silently split across the whole project; add co-splitters via
+      // the member pills or 全選.
+      pool: init.paidBy ? [init.paidBy] : init.members.slice(0, 1).map((m) => m.id),
       personalMode: false,
       personalItems: {} as Record<string, DraftItem[]>,
       personalMembers: [] as string[],

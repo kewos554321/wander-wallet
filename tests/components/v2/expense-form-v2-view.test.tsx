@@ -25,13 +25,26 @@ interface SubmittedDraft {
   splitDetail: SplitDetail | null
 }
 
-function renderForm(overrides: Partial<Parameters<typeof ExpenseFormV2View>[0]> = {}) {
+function renderForm(
+  overrides: Partial<Parameters<typeof ExpenseFormV2View>[0]> = {},
+  { seedPool = true }: { seedPool?: boolean } = {},
+) {
   const hook = renderHook(() =>
     useExpenseDraft(
       { members, currency: "TWD", paidBy: "a", projectCurrency: overrides.projectCurrency },
       overrides.previewRateInfo,
     ),
   )
+  // A new expense now starts with only the current user in the shared pool.
+  // These view tests exercise a multi-member split, so seed the rest (as if the
+  // user tapped 全選); tests asserting the untouched default pass seedPool:false.
+  if (seedPool) {
+    act(() => {
+      for (const m of members) {
+        if (!hook.result.current.state.pool.includes(m.id)) hook.result.current.actions.togglePool(m.id)
+      }
+    })
+  }
   // Snapshot the draft at the moment submit fires so we assert the payload,
   // not just that the no-arg onSubmit callback ran.
   const submissions: SubmittedDraft[] = []
@@ -74,6 +87,15 @@ describe("ExpenseFormV2View", () => {
     expect(screen.getByRole("button", { name: "餐飲" })).toBeInTheDocument()
     expect(screen.getByRole("checkbox", { name: "小雨" })).toBeChecked()
     expect(screen.getByRole("button", { name: "新增支出 · TWD 1,280" })).toBeInTheDocument()
+  })
+
+  it("starts a new expense with only the current user in the split pool", () => {
+    const { hook, rerender } = renderForm({}, { seedPool: false })
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    expect(hook.result.current.state.pool).toEqual(["a"])
+    expect(within(split).getByText("已選 1 人")).toBeInTheDocument()
   })
 
   it("shows the conversion checkpoint before the payer section for a foreign expense", () => {
