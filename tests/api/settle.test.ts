@@ -22,9 +22,17 @@ vi.mock("@/lib/auth", () => ({
   getAuthUser: vi.fn(),
 }))
 
+vi.mock("@/lib/services/exchange-rate", () => ({
+  convertCurrency: vi.fn(),
+  getExchangeRate: vi.fn(),
+  getExchangeRates: vi.fn(),
+  isUsingFallbackRates: vi.fn().mockReturnValue(false),
+}))
+
 import { GET } from "@/app/api/projects/[id]/settle/route"
 import { prisma } from "@/lib/db"
 import { getAuthUser } from "@/lib/auth"
+import { convertCurrency } from "@/lib/services/exchange-rate"
 
 const mockUser = {
   id: "user-123",
@@ -133,6 +141,54 @@ describe("GET /api/projects/[id]/settle", () => {
 
     expect(response.status).toBe(401)
     expect(data.error).toBe("未授權")
+  })
+
+  it("uses stored settlement amounts instead of live conversion", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue({
+      currency: "USD",
+      customRates: null,
+      exchangeRatePrecision: 2,
+    } as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue(mockMembers as never)
+    vi.mocked(convertCurrency).mockResolvedValue({ convertedAmount: 1, exchangeRate: 0.03 })
+    vi.mocked(prisma.expense.findMany).mockResolvedValue([
+      {
+        id: "e1",
+        amount: 1000,
+        currency: "TWD",
+        description: "d",
+        category: null,
+        deletedAt: null,
+        splitDetail: null,
+        payers: [
+          {
+            id: "p1",
+            memberId: "member-123",
+            amount: 1000,
+            amountProject: 3172,
+            member: { id: "member-123", displayName: "User 1", user: { image: null } },
+          },
+        ],
+        participants: [
+          {
+            id: "pa1",
+            memberId: "member-123",
+            shareAmount: 1000,
+            shareAmountProject: 3172,
+            member: { id: "member-123", displayName: "User 1", user: { image: null } },
+          },
+        ],
+      },
+    ] as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123/settle")
+    const response = await GET(req, { params: createParams("project-123") })
+    const data = await response.json()
+
+    const balance = data.balances.find((b: { memberId: string }) => b.memberId === "member-123")
+    expect(balance.balance).toBe(0)
   })
 
   it("should return 403 if user is not a project member", async () => {

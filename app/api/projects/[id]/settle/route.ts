@@ -3,6 +3,7 @@ import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { convertCurrency } from "@/lib/services/exchange-rate"
+import { fromMinorUnits } from "@/lib/currency-conversion"
 
 interface Balance {
   memberId: string
@@ -261,7 +262,9 @@ export async function GET(
 
       if (expense.payers.length > 0) {
         for (const payer of expense.payers) {
-          const converted = roundToPrecision(Number(payer.amount) * rate, precision)
+          const converted = payer.amountProject != null
+            ? fromMinorUnits(Number(payer.amountProject), projectCurrency)
+            : roundToPrecision(Number(payer.amount) * rate, precision)
           paidAmount += converted
           const payerBalance = balanceMap.get(payer.memberId)
           if (payerBalance) {
@@ -295,7 +298,9 @@ export async function GET(
 
       // 扣除每個參與者應該分擔的金額
       expense.participants.forEach((participant) => {
-        const shareAmount = roundToPrecision(Number(participant.shareAmount) * rate, precision)
+        const shareAmount = participant.shareAmountProject != null
+          ? fromMinorUnits(Number(participant.shareAmountProject), projectCurrency)
+          : roundToPrecision(Number(participant.shareAmount) * rate, precision)
         totalShared += shareAmount
         const participantBalance = balanceMap.get(participant.memberId)
         if (participantBalance) {
