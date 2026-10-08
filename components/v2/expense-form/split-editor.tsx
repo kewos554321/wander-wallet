@@ -1,6 +1,6 @@
 "use client"
 
-import { CornerRightDown, Pin, PinOff, Plus, UserMinus, X } from "lucide-react"
+import { CornerRightDown, Info, Pin, PinOff, Plus, UserMinus, X } from "lucide-react"
 import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
 import { fromMinorUnits } from "@/lib/currency-conversion"
 import { toMoneyInput } from "@/lib/money-input"
@@ -179,8 +179,14 @@ export function SplitEditor({
       )}
 
       <div className="mb-2.5 mt-3 flex items-center justify-between gap-2">
-        <p className="m-0 text-xs font-semibold text-v2-ink-muted">
+        <p className="m-0 flex items-center gap-1.5 text-xs font-semibold text-v2-ink-muted">
           共同分攤 <span className="font-bold text-v2-ink">（{state.personalMode ? "剩餘 " : ""}${num(Math.max(0, derived.splitInput.amount - derived.personalTotal))}）</span>
+          {derived.remainderMembers.length > 0 && (
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-v2-lake-tint px-1.5 py-px text-[10px] font-bold text-v2-lake">
+              <Info className="h-3 w-3" aria-hidden="true" />
+              尾差 ${formatAmount(fromMinorUnits(derived.remainderMinor, currency), currency)}
+            </span>
+          )}
         </p>
         <button type="button" onClick={() => actions.setPoolAll(!allInPool)} className="shrink-0 text-xs font-bold text-v2-lake">
           {allInPool ? "取消全選" : "全選"}
@@ -277,13 +283,6 @@ export function SplitEditor({
             )
           })}
         </div>
-      )}
-
-      {derived.remainderMembers.length > 0 && (
-        <p className="mt-2 text-[11px] text-v2-ink-muted">
-          除不盡，尾差 ${formatAmount(fromMinorUnits(derived.remainderMinor, currency), currency)} 由{" "}
-          {derived.remainderMembers.map((id) => name(id)).join("、")} 承擔
-        </p>
       )}
 
       {!showBreakdown && (
