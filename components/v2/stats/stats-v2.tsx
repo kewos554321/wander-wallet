@@ -15,7 +15,7 @@ export function StatsV2({ projectId }: { projectId: string }) {
   const { project, loading, joinInfo, joining, joinProject, claimMember, summary, convert } = useProjectOverview(projectId)
   const stats = useMemo(() => {
     if (!project) return null
-    const base = computeProjectStats(project, convert)
+    const base = computeProjectStats(project, convert, project.currency)
     const imageById = new Map(project.members.map((m) => [m.id, m.user?.image ?? null]))
     return { ...base, members: base.members.map((m) => ({ ...m, image: imageById.get(m.id) ?? null })) }
   }, [project, convert])

@@ -66,6 +66,28 @@ describe("computeProjectStats", () => {
     expect(stats.members[0].share).toBe(200)
   })
 
+  it("prefers stored settlement amounts over the convert callback", () => {
+    const input: StatsInput = {
+      members,
+      expenses: [
+        {
+          amount: 1000,
+          currency: "TWD",
+          amountProject: 3172,
+          category: "food",
+          expenseDate: day(11, 12),
+          createdAt: day(11, 12),
+          payers: [{ memberId: "me", amount: 1000, amountProject: 3172 }],
+          participants: [{ memberId: "me", shareAmount: 1000, shareAmountProject: 3172 }],
+        },
+      ],
+    }
+    const stats = computeProjectStats(input, () => 999, "USD")
+    expect(stats.total).toBeCloseTo(31.72)
+    expect(stats.members[0].paid).toBeCloseTo(31.72)
+    expect(stats.members[0].share).toBeCloseTo(31.72)
+  })
+
   it("keeps only the last 7 expense days", () => {
     const expenses = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => expense(10, "food", day(11, d), "me", { me: 10 }))
     const stats = computeProjectStats({ members, expenses }, identity)

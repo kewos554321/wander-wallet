@@ -153,7 +153,7 @@ export function StatsV1({ projectId: id }: { projectId: string }) {
   }
 
   const stats = useMemo(
-    () => (project ? computeProjectStats(project, convertToProjectCurrency) : null),
+    () => (project ? computeProjectStats(project, convertToProjectCurrency, project.currency) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [project, exchangeRates]
   )

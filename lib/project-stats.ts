@@ -1,14 +1,17 @@
 // lib/project-stats.ts
+import { fromMinorUnits } from "@/lib/currency-conversion"
+
 export interface StatsInput {
   members: { id: string; displayName: string }[]
   expenses: {
     amount: number
     currency: string
+    amountProject?: number | null
     category: string | null
     expenseDate?: string
     createdAt: string
-    payers: { memberId: string; amount: number }[]
-    participants: { memberId: string; shareAmount: number }[]
+    payers: { memberId: string; amount: number; amountProject?: number | null }[]
+    participants: { memberId: string; shareAmount: number; shareAmountProject?: number | null }[]
   }[]
 }
 
@@ -35,8 +38,12 @@ const DAILY_LIMIT = 7
 
 export function computeProjectStats(
   input: StatsInput,
-  convert: (amount: number, currency: string) => number
+  convert: (amount: number, currency: string) => number,
+  projectCurrency?: string
 ): { categories: CategoryStat[]; members: MemberStat[]; daily: DailyStat[]; total: number } {
+  const projectAmount = (projectMinor: number | null | undefined, amount: number, currency: string) =>
+    projectMinor != null && projectCurrency ? fromMinorUnits(projectMinor, projectCurrency) : convert(amount, currency)
+
   const categoryTotals = new Map<string, number>()
   const dailyTotals = new Map<string, { amount: number; dayStart: number; label: string }>()
   const paid = new Map<string, number>()
@@ -45,7 +52,7 @@ export function computeProjectStats(
 
   for (const expense of input.expenses) {
     const amount = Number(expense.amount)
-    const converted = convert(amount, expense.currency)
+    const converted = projectAmount(expense.amountProject, amount, expense.currency)
     total += converted
 
     const category = expense.category || "other"
@@ -62,12 +69,19 @@ export function computeProjectStats(
     })
 
     for (const payer of expense.payers) {
-      paid.set(payer.memberId, (paid.get(payer.memberId) ?? 0) + convert(Number(payer.amount), expense.currency))
+      paid.set(
+        payer.memberId,
+        (paid.get(payer.memberId) ?? 0) + projectAmount(payer.amountProject, Number(payer.amount), expense.currency),
+      )
     }
-    if (amount !== 0) {
-      for (const p of expense.participants) {
-        share.set(p.memberId, (share.get(p.memberId) ?? 0) + converted * (Number(p.shareAmount) / amount))
-      }
+    for (const p of expense.participants) {
+      const shareValue =
+        p.shareAmountProject != null && projectCurrency
+          ? fromMinorUnits(p.shareAmountProject, projectCurrency)
+          : amount !== 0
+            ? converted * (Number(p.shareAmount) / amount)
+            : 0
+      share.set(p.memberId, (share.get(p.memberId) ?? 0) + shareValue)
     }
   }
 
