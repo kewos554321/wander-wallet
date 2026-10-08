@@ -50,7 +50,17 @@ export function allocate(
   }
 
   const remainder = totalMinor - assigned
-  const order = effective
+  // Only members whose exact share was rounded down have a claim to a unit;
+  // among them the lowest discrepancy wins (ties by original order). This keeps
+  // every allocation within [floor(exact), ceil(exact)].
+  const fractional = effective.filter((w) => {
+    const exact = (totalMinor * w.weight) / effTotal
+    return w.weight > 0 && exact > Math.floor(exact)
+  })
+  const positive = effective.filter((w) => w.weight > 0)
+  const orderSource =
+    fractional.length > 0 ? fractional : positive.length > 0 ? positive : effective
+  const order = orderSource
     .map((w, i) => ({ id: w.id, i, d: discrepancy.get(w.id) ?? 0 }))
     .sort((a, b) => a.d - b.d || a.i - b.i)
 

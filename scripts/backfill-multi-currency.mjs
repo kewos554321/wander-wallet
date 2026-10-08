@@ -46,13 +46,18 @@ function allocate(totalMinor, weights, ledger) {
     alloc.set(w.id, v)
     assigned += v
   }
-  const order = eff
+  const fractional = eff.filter((w) => {
+    const exact = (totalMinor * w.weight) / effTotal
+    return w.weight > 0 && exact > Math.floor(exact)
+  })
+  const positive = eff.filter((w) => w.weight > 0)
+  const orderSource = (fractional.length > 0 ? fractional : positive.length > 0 ? positive : eff)
     .map((w, i) => ({ id: w.id, i, d: ledger.get(w.id) ?? 0 }))
     .sort((a, b) => a.d - b.d || a.i - b.i)
   let remainder = totalMinor - assigned
   let k = 0
-  while (remainder > 0 && order.length > 0) {
-    const id = order[k % order.length].id
+  while (remainder > 0 && orderSource.length > 0) {
+    const id = orderSource[k % orderSource.length].id
     alloc.set(id, alloc.get(id) + 1)
     ledger.set(id, (ledger.get(id) ?? 0) + 1)
     remainder -= 1
