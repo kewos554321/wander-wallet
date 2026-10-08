@@ -125,7 +125,7 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
       </div>
       <CategoryPicker value={state.category} onChange={actions.setCategory} />
       {isForeign && (
-        <ConversionCheckpoint currency={state.currency} projectCurrency={props.projectCurrency!} rate={rate} />
+        <ConversionCheckpoint projectCurrency={props.projectCurrency!} />
       )}
       <PayerPicker
         members={props.members}

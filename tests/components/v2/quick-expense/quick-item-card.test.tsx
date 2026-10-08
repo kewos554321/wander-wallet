@@ -214,7 +214,7 @@ describe("QuickItemCard", () => {
     createObjectURL.mockRestore()
   })
 
-  it("shows the two-line rate explanation and the conversion checkpoint for a foreign item", () => {
+  it("shows the conversion checkpoint for a foreign item", () => {
     setup(
       { currency: "JPY", amount: "1000" },
       { projectCurrency: "USD", previewRateInfo: () => ({ rate: 0.0067, source: "live" as const }) }
@@ -222,7 +222,6 @@ describe("QuickItemCard", () => {
     expect(screen.getByTestId("amount-conversion")).toHaveTextContent("≈ USD 6.70")
     expect(screen.getByTestId("rate-source")).toHaveTextContent("即時匯率")
     const note = screen.getByLabelText("匯率換算")
-    expect(note).toHaveTextContent("1 JPY = 0.0067 USD")
     expect(note).toHaveTextContent("結算會先換匯，再以 USD 分攤")
   })
 

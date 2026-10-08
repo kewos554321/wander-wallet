@@ -174,7 +174,7 @@ export function QuickItemCard({ item, members, onChange, projectCurrency, previe
       <CategoryPicker value={item.category} onChange={(c) => onChange({ category: c as QuickItem["category"] })} />
 
       {isForeign && (
-        <ConversionCheckpoint currency={item.currency} projectCurrency={projectCurrency!} rate={rate} />
+        <ConversionCheckpoint projectCurrency={projectCurrency!} />
       )}
 
       <PayerPicker

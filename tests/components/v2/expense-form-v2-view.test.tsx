@@ -107,7 +107,6 @@ describe("ExpenseFormV2View", () => {
     })
     rerender()
     const note = screen.getByLabelText("匯率換算")
-    expect(note).toHaveTextContent("1 JPY = 0.2135 TWD")
     expect(note).toHaveTextContent("結算會先換匯，再以 TWD 分攤")
   })
 
