@@ -106,6 +106,6 @@ describe("ExpenseFormV2 conversion preview", () => {
     const group = await screen.findByRole("group", { name: "付款成員" })
     // 1000 TWD / 31.5 = 31.746 → 31.75 USD.
     fireEvent.click(await within(group).findByRole("button", { name: "顯示 USD" }))
-    await waitFor(() => expect(within(group).getByLabelText("小雨的付款金額")).toHaveTextContent("$31.75"))
+    await waitFor(() => expect(within(group).getByLabelText("小雨的付款金額")).toHaveTextContent("≈$31.75"))
   })
 })

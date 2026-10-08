@@ -80,12 +80,15 @@ export function SplitEquation({
   const viewCurrency = displayCurrency ?? currency
   const settleView = displayCurrency != null && displayCurrency !== currency && rate != null
   const num = (n: number) => formatAmount(settleView ? roundMajorToMinor(n * rate!, viewCurrency) : n, viewCurrency)
+  const money = (n: number) => `$${num(n)}`
+  // Only the reconciled result is an approximation worth flagging.
+  const approx = (n: number) => `${settleView ? "≈" : ""}$${num(n)}`
   const sharedTotal = Math.round((derived.splitInput.amount - derived.personalTotal) * 100) / 100
   const sharesSum = derived.shares.reduce((s, x) => s + x.shareAmount, 0)
-  const personalPart = state.personalMode ? `個人項目 $${num(derived.personalTotal)}（${derived.itemCount} 項）＋ ` : ""
+  const personalPart = state.personalMode ? `個人項目 ${money(derived.personalTotal)}（${derived.itemCount} 項）＋ ` : ""
   return (
     <p className="mt-2 break-words text-xs leading-normal text-v2-ink-muted">
-      {personalPart}共同分攤 ${num(sharedTotal)}（{state.pool.length} 人）= ${num(sharesSum)} / ${num(derived.splitInput.amount)}
+      {personalPart}共同分攤 {money(sharedTotal)}（{state.pool.length} 人）= {approx(sharesSum)} / {approx(derived.splitInput.amount)}
     </p>
   )
 }
@@ -113,7 +116,10 @@ export function SplitSummary({
 
   const viewCurrency = displayCurrency ?? currency
   const settleView = displayCurrency != null && displayCurrency !== currency && rate != null
-  const money = (n: number) => `$${formatAmount(settleView ? roundMajorToMinor(n * rate!, viewCurrency) : n, viewCurrency)}`
+  const view = (n: number) => (settleView ? roundMajorToMinor(n * rate!, viewCurrency) : n)
+  const money = (n: number) => `$${formatAmount(view(n), viewCurrency)}`
+  // ≈ flags only the key settlement totals: each member's 小計 and the 合計 row.
+  const approx = (n: number) => `${settleView ? "≈" : ""}$${formatAmount(view(n), viewCurrency)}`
   const rows = buildSummaryRows(members, draft)
   const visibleRows = rows.filter((r) => r.total !== 0)
   if (visibleRows.length === 0) return null
@@ -148,7 +154,7 @@ export function SplitSummary({
               <span role="cell" className={`${cell} ${r.personal ? "" : "text-v2-ink-subtle"}`}>{money(r.personal)}</span>
               <span role="cell" className={`${cell} ${r.pool ? "" : "text-v2-ink-subtle"}`}>{money(r.pool)}</span>
               <span role="cell" className={`${cell} font-bold`}>
-                <span className="block">{money(r.total)}</span>
+                <span className="block">{approx(r.total)}</span>
                 {displayCurrency == null && projectCurrency && rate != null && currency !== projectCurrency && (
                   <span className="block text-[10px] font-normal text-v2-ink-muted">
                     ≈ {formatCurrency(r.total * rate, projectCurrency)}
@@ -159,9 +165,9 @@ export function SplitSummary({
           ))}
           <div role="row" className={`${cols} border-t border-v2-lake-border bg-v2-lake-tint py-2.5 font-bold`}>
             <span role="rowheader" className="text-left text-[13px]">合計</span>
-            <span role="cell" className={cell}>{money(sum("personal"))}</span>
-            <span role="cell" className={cell}>{money(sum("pool"))}</span>
-            <span role="cell" className={`${cell} text-v2-lake`}>{money(sum("total"))}</span>
+            <span role="cell" className={cell}>{approx(sum("personal"))}</span>
+            <span role="cell" className={cell}>{approx(sum("pool"))}</span>
+            <span role="cell" className={`${cell} text-v2-lake`}>{approx(sum("total"))}</span>
           </div>
         </div>
       </div>

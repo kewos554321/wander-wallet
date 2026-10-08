@@ -65,7 +65,7 @@ export function PayerPicker({
   const viewCurrency = displayCurrency ?? currency
   const settleView = displayCurrency != null && displayCurrency !== currency && rate != null
   const convert = (n: number) => (settleView ? roundMajorToMinor((n ?? 0) * rate!, viewCurrency) : n)
-  const money = (n: number) => `$${formatAmount(convert(n), viewCurrency)}`
+  const money = (n: number) => `${settleView ? "≈" : ""}$${formatAmount(convert(n), viewCurrency)}`
   const showCurrencyToggle =
     onDisplayCurrencyChange != null && !!projectCurrency && rate != null && currency !== projectCurrency
   const showLegacyEstimate = displayCurrency == null && !!projectCurrency && rate != null && currency !== projectCurrency

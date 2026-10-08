@@ -165,9 +165,10 @@ describe("ExpenseFormV2View", () => {
     // Flipping the split toggle also flips the payer section (they are linked).
     fireEvent.click(within(split).getByRole("button", { name: "顯示 USD" }))
     rerender()
-    // 1000 JPY × 0.05 = 50 USD; each of the two members holds 25 USD.
-    expect(within(payer).getByLabelText("小雨的付款金額")).toHaveTextContent("$50.00")
-    expect(within(split).getByLabelText("小雨的分攤金額")).toHaveTextContent("$25.00")
+    // 1000 JPY × 0.05 = 50 USD; each of the two members holds 25 USD. The ≈
+    // marks the settlement figure as an approximation.
+    expect(within(payer).getByLabelText("小雨的付款金額")).toHaveTextContent("≈$50.00")
+    expect(within(split).getByLabelText("小雨的分攤金額")).toHaveTextContent("≈$25.00")
     // Flipping back restores the original currency.
     fireEvent.click(within(payer).getByRole("button", { name: "顯示 JPY" }))
     rerender()
@@ -191,7 +192,7 @@ describe("ExpenseFormV2View", () => {
     fireEvent.click(within(payer).getByRole("button", { name: "顯示 USD" }))
     rerender()
     expect(within(payer).getByLabelText("小雨的付款金額").tagName).toBe("SPAN")
-    expect(within(payer).getByLabelText("小雨的付款金額")).toHaveTextContent("$50.00")
+    expect(within(payer).getByLabelText("小雨的付款金額")).toHaveTextContent("≈$50.00")
     expect(within(payer).queryByRole("button", { name: /小雨的付款金額/ })).not.toBeInTheDocument()
   })
 
@@ -241,7 +242,7 @@ describe("ExpenseFormV2View", () => {
     expect(within(split).queryByLabelText("為小雨新增品項")).not.toBeInTheDocument()
     const amount = within(split).getByLabelText("小雨的品項金額 1")
     expect(amount.tagName).toBe("SPAN")
-    expect(amount).toHaveTextContent("$5.00")
+    expect(amount).toHaveTextContent("≈$5.00")
     expect(within(split).getByText("咖啡")).toBeInTheDocument()
   })
 
@@ -270,9 +271,36 @@ describe("ExpenseFormV2View", () => {
     expect(within(split).queryByRole("button", { name: "小雨" })).not.toBeInTheDocument()
     expect(within(split).queryByRole("switch", { name: "先扣個人項目" })).not.toBeInTheDocument()
     expect(within(split).queryByRole("button", { name: "小雨不參與共同分攤" })).not.toBeInTheDocument()
-    expect(within(payer).getByLabelText("小雨的付款金額")).toHaveTextContent("$50.00")
+    expect(within(payer).getByLabelText("小雨的付款金額")).toHaveTextContent("≈$50.00")
     // The flip-back control stays, so the preview is not a dead end.
     expect(within(split).getByRole("button", { name: "顯示 JPY" })).toBeInTheDocument()
+  })
+
+  it("marks only the key totals with ≈ in the breakdown table", () => {
+    const { hook, rerender } = renderForm({
+      projectCurrency: "USD",
+      previewRateInfo: () => ({ rate: 0.05, source: "live" as const }),
+    })
+    act(() => {
+      hook.result.current.actions.setAmount("1000")
+      hook.result.current.actions.setCurrency("JPY")
+      hook.result.current.actions.setPersonalMode(true)
+      hook.result.current.actions.togglePersonalMember("a")
+    })
+    rerender()
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    fireEvent.click(within(split).getByRole("button", { name: "顯示 USD" }))
+    rerender()
+    const breakdown = within(split).getByRole("region", { name: "分攤明細" })
+    const cells = within(within(breakdown).getByRole("row", { name: /小雨/ })).getAllByRole("cell")
+    // The 個人項目 and 共同分攤 columns stay plain; the 小計 is a key total.
+    expect(cells[0]).not.toHaveTextContent("≈")
+    expect(cells[1]).not.toHaveTextContent("≈")
+    expect(cells[2]).toHaveTextContent("≈")
+    // The whole 合計 row is a key total.
+    for (const c of within(within(breakdown).getByRole("row", { name: /^合計/ })).getAllByRole("cell")) {
+      expect(c).toHaveTextContent("≈")
+    }
   })
 
   it("hides the split settlement estimates for a same-currency expense", () => {

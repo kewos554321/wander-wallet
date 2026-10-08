@@ -48,6 +48,8 @@ export function SplitEditor({
   const view = (n: number) => (settleView ? roundMajorToMinor(n * rate!, viewCurrency) : n)
   // Currency code only on totals; per-member amounts show the number alone.
   const num = (n: number) => formatAmount(view(n), viewCurrency)
+  // A settlement figure is an approximation, so it is marked with ≈.
+  const money = (n: number) => `${settleView ? "≈" : ""}$${num(n)}`
   const tone = (id: string) => memberTone(members.findIndex((m) => m.id === id))
   const name = (id: string) => members.find((m) => m.id === id)?.displayName ?? ""
   // Shared-pool portion only: personal items are shown in their own section.
@@ -154,7 +156,7 @@ export function SplitEditor({
                       />
                       <span className="flex flex-1 items-center justify-between gap-2 text-[13px]">
                         <span className="font-semibold">{name(id)}</span>
-                        <span className="font-bold">${num(sum)}</span>
+                        <span className="font-bold">{money(sum)}</span>
                       </span>
                       {!settleView && (
                         <button type="button" aria-label={`為${name(id)}新增品項`} onClick={() => actions.addItem(id)} className="flex h-[22px] shrink-0 items-center justify-center gap-px rounded-md bg-v2-lake-tint px-1 text-v2-lake">
@@ -182,7 +184,7 @@ export function SplitEditor({
                           <div key={item.id} className="mt-1.5 flex items-center justify-between gap-3 text-xs">
                             <span className="min-w-0 flex-1 truncate text-v2-ink">{item.name.trim() || "（未命名品項）"}</span>
                             <span className="shrink-0 font-bold" aria-label={`${name(id)}的品項金額 ${idx + 1}`}>
-                              ${num(Number(item.amount) || 0)}
+                              {money(Number(item.amount) || 0)}
                             </span>
                           </div>
                         ) : (
@@ -226,7 +228,7 @@ export function SplitEditor({
 
       <div className="mb-2.5 mt-3 flex items-center justify-between gap-2">
         <p className="m-0 flex items-center gap-1.5 text-xs font-semibold text-v2-ink-muted">
-          共同分攤 <span className="font-bold text-v2-ink">（{state.personalMode ? "剩餘 " : ""}${num(Math.max(0, derived.splitInput.amount - derived.personalTotal))}）</span>
+          共同分攤 <span className="font-bold text-v2-ink">（{state.personalMode ? "剩餘 " : ""}{money(Math.max(0, derived.splitInput.amount - derived.personalTotal))}）</span>
           {!settleView && derived.remainderMembers.length > 0 && (
             <Popover>
               <PopoverTrigger asChild>
@@ -321,7 +323,7 @@ export function SplitEditor({
                     </label>
                   ) : (
                     <span aria-label={`${name(id)}的分攤金額`} className="shrink-0 text-right text-[13px] font-bold">
-                      ${num(poolShareOf(id))}
+                      {money(poolShareOf(id))}
                     </span>
                   )}
                   {!settleView && (
