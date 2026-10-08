@@ -4,6 +4,7 @@ import { useState } from "react"
 import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
 import { CalendarIcon, Check, Trash2 } from "lucide-react"
+import { roundRateForDisplay } from "@/lib/currency-conversion"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { LocationPickerV2 } from "./location-picker-v2"
@@ -95,7 +96,7 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
             actions.setExchangeRate("")
             actions.setRatePinned(false)
           } else {
-            actions.setExchangeRate(autoRate != null ? String(autoRate) : "")
+            actions.setExchangeRate(autoRate != null ? String(roundRateForDisplay(autoRate)) : "")
             actions.setRatePinned(true)
           }
         }}

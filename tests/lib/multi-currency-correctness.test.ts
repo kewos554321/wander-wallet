@@ -7,6 +7,7 @@ import {
   rollbackAllocation,
   resolveRate,
   previewRate,
+  roundRateForDisplay,
 } from "@/lib/currency-conversion"
 import { computeProjectAmounts } from "@/lib/expense-project-amounts"
 
@@ -318,5 +319,14 @@ describe("previewRate — display-only conversion", () => {
   it("returns null when no rate is known (no misleading 1:1)", () => {
     expect(previewRate("TWD", "USD", null, null)).toBeNull()
     expect(previewRate("TWD", "USD", null, { USD: 1 })).toBeNull()
+  })
+})
+
+describe("roundRateForDisplay — 6 significant digits, trimmed", () => {
+  it("shortens long floats and keeps short rates", () => {
+    expect(roundRateForDisplay(1 / 31.5)).toBe(0.031746)
+    expect(roundRateForDisplay(149.5)).toBe(149.5)
+    expect(roundRateForDisplay(0.03)).toBe(0.03)
+    expect(roundRateForDisplay(1)).toBe(1)
   })
 })

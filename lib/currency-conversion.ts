@@ -174,3 +174,13 @@ export function previewRate(
 ): number | null {
   return resolvePreviewRate(currency, projectCurrency, customRates, exchangeRates).rate
 }
+
+/**
+ * Round a rate for DISPLAY only: 6 significant digits, trailing zeros dropped.
+ * 0.0317460317 → 0.031746; 149.5 → 149.5; 0.03 → 0.03. The conversion itself
+ * keeps full precision.
+ */
+export function roundRateForDisplay(rate: number): number {
+  if (!Number.isFinite(rate) || rate === 0) return rate
+  return Number(rate.toPrecision(6))
+}

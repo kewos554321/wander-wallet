@@ -3,6 +3,7 @@
 import { Calculator as CalculatorIcon, Pin, PinOff } from "lucide-react"
 import { CurrencySelect } from "@/components/ui/currency-select"
 import { formatCurrency, type CurrencyCode } from "@/lib/constants/currencies"
+import { roundRateForDisplay } from "@/lib/currency-conversion"
 
 interface AmountCardProps {
   amount: string
@@ -126,7 +127,7 @@ export function AmountCard({
                 className="w-20 rounded bg-v2-paper/10 px-1.5 py-0.5 text-right tabular-nums text-v2-paper outline-none"
               />
             ) : (
-              <span className="tabular-nums">{rate != null ? rate : "—"}</span>
+              <span className="tabular-nums">{rate != null ? roundRateForDisplay(rate) : "—"}</span>
             )}
             <span>{projectCurrency}</span>
             {rateEditable && (
