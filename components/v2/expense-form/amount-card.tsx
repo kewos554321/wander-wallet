@@ -103,11 +103,11 @@ export function AmountCard({
         </div>
       )}
       {showConversion && (
-        <div className="mt-2 flex items-center justify-between gap-2 text-[12px] text-v2-paper/85">
+        <div data-testid="conversion-row" className="mt-2 flex flex-col gap-1 text-[12px] text-v2-paper/85">
           <span data-testid="amount-conversion">
             {previewProjectAmount != null ? `≈ ${formatCurrency(previewProjectAmount, projectCurrency!)}` : "≈ —"}
           </span>
-          <span className="inline-flex items-center gap-1">
+          <span data-testid="rate-row" className="inline-flex flex-wrap items-center gap-1">
             <span className="text-[10px] opacity-80" data-testid="rate-source">
               {customRate
                 ? "自訂匯率"

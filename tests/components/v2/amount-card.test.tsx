@@ -128,6 +128,26 @@ describe("AmountCard", () => {
     expect(screen.queryByLabelText("匯率")).not.toBeInTheDocument()
   })
 
+  it("stacks the converted amount and the rate explanation on two lines", () => {
+    setup({
+      currency: "TWD",
+      projectCurrency: "USD",
+      previewProjectAmount: 31.72,
+      rate: 0.031715,
+      rateEditable: true,
+      rateSource: "fixed",
+      onToggleCustomRate: vi.fn(),
+    })
+    const conversion = screen.getByTestId("amount-conversion")
+    const rateRow = screen.getByTestId("rate-row")
+    // Both lines share one column container, so the rate never wraps next to
+    // the converted amount on a narrow screen.
+    expect(conversion.parentElement).toBe(rateRow.parentElement)
+    expect(conversion.parentElement).toHaveClass("flex-col")
+    expect(rateRow).toHaveTextContent("1 TWD =")
+    expect(rateRow).toHaveTextContent("USD")
+  })
+
   it("shows 即時匯率 as the source when derived from live rates", () => {
     setup({
       currency: "TWD",
