@@ -1,332 +1,342 @@
 # 多幣別支出（Multi-currency expenses）— 設計（spec）
 
 - 日期：2026-10-08
-- 狀態：待審（設計階段）
-- 目標：讓**非專案結算幣別的支出**能正確換算成專案幣別參與記帳、分攤、結算、統計與匯出；換算結果**穩定、可解釋、帳一定平**。
+- 狀態：待審（v2：USD-first 雙層）
+- 目標：讓**非專案幣別的支出**能正確、公平、可對帳地併入專案計算與結算；**帳一定平**。
 - 範圍：v2 為主（新增支出、專案設定、匯率頁），v1 需相容。
-- 核心原則：**每筆支出只保留高精度、不逐筆四捨五入；只在最後結算圓整一次。**
+- 核心架構：**USD-first 雙層** — 先換算成專案幣別、再分攤；專案幣別為**唯一權威**，原幣僅供**對帳／顯示**。
 
-## 1. 問題
+## 1. 核心架構（USD-first 雙層）
 
-現況（`app/api/projects/[id]/settle/route.ts`、`lib/project-stats.ts`、`components/v2/export/export-data.ts`）：
+```
+建立支出時：
+  ① 綁定匯率（當下）
+  ② 總額換算成「專案幣別」，取整到最小單位 → 鎖定 totalMinor
+  ③ 在「專案幣別」上分攤與付款，配到整數最小單位（尾差用尾差帳分配）
+  ④ 落地：原幣輸入 + 專案幣別結果（權威）
 
-- 非專案幣別支出**沒有儲存匯率**，換算在**讀取時即時**用「專案自訂匯率 or 即時匯率」計算。
-- 即時匯率每 1 小時更新（`lib/services/exchange-rate.ts`：`CACHE_DURATION = 1h`）→ **同一筆支出每次看金額都可能不同**。
-- 換算邏輯**散在至少三套**（前端 hook、匯出、結算），四捨五入位數不一致 → 列表與結算可能對不起來。
-- 金額四捨五入用的是 `exchangeRatePrecision`（預設 2）→ TWD 被算到「分」（台幣無小數）。
-- 每筆逐項四捨五入會產生殘差，若由固定的人吸收，長期會**系統性不公平**。
+原幣層（TWD）：Expense.amount、currency、splitDetail、各人原幣金額 → 顯示／對帳
+專案層（USD）：shareAmountProject、amountProject                        → 權威／結算
+```
+
+**為什麼 USD-first**
+- **尾差只在一維**：只在專案幣別分一次，沒有「原幣尾差 → 換算又尾差」的鏈條，Ledger Audit 單純。
+- **符合心智**：成員在乎「最後要付／拿多少 USD」。
+- **結算端大幅簡化**：shares 已是專案幣別，不需再換算。
+
+**唯一權威**：只有專案幣別層會產生 `balances` / `settlements`。原幣層不參與結算。
 
 ## 2. 名詞定義
 
 | 名詞 | 定義 |
 |---|---|
-| 專案幣別（projectCurrency / 結算幣別） | 專案統一計算的幣別（`Project.currency`）。 |
-| 支出幣別（expense currency） | 該筆支出的原幣（`Expense.currency`）。與專案幣別相同時，不需匯率。 |
-| 固定匯率（fixed rate） | 專案層級、每個外幣一個值（`Project.customRates[currency]`）。單位：**1 外幣 = ? 專案幣別**。 |
-| 單筆自訂匯率（per-expense rate） | 該筆支出覆寫的匯率（`Expense.exchangeRate`）。 |
-| 自訂（custom） | 該筆支出有 `exchangeRate`（使用者改過），不隨專案匯率變動。 |
-| 最小單位（minor unit） | 幣別可表示的最小值：TWD/JPY/KRW/IDR/VND = 1；USD/EUR/… = 0.01。 |
-| 內部精度（internal precision） | 帳務運算的定點小數位。**固定 8 位**。 |
+| 專案幣別 | 專案統一的結算幣別（`Project.currency`），權威層幣別。 |
+| 原幣 | 該筆支出的原始幣別（`Expense.currency`），對帳層。 |
+| 綁定匯率 | 建立該筆時快照的匯率（`Expense.exchangeRate`），單位：1 原幣 = ? 專案幣別。 |
+| 最小單位（minor unit） | 幣別可表示的最小值（USD = 0.01）。**分配與取整的單位**。 |
+| totalMinor | 該筆換算後鎖定的專案幣別總額，以最小單位整數表示。 |
+| 尾差帳（remainderDiscrepancy） | 每位成員在專案內累積的「尾差分配」淨值（最小單位整數）。 |
+| 自訂匯率 | 該筆 `exchangeRate` 與專案當前固定匯率不同（**純顯示**）。 |
 
 ## 3. 決策摘要
 
 | 項目 | 決策 | 理由 |
 |---|---|---|
-| 匯率基準 | **專案層級固定匯率**（每外幣一個值）為預設 | 一致性 > 精確度；短期行程波動小；全團用同一值最好解釋 |
-| 匯率來源 | 第一次用到該外幣時，**自動帶入當下即時匯率**寫入專案固定匯率 | 使用者零設定；但值是**鎖住**的，不會漂移 |
-| 每筆支出匯率 | **預設引用專案固定匯率**；可**單筆覆寫**（`Expense.exchangeRate`） | 支援「這筆匯率就是不一樣」 |
-| 「自訂」定義 | `Expense.exchangeRate` 非 null = 自訂 | 明確、可持久判斷，不受專案匯率變動影響 |
-| 改專案匯率 | 若影響到其他支出 → **兩段式確認**：`一起更新舊支出` / `只改未來` | 使用者要求「重複確認」 |
-| 改的是什麼 | 編輯的是**匯率**（不是換算後金額） | 一般 App 慣例；避免反推 |
-| 分攤幣別 | 付款人／分攤者金額**一律存原幣**；換算只在讀取／結算端 | 與帳單一致（`ExpensePayer`、`ExpenseParticipant`、`splitDetail`） |
-| 精度 | 帳務用**定點整數、8 位小數**（BigInt） | 對最細幣別（美分 0.01）仍安全；避免浮點漂移 |
-| 圓整時機 | **只在最後結算圓整一次**；每筆不逐項圓整、不逐筆分殘差 | 避免每項差額與系統性不公平 |
-| 殘差處理 | 結算時對餘額圓整後，殘差用**最大餘數法**分攤 | 公平、且帳一定平 |
-| 金額 vs 匯率精度 | 金額圓整用**幣別最小單位**；`exchangeRatePrecision` 只管**匯率顯示** | 修正 TWD 被算到「分」的錯誤 |
-| 顯示層 | 明細以**原幣**為主，換算僅「≈」參考；權威 TWD 只出現在**統計與結算** | 避免明細逐項圓整與總額對不上 |
-| 最小單位資料 | 程式碼常數（`lib/constants/currencies.ts`），**每個幣別明寫 `decimals`** | 靜態 ISO 資料；API 不提供、DB 不必要 |
-| 幣別名稱 | 補**短名** + 元件加 `truncate` | 避免長名稱跑版 |
-| 幣別：CNY/THB | 設為 **2**（ISO 4217；原為 0） | 正確性 |
+| 換算順序 | **先換算成專案幣別，再分攤**（USD-first） | 尾差單一維度、符合心智、結算簡化 |
+| 權威層 | **專案幣別**（原幣僅對帳） | 避免兩本帳互相打架 |
+| 取整 | **每筆分配整數最小單位**；殘差用**尾差帳**分配 | 顯示乾淨、加總相符、長期公平 |
+| 尾差帳 | `ProjectMember.remainderDiscrepancy`（per project、最小單位整數） | 不受成員變動影響，永遠給「最虧」的人 |
+| 匯率綁定 | 建立時**快照綁在該筆支出** | 金額穩定、不漂移 |
+| 預設匯率來源 | 專案設定可選 **固定匯率 / 即時匯率**（預設**固定**） | 使用者決定新支出預設抓哪個值；兩者皆綁定快照 |
+| 事後改匯率 | **允許**（編輯該筆）→ 回滾＋重算 | 使用者要求（方案 A） |
+| 改專案固定匯率 | **只影響未來新支出**（已建立者不動） | 每筆已快照 |
+| 分攤編輯 | 以**原幣**輸入，即時換算顯示專案幣別 | 對得上帳單 |
+| 精度 | 分配用**最小單位整數**；匯率 `Decimal(18,8)`、不預圓 | 精確、可審計 |
+| 顯示 | 雙層：原幣（對帳）＋專案幣別（權威） | 兩者都看得到 |
 
 ## 4. 資料模型變更
 
 `prisma/schema.prisma`：
 
 ```prisma
+model Project {
+  // ...既有
+  rateSource String @default("fixed") @map("rate_source") // 新支出預設匯率來源：fixed | live
+}
+
 model Expense {
-  // ...既有欄位
-  exchangeRate Decimal? @db.Decimal(18, 8) @map("exchange_rate") // 單筆自訂匯率；null = 用專案固定匯率
+  // ...既有
+  exchangeRate Decimal? @db.Decimal(18, 8) @map("exchange_rate") // 綁定匯率；同幣別為 null
+}
+
+model ExpenseParticipant {
+  // ...既有
+  shareAmount        Decimal  @db.Decimal(10, 2)              // 原幣（對帳）
+  shareAmountProject Decimal? @db.Decimal(18, 8) @map("share_amount_project") // 專案幣別（權威）
+}
+
+model ExpensePayer {
+  // ...既有
+  amount        Decimal  @db.Decimal(10, 2)             // 原幣
+  amountProject Decimal? @db.Decimal(18, 8) @map("amount_project") // 專案幣別（權威）
+}
+
+model ProjectMember {
+  // ...既有
+  remainderDiscrepancy Int @default(0) @map("remainder_discrepancy") // 尾差帳（最小單位整數，per project）
 }
 ```
 
-- **語意**：`null` = 使用專案固定匯率（會隨專案匯率一起變）；非 `null` = 自訂（凍結）。
-- 專案幣別的支出**永遠為 `null`**。
-- 專案固定匯率沿用既有 `Project.customRates`（JSON，單位 1 外幣 = ? 專案幣別），**不改結構**。
+- `exchangeRate`：同幣別支出為 `null`；外幣支出**必為快照值**（不再有「null = 引用專案匯率」語意）。
+- 專案幣別金額（`*Project`）為**權威**；原幣欄位維持不變（對帳用）。
 
-### 4.1 既有資料補齊（backfill）
+### 4.1 既有資料 backfill
 
-- 既有外幣支出：`exchangeRate` 一律留 `null`（= 繼續引用專案固定匯率），**不逐筆回填**。
-- 既有專案若無 `customRates`：於首次讀取或首次新增外幣支出時，用當下即時匯率 seed（見 §8）。
-- 若 `customRates` 也不需要 backfill 腳本：以應用層 lazy seed 處理（見 §8.1）。
+- 既有外幣支出：以當下 `Project.customRates[currency]`（或即時匯率）回填 `exchangeRate` 與 `*Project` 金額；`remainderDiscrepancy` 起始 0。
+- 同幣別支出：`exchangeRate = null`、`*Project` 可留 `null`（讀取時視為原幣＝專案幣別）。
 
-### 4.2 不變式（invariant）
+## 5. 建立／更新支出的計算流程
 
-- 每筆支出的 `exchangeRate != null` ⇒ `currency != projectCurrency`。
-- 換算後，同一筆的「付款總額 = 分攤總額」（全精度恆等，見 §5）。
+**伺服器端為唯一計算處**（client 只做近似預覽，見 §9）。
 
-## 5. 精度與換算規則（核心）
+```
+輸入：原幣 amount、currency、splitDetail、payers[]（原幣）、exchangeRate（可省略）
+  1. rate = exchangeRate                                     // 使用者已指定（若有）
+            ?? (Project.rateSource === "fixed"
+                  ? (customRates[currency] ?? seedFromLive(currency))  // 固定匯率（缺則 seed）
+                  : 即時匯率)                                  // 即時匯率
+  2. totalMinor = roundToMinorUnit(amount × rate, projectCurrency)   // 整數最小單位
+  3. 分攤：weights = 各人原幣 share
+       shareAmountProject_i = allocate(totalMinor, weights, discrepancy)
+  4. 付款：weights = 各人原幣 payer amount
+       amountProject_i = allocate(totalMinor, weights, discrepancy)
+       （同一交易、同一 discrepancy 狀態依序套用）
+  5. 寫入原幣欄位 + *Project 欄位 + exchangeRate
+  6. 不變式：Σ shareAmountProject = Σ amountProject = totalMinor
+```
 
-新增 `lib/currency-conversion.ts`（前端／後端共用、純函式）：
+> 分攤／付款「兩側」都各做一次整數分配（因為兩側各自要湊到 `totalMinor`），尾差帳各自更新。
+
+## 6. 尾差帳（Discrepancy）演算法
+
+**定義**：`remainderDiscrepancy`（整數、單位＝專案幣別最小單位）。
+- **正** = 該成員歷史上被多分到的尾差（多付）。
+- **負** = 少付。
+- 分配時把尾差優先給「**目前最低（最虧）**」者。
+
+**分配函式**（前端／後端共用，`lib/currency-conversion.ts`）：
 
 ```ts
-// 幣別最小單位（0 或 2 位）；見 lib/constants/currencies.ts
-export function getCurrencyDecimals(currency: string): number
-
-// 依幣別最小單位四捨五入（金額用）
-export function roundToMinorUnit(amount: number, currency: string): number
-
-// 匯率解析優先序
-export function resolveExpenseRate(
-  expense: { currency: string; exchangeRate: number | null },
-  project: { currency: string; customRates: Record<string, number> | null },
-  liveRates: Record<string, number> | null
-): number
-
-// 帳務層：8 位小數定點整數（BigInt）
-export function toScaled(amount: number): bigint      // amount × 1e8
-export function fromScaled(scaled: bigint): number    // ÷ 1e8
-
-// 結算：把已圓整後的每人餘額，用最大餘數法收斂到整數總額
-export function allocateRemainder(
-  total: bigint,           // 已圓整的最小單位總額（整數）
-  shares: { id: string; exact: number }[]
-): Map<string, number>
+// totalMinor：整數最小單位；weights：各人以原幣計的權重（≥0）
+// discrepancy：各人目前尾差；回傳各人於專案幣別的整數分配（和 = totalMinor）
+export function allocate(
+  totalMinor: bigint,
+  weights: { id: string; weight: bigint }[],
+  discrepancy: Map<string, number>
+): Map<string, bigint>
+// 1) exact_i = totalMinor * weight_i / Σweight
+// 2) base_i  = floor(exact_i)
+// 3) R = totalMinor - Σbase_i
+// 4) 依 discrepancy 由低到高（平手取原順序）取前 R 人 +1
+// 5) 回傳；呼叫端對被 +1 者 discrepancy += 1
 ```
 
-**規則**：
+- 若 `Σweight = 0`：全員均分（退化處理）。
+- 尾差 `R` 必 < 人數。
 
-1. **內部帳務精度 = 8 位小數**（`scale = 1e8`），用 `BigInt` 做加減乘，**不在中途四捨五入**。
-2. 換算：`scaled = toScaled(amount) × toScaledBig(rate)`，得出的高精度值一路累加。
-3. **匯率不預先圓整**：直接用 `Expense.exchangeRate ?? customRates[currency] ?? live`。
-4. **只有結算時圓整一次**：把每個成員的淨餘額 `roundToMinorUnit(net, projectCurrency)`。
-5. **殘差**：圓整後若加總 ≠ 0，用 `allocateRemainder`（最大餘數法）把殘差以最小單位分到「被捨去最多」的成員，確保加總 = 0。
-6. **金額一律用幣別最小單位**；`exchangeRatePrecision` **不再用於金額圓整**，僅保留為匯率顯示小數位（見 §12）。
-7. 匯率欄位精度：`Expense.exchangeRate` 用 `Decimal(18,8)`；對支援幣別可保留足夠有效位數（若未來加入極小值幣別再提高）。
+**回滾（編輯／刪除時）**：
+- 依「上次分配結果」還原：對每人 `extra_i = 已存 project 值 − floor(exact_i)`，`discrepancy -= extra_i`。
+- 再以新值重新分配。
+- 全流程在**同一交易**內；避免併發漂移。
 
-> **為何是 8 位**：對最細幣別（美分，圓整門檻 0.005），8 位精度下累積誤差在 10 萬次運算仍只占門檻約 1%；6 位只夠約 1,000 次（≈200 筆支出），對人多筆多的行程會踩線。
+## 7. 匯率綁定與編輯
 
-> **註（範圍界定）**：本節的「不逐筆圓整」只針對**換算成專案幣別**。**原幣內的平均分攤**（例：¥3,200 ÷ 3 除不盡）仍由既有 `lib/expense-split.ts` 的 `computeShares`／`derivePayerShares` 在**原幣整數**上處理（餘數給第一個自動成員）。兩者互不衝突：原幣分帳先算好，再整筆換算。
+- **建立**：`exchangeRate` 快照綁在該筆（外幣）。預設值依 `Project.rateSource`（固定／即時）帶入；同時算好 `*Project`。
+- **編輯允許改該筆匯率（方案 A）**：
+  1. 回滾此筆的 discrepancy（§6）。
+  2. 以新匯率重算 `totalMinor` 與 `*Project`。
+  3. 重新分配 + 更新 discrepancy。
+  4. 同一交易完成。
+- **改專案固定匯率**：只影響**未來**新支出；已建立者不動（**移除**先前的「改匯率→二次確認」流程）。
+- **「自訂」徽章**：`exchangeRate` ≠ 專案當前固定匯率 → 純顯示。
 
-## 6. 匯率解析優先序
+## 8. 寫入 API 契約
 
-```
-Expense.exchangeRate            // 單筆自訂（最高）
-  └─ 否則 Project.customRates[currency]   // 專案固定匯率
-       └─ 否則 即時匯率（live）             // 僅作 seed/兜底
-```
-
-所有消費端（列表、統計、匯出、結算）**一律呼叫 `resolveExpenseRate`**，不得自寫換算。
-
-## 7. 寫入 API 契約
-
-`app/api/projects/[id]/expenses/route.ts`（POST）與 `.../expenses/[expenseId]/route.ts`（PUT）：
+`app/api/projects/[id]/expenses/route.ts`（POST）與 `.../[expenseId]/route.ts`（PUT）：
 
 ```jsonc
 {
-  // ...既有欄位
-  "currency": "JPY",
-  "exchangeRate": 0.2265   // 可選；非專案幣別才接受
+  "currency": "TWD",
+  "exchangeRate": 0.031715,          // 可省略（未帶 → 依 Project.rateSource：固定匯率 / 即時）
+  "payers": [{ "memberId": "...", "amount": 600 }],
+  "participants": [{ "memberId": "...", "shareAmount": 316.67 }],
+  "splitDetail": { ... }             // 原幣
 }
 ```
 
-- **驗證**：`exchangeRate` 可省略（省略 = 用專案固定匯率）；若有值須 > 0，且 `currency != projectCurrency`，否則 400。
-- **寫入**：`exchangeRate` 有值 → 存該值；無值 → 存 `null`。
-- **編輯時幣別改為專案幣別** → `exchangeRate` 強制清為 `null`。
-- 活動紀錄（`diffChanges` 欄位清單）加入 `exchangeRate`。
-- `lib/hooks/useSaveExpense.ts` 的 `ExpensePayload` 加 `exchangeRate`。
+- **伺服器計算** `shareAmountProject` / `amountProject` / `totalMinor` / discrepancy（§5）。
+- 驗證：`exchangeRate > 0`（外幣）、付款合計 = 原幣金額、分攤合計 = 原幣金額（±0.01）。
+- POST 內若 `customRates[currency]` 不存在 → 以即時匯率 seed；即時失敗時用 fallback 並標示。
+- 回應帶回 `*Project` 值（供前端顯示最終結果）。
+- UT：`lib/hooks/useSaveExpense.ts` payload 加 `exchangeRate`。
 
-### 7.1 自動 seed 專案固定匯率
+## 9. UI：新增／編輯支出（v2）
 
-`app/api/projects/[id]/expenses/route.ts`（POST）內，寫入前：
+- **金額卡**：原幣輸入 + `≈ {專案幣別} {金額}`、綁定匯率；點擊可展開改匯率（方案 A）。
+- **分攤編輯**：以**原幣**輸入（對帳）；每人小字顯示 `≈ {專案幣別}`。
+- **預覽與權威值的落差**：client 的 `*Project` 為**近似**（無法得知伺服器當下的 discrepancy）；儲存後以伺服器回傳值為準，誤差 ≤ 1 最小單位／人。UI 標示 `≈`。
+- **尾差提示**：若某人被分配 +1，明細可標「尾差」，避免使用者覺得加總怪。
+- 同幣別支出：不顯示匯率行、不送 `exchangeRate`。
 
-- 若 `currency != projectCurrency` 且 `Project.customRates[currency]` **不存在** → 以當下即時匯率寫入 `customRates[currency]`。
-- 即時匯率取得失敗時使用 fallback，並於回應帶出 `usedFallbackRate: true`（前端可提示）。
+## 10. 結算與讀取
 
-（替代方案：獨立端點 `POST /api/projects/[id]/exchange-rates`；本 spec 採在 POST 內 ensure，較少來回。）
+- **結算 `app/api/projects/[id]/settle/route.ts`**：**大幅簡化** — 直接累加 `amountProject` / `shareAmountProject`（已是專案幣別），不需換算；殘差已於建立時處理，結算不會有尾差。
+- **統計 `lib/project-stats.ts`**：用 `*Project` 直接累加。
+- **匯出 `lib/export/*`**：專案幣別用 `*Project`；原幣欄位顯示原幣金額與綁定匯率。
+- **列表 `lib/hooks/useProjectExpenses.ts` / `components/v2/expenses/*`**：顯示原幣 + `≈` 專案幣別。
+- **v1 相容**：共用同一批 `*Project` 讀取；v1 表單加匯率欄位與功能對等。
 
-## 8. 讀取與結算
+## 11. 前端：專案設定與匯率頁
 
-### 8.1 結算 `app/api/projects/[id]/settle/route.ts`
-
-- `expense.findMany` include `exchangeRate`。
-- 每筆：`rate = resolveExpenseRate(expense, project, liveRates)`。
-- 以 **8 位定點**累加 `balance`、`totalPaid`、`totalShare`（付款人、分攤者、個人項目皆用同一個 `rate`）。
-- **最後**：`roundToMinorUnit` 餘額 → `allocateRemainder` 收斂 → 既有 `calculateOptimalSettlements`。
-- `expenseDetails` 的 `convertedAmount` 為**顯示值**（可圓整），但 `balances`/`settlements` 以定點累加後圓整為準。
-
-### 8.2 統計 `lib/project-stats.ts`
-
-- `convert` 介面改為能取得**整筆支出**（含 `exchangeRate`）：`convertExpense(expense)`。
-- 付款人、分攤者改用同一解析後的 `rate`；不再逐項獨立猜匯率。
-
-### 8.3 匯出 `components/v2/export/export-data.ts`
-
-- `convertToProjectCurrency(amount, currency, ctx)` → 加入 `expense.exchangeRate`；優先序同 `resolveExpenseRate`。
-
-### 8.4 列表 `lib/hooks/useProjectExpenses.ts` / `components/v2/expenses/*`
-
-- `ProjectExpense` 型別加 `exchangeRate: number | null`。
-- 顯示採 §11（原幣為主 + `≈`）。
-
-### 8.5 v1 相容
-
-- `components/v1/*`（含 `components/expense/expense-form.tsx` 內嵌換算）改為共用 `lib/currency-conversion.ts`；v1 表單加單筆匯率欄位，與 v2 對等。
-
-## 9. 前端：新增／編輯支出（v2）
-
-`components/v2/expense-form/`：
-
-- `use-expense-draft.ts`：state 加 `exchangeRate: number | null`；`DraftInit.currency` 帶入專案固定匯率作為預設。
-- `amount-card.tsx`：`currency != projectCurrency` 時，金額下方新增一行**唯讀換算**：
-  - `≈ NT$725 · 1 JPY = 0.2265 TWD`；右側徽章 `專案匯率` / `自訂`（自訂為橘色）。
-  - 點擊該行 → 展開匯率編輯器（**編輯匯率**，非金額）＋「套用」「重設為專案匯率」。
-- `expense-form-v2-view.tsx`：切換幣別時，若專案無該外幣固定匯率 → 顯示提示「已自動新增 XXX 固定匯率」。
-- 幣別 = 專案幣別：**不顯示**換算行、不送 `exchangeRate`。
-
-## 10. 前端：專案設定（固定匯率）
-
-`components/v2/project-settings/project-settings-v2*.tsx`、`exchange-rate-row.tsx`：
-
-- 「固定匯率」清單（每個使用中的外幣一列），可編輯；附「用即時」按鈕。
-- 說明：「單位：1 外幣 = ? 專案幣別；第一次用到新外幣時自動帶入即時匯率。」
-- **修改匯率時**（若該外幣有未自訂的支出）：
-
-  1. 第一段：顯示「將從 A 改為 B」＋「會影響 N 筆未自訂的 XXX 支出」。
-  2. 第二段（重複確認）：「要一起更新舊支出嗎？」
-     - `一起更新`：未自訂支出維持引用 → 自動反映新值（自訂支出不動）。
-     - `只改未來`：把**現有**未自訂的該幣別支出，`exchangeRate` 設為**舊的專案匯率**（凍結），再更新專案匯率；新支出用新值。
-
-## 11. 前端：匯率頁
-
-`components/v2/currency/currency-v2*.tsx`：
-
-- 換算器（既有）＋「**設為專案固定匯率**」按鈕（寫入 `customRates[currency]`）。
-- 顯示各幣別固定匯率的新鮮度（沿用 `isRatesStale`）。
+- **專案設定** `project-settings-v2*`：
+  - **預設匯率來源**（新支出預設用哪個匯率）：`固定匯率` / `即時匯率`（預設固定）。
+    - 選「固定匯率」→ 顯示固定匯率表；新增外幣支出時預設帶入該值（缺則自動 seed 即時匯率）。
+    - 選「即時匯率」→ 新增時預設帶入當下即時匯率。
+  - **固定匯率清單**（每個使用中的外幣一列，可改、有「用即時」）。
+  - 說明：「**只影響未來的新支出**；已建立的支出已綁定當時匯率。」
+  - **移除**先前的「受影響 N 筆 + 兩段式確認」。
+- **結算幣別欄位**：下方顯示**依所選幣別動態**的最小單位唯讀說明（TWD→「四捨五入至整數」、USD→「四捨五入至 0.01」）。
+- **匯率頁** `currency-v2*`：換算器 + 「設為專案固定匯率」。
 
 ## 12. 幣別常數、顯示統一與跑版修正
 
 `lib/constants/currencies.ts`：
-
-- 補齊**常見幣別**，且**每筆明寫 `decimals`**。
-- `CNY`、`THB` 改為 `decimals: 2`（原為 0）。
-- `SHORT_NAMES`（現於 `components/v2/ui/currency-field.tsx`）補齊短名：`CHF 瑞郎`、`NZD 紐幣`、`MYR 馬幣`、`PHP 披索`、`AED 迪拉姆`、`TRY 里拉`；`TWD 台幣`。
-- 「匯率顯示小數位」：`Project.exchangeRatePrecision` 保留但**僅影響匯率顯示**（或移除欄位改固定/自動）。金額不再用它。
+- 補齊常見幣別，**每筆明寫 `decimals`**；`CNY`、`THB` 改 `2`。
+- `SHORT_NAMES` 補短名（`CHF 瑞郎`、`NZD 紐幣`、`MYR 馬幣`、`PHP 披索`、`AED 迪拉姆`、`TRY 里拉`、`TWD 台幣`）。
+- `exchangeRatePrecision` 保留但**僅影響匯率顯示**。
 
 ### 12.1 顯示統一（金額小數）
 
-**規則**：金額顯示的小數位 = 該幣別的最小單位（`getCurrencyDecimals`）。
+- 規則：金額小數位 = 幣別最小單位（TWD/JPY/… 0 位；USD/EUR/… 2 位）。內部精度不顯示。
+- **唯一入口** `formatAmount` / `formatCurrency`；**禁止** `toFixed()` / 裸 `toLocaleString()` 於金額。收斂既有旁路：`components/expense/expense-form.tsx`、`settlement-calc-dialog.tsx:87`、`lib/expense-changes.ts`、兩個 calculator、`stats-v1`/`category-donut` 的多餘 `Math.round`、`mileage-v1`、`csv-generator.ts`、v2 分帳的 `$`→ISO 代碼。
 
-| 幣別 | 顯示 |
-|---|---|
-| TWD / JPY / KRW / IDR / VND（0 位） | `TWD 725`、`JPY 3,200` |
-| USD / EUR / HKD / SGD / THB …（2 位） | `USD 1,066.67` |
+### 12.2 跑版修正
 
-內部 8 位精度**永不顯示**。
-
-**唯一入口**：所有金額一律走 `formatAmount` / `formatCurrency`（`lib/constants/currencies.ts`）。**禁止** `toFixed()` 或裸 `toLocaleString()` 用於金額。
-
-**要收斂的旁路**（現況不一致）：
-
-| 檔案 | 問題 | 修法 |
-|---|---|---|
-| `components/expense/expense-form.tsx`（v1） | 多處 `toFixed(2)` → 台幣顯示「分」 | 改 `formatCurrency` / `formatAmount` |
-| `components/settle/settlement-calc-dialog.tsx:87` | `perPerson.toFixed(precision)` | 改 `formatAmount(..., projectCurrency)` |
-| `lib/expense-changes.ts:44` | 裸 `toLocaleString()`（最多 3 位） | 改 `formatCurrency` |
-| `components/ui/calculator.tsx:98`、`components/v2/expense-form/calculator-pad.tsx:206` | 裸 `toLocaleString` | 依目前輸入幣別的最小單位 |
-| `components/v1/stats/stats-v1.tsx`、`components/v2/stats/category-donut.tsx` | `Math.round` → USD 掉美分 | 移除多餘 `Math.round`，交給 formatter |
-| `components/v1/mileage/mileage-v1.tsx` | `maximumFractionDigits: 0` | 改 `formatAmount` |
-| `lib/export/csv-generator.ts:31` | 自帶 `formatAmount`（zh-TW） | 共用主 formatter |
-| v2 分帳（`payer-picker`、`split-editor`、`split-summary`） | 用 `$` 前綴 | 改用 ISO 代碼（對齊 `currency-field.tsx` 慣例） |
-
-> 收斂後「小數點」只剩一條規則：**該幣別最小單位幾位，就顯示幾位**；TWD 不再有小數、USD 不再掉美分。
-
-**跑版修正**（長名稱）：
-
-- `components/v2/ui/currency-field.tsx`：`currencyLabel` 的 span 加 `truncate`，外層加 `min-w-0`。
-- `components/ui/currency-select.tsx`：下拉項目的名稱 span 加 `truncate`；必要時固定 `SelectContent` 寬度。
+- `components/v2/ui/currency-field.tsx` span 加 `truncate`、外層 `min-w-0`。
+- `components/ui/currency-select.tsx` 下拉名稱 span 加 `truncate`。
 - v1（`new-project-v1.tsx`、`currency-v1.tsx`）同樣加截斷。
 
 ## 13. 邊界情況
 
-- 支出幣別 = 專案幣別：不顯示匯率、`exchangeRate` 為 `null`。
-- 編輯時幣別改回專案幣別：清除 `exchangeRate`。
-- 專案幣別被更動：所有固定／自訂匯率的「基準幣別」改變 → 顯示警告，既有 `exchangeRate` 視為失效（需重設或重新 seed）。
-- 即時匯率抓不到、使用 fallback：seed 的值標示「備用匯率」。
-- 除不盡：見 §5；只有「≥ 最小單位」的殘差需具名分攤。
-- 支出金額為 0：不影響換算。
-- 權限：專案固定匯率僅**擁有者／建立者**可改（沿用現有專案設定權限）。
+- 支出幣別 = 專案幣別：`exchangeRate = null`、`*Project` 可空（讀取視為相同）。
+- **編輯該筆匯率 / 刪除**：回滾 discrepancy，同一交易（§6）。
+- **改專案幣別**：`remainderDiscrepancy` 的單位（最小單位）改變 → 需重設為 0 或轉換；顯示警告。
+- **成員中途加入/移除**：尾差帳以「目前成員」為準，不受影響。
+- **即時匯率 fallback**：標示「備用匯率」。
+- **併發**：所有 discrepancy 更新與支出寫入同交易。
 
 ## 14. 分階段執行（每階段可獨立部署、可回退）
 
 **Phase 1 — 精度核心**
-- 新增 `lib/currency-conversion.ts`（minor unit、resolve、8 位定點、remainder）；`currencies.ts` 補 `decimals` 與短名。
-- 驗收：純函式單元測試（含 §5 範例）。
+- 新增 `lib/currency-conversion.ts`（minor unit、`allocate`、`resolveRate`、定點）；`currencies.ts` 補 `decimals`、短名。
+- 驗收：純函式單元測試（§5 範例、allocate、回滾）。
 
 **Phase 2 — 資料模型**
-- `Expense.exchangeRate` + migration；backfill 決策（留 null）。
-- 驗收：schema 套用、既有資料不受影響。
+- `Expense.exchangeRate`、`ExpenseParticipant.shareAmountProject`、`ExpensePayer.amountProject`、`ProjectMember.remainderDiscrepancy`；backfill。
 
-**Phase 3 — 寫入 API + seed**
-- POST/PUT 接受 `exchangeRate`；自動 seed 專案匯率；`useSaveExpense`。
-- 驗收：API 測試（驗證、幣別切換清除、seed）。
+**Phase 3 — 寫入 API + 尾差帳**
+- POST/PUT 伺服器計算 `*Project` + discrepancy（含回滾）；seed 專案匯率；`useSaveExpense`。
 
-**Phase 4 — 讀取端統一（風險最高）**
-- 結算、`project-stats`、`export-data`、`useProjectExpenses` 全改用 `lib/currency-conversion.ts`；簽名改為整筆支出。
-- 驗收：同一筆支出在列表／統計／匯出／結算**數字一致**。
+**Phase 4 — 讀取端（簡化）**
+- settle / stats / export / 列表改讀 `*Project`；移除結算換算。
 
 **Phase 5 — v2 UI**
-- 新增支出換算行／編輯器；專案設定固定匯率＋兩段式確認；匯率頁「設為固定匯率」。
-- 驗收：元件與表單測試。
+- 新增支出（原幣輸入 + ≈ 專案 + 匯率編輯）；專案設定（移除確認流程）；匯率頁。
 
 **Phase 6 — 顯示統一與跑版 + v1 相容**
-- 金額顯示統一（§12.1：收斂所有 `toFixed`／裸 `toLocaleString`／多餘 `Math.round`／`$`→ISO 代碼）；幣別短名、`truncate`；v1 表單與顯示面功能對等。
-- 驗收：v1/v2 對應測試；手動 smoke（**TWD 無小數、USD 保留美分**、長名稱不跑版）。
 
 **Phase 7 — 收尾**
-- `docs/DATABASE.md`、`docs/API.md` 更新；`npm run lint`、`npm run test:run`；逐階段 commit。
+- `docs/DATABASE.md`、`docs/API.md`；`npm run lint`、`npm run test:run`；逐階段 commit。
 
 ## 15. 測試策略
 
-- 單元：`lib/currency-conversion.ts`（minor unit、resolve 優先序、8 位累加、remainder；§5 的 JPY→TWD 多人範例）。
-- API：expenses POST/PUT（`exchangeRate` 驗證、幣別切換、seed）；settle（單筆自訂 vs 專案）與現有 `isBalanced` 一致。
-- 元件：v2 `amount-card` 換算行／編輯器；`project-settings` 兩段式確認；`currency-v2` 設為固定匯率。
-- 顯示：`formatAmount` / `formatCurrency` 對各幣別（TWD 0 位、USD 2 位）；全域**無金額**使用 `toFixed` 或裸 `toLocaleString`（以 lint/測試把關）。
-- 迴歸：凡依賴 `convert(amount, currency)` 的呼叫端逐一套用為整筆支出版本。
-- 指令：`npm run lint`、`npm run test:run`；關鍵階段 `npm run test:coverage`。
+- 單元：`allocate`（整除、除不盡、單人、零權重）、discrepancy 演算法（輪替公平、回滾）、`resolveRate`。
+- API：POST/PUT（匯率驗證、原幣合計、`*Project` 正確、discrepancy 更新與回滾）、seed。
+- 結算：Σ `amountProject` = Σ `shareAmountProject`；`settlements` 加總 = 0。
+- 顯示：`formatAmount` 各幣別；無 `toFixed`/裸 `toLocaleString`。
+- 元件：v2 `amount-card`、分攤編輯、專案設定、匯率頁。
 
-## 16. 不在本次範圍（未來工作）
+## 16. 不在本次範圍
 
-- 每筆支出「多段匯率」或依日期抓歷史匯率。
+- 每筆多段匯率、依日期抓歷史匯率。
 - 部分付款／應收應付。
-- 自訂幣別／加密貨幣（decimals 由使用者定義）→ 屆時才需 DB 表。
-- 匯率歷史圖表／自動更新固定匯率。
+- 自訂幣別／加密貨幣。
+- 跨專案合併的尾差帳。
 
 ## 17. 驗收條件
 
-- 新增一筆 JPY 支出：預設顯示專案固定匯率換算；可單筆覆寫匯率；再開啟維持自訂值。
-- 專案幣別 TWD 的支出不顯示、不儲存匯率。
-- 修改專案固定匯率時：有受影響支出 → 兩段式確認；`一起更新` 與 `只改未來` 行為符合 §10。
-- 同一筆支出在列表、統計、匯出、結算的專案幣別金額**一致**。
-- **金額顯示統一**：TWD 等 0 位幣別不顯示小數；USD 等 2 位幣別保留美分；無金額使用 `toFixed`／裸 `toLocaleString`。
-- 結算 `settlements` 加總 = 0；金額為專案幣別最小單位的整數。
-- 長幣別名稱在專案設定／匯率頁／下拉選單**不跑版**。
+- 建立專案時，結算幣別說明依所選幣別動態顯示最小單位。
+- 專案設定可切換「預設匯率來源（固定／即時）」；新增外幣支出時依此帶入預設匯率。
+- 新增 JPY/TWD 支出：建立時綁定匯率；`*Project` 為整數最小單位且 Σ = 專案幣別總額。
+- 分攤／付款在專案幣別加總相符；尾差帳有更新。
+- 編輯該筆匯率 → 重算且 discrepancy 正確回滾重配；刪除 → 正確回滾。
+- 改專案固定匯率 → 只影響未來；不需確認流程。
+- 結算 `settlements` 加總 = 0；統計／匯出與結算數字一致。
+- 顯示統一（TWD 無小數、USD 保留美分）；長名稱不跑版。
 - `npm run test:run` 全綠；`npm run lint` 無錯誤。
 
 ## 18. 已採建議、可調整的決策
 
 | 項目 | 目前採納 | 可改為 |
 |---|---|---|
-| 顯示層策略 | A：明細以原幣為主，換算僅 `≈` | B：明細顯示整數 TWD（需逐項圓整，會回到對不上的問題） |
-| CNY / THB `decimals` | 2（ISO） | 0（若刻意簡化） |
-| `exchangeRatePrecision` 欄位 | 保留但僅影響匯率顯示 | 直接移除，改固定/自動 |
-| v1 範圍 | 功能對等（納入 Phase 6） | 僅 v2，v1 之後補 |
+| 事後改該筆匯率 | **A：允許**（回滾＋重算） | B：建立後不可改 |
+| 「自訂」徽章 | 保留（純顯示） | 移除 |
+| 原幣每人分攤顯示 | 顯示（由輸入重建） | 只顯示原幣總額 |
+| CNY / THB `decimals` | 2 | 0 |
+| `*Project` 欄位精度 | `Decimal(18,8)` | 更低位數 |
+| v1 範圍 | 功能對等（Phase 6） | 僅 v2 |
+
+## 19. UX 流程（從建立專案到結算）
+
+### 19.1 建立專案
+- 輸入名稱、封面、日期、**結算幣別**。
+- 結算幣別下方**依所選幣別動態**顯示最小單位唯讀說明（TWD→「四捨五入至整數」、USD→「四捨五入至 0.01」）。
+- **此時不需設匯率**（還不知道會用到哪些外幣）。
+
+### 19.2 專案設定 › 幣別與匯率
+- **預設匯率來源**（新支出預設用哪個匯率）：`固定匯率` / `即時匯率`（預設**固定**）。
+- **固定匯率清單**（使用中的外幣，每列可改、有「用即時」）。
+- 說明：「只影響未來的新支出；已建立的支出已綁定當時匯率。」
+- （無「受影響 N 筆 + 兩段式確認」流程。）
+
+### 19.3 匯率頁
+- 換算器 + 「設為專案固定匯率」。
+
+### 19.4 新增支出（核心）
+- 選幣別：
+  - **＝專案幣別** → 不顯示匯率、不綁定。
+  - **≠專案幣別** → 依「預設匯率來源」帶入**綁定匯率**；顯示 `≈ 專案幣別`；可點擊**改這一筆**匯率。
+- **分攤／付款以原幣輸入**（對帳）；每人小字顯示 `≈ 專案幣別`。
+- 若尾差帳把某人 +1，明細標「**尾差**」。
+
+### 19.5 儲存後（系統行為）
+1. 綁定匯率快照到該筆。
+2. 原幣總額 → 換算專案幣別 → 取整最小單位（`totalMinor`）。
+3. 在**專案幣別**上分攤與付款，配成整數（尾差依**尾差帳**給「最虧」的人）。
+4. 落地（原幣 + 專案幣別）＋ 更新尾差帳（同交易）。
+
+### 19.6 支出列表／明細
+- 顯示 `原幣金額` + `≈ 專案幣別`；與統計／結算一致。
+
+### 19.7 編輯／刪除
+- 改該筆匯率／金額／分攤 → **回滾尾差 + 重算**。
+- 改**專案固定匯率** → 不影響既有支出。
+
+### 19.8 統計
+- 用**專案幣別**結果直接累加。
+
+### 19.9 結算
+- **不換算、無尾差**：shares/paid 已是專案幣別，直接算餘額與轉帳。
+
+### 19.10 匯出
+- 專案幣別權威值 + 原幣金額 + 綁定匯率（對帳）。
