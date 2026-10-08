@@ -7,6 +7,10 @@ import { deleteFile, extractKeyFromUrl } from "@/lib/r2"
 import { validateSplitDetail } from "@/lib/expense-split"
 import { primaryPayerId, validatePayers } from "@/lib/expense-payers"
 import { expensePayersInclude } from "@/lib/expense-payers-include"
+import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { rollbackAllocation, resolveRate } from "@/lib/currency-conversion"
+import { computeProjectAmounts, type ProjectAmountResult } from "@/lib/expense-project-amounts"
+import { getExchangeRate } from "@/lib/services/exchange-rate"
 
 interface Participant {
   memberId: string
@@ -105,7 +109,7 @@ export async function PUT(
     }
 
     const body = await req.json()
-    const { payers, amount, currency, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail } = body
+    const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail } = body
     const hasSplitDetailField = Object.prototype.hasOwnProperty.call(body, "splitDetail")
 
     // 獲取現有費用（包含付款人和參與者資訊）
@@ -160,9 +164,10 @@ export async function PUT(
       },
       select: {
         id: true,
+        remainderDiscrepancy: true,
       },
     })
-    const memberIds = new Set(projectMembers.map((m: { id: string }) => m.id))
+    const memberIds = new Set(projectMembers.map((m) => m.id))
 
     // 如果更新了參與者，需要重新驗證
     if (participants && Array.isArray(participants)) {
@@ -231,6 +236,7 @@ export async function PUT(
     const updateData: {
       amount?: number
       currency?: string
+      exchangeRate?: number | null
       description?: string | null
       category?: string | null
       image?: string | null
@@ -261,6 +267,92 @@ export async function PUT(
     if (splitDetailUpdate !== undefined) {
       updateData.splitDetail = splitDetailUpdate
     }
+
+    // 計算結算幣別金額（含編輯回滾；與尾差帳同交易）
+    const project = await prisma.project.findUnique({
+      where: { id },
+      select: { currency: true, customRates: true, rateSource: true },
+    })
+    const projectCurrency = project?.currency || existingExpense.currency || DEFAULT_CURRENCY
+    const customRates = (project?.customRates as Record<string, number> | null) || {}
+    const rateSource = (project?.rateSource as "fixed" | "live") || "fixed"
+
+    const existingCurrency = existingExpense.currency || projectCurrency
+    const newCurrency = currency !== undefined ? currency : existingCurrency
+    const wasForeign = existingCurrency !== projectCurrency
+    const isForeign = newCurrency !== projectCurrency
+
+    const settlementParticipants =
+      participants && Array.isArray(participants)
+        ? participants.map((p: Participant) => ({ memberId: p.memberId, shareAmount: Number(p.shareAmount) }))
+        : existingExpense.participants.map((p) => ({ memberId: p.member.id, shareAmount: Number(p.shareAmount) }))
+
+    let newRate: number | null = null
+    let seedRate: number | null = null
+    if (isForeign) {
+      const currencyChanged = currency !== undefined && currency !== existingCurrency
+      const providedRate = exchangeRate !== undefined && exchangeRate !== null ? Number(exchangeRate) : null
+      if (currencyChanged || providedRate != null || !existingExpense.exchangeRate) {
+        const needsLive =
+          providedRate == null && (rateSource === "live" || customRates[newCurrency] == null)
+        let liveRate: number | null = null
+        if (needsLive) {
+          try {
+            liveRate = await getExchangeRate(newCurrency, projectCurrency)
+          } catch {
+            liveRate = null
+          }
+        }
+        const resolved = resolveRate({
+          currency: newCurrency,
+          projectCurrency,
+          provided: providedRate,
+          rateSource,
+          customRate: customRates[newCurrency] ?? null,
+          liveRate,
+        })
+        newRate = resolved.rate
+        if (resolved.shouldSeedFixed) seedRate = resolved.rate
+      } else {
+        newRate = Number(existingExpense.exchangeRate)
+      }
+    }
+
+    let ledger = new Map(projectMembers.map((m) => [m.id, m.remainderDiscrepancy ?? 0]))
+    const ledgerInitial = new Map(ledger)
+    if (wasForeign) {
+      const oldTotal =
+        existingExpense.participants.reduce((s, p) => s + Number(p.shareAmountProject ?? 0), 0) ||
+        existingExpense.payers.reduce((s, p) => s + Number(p.amountProject ?? 0), 0)
+      ledger = rollbackAllocation(
+        oldTotal,
+        existingExpense.participants.map((p) => ({ id: p.member.id, weight: Number(p.shareAmount) })),
+        new Map(existingExpense.participants.map((p) => [p.member.id, Number(p.shareAmountProject ?? 0)])),
+        ledger,
+      )
+      ledger = rollbackAllocation(
+        oldTotal,
+        existingExpense.payers.map((p) => ({ id: p.memberId, weight: Number(p.amount) })),
+        new Map(existingExpense.payers.map((p) => [p.memberId, Number(p.amountProject ?? 0)])),
+        ledger,
+      )
+    }
+
+    let projectAmounts: ProjectAmountResult | null = null
+    if (isForeign) {
+      projectAmounts = computeProjectAmounts({
+        amount: effectiveAmount,
+        currency: newCurrency,
+        projectCurrency,
+        rate: newRate as number,
+        participants: settlementParticipants,
+        payers: validatedPayers.map((p) => ({ memberId: p.memberId, amount: p.amount })),
+        discrepancy: ledger,
+      })
+      ledger = projectAmounts.discrepancy
+    }
+
+    updateData.exchangeRate = isForeign ? newRate : null
 
     // 成員名稱映射（付款人顯示用）
     const memberNameMap: Record<string, string> = Object.fromEntries(
@@ -358,23 +450,45 @@ export async function PUT(
           },
         })
 
-        // 創建新的參與者
+        // 創建新的參與者（含結算幣別金額）
         await tx.expenseParticipant.createMany({
           data: participants.map((p: Participant) => ({
             expenseId: expenseId,
             memberId: p.memberId,
             shareAmount: Number(p.shareAmount),
+            ...(projectAmounts
+              ? {
+                  shareAmountProject: projectAmounts.participants.find((x) => x.memberId === p.memberId)
+                    ?.shareAmountProject,
+                }
+              : {}),
           })),
         })
+      } else if (projectAmounts) {
+        // 參與者未提供但結算幣別金額需重算
+        for (const p of existingExpense.participants) {
+          await tx.expenseParticipant.update({
+            where: { id: p.id },
+            data: {
+              shareAmountProject: projectAmounts.participants.find((x) => x.memberId === p.member.id)
+                ?.shareAmountProject,
+            },
+          })
+        }
       }
 
-      // 重建付款人
+      // 重建付款人（含結算幣別金額）
       await tx.expensePayer.deleteMany({ where: { expenseId } })
       await tx.expensePayer.createMany({
         data: validatedPayers.map((p) => ({
           expenseId,
           memberId: p.memberId,
           amount: p.amount,
+          ...(projectAmounts
+            ? {
+                amountProject: projectAmounts.payers.find((x) => x.memberId === p.memberId)?.amountProject,
+              }
+            : {}),
         })),
       })
 
@@ -383,6 +497,23 @@ export async function PUT(
         where: { id: expenseId },
         data: updateData,
       })
+
+      if (seedRate != null) {
+        await tx.project.update({
+          where: { id },
+          data: { customRates: { ...customRates, [newCurrency]: seedRate } },
+        })
+      }
+
+      // 尾差帳（回滾舊 + 套用新）
+      for (const [memberId, value] of ledger) {
+        if ((ledgerInitial.get(memberId) ?? 0) !== value) {
+          await tx.projectMember.update({
+            where: { id: memberId },
+            data: { remainderDiscrepancy: value },
+          })
+        }
+      }
 
       // 記錄操作歷史（包含 metadata 快照）
       if (changesWithNames || (participants && Array.isArray(participants))) {

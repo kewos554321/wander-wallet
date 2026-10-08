@@ -1003,6 +1003,88 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     expect(data.error).toBe("金額不可為負數")
   })
 
+  it("recomputes settlement amounts and rolls back the ledger when the rate is edited", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue({
+      currency: "USD",
+      customRates: null,
+      rateSource: "fixed",
+    } as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123", remainderDiscrepancy: 1 },
+    ] as never)
+    vi.mocked(prisma.expense.findFirst).mockResolvedValue({
+      ...mockExpense,
+      currency: "TWD",
+      exchangeRate: 0.03,
+      participants: [
+        {
+          id: "participant-1",
+          memberId: "member-123",
+          shareAmount: 1000,
+          shareAmountProject: 3000,
+          member: { id: "member-123", displayName: "Test User" },
+        },
+      ],
+      payers: [
+        {
+          id: "payer-1",
+          memberId: "member-123",
+          amount: 1000,
+          amountProject: 3000,
+          member: { id: "member-123", displayName: "Test User" },
+        },
+      ],
+    } as never)
+    vi.mocked(getExchangeRate).mockResolvedValue(0.031715)
+    vi.mocked(prisma.expense.findUnique).mockResolvedValue(mockExpense as never)
+
+    const createManyParticipant = vi.fn().mockResolvedValue({ count: 1 })
+    const updateExpense = vi.fn().mockResolvedValue({})
+    vi.mocked(prisma.$transaction).mockImplementation(
+      async (cb: (tx: unknown) => Promise<unknown>) =>
+        cb({
+          expenseParticipant: {
+            deleteMany: vi.fn().mockResolvedValue({}),
+            createMany: createManyParticipant,
+            update: vi.fn().mockResolvedValue({}),
+          },
+          expensePayer: {
+            deleteMany: vi.fn().mockResolvedValue({}),
+            createMany: vi.fn().mockResolvedValue({ count: 1 }),
+          },
+          expense: { update: updateExpense },
+          projectMember: { update: vi.fn().mockResolvedValue({}) },
+          project: { update: vi.fn().mockResolvedValue({}) },
+        }),
+    )
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses/expense-123",
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          exchangeRate: 0.0317,
+          payers: [{ memberId: "member-123", amount: 1000 }],
+          participants: [{ memberId: "member-123", shareAmount: 1000 }],
+        }),
+      }
+    )
+    const response = await PUT_EXPENSE(req, {
+      params: createExpenseParams("project-123", "expense-123"),
+    })
+    expect(response.status).toBe(200)
+    expect(createManyParticipant).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: [expect.objectContaining({ memberId: "member-123", shareAmountProject: 3170 })],
+      }),
+    )
+    expect(updateExpense).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ exchangeRate: 0.0317 }) }),
+    )
+  })
+
   it("should return 400 if participants array is empty", async () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(
