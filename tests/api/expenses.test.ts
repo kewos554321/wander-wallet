@@ -1085,6 +1085,67 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     )
   })
 
+  it("rejects an expense with a non-positive exchange rate", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          amount: 1000,
+          currency: "TWD",
+          exchangeRate: 0,
+          payers: [{ memberId: "member-123", amount: 1000 }],
+          participants: [{ memberId: "member-123", shareAmount: 1000 }],
+        }),
+      }
+    )
+    const response = await POST(req, { params: createParams("project-123") })
+    expect(response.status).toBe(400)
+  })
+
+  it("rolls back the ledger when deleting a foreign-currency expense", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue({ currency: "USD" } as never)
+    vi.mocked(prisma.expense.findFirst).mockResolvedValue({
+      ...mockExpense,
+      currency: "TWD",
+      exchangeRate: 0.0317,
+      participants: [
+        { id: "pa", memberId: "member-123", shareAmount: 333.33, shareAmountProject: 1058 },
+        { id: "pb", memberId: "member-456", shareAmount: 333.33, shareAmountProject: 1057 },
+        { id: "pc", memberId: "member-789", shareAmount: 333.34, shareAmountProject: 1057 },
+      ],
+      payers: [
+        { id: "payer-1", memberId: "member-123", amount: 1000, amountProject: 3172, member: { displayName: "Test User" } },
+      ],
+    } as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123", remainderDiscrepancy: 1 },
+      { id: "member-456", remainderDiscrepancy: 0 },
+      { id: "member-789", remainderDiscrepancy: 0 },
+    ] as never)
+    vi.mocked(prisma.expense.update).mockResolvedValue({} as never)
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses/expense-123",
+      { method: "DELETE" },
+    )
+    const response = await DELETE_EXPENSE(req, {
+      params: createExpenseParams("project-123", "expense-123"),
+    })
+    expect(response.status).toBe(200)
+    expect(prisma.projectMember.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "member-123" },
+        data: { remainderDiscrepancy: 0 },
+      }),
+    )
+  })
+
   it("should return 400 if participants array is empty", async () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(

@@ -135,6 +135,11 @@ export async function POST(
       return NextResponse.json({ error: "金額不可為負數" }, { status: 400 })
     }
 
+    // 外幣匯率必須為正數
+    if (exchangeRate !== undefined && exchangeRate !== null && !(Number(exchangeRate) > 0)) {
+      return NextResponse.json({ error: "匯率必須大於 0" }, { status: 400 })
+    }
+
     // 驗證參與者
     if (participants.length === 0) {
       return NextResponse.json({ error: "至少需要一個參與者" }, { status: 400 })

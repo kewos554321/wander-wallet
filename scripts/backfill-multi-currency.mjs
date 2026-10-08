@@ -33,8 +33,9 @@ async function getUsdRates() {
   }
 }
 
-// floor + remainder-by-index; total always equals totalMinor.
-function allocate(totalMinor, weights) {
+// floor + remainder; extras go to the lowest ledger value (ties by original order),
+// and the ledger is advanced so a later edit rolls back correctly.
+function allocate(totalMinor, weights, ledger) {
   const total = weights.reduce((s, w) => s + w.weight, 0)
   const eff = total === 0 ? weights.map((w) => ({ ...w, weight: 1 })) : weights
   const effTotal = total === 0 ? weights.length : total
@@ -45,14 +46,17 @@ function allocate(totalMinor, weights) {
     alloc.set(w.id, v)
     assigned += v
   }
+  const order = eff
+    .map((w, i) => ({ id: w.id, i, d: ledger.get(w.id) ?? 0 }))
+    .sort((a, b) => a.d - b.d || a.i - b.i)
   let remainder = totalMinor - assigned
-  const ids = eff.map((w) => w.id)
-  let i = 0
-  while (remainder > 0 && ids.length > 0) {
-    const id = ids[i % ids.length]
+  let k = 0
+  while (remainder > 0 && order.length > 0) {
+    const id = order[k % order.length].id
     alloc.set(id, alloc.get(id) + 1)
+    ledger.set(id, (ledger.get(id) ?? 0) + 1)
     remainder -= 1
-    i += 1
+    k += 1
   }
   return alloc
 }
@@ -67,6 +71,13 @@ async function main() {
   for (const project of projects) {
     const projectCurrency = project.currency || "TWD"
     const customRates = project.customRates || {}
+    const members = await prisma.projectMember.findMany({
+      where: { projectId: project.id },
+      select: { id: true, remainderDiscrepancy: true },
+    })
+    const ledger = new Map(members.map((m) => [m.id, m.remainderDiscrepancy ?? 0]))
+    const ledgerInitial = new Map(ledger)
+
     const expenses = await prisma.expense.findMany({
       where: {
         projectId: project.id,
@@ -93,10 +104,12 @@ async function main() {
       const partAlloc = allocate(
         totalMinor,
         expense.participants.map((p) => ({ id: p.id, weight: Number(p.shareAmount) })),
+        ledger,
       )
       const payAlloc = allocate(
         totalMinor,
         expense.payers.map((p) => ({ id: p.id, weight: Number(p.amount) })),
+        ledger,
       )
 
       await prisma.$transaction([
@@ -115,6 +128,17 @@ async function main() {
         prisma.expense.update({ where: { id: expense.id }, data: { exchangeRate: rate } }),
       ])
       count += 1
+    }
+
+    // Persist the seeded ledger so a later edit rolls back to 0, not negative.
+    for (const m of members) {
+      const value = ledger.get(m.id) ?? 0
+      if ((ledgerInitial.get(m.id) ?? 0) !== value) {
+        await prisma.projectMember.update({
+          where: { id: m.id },
+          data: { remainderDiscrepancy: value },
+        })
+      }
     }
   }
 

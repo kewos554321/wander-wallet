@@ -155,6 +155,11 @@ export async function PUT(
       }
     }
 
+    // 外幣匯率必須為正數
+    if (exchangeRate !== undefined && exchangeRate !== null && !(Number(exchangeRate) > 0)) {
+      return NextResponse.json({ error: "匯率必須大於 0" }, { status: 400 })
+    }
+
     const effectiveAmount = amount !== undefined ? Number(amount) : Number(existingExpense.amount)
 
     // 驗證所有成員（用於付款人與參與者）
@@ -464,14 +469,15 @@ export async function PUT(
               : {}),
           })),
         })
-      } else if (projectAmounts) {
-        // 參與者未提供但結算幣別金額需重算
+      } else if (projectAmounts || wasForeign) {
+        // 參與者未提供：重算結算幣別金額（若由外幣改為同幣別，清為 null）
         for (const p of existingExpense.participants) {
           await tx.expenseParticipant.update({
             where: { id: p.id },
             data: {
-              shareAmountProject: projectAmounts.participants.find((x) => x.memberId === p.member.id)
-                ?.shareAmountProject,
+              shareAmountProject: projectAmounts
+                ? projectAmounts.participants.find((x) => x.memberId === p.member.id)?.shareAmountProject
+                : null,
             },
           })
         }
@@ -631,6 +637,45 @@ export async function DELETE(
         } catch (error) {
           console.error("刪除 R2 圖片失敗:", error)
           // 繼續執行，不影響費用刪除
+        }
+      }
+    }
+
+    // 外幣費用刪除：回滾尾差帳
+    const deleteProject = await prisma.project.findUnique({
+      where: { id },
+      select: { currency: true },
+    })
+    const deleteProjectCurrency = deleteProject?.currency || expense.currency || DEFAULT_CURRENCY
+    const deleteExpenseCurrency = expense.currency || deleteProjectCurrency
+    if (deleteExpenseCurrency !== deleteProjectCurrency) {
+      const oldTotal =
+        expense.participants.reduce((s, p) => s + Number(p.shareAmountProject ?? 0), 0) ||
+        expense.payers.reduce((s, p) => s + Number(p.amountProject ?? 0), 0)
+      const members = await prisma.projectMember.findMany({
+        where: { projectId: id },
+        select: { id: true, remainderDiscrepancy: true },
+      })
+      let ledger = new Map(members.map((m) => [m.id, m.remainderDiscrepancy ?? 0]))
+      const initial = new Map(ledger)
+      ledger = rollbackAllocation(
+        oldTotal,
+        expense.participants.map((p) => ({ id: p.memberId, weight: Number(p.shareAmount) })),
+        new Map(expense.participants.map((p) => [p.memberId, Number(p.shareAmountProject ?? 0)])),
+        ledger,
+      )
+      ledger = rollbackAllocation(
+        oldTotal,
+        expense.payers.map((p) => ({ id: p.memberId, weight: Number(p.amount) })),
+        new Map(expense.payers.map((p) => [p.memberId, Number(p.amountProject ?? 0)])),
+        ledger,
+      )
+      for (const [memberId, value] of ledger) {
+        if ((initial.get(memberId) ?? 0) !== value) {
+          await prisma.projectMember.update({
+            where: { id: memberId },
+            data: { remainderDiscrepancy: value },
+          })
         }
       }
     }
