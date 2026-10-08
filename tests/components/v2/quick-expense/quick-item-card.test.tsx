@@ -223,7 +223,7 @@ describe("QuickItemCard", () => {
     expect(screen.getByTestId("rate-source")).toHaveTextContent("即時匯率")
     const note = screen.getByLabelText("匯率換算")
     expect(note).toHaveTextContent("1 JPY = 0.0067 USD")
-    expect(note).toHaveTextContent("系統以結算幣別 USD 記帳，下方金額以原幣 JPY 填寫")
+    expect(note).toHaveTextContent("結算會先換匯，再以 USD 分攤")
   })
 
   it("hides the conversion UI for a same-currency item", () => {
