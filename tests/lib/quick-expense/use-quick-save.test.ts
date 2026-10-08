@@ -35,7 +35,7 @@ describe("useQuickSave", () => {
     expect(res).toEqual({ savedIds: ["1"], failed: null })
     const body = JSON.parse(authFetch.mock.calls[0][1].body)
     expect(authFetch.mock.calls[0][0]).toBe("/api/projects/p1/expenses")
-    expect(body.participants.map((p: { shareAmount: number }) => p.shareAmount)).toEqual([33.34, 33.33, 33.33])
+    expect(body.participants.map((p: { shareAmount: number }) => p.shareAmount)).toEqual([100 / 3, 100 / 3, 100 / 3])
     expect(body).toMatchObject({ payers: [{ memberId: "a", amount: 100 }], amount: 100, currency: "TWD", image: null })
     expect(body.splitDetail).toBeNull()
     expect(body).not.toHaveProperty("paidByMemberId")

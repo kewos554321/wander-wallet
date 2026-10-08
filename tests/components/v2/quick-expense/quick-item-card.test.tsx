@@ -251,6 +251,15 @@ describe("QuickItemCard", () => {
     expect(p.onChange).toHaveBeenLastCalledWith({ exchangeRate: "", ratePinned: false })
   })
 
+  it("allocates a non-divisible split into whole units that sum to the total", () => {
+    setup({ amount: "100" }, { projectCurrency: "TWD" })
+    const shares = members.map((m) =>
+      Number(screen.getByLabelText(`${m.displayName}的分攤金額`).textContent?.replace(/[^0-9]/g, "") ?? "0"),
+    )
+    expect(shares.reduce((s, x) => s + x, 0)).toBe(100)
+    expect(shares.every((s) => Number.isInteger(s))).toBe(true)
+  })
+
   it("renders the member image in the payer option when present", () => {
     const withImage = [
       { id: "a", displayName: "小雨", image: "https://cdn.example/xiaoyu.jpg" },

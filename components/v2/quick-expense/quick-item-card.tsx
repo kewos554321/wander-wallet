@@ -35,7 +35,7 @@ import { SECTION_CARD, SECTION_TITLE } from "@/components/v2/expense-form/sectio
 import { SplitEditor } from "@/components/v2/expense-form/split-editor"
 import { V2ImagePicker } from "@/components/v2/expense-form/v2-image-picker"
 
-type Member = { id: string; displayName: string; image?: string | null }
+type Member = { id: string; displayName: string; image?: string | null; remainderDiscrepancy?: number }
 export function QuickItemCard({ item, members, onChange, projectCurrency, previewRateInfo }: {
   item: QuickItem
   members: Member[]
@@ -92,7 +92,12 @@ export function QuickItemCard({ item, members, onChange, projectCurrency, previe
     setCustomShare: (id, value) => applySplit(withCustomShare(splitState, id, value)),
     clearCustomShare: (id) => applySplit(withClearedCustomShare(splitState, id)),
   }
-  const splitDraft: SplitDraft = { state: splitState, actions: splitActions, derived: deriveSplit(amount, memberIds, splitState) }
+  const discrepancy = Object.fromEntries(members.map((m) => [m.id, m.remainderDiscrepancy ?? 0]))
+  const splitContext =
+    rate != null || item.currency === (projectCurrency ?? item.currency)
+      ? { currency: item.currency, projectCurrency: projectCurrency ?? item.currency, rate: rate ?? 1, discrepancy }
+      : undefined
+  const splitDraft: SplitDraft = { state: splitState, actions: splitActions, derived: deriveSplit(amount, memberIds, splitState, splitContext) }
 
   // Multi-payer state, mirroring the v2 expense form's PayerPicker wiring.
   const payerDerived = itemDerivedPayers(item)

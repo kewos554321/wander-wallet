@@ -6,6 +6,7 @@ export interface OverviewMember {
   id: string
   role: string
   displayName: string
+  remainderDiscrepancy?: number
   user: {
     id: string
     name: string | null

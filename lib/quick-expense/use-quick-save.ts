@@ -68,7 +68,7 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
               latitude: item.latitude,
               longitude: item.longitude,
               expenseDate: item.expenseDate.toISOString(),
-              participants: derived.shares,
+              participants: derived.weights.map((w) => ({ memberId: w.memberId, shareAmount: w.weight })),
               splitDetail: buildSplitDetail(derived.splitInput),
             }),
           })
