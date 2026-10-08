@@ -212,6 +212,39 @@ describe("ExpenseFormV2View", () => {
     expect(within(split).queryByText("尾差")).not.toBeInTheDocument()
   })
 
+  it("renders personal items read-only while the settlement currency is shown", () => {
+    const { hook, rerender } = renderForm({
+      projectCurrency: "USD",
+      previewRateInfo: () => ({ rate: 0.05, source: "live" as const }),
+    })
+    act(() => {
+      hook.result.current.actions.setAmount("1000")
+      hook.result.current.actions.setCurrency("JPY")
+      hook.result.current.actions.setPersonalMode(true)
+      hook.result.current.actions.togglePersonalMember("a")
+    })
+    const itemId = hook.result.current.state.personalItems.a[0].id
+    act(() => {
+      hook.result.current.actions.updateItem("a", itemId, "name", "咖啡")
+      hook.result.current.actions.updateItem("a", itemId, "amount", "100")
+    })
+    rerender()
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    // Editing view: the item fields are inputs.
+    expect(within(split).getByLabelText("小雨的品項名稱 1").tagName).toBe("INPUT")
+    expect(within(split).getByLabelText("小雨的品項金額 1").tagName).toBe("INPUT")
+
+    fireEvent.click(within(split).getByRole("button", { name: "顯示 USD" }))
+    rerender()
+    // Settlement view: the whole input block is gone; each item reads as text.
+    expect(within(split).queryByLabelText("小雨的品項名稱 1")).not.toBeInTheDocument()
+    expect(within(split).queryByLabelText("為小雨新增品項")).not.toBeInTheDocument()
+    const amount = within(split).getByLabelText("小雨的品項金額 1")
+    expect(amount.tagName).toBe("SPAN")
+    expect(amount).toHaveTextContent("$5.00")
+    expect(within(split).getByText("咖啡")).toBeInTheDocument()
+  })
+
   it("hides the split settlement estimates for a same-currency expense", () => {
     const { hook, rerender } = renderForm({ projectCurrency: "TWD" })
     act(() => {

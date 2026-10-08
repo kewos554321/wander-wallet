@@ -150,10 +150,12 @@ export function SplitEditor({
                         <span className="font-semibold">{name(id)}</span>
                         <span className="font-bold">${num(sum)}</span>
                       </span>
-                      <button type="button" aria-label={`為${name(id)}新增品項`} onClick={() => actions.addItem(id)} className="flex h-[22px] shrink-0 items-center justify-center gap-px rounded-md bg-v2-lake-tint px-1 text-v2-lake">
-                        <CornerRightDown className="h-3 w-3" aria-hidden="true" />
-                        <Plus className="h-3 w-3" aria-hidden="true" />
-                      </button>
+                      {!settleView && (
+                        <button type="button" aria-label={`為${name(id)}新增品項`} onClick={() => actions.addItem(id)} className="flex h-[22px] shrink-0 items-center justify-center gap-px rounded-md bg-v2-lake-tint px-1 text-v2-lake">
+                          <CornerRightDown className="h-3 w-3" aria-hidden="true" />
+                          <Plus className="h-3 w-3" aria-hidden="true" />
+                        </button>
+                      )}
                       <button type="button" aria-label={`移除${name(id)}的個人項目`} onClick={() => actions.togglePersonalMember(id)} className={`${smallButton} bg-v2-danger-soft text-v2-danger-strong`}>
                         <UserMinus className="h-3 w-3" />
                       </button>
@@ -167,24 +169,24 @@ export function SplitEditor({
                       </p>
                     )}
                     <div className="ml-[34px] mt-1 border-l border-v2-check pl-2.5">
-                      {items.map((item, idx) => (
-                        <div key={item.id} className="mt-1.5 flex items-center gap-1.5">
-                          <input
-                            aria-label={`${name(id)}的品項名稱 ${idx + 1}`}
-                            placeholder="品項名稱"
-                            maxLength={MAX_PERSONAL_ITEM_NAME}
-                            value={item.name}
-                            onChange={(e) => actions.updateItem(id, item.id, "name", e.target.value)}
-                            className={`${itemInput} flex-[2]`}
-                          />
-                          {settleView ? (
-                            <span
-                              aria-label={`${name(id)}的品項金額 ${idx + 1}`}
-                              className={`${itemInput} flex flex-1 items-center justify-end font-bold`}
-                            >
+                      {items.map((item, idx) =>
+                        settleView ? (
+                          <div key={item.id} className="mt-1.5 flex items-center justify-between gap-3 text-xs">
+                            <span className="min-w-0 flex-1 truncate text-v2-ink">{item.name.trim() || "（未命名品項）"}</span>
+                            <span className="shrink-0 font-bold" aria-label={`${name(id)}的品項金額 ${idx + 1}`}>
                               ${num(Number(item.amount) || 0)}
                             </span>
-                          ) : (
+                          </div>
+                        ) : (
+                          <div key={item.id} className="mt-1.5 flex items-center gap-1.5">
+                            <input
+                              aria-label={`${name(id)}的品項名稱 ${idx + 1}`}
+                              placeholder="品項名稱"
+                              maxLength={MAX_PERSONAL_ITEM_NAME}
+                              value={item.name}
+                              onChange={(e) => actions.updateItem(id, item.id, "name", e.target.value)}
+                              className={`${itemInput} flex-[2]`}
+                            />
                             <label className={`${itemInput} flex flex-1 items-center gap-1`}>
                               <span aria-hidden="true">$</span>
                               <input
@@ -199,12 +201,12 @@ export function SplitEditor({
                                 className="w-full min-w-0 bg-transparent text-right outline-none"
                               />
                             </label>
-                          )}
-                          <button type="button" aria-label="刪除項目" onClick={() => actions.removeItem(id, item.id)} className="flex h-5 w-5 shrink-0 items-center justify-center text-v2-danger-strong">
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ))}
+                            <button type="button" aria-label="刪除項目" onClick={() => actions.removeItem(id, item.id)} className="flex h-5 w-5 shrink-0 items-center justify-center text-v2-danger-strong">
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ),
+                      )}
                     </div>
                   </div>
                 )
