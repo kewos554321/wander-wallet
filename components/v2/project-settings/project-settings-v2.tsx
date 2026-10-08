@@ -114,7 +114,6 @@ export function ProjectSettingsV2({ projectId }: { projectId: string }) {
   }, [projectId])
 
   useEffect(() => {
-    if (expenseCurrencies.length === 0) return
     let cancelled = false
     authFetch("/api/exchange-rates")
       .then(async (res) => {
@@ -128,7 +127,7 @@ export function ProjectSettingsV2({ projectId }: { projectId: string }) {
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [expenseCurrencies])
+  }, [])
 
   async function handleSave() {
     if (formError) {

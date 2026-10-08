@@ -100,7 +100,6 @@ export function rollbackAllocation(
 }
 
 export type RateSource = "fixed" | "live"
-
 export interface ResolvedRate {
   rate: number
   source: "same" | "provided" | "fixed" | "seeded" | "live"
@@ -135,4 +134,27 @@ export function resolveRate(input: {
     return { rate: customRate, source: "fixed", shouldSeedFixed: false }
   }
   return { rate: liveRate ?? 1, source: "seeded", shouldSeedFixed: liveRate != null }
+}
+
+/**
+ * Resolve a display-only conversion rate (1 unit of `currency` = ? `projectCurrency`).
+ * Prefers the project's fixed rate, else derives from live USD-based rates.
+ * Returns null when no rate is known (so callers can hide the preview instead of
+ * showing a misleading 1:1).
+ */
+export function previewRate(
+  currency: string,
+  projectCurrency: string,
+  customRates: Record<string, number> | null | undefined,
+  exchangeRates: Record<string, number> | null | undefined,
+): number | null {
+  if (!currency || currency === projectCurrency) return null
+  const custom = customRates?.[currency]
+  if (typeof custom === "number" && custom > 0) return custom
+  if (!exchangeRates) return null
+  const fromRate = exchangeRates[currency]
+  const toRate = exchangeRates[projectCurrency]
+  if (!fromRate || !toRate) return null
+  const rate = toRate / fromRate
+  return rate > 0 && Number.isFinite(rate) ? rate : null
 }

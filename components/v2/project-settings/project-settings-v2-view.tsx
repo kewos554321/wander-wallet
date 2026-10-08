@@ -1,8 +1,10 @@
+import { useState } from "react"
 import { Trash2 } from "lucide-react"
 import { CoverTileButton } from "@/components/v2/cover/cover-tile-button"
 import { DateRangeField } from "@/components/v2/project/date-range-field"
 import { JoinModePicker } from "@/components/v2/project/join-mode-picker"
 import { V2CurrencyField, moneySymbol } from "@/components/v2/ui/currency-field"
+import { SUPPORTED_CURRENCIES } from "@/lib/constants/currencies"
 import type { ProjectFormValues } from "@/lib/hooks/use-project-form"
 import { ExchangeRateRow } from "./exchange-rate-row"
 
@@ -33,6 +35,10 @@ function liveRate(rates: Record<string, number>, from: string, to: string, preci
 export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
   const { values, set } = props
   const descriptionCount = values.description.length
+  const [pendingCurrency, setPendingCurrency] = useState("")
+  const rateCurrencies = Array.from(
+    new Set([...props.expenseCurrencies, ...Object.keys(values.customRates)]),
+  ).filter((c) => c && c !== values.currency)
 
   return (
     <div className="flex flex-col gap-3.5 px-4 pb-32 pt-4">
@@ -117,25 +123,51 @@ export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
           <p className="mt-1.5 text-xs text-v2-ink-subtle">所有費用將以此幣別進行結算計算</p>
         </div>
 
-        {props.expenseCurrencies.length > 0 && (
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-v2-ink-muted">自訂匯率（選填）</label>
-            <p className="mb-2 text-xs text-v2-ink-subtle">不設定則使用即時匯率</p>
-            <div className="flex flex-col gap-3">
-              {props.expenseCurrencies.map((curr) => (
-                <ExchangeRateRow
-                  key={curr}
-                  currency={curr}
-                  settlementCurrency={values.currency}
-                  value={values.customRates[curr] ?? ""}
-                  liveRate={liveRate(props.rates, curr, values.currency, values.exchangeRatePrecision)}
-                  onChange={(rate) => set("customRates", { ...values.customRates, [curr]: rate })}
-                  disabled={props.saving}
-                />
-              ))}
-            </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-v2-ink-muted">自訂匯率（選填）</label>
+          <p className="mb-2 text-xs text-v2-ink-subtle">不設定則使用即時匯率</p>
+          <div className="flex flex-col gap-3">
+            {rateCurrencies.map((curr) => (
+              <ExchangeRateRow
+                key={curr}
+                currency={curr}
+                settlementCurrency={values.currency}
+                value={values.customRates[curr] ?? ""}
+                liveRate={liveRate(props.rates, curr, values.currency, values.exchangeRatePrecision)}
+                onChange={(rate) => set("customRates", { ...values.customRates, [curr]: rate })}
+                disabled={props.saving}
+              />
+            ))}
           </div>
-        )}
+          <div className="mt-3 flex items-center gap-2">
+            <select
+              aria-label="新增幣別"
+              value={pendingCurrency}
+              onChange={(e) => setPendingCurrency(e.target.value)}
+              className="min-w-0 flex-1 rounded-xl border border-v2-line bg-v2-paper px-3 py-2 text-[13px]"
+            >
+              <option value="">選擇要新增的幣別</option>
+              {SUPPORTED_CURRENCIES.filter(
+                (c) => c.code !== values.currency && !rateCurrencies.includes(c.code),
+              ).map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.code} {c.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              disabled={!pendingCurrency || props.saving}
+              onClick={() => {
+                set("customRates", { ...values.customRates, [pendingCurrency]: "" })
+                setPendingCurrency("")
+              }}
+              className="rounded-xl border border-v2-line bg-v2-paper px-3 py-2 text-[13px] font-semibold text-v2-lake disabled:opacity-50"
+            >
+              新增
+            </button>
+          </div>
+        </div>
 
         <div>
           <label htmlFor="v2-rate-precision" className={fieldLabelClass}>

@@ -30,8 +30,8 @@ export interface ExpenseFormV2ViewProps {
   onRequestDelete?: () => void
   /** Settlement currency; enables the ≈ conversion preview for foreign expenses. */
   projectCurrency?: string
-  /** Project fixed rates keyed by currency (used for the preview only). */
-  projectRates?: Record<string, number> | null
+  /** Resolve a display-only rate (currency → settlement); null hides the preview. */
+  previewRateFor?: (currency: string) => number | null
 }
 
 export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
@@ -43,7 +43,7 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
   const submitLabel = props.mode === "create" ? `新增支出 · ${amountLabel}` : `儲存變更 · ${amountLabel}`
   const rate =
     props.projectCurrency && state.currency !== props.projectCurrency
-      ? props.projectRates?.[state.currency] ?? null
+      ? props.previewRateFor?.(state.currency) ?? null
       : null
   const previewProjectAmount = rate != null ? derived.splitInput.amount * rate : null
 

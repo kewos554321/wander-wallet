@@ -8,6 +8,8 @@ import { NotifyLineCheckbox } from "@/components/expense/notify-line-checkbox"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { useProjectData } from "@/lib/hooks"
+import { useCurrencyConversion } from "@/lib/hooks/useCurrencyConversion"
+import { previewRate } from "@/lib/currency-conversion"
 import { useSaveExpense } from "@/lib/hooks/useSaveExpense"
 import { buildExpenseChanges, type ExpenseSnapshot } from "@/lib/expense-changes"
 import { primaryPayerId } from "@/lib/expense-payers"
@@ -143,7 +145,7 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
           init={init}
           original={expense}
           projectCurrency={projectCurrency}
-          projectRates={(project?.customRates as Record<string, number> | null) ?? null}
+          customRates={project?.customRates ?? null}
         />
       </div>
     </UiV2Scope>
@@ -158,17 +160,30 @@ function LoadedForm({
   init,
   original,
   projectCurrency,
-  projectRates,
+  customRates,
 }: Props & {
   projectName: string
   init: DraftInit
   original: LoadedExpense | null
   projectCurrency: string
-  projectRates: Record<string, number> | null
+  customRates: Record<string, number> | null
 }) {
   const router = useRouter()
   const draft = useExpenseDraft(init)
   const { save, remove, saving, uploadingImage, deleting, canNotifyLine } = useSaveExpense(projectId)
+  const { exchangeRates, refetch: refetchRates } = useCurrencyConversion({
+    projectCurrency,
+    customRates,
+    autoFetch: false,
+  })
+  const selectedCurrency = draft.state.currency
+  useEffect(() => {
+    if (selectedCurrency && selectedCurrency !== projectCurrency && !exchangeRates) {
+      refetchRates()
+    }
+  }, [selectedCurrency, projectCurrency, exchangeRates, refetchRates])
+  const previewRateFor = (currency: string) =>
+    previewRate(currency, projectCurrency, customRates, exchangeRates)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [showDelete, setShowDelete] = useState(false)
 
@@ -296,7 +311,7 @@ function LoadedForm({
         onSubmit={handleSubmit}
         onRequestDelete={mode === "edit" ? () => setShowDelete(true) : undefined}
         projectCurrency={projectCurrency}
-        projectRates={projectRates}
+        previewRateFor={previewRateFor}
       />
       <ConfirmDeleteDialog
         open={showDelete}
