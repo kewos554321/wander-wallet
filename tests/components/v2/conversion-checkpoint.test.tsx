@@ -7,7 +7,7 @@ describe("ConversionCheckpoint", () => {
     render(<ConversionCheckpoint currency="JPY" projectCurrency="TWD" rate={0.213504} />)
     const note = screen.getByLabelText("匯率換算")
     expect(note).toHaveTextContent("1 JPY = 0.213504 TWD")
-    expect(note).toHaveTextContent("以下以結算幣別 TWD 分攤與付款")
+    expect(note).toHaveTextContent("系統以結算幣別 TWD 記帳，下方金額以原幣 JPY 填寫")
   })
 
   it("shows a dash when the rate is unknown", () => {

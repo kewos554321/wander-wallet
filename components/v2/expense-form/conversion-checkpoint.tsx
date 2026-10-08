@@ -23,7 +23,7 @@ export function ConversionCheckpoint({
       <p className="m-0">
         ① 匯率換算 1 {currency} = {rate != null ? roundRateForDisplay(rate) : "—"} {projectCurrency}
       </p>
-      <p className="m-0">② 以下以結算幣別 {projectCurrency} 分攤與付款</p>
+      <p className="m-0">② 系統以結算幣別 {projectCurrency} 記帳，下方金額以原幣 {currency} 填寫</p>
     </div>
   )
 }
