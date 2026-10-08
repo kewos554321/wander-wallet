@@ -1295,6 +1295,7 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
         expenseParticipant: {
           deleteMany: vi.fn(),
           createMany: vi.fn(),
+          update: vi.fn(),
         },
         expensePayer: {
           deleteMany: vi.fn(),
@@ -1305,6 +1306,8 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
         expense: {
           update: vi.fn(),
         },
+        projectMember: { update: vi.fn() },
+        project: { update: vi.fn() },
       } as never)
     })
     vi.mocked(prisma.expense.findUnique).mockResolvedValue({
@@ -1338,6 +1341,58 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     expect(data.amount).toBe(2000)
   })
 
+  it("allocates original+settlement on a same-currency edit and updates the ledger", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.expense.findFirst).mockResolvedValue(mockExpense as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123", remainderDiscrepancy: 5 },
+      { id: "member-456", remainderDiscrepancy: 0 },
+    ] as never)
+    const participantCreate = vi.fn().mockResolvedValue(undefined)
+    const memberUpdate = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(prisma.$transaction).mockImplementation(async (cb) =>
+      cb({
+        expenseParticipant: { deleteMany: vi.fn(), createMany: participantCreate, update: vi.fn() },
+        expensePayer: { deleteMany: vi.fn(), createMany: vi.fn(), create: vi.fn(), count: vi.fn() },
+        expense: { update: vi.fn() },
+        projectMember: { update: memberUpdate },
+        project: { update: vi.fn() },
+      } as never),
+    )
+    vi.mocked(prisma.expense.findUnique).mockResolvedValue({ ...mockExpense, amount: 667 } as never)
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses/expense-123",
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          amount: 667,
+          payers: [{ memberId: "member-123", amount: 667 }],
+          participants: [
+            { memberId: "member-123", shareAmount: 333.5 },
+            { memberId: "member-456", shareAmount: 333.5 },
+          ],
+        }),
+      }
+    )
+    const response = await PUT_EXPENSE(req, {
+      params: createExpenseParams("project-123", "expense-123"),
+    })
+    expect(response.status).toBe(200)
+    const created = participantCreate.mock.calls[0][0].data as {
+      memberId: string
+      shareAmount: number
+      shareAmountProject: number
+    }[]
+    // member-456 has the lowest ledger → gets the extra unit in both currencies.
+    expect(created.map((p) => p.shareAmount)).toEqual([333, 334])
+    expect(created.map((p) => p.shareAmountProject)).toEqual([333, 334])
+    expect(memberUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "member-456" }, data: { remainderDiscrepancy: 1 } }),
+    )
+  })
+
   it("should update expense with only description", async () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(
@@ -1352,6 +1407,7 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
         expenseParticipant: {
           deleteMany: vi.fn(),
           createMany: vi.fn(),
+          update: vi.fn(),
         },
         expensePayer: {
           deleteMany: vi.fn(),
@@ -1362,6 +1418,8 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
         expense: {
           update: vi.fn(),
         },
+        projectMember: { update: vi.fn() },
+        project: { update: vi.fn() },
       } as never)
     })
     vi.mocked(prisma.expense.findUnique).mockResolvedValue({
@@ -1414,7 +1472,7 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     const update = vi.fn()
     vi.mocked(prisma.$transaction).mockImplementation(async (cb) =>
       cb({
-        expenseParticipant: { deleteMany: vi.fn(), createMany: vi.fn() },
+        expenseParticipant: { deleteMany: vi.fn(), createMany: vi.fn(), update: vi.fn() },
         expensePayer: {
           deleteMany: vi.fn(),
           createMany: vi.fn(),
@@ -1422,6 +1480,8 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
           count: vi.fn(),
         },
         expense: { update },
+        projectMember: { update: vi.fn() },
+        project: { update: vi.fn() },
       } as never)
     )
     return update

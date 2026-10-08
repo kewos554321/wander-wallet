@@ -9,7 +9,7 @@ import { primaryPayerId, validatePayers } from "@/lib/expense-payers"
 import { expensePayersInclude } from "@/lib/expense-payers-include"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { rollbackAllocation, resolveRate } from "@/lib/currency-conversion"
-import { computeProjectAmounts, type ProjectAmountResult } from "@/lib/expense-project-amounts"
+import { computeProjectAmounts } from "@/lib/expense-project-amounts"
 import { getExchangeRate } from "@/lib/services/exchange-rate"
 
 interface Participant {
@@ -323,9 +323,13 @@ export async function PUT(
       }
     }
 
+    const hadAllocation =
+      wasForeign ||
+      existingExpense.participants.some((p) => p.shareAmountProject != null) ||
+      existingExpense.payers.some((p) => p.amountProject != null)
     let ledger = new Map(projectMembers.map((m) => [m.id, m.remainderDiscrepancy ?? 0]))
     const ledgerInitial = new Map(ledger)
-    if (wasForeign) {
+    if (hadAllocation) {
       const oldTotal =
         existingExpense.participants.reduce((s, p) => s + Number(p.shareAmountProject ?? 0), 0) ||
         existingExpense.payers.reduce((s, p) => s + Number(p.amountProject ?? 0), 0)
@@ -343,19 +347,16 @@ export async function PUT(
       )
     }
 
-    let projectAmounts: ProjectAmountResult | null = null
-    if (isForeign) {
-      projectAmounts = computeProjectAmounts({
-        amount: effectiveAmount,
-        currency: newCurrency,
-        projectCurrency,
-        rate: newRate as number,
-        participants: settlementParticipants,
-        payers: validatedPayers.map((p) => ({ memberId: p.memberId, amount: p.amount })),
-        discrepancy: ledger,
-      })
-      ledger = projectAmounts.discrepancy
-    }
+    const projectAmounts = computeProjectAmounts({
+      amount: effectiveAmount,
+      currency: newCurrency,
+      projectCurrency,
+      rate: isForeign ? (newRate as number) : 1,
+      participants: settlementParticipants,
+      payers: validatedPayers.map((p) => ({ memberId: p.memberId, amount: p.amount })),
+      discrepancy: ledger,
+    })
+    ledger = projectAmounts.discrepancy
 
     updateData.exchangeRate = isForeign ? newRate : null
 
@@ -457,27 +458,25 @@ export async function PUT(
 
         // 創建新的參與者（含結算幣別金額）
         await tx.expenseParticipant.createMany({
-          data: participants.map((p: Participant) => ({
-            expenseId: expenseId,
-            memberId: p.memberId,
-            shareAmount: Number(p.shareAmount),
-            ...(projectAmounts
-              ? {
-                  shareAmountProject: projectAmounts.participants.find((x) => x.memberId === p.memberId)
-                    ?.shareAmountProject,
-                }
-              : {}),
-          })),
+          data: participants.map((p: Participant) => {
+            const allocated = projectAmounts.participants.find((x) => x.memberId === p.memberId)
+            return {
+              expenseId: expenseId,
+              memberId: p.memberId,
+              shareAmount: allocated?.shareAmount ?? Number(p.shareAmount),
+              shareAmountProject: allocated?.shareAmountProject,
+            }
+          }),
         })
-      } else if (projectAmounts || wasForeign) {
-        // 參與者未提供：重算結算幣別金額（若由外幣改為同幣別，清為 null）
+      } else {
+        // 參與者未提供：重算原幣與結算幣別金額
         for (const p of existingExpense.participants) {
+          const allocated = projectAmounts.participants.find((x) => x.memberId === p.member.id)
           await tx.expenseParticipant.update({
             where: { id: p.id },
             data: {
-              shareAmountProject: projectAmounts
-                ? projectAmounts.participants.find((x) => x.memberId === p.member.id)?.shareAmountProject
-                : null,
+              shareAmount: allocated?.shareAmount,
+              shareAmountProject: allocated?.shareAmountProject,
             },
           })
         }
@@ -490,11 +489,7 @@ export async function PUT(
           expenseId,
           memberId: p.memberId,
           amount: p.amount,
-          ...(projectAmounts
-            ? {
-                amountProject: projectAmounts.payers.find((x) => x.memberId === p.memberId)?.amountProject,
-              }
-            : {}),
+          amountProject: projectAmounts.payers.find((x) => x.memberId === p.memberId)?.amountProject,
         })),
       })
 
