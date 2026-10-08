@@ -26,6 +26,7 @@ export function PayerPicker({
   pinned,
   payers,
   matches,
+  amount,
   currency,
   projectCurrency,
   rate,
@@ -41,6 +42,7 @@ export function PayerPicker({
   pinned: Record<string, string>
   payers: PayerShare[]
   matches: boolean
+  amount: number
   currency: string
   projectCurrency?: string
   rate?: number | null
@@ -56,6 +58,9 @@ export function PayerPicker({
   const nameOf = (id: string) => members.find((m) => m.id === id)?.displayName ?? ""
   const derivedAmount = (id: string) => payers.find((p) => p.memberId === id)?.amount ?? 0
   const allSelected = members.length > 0 && payerIds.length === members.length
+  // Signed gap between the payer total and the expense amount, for the mismatch
+  // badge (positive = over, negative = short). Expense currency, never converted.
+  const payerDiff = Math.round((payers.reduce((sum, p) => sum + p.amount, 0) - amount) * 100) / 100
   // A set `displayCurrency` means the section is a glance view: amounts show in
   // that currency and every field becomes read-only (edits stay in the expense
   // currency, reached by flipping back).
@@ -204,7 +209,11 @@ export function PayerPicker({
               金額相符
             </span>
           ) : (
-            <span className="text-xs font-bold text-v2-danger">金額不符</span>
+            <span className="text-xs font-bold text-v2-danger">
+              {payerDiff !== 0
+                ? `${payerDiff > 0 ? "超出" : "尚差"} $${formatAmount(Math.abs(payerDiff), currency)}`
+                : "金額不符"}
+            </span>
           )}
         </div>
       </div>

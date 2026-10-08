@@ -474,6 +474,17 @@ describe("ExpenseFormV2View", () => {
     expect(within(split).getByText("金額相符")).toBeInTheDocument()
   })
 
+  it("shows how far short the split is when nobody is in the pool", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    const split = screen.getByRole("region", { name: "分攤成員" })
+    fireEvent.click(within(split).getByRole("button", { name: "取消全選" }))
+    rerender()
+    // Nothing is allocated against the 100 target.
+    expect(within(split).getByText("尚差 $100")).toBeInTheDocument()
+  })
+
   it("no longer renders a text summary under the split header", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))

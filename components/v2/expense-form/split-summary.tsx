@@ -48,9 +48,16 @@ export function shouldShowBreakdown(members: DraftMember[], draft: SplitDraft): 
   return draft.state.personalMode && buildSummaryRows(members, draft).some((r) => r.total !== 0)
 }
 
-// Match status for the split. Rendered below the breakdown table when it is
-// visible, otherwise next to the participant count.
-export function MatchBadge({ matches }: { matches: boolean }) {
+// Signed gap between the split's ideal shares and the expense amount, matching
+// what `matches` compares. Positive = over, negative = short.
+export function splitGap(draft: SplitDraft): number {
+  const { derived } = draft
+  return Math.round((derived.weights.reduce((s, w) => s + w.weight, 0) - derived.splitInput.amount) * 100) / 100
+}
+
+// Match status for the split. On a mismatch it shows the signed gap from the
+// expense amount (expense currency), e.g. 尚差 $40 / 超出 $20.
+export function MatchBadge({ matches, diff, currency }: { matches: boolean; diff: number; currency: string }) {
   if (matches) {
     return (
       <span className="flex items-center gap-1 text-xs font-bold text-v2-link">
@@ -59,7 +66,13 @@ export function MatchBadge({ matches }: { matches: boolean }) {
       </span>
     )
   }
-  return <span className="text-xs font-bold text-v2-danger">金額不符</span>
+  return (
+    <span className="text-xs font-bold text-v2-danger">
+      {diff !== 0
+        ? `${diff > 0 ? "超出" : "尚差"} $${formatAmount(Math.abs(diff), currency)}`
+        : "金額不符"}
+    </span>
+  )
 }
 
 // Per-member breakdown (design A3d, deliberately deviating): members whose
@@ -142,7 +155,7 @@ export function SplitSummary({
         </div>
       </div>
       <div className="mt-2 flex justify-end">
-        <MatchBadge matches={derived.matches} />
+        <MatchBadge matches={derived.matches} diff={splitGap(draft)} currency={currency} />
       </div>
     </section>
   )

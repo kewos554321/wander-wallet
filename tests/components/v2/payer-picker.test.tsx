@@ -16,6 +16,7 @@ function setup(overrides: Partial<Props> = {}) {
     pinned: {},
     payers: [{ memberId: "a", amount: 100 }],
     matches: true,
+    amount: 100,
     currency: "TWD",
     onTogglePayer: vi.fn(),
     onSetAll: vi.fn(),
@@ -137,7 +138,7 @@ describe("PayerPicker", () => {
     expect(within(group).getByText("金額相符")).toBeInTheDocument()
   })
 
-  it("shows 金額不符 when the payer total does not match", () => {
+  it("shows how far short the payer total is when it is below the amount", () => {
     setup({
       payerIds: ["a", "b"],
       payers: [
@@ -147,7 +148,22 @@ describe("PayerPicker", () => {
       matches: false,
     })
     const group = screen.getByRole("group", { name: "付款成員" })
-    expect(within(group).getByText("金額不符")).toBeInTheDocument()
+    // 60 of the 100 target → short by 40.
+    expect(within(group).getByText("尚差 $40")).toBeInTheDocument()
+  })
+
+  it("shows how far over the payer total is when it exceeds the amount", () => {
+    setup({
+      payerIds: ["a", "b"],
+      payers: [
+        { memberId: "a", amount: 60 },
+        { memberId: "b", amount: 60 },
+      ],
+      matches: false,
+    })
+    const group = screen.getByRole("group", { name: "付款成員" })
+    // 120 of the 100 target → over by 20.
+    expect(within(group).getByText("超出 $20")).toBeInTheDocument()
   })
 
   it("shows each payer's settlement estimate on its own line for a foreign expense", () => {

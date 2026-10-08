@@ -133,6 +133,7 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
         pinned={state.pinnedPayerAmounts}
         payers={derived.payers}
         matches={derived.payerMatches}
+        amount={derived.splitInput.amount}
         currency={state.currency}
         projectCurrency={props.projectCurrency}
         rate={rate}
