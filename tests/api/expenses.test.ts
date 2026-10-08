@@ -7,11 +7,13 @@ vi.mock("@/lib/db", () => ({
   prisma: {
     project: {
       findUnique: vi.fn(),
+      update: vi.fn(),
     },
     projectMember: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
       findUnique: vi.fn(),
+      update: vi.fn(),
     },
     expense: {
       findMany: vi.fn(),
@@ -52,6 +54,14 @@ vi.mock("@/lib/activity-log", () => ({
   diffChanges: vi.fn().mockReturnValue(null),
 }))
 
+// Mock exchange-rate service
+vi.mock("@/lib/services/exchange-rate", () => ({
+  getExchangeRate: vi.fn(),
+  convertCurrency: vi.fn(),
+  getExchangeRates: vi.fn(),
+  isUsingFallbackRates: vi.fn().mockReturnValue(false),
+}))
+
 import { GET, POST } from "@/app/api/projects/[id]/expenses/route"
 import {
   GET as GET_EXPENSE,
@@ -62,6 +72,7 @@ import { DELETE as DELETE_BATCH } from "@/app/api/projects/[id]/expenses/batch/r
 import { prisma } from "@/lib/db"
 import { getAuthUser } from "@/lib/auth"
 import { createActivityLog } from "@/lib/activity-log"
+import { getExchangeRate } from "@/lib/services/exchange-rate"
 
 const mockUser = {
   id: "user-123",
@@ -260,6 +271,9 @@ describe("POST /api/projects/[id]/expenses", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as never)
+    vi.mocked(prisma.$transaction).mockImplementation(
+      async (cb: (tx: typeof prisma) => Promise<unknown>) => cb(prisma),
+    )
   })
 
   it("should return 401 if user is not authenticated", async () => {
@@ -586,6 +600,42 @@ describe("POST /api/projects/[id]/expenses", () => {
         }),
       })
     )
+  })
+
+  it("stores settlement amounts and a snapshot rate for a foreign-currency expense", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue({
+      currency: "USD",
+      customRates: null,
+      exchangeRatePrecision: 2,
+      rateSource: "fixed",
+    } as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123", remainderDiscrepancy: 0 },
+    ] as never)
+    vi.mocked(getExchangeRate).mockResolvedValue(0.031715)
+    vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense as never)
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          amount: 1000,
+          currency: "TWD",
+          payers: [{ memberId: "member-123", amount: 1000 }],
+          participants: [{ memberId: "member-123", shareAmount: 1000 }],
+        }),
+      }
+    )
+    const response = await POST(req, { params: createParams("project-123") })
+    expect(response.status).toBe(201)
+
+    const call = vi.mocked(prisma.expense.create).mock.calls[0][0]
+    expect(call.data.exchangeRate).toBeCloseTo(0.031715)
+    expect(call.data.participants.create[0].shareAmountProject).toBe(3172)
+    expect(call.data.payers.create[0].amountProject).toBe(3172)
   })
 
   it("should create activity log after creating expense", async () => {

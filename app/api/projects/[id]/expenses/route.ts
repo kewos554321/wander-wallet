@@ -7,6 +7,9 @@ import { Prisma } from "@prisma/client"
 import { validateSplitDetail } from "@/lib/expense-split"
 import { primaryPayerId, validatePayers, type PayerShare } from "@/lib/expense-payers"
 import { expensePayersInclude } from "@/lib/expense-payers-include"
+import { getExchangeRate } from "@/lib/services/exchange-rate"
+import { resolveRate } from "@/lib/currency-conversion"
+import { computeProjectAmounts, type ProjectAmountResult } from "@/lib/expense-project-amounts"
 
 interface Participant {
   memberId: string
@@ -104,12 +107,12 @@ export async function POST(
     }
 
     const body = await req.json()
-    const { payers, amount, currency, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail } = body
+    const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail } = body
 
-    // 獲取專案幣別
+    // 獲取專案幣別與匯率設定
     const project = await prisma.project.findUnique({
       where: { id },
-      select: { currency: true },
+      select: { currency: true, customRates: true, rateSource: true },
     })
 
     if (!project) {
@@ -144,10 +147,11 @@ export async function POST(
       },
       select: {
         id: true,
+        remainderDiscrepancy: true,
       },
     })
 
-    const memberIdSet = new Set(projectMembers.map((m: { id: string }) => m.id))
+    const memberIdSet = new Set(projectMembers.map((m) => m.id))
     const participantMemberIds = participants.map((p: Participant) => p.memberId)
 
     for (const memberId of participantMemberIds) {
@@ -199,57 +203,144 @@ export async function POST(
 
     const primaryPayer = primaryPayerId(validatedPayers)
 
-    // 創建費用記錄（匯率轉換在結算時執行）
-    const expense = await prisma.expense.create({
-      data: {
-        projectId: id,
+    // 計算結算幣別金額（換算 + 整數分配 + 尾差帳）
+    const projectCurrency = project.currency || DEFAULT_CURRENCY
+    const customRates = (project.customRates as Record<string, number> | null) || {}
+    const rateSource = (project.rateSource as "fixed" | "live") || "fixed"
+
+    let snapshotRate: number | null = null
+    let seedRate: number | null = null
+    let projectAmounts: ProjectAmountResult | null = null
+
+    if (expenseCurrency !== projectCurrency) {
+      const providedRate =
+        exchangeRate !== undefined && exchangeRate !== null ? Number(exchangeRate) : null
+      const needsLive =
+        providedRate == null && (rateSource === "live" || customRates[expenseCurrency] == null)
+      let liveRate: number | null = null
+      if (needsLive) {
+        try {
+          liveRate = await getExchangeRate(expenseCurrency, projectCurrency)
+        } catch {
+          liveRate = null
+        }
+      }
+      const resolved = resolveRate({
+        currency: expenseCurrency,
+        projectCurrency,
+        provided: providedRate,
+        rateSource,
+        customRate: customRates[expenseCurrency] ?? null,
+        liveRate,
+      })
+      snapshotRate = resolved.rate
+      if (resolved.shouldSeedFixed) seedRate = resolved.rate
+
+      projectAmounts = computeProjectAmounts({
         amount: amountNum,
         currency: expenseCurrency,
-        description: description?.trim() || null,
-        category: category?.trim() || null,
-        image: image || null,
-        location: location?.trim() || null,
-        latitude: latitude ? Number(latitude) : null,
-        longitude: longitude ? Number(longitude) : null,
-        expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
-        ...(validatedSplitDetail
-          ? { splitDetail: validatedSplitDetail as unknown as Prisma.InputJsonValue }
-          : {}),
-        payers: {
-          create: validatedPayers.map((p) => ({
-            memberId: p.memberId,
-            amount: p.amount,
-          })),
+        projectCurrency,
+        rate: resolved.rate,
+        participants: participants.map((p: Participant) => ({
+          memberId: p.memberId,
+          shareAmount: Number(p.shareAmount),
+        })),
+        payers: validatedPayers.map((p) => ({ memberId: p.memberId, amount: p.amount })),
+        discrepancy: new Map(projectMembers.map((m) => [m.id, m.remainderDiscrepancy ?? 0])),
+      })
+    }
+
+    const initialDiscrepancy = new Map(
+      projectMembers.map((m) => [m.id, m.remainderDiscrepancy ?? 0])
+    )
+
+    // 創建費用記錄（結算幣別金額 + 匯率快照；與尾差帳同交易）
+    const expense = await prisma.$transaction(async (tx) => {
+      const created = await tx.expense.create({
+        data: {
+          projectId: id,
+          amount: amountNum,
+          currency: expenseCurrency,
+          exchangeRate: snapshotRate,
+          description: description?.trim() || null,
+          category: category?.trim() || null,
+          image: image || null,
+          location: location?.trim() || null,
+          latitude: latitude ? Number(latitude) : null,
+          longitude: longitude ? Number(longitude) : null,
+          expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
+          ...(validatedSplitDetail
+            ? { splitDetail: validatedSplitDetail as unknown as Prisma.InputJsonValue }
+            : {}),
+          payers: {
+            create: validatedPayers.map((p) => ({
+              memberId: p.memberId,
+              amount: p.amount,
+              ...(projectAmounts
+                ? {
+                    amountProject: projectAmounts.payers.find((x) => x.memberId === p.memberId)
+                      ?.amountProject,
+                  }
+                : {}),
+            })),
+          },
+          participants: {
+            create: participants.map((p: Participant) => ({
+              memberId: p.memberId,
+              shareAmount: Number(p.shareAmount),
+              ...(projectAmounts
+                ? {
+                    shareAmountProject: projectAmounts.participants.find(
+                      (x) => x.memberId === p.memberId
+                    )?.shareAmountProject,
+                  }
+                : {}),
+            })),
+          },
         },
-        participants: {
-          create: participants.map((p: Participant) => ({
-            memberId: p.memberId,
-            shareAmount: Number(p.shareAmount),
-          })),
-        },
-      },
-      include: {
-        payers: expensePayersInclude,
-        participants: {
-          include: {
-            member: {
-              select: {
-                id: true,
-                displayName: true,
-                userId: true,
-                user: {
-                  select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    image: true,
+        include: {
+          payers: expensePayersInclude,
+          participants: {
+            include: {
+              member: {
+                select: {
+                  id: true,
+                  displayName: true,
+                  userId: true,
+                  user: {
+                    select: {
+                      id: true,
+                      name: true,
+                      email: true,
+                      image: true,
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
+      })
+
+      if (seedRate != null) {
+        await tx.project.update({
+          where: { id },
+          data: { customRates: { ...customRates, [expenseCurrency]: seedRate } },
+        })
+      }
+
+      if (projectAmounts) {
+        for (const [memberId, value] of projectAmounts.discrepancy) {
+          if ((initialDiscrepancy.get(memberId) ?? 0) !== value) {
+            await tx.projectMember.update({
+              where: { id: memberId },
+              data: { remainderDiscrepancy: value },
+            })
+          }
+        }
+      }
+
+      return created
     })
 
     const payerName = expense.payers.find((p) => p.memberId === primaryPayer)?.member.displayName
