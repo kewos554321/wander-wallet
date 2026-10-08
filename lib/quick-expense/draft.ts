@@ -37,7 +37,7 @@ export function fromParsed(results: ExpenseItemResult[], today: Date = new Date(
     const payerIds = parsedPayers.map((p) => p.memberId)
     // Pin amounts only when the AI returned an explicit split that differs from
     // a plain equal split, so a default single/equal payer stays auto.
-    const equal = derivePayerShares({ amount, payerIds, pinned: {} }).shares
+    const equal = derivePayerShares({ amount, payerIds, pinned: {}, currency: rest.currency }).shares
     const isEqualPayerSplit =
       payerIds.length > 0 &&
       parsedPayers.length === equal.length &&
@@ -95,7 +95,7 @@ export function itemDerivedPayers(item: QuickItem): {
   ok: boolean
 } {
   const amount = amountOf(item)
-  const result = derivePayerShares({ amount, payerIds: item.payerIds, pinned: pinnedNumbersOf(item) })
+  const result = derivePayerShares({ amount, payerIds: item.payerIds, pinned: pinnedNumbersOf(item), currency: item.currency })
   const payerTotal = result.shares.reduce((sum, p) => sum + p.amount, 0)
   return {
     payers: result.shares,

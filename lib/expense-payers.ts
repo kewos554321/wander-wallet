@@ -6,6 +6,8 @@
 //
 // Design: docs/superpowers/specs/2026-10-06-multi-payer-expenses-design.md
 
+import { roundMajorToMinor } from "@/lib/currency-conversion"
+
 export interface PayerShare {
   memberId: string
   amount: number
@@ -18,16 +20,21 @@ const hasOwn = (obj: object, key: string) => Object.prototype.hasOwnProperty.cal
  * Distribute an expense amount across the selected payers.
  * Payers with a pinned amount keep it; the rest share the remainder equally.
  * The first unpinned payer absorbs the rounding remainder so the total matches
- * `amount` exactly.
+ * `amount` exactly. When `currency` is given, amounts round to that currency's
+ * minor unit (so a 0-decimal currency never yields fractional payments); the
+ * payer remainder is intentionally deterministic and never touches the
+ * fairness ledger, because a payment is a record, not a debt.
  */
 export function derivePayerShares(input: {
   amount: number
   payerIds: string[]
   pinned: Record<string, number>
+  currency?: string
 }): { shares: PayerShare[]; pinnedTotal: number; autoIds: string[]; ok: boolean } {
-  const { amount, payerIds, pinned } = input
+  const { amount, payerIds, pinned, currency } = input
+  const round = (n: number) => (currency ? roundMajorToMinor(n, currency) : round2(n))
   const autoIds = payerIds.filter((id) => !hasOwn(pinned, id))
-  const pinnedTotal = round2(
+  const pinnedTotal = round(
     payerIds.reduce((sum, id) => sum + (hasOwn(pinned, id) ? Number(pinned[id]) || 0 : 0), 0)
   )
   const ok = pinnedTotal <= amount + 0.01
@@ -36,12 +43,12 @@ export function derivePayerShares(input: {
 
   const shares: PayerShare[] = payerIds.map((id) => ({
     memberId: id,
-    amount: hasOwn(pinned, id) ? round2(Number(pinned[id]) || 0) : 0,
+    amount: hasOwn(pinned, id) ? round(Number(pinned[id]) || 0) : 0,
   }))
 
   if (autoIds.length > 0) {
-    const remaining = round2(amount - pinnedTotal)
-    const perAuto = round2(remaining / autoIds.length)
+    const remaining = round(amount - pinnedTotal)
+    const perAuto = round(remaining / autoIds.length)
     for (const share of shares) {
       if (!hasOwn(pinned, share.memberId)) share.amount = perAuto
     }
@@ -50,7 +57,7 @@ export function derivePayerShares(input: {
       .filter((s) => s.memberId !== firstAuto)
       .reduce((sum, s) => sum + s.amount, 0)
     const first = shares.find((s) => s.memberId === firstAuto)!
-    first.amount = round2(amount - others)
+    first.amount = round(amount - others)
   }
 
   return { shares, pinnedTotal, autoIds, ok }

@@ -25,6 +25,15 @@ describe("derivePayerShares", () => {
     expect(shares[2].amount).toBe(33.33)
   })
 
+  it("rounds an equal split to the currency's minor unit, keeping the total exact", () => {
+    const { shares } = derivePayerShares({ amount: 100, payerIds: ["a", "b", "c"], pinned: {}, currency: "TWD" })
+    expect(shares).toEqual([
+      { memberId: "a", amount: 34 },
+      { memberId: "b", amount: 33 },
+      { memberId: "c", amount: 33 },
+    ])
+  })
+
   it("keeps pinned amounts and distributes the remainder to auto payers", () => {
     const { shares, pinnedTotal, autoIds } = derivePayerShares({
       amount: 1000,

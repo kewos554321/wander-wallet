@@ -84,7 +84,7 @@ function initialState(init: DraftInit) {
   const payerIds = e.payers.map((p) => p.memberId)
   // Seed pinned amounts only when the stored split is not a plain equal split,
   // so re-saving keeps custom amounts without pinning a plain equal split.
-  const equal = derivePayerShares({ amount: e.amount, payerIds, pinned: {} }).shares
+  const equal = derivePayerShares({ amount: e.amount, payerIds, pinned: {}, currency: e.currency }).shares
   const isEqualPayerSplit =
     payerIds.length > 0 &&
     e.payers.length === equal.length &&
@@ -267,7 +267,7 @@ export function useExpenseDraft(init: DraftInit, previewRateInfo?: (currency: st
     for (const [id, value] of Object.entries(state.pinnedPayerAmounts)) {
       pinnedNumbers[id] = Number(value) || 0
     }
-    const payerResult = derivePayerShares({ amount: amountNum, payerIds: state.payerIds, pinned: pinnedNumbers })
+    const payerResult = derivePayerShares({ amount: amountNum, payerIds: state.payerIds, pinned: pinnedNumbers, currency: state.currency })
     const payers: PayerShare[] = payerResult.shares
     const payerTotal = payers.reduce((s, p) => s + p.amount, 0)
     const payerMatches = payerResult.ok && Math.abs(payerTotal - amountNum) <= 0.01
