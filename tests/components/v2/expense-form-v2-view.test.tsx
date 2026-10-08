@@ -724,10 +724,10 @@ describe("ExpenseFormV2View", () => {
 
   it("shows a dashed hint when nobody is in the shared pool", () => {
     const { hook, rerender } = renderForm()
-    expect(screen.queryByText(/目前沒有人參與共同分攤/)).not.toBeInTheDocument()
+    expect(screen.queryByText("請選擇分攤成員")).not.toBeInTheDocument()
     act(() => hook.result.current.actions.setPoolAll(false))
     rerender()
-    expect(screen.getByText(/目前沒有人參與共同分攤/)).toBeInTheDocument()
+    expect(screen.getByText("請選擇分攤成員")).toBeInTheDocument()
   })
 
   it("pins the current auto share when the pin button is pressed", () => {

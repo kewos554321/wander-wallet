@@ -57,9 +57,10 @@ describe("PayerPicker", () => {
     expect(b).toHaveTextContent("$50")
   })
 
-  it("does not render payer rows when nobody is selected", () => {
+  it("hints to pick payers and renders no rows when nobody is selected", () => {
     setup({ payerIds: [], payers: [] })
     expect(screen.queryByLabelText(/的付款金額/)).not.toBeInTheDocument()
+    expect(screen.getByText("請選擇付款成員")).toBeInTheDocument()
   })
 
   it("renders an editable input with the pinned amount once a payer is pinned", () => {

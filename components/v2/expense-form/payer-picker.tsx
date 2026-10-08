@@ -130,6 +130,12 @@ export function PayerPicker({
         </div>
       )}
 
+      {!settleView && payerIds.length === 0 && (
+        <p className="rounded-[14px] border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
+          請選擇付款成員
+        </p>
+      )}
+
       {payerIds.length > 0 && (
         <div className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
           {payers.map((p, idx) => {
