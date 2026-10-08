@@ -118,8 +118,9 @@ export function SplitSummary({
   const settleView = displayCurrency != null && displayCurrency !== currency && rate != null
   const view = (n: number) => (settleView ? roundMajorToMinor(n * rate!, viewCurrency) : n)
   const money = (n: number) => `$${formatAmount(view(n), viewCurrency)}`
-  // ≈ flags only the key settlement totals: each member's 小計 and the 合計 row.
+  // ≈ flags any cell that actually holds an amount; a structural 0 stays plain.
   const approx = (n: number) => `${settleView ? "≈" : ""}$${formatAmount(view(n), viewCurrency)}`
+  const amount = (n: number) => (n !== 0 ? approx(n) : money(n))
   const rows = buildSummaryRows(members, draft)
   const visibleRows = rows.filter((r) => r.total !== 0)
   if (visibleRows.length === 0) return null
@@ -151,10 +152,10 @@ export function SplitSummary({
                 />
                 <span className="truncate">{r.name}</span>
               </span>
-              <span role="cell" className={`${cell} ${r.personal ? "" : "text-v2-ink-subtle"}`}>{money(r.personal)}</span>
-              <span role="cell" className={`${cell} ${r.pool ? "" : "text-v2-ink-subtle"}`}>{money(r.pool)}</span>
+              <span role="cell" className={`${cell} ${r.personal ? "" : "text-v2-ink-subtle"}`}>{amount(r.personal)}</span>
+              <span role="cell" className={`${cell} ${r.pool ? "" : "text-v2-ink-subtle"}`}>{amount(r.pool)}</span>
               <span role="cell" className={`${cell} font-bold`}>
-                <span className="block">{approx(r.total)}</span>
+                <span className="block">{amount(r.total)}</span>
                 {displayCurrency == null && projectCurrency && rate != null && currency !== projectCurrency && (
                   <span className="block text-[10px] font-normal text-v2-ink-muted">
                     ≈ {formatCurrency(r.total * rate, projectCurrency)}
@@ -165,9 +166,9 @@ export function SplitSummary({
           ))}
           <div role="row" className={`${cols} border-t border-v2-lake-border bg-v2-lake-tint py-2.5 font-bold`}>
             <span role="rowheader" className="text-left text-[13px]">合計</span>
-            <span role="cell" className={cell}>{approx(sum("personal"))}</span>
-            <span role="cell" className={cell}>{approx(sum("pool"))}</span>
-            <span role="cell" className={`${cell} text-v2-lake`}>{approx(sum("total"))}</span>
+            <span role="cell" className={cell}>{amount(sum("personal"))}</span>
+            <span role="cell" className={cell}>{amount(sum("pool"))}</span>
+            <span role="cell" className={`${cell} text-v2-lake`}>{amount(sum("total"))}</span>
           </div>
         </div>
       </div>

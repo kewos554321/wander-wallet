@@ -276,7 +276,7 @@ describe("ExpenseFormV2View", () => {
     expect(within(split).getByRole("button", { name: "顯示 JPY" })).toBeInTheDocument()
   })
 
-  it("marks only the key totals with ≈ in the breakdown table", () => {
+  it("marks every non-zero amount in the breakdown table with ≈", () => {
     const { hook, rerender } = renderForm({
       projectCurrency: "USD",
       previewRateInfo: () => ({ rate: 0.05, source: "live" as const }),
@@ -293,14 +293,15 @@ describe("ExpenseFormV2View", () => {
     rerender()
     const breakdown = within(split).getByRole("region", { name: "分攤明細" })
     const cells = within(within(breakdown).getByRole("row", { name: /小雨/ })).getAllByRole("cell")
-    // The 個人項目 and 共同分攤 columns stay plain; the 小計 is a key total.
+    // No personal-item amount: that cell is a structural 0 and stays plain.
     expect(cells[0]).not.toHaveTextContent("≈")
-    expect(cells[1]).not.toHaveTextContent("≈")
+    // Cells that hold an amount (共同分攤, 小計) are flagged as approximations.
+    expect(cells[1]).toHaveTextContent("≈")
     expect(cells[2]).toHaveTextContent("≈")
-    // The whole 合計 row is a key total.
-    for (const c of within(within(breakdown).getByRole("row", { name: /^合計/ })).getAllByRole("cell")) {
-      expect(c).toHaveTextContent("≈")
-    }
+    const totalCells = within(within(breakdown).getByRole("row", { name: /^合計/ })).getAllByRole("cell")
+    expect(totalCells[0]).not.toHaveTextContent("≈")
+    expect(totalCells[1]).toHaveTextContent("≈")
+    expect(totalCells[2]).toHaveTextContent("≈")
   })
 
   it("hides the split settlement estimates for a same-currency expense", () => {
