@@ -107,7 +107,7 @@ describe("CurrencySelect Component", () => {
     })
 
     it("should have correct currency count", () => {
-      expect(SUPPORTED_CURRENCIES.length).toBe(13)
+      expect(SUPPORTED_CURRENCIES.length).toBe(19)
     })
   })
 
