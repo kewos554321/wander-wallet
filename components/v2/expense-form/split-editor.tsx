@@ -182,7 +182,10 @@ export function SplitEditor({
         <p className="m-0 flex items-center gap-1.5 text-xs font-semibold text-v2-ink-muted">
           共同分攤 <span className="font-bold text-v2-ink">（{state.personalMode ? "剩餘 " : ""}${num(Math.max(0, derived.splitInput.amount - derived.personalTotal))}）</span>
           {derived.remainderMembers.length > 0 && (
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-v2-lake-tint px-1.5 py-px text-[10px] font-bold text-v2-lake">
+            <span
+              title="無法整除之尾差，依公平原則輪替承擔"
+              className="inline-flex items-center gap-0.5 rounded-full bg-v2-lake-tint px-1.5 py-px text-[10px] font-bold text-v2-lake"
+            >
               <Info className="h-3 w-3" aria-hidden="true" />
               尾差 ${formatAmount(fromMinorUnits(derived.remainderMinor, currency), currency)}
             </span>
