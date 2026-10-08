@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import {
   buildSplitDetail,
+  computeIdealShares,
   computeShares,
   getV1SplitMode,
   isSameSplitDetail,
@@ -113,6 +114,47 @@ describe("computeShares — personal items", () => {
       { memberId: "a", shareAmount: 45 },
       { memberId: "b", shareAmount: 45 },
       { memberId: "c", shareAmount: 10 },
+    ])
+  })
+})
+
+describe("computeIdealShares", () => {
+  it("returns unrounded equal weights that sum to the amount", () => {
+    const weights = computeIdealShares(input({ amount: 100 }))
+    expect(weights).toEqual([
+      { memberId: "a", weight: 100 / 3 },
+      { memberId: "b", weight: 100 / 3 },
+      { memberId: "c", weight: 100 / 3 },
+    ])
+    expect(weights.reduce((s, w) => s + w.weight, 0)).toBeCloseTo(100, 10)
+  })
+
+  it("returns [] without participants", () => {
+    expect(computeIdealShares(input({ participantIds: [] }))).toEqual([])
+  })
+
+  it("adds personal items then splits the pool evenly, without rounding", () => {
+    expect(computeIdealShares(input({ amount: 1000, personalItems: { b: [{ name: "計程車", amount: 100 }] } }))).toEqual([
+      { memberId: "a", weight: 300 },
+      { memberId: "b", weight: 400 },
+      { memberId: "c", weight: 300 },
+    ])
+  })
+
+  it("uses custom shares and splits the rest among the auto members", () => {
+    expect(computeIdealShares(input({ amount: 100, participantIds: ["a", "b"], customShares: { a: 30 } }))).toEqual([
+      { memberId: "a", weight: 30 },
+      { memberId: "b", weight: 70 },
+    ])
+  })
+
+  it("gives a personal-only member (custom 0) only their items", () => {
+    expect(
+      computeIdealShares(input({ personalItems: { c: [{ name: "紀念品", amount: 10 }] }, customShares: { c: 0 } }))
+    ).toEqual([
+      { memberId: "a", weight: 45 },
+      { memberId: "b", weight: 45 },
+      { memberId: "c", weight: 10 },
     ])
   })
 })
