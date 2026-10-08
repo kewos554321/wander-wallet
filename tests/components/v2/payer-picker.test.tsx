@@ -41,7 +41,7 @@ describe("PayerPicker", () => {
     expect(onTogglePayer).toHaveBeenCalledWith("b")
   })
 
-  it("renders an editable amount input per selected payer, labelled with the name", () => {
+  it("shows each selected payer's equal amount as read-only text until pinned", () => {
     setup({
       payerIds: ["a", "b"],
       payers: [
@@ -49,8 +49,12 @@ describe("PayerPicker", () => {
         { memberId: "b", amount: 50 },
       ],
     })
-    expect(screen.getByLabelText("小雨的付款金額")).toHaveValue("50")
-    expect(screen.getByLabelText("志明的付款金額")).toHaveValue("50")
+    const a = screen.getByLabelText("小雨的付款金額")
+    expect(a.tagName).toBe("SPAN")
+    expect(a).toHaveTextContent("$50")
+    const b = screen.getByLabelText("志明的付款金額")
+    expect(b.tagName).toBe("SPAN")
+    expect(b).toHaveTextContent("$50")
   })
 
   it("does not render payer rows when nobody is selected", () => {
@@ -59,10 +63,21 @@ describe("PayerPicker", () => {
     expect(screen.getByText("已選 0 人")).toBeInTheDocument()
   })
 
-  it("forwards amount edits for the matching payer", () => {
-    const { onSetAmount } = setup()
-    fireEvent.change(screen.getByLabelText("小雨的付款金額"), { target: { value: "40" } })
-    expect(onSetAmount).toHaveBeenCalledWith("a", "40")
+  it("renders an editable input with the pinned amount once a payer is pinned", () => {
+    setup({
+      payerIds: ["a"],
+      pinned: { a: "40" },
+      payers: [{ memberId: "a", amount: 40 }],
+    })
+    const input = screen.getByLabelText("小雨的付款金額")
+    expect(input.tagName).toBe("INPUT")
+    expect(input).toHaveValue("40")
+  })
+
+  it("forwards amount edits for a pinned payer", () => {
+    const { onSetAmount } = setup({ pinned: { a: "40" }, payers: [{ memberId: "a", amount: 40 }] })
+    fireEvent.change(screen.getByLabelText("小雨的付款金額"), { target: { value: "35" } })
+    expect(onSetAmount).toHaveBeenCalledWith("a", "35")
   })
 
   it("pins an auto payer at its derived amount", () => {

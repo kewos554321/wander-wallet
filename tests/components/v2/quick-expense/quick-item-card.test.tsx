@@ -141,7 +141,7 @@ describe("QuickItemCard", () => {
   })
 
   it("edits and clears an individual payer amount", () => {
-    const p = setup({ amount: "1280", payerIds: ["a", "b"] })
+    const p = setup({ amount: "1280", payerIds: ["a", "b"], pinnedPayerAmounts: { a: "640" } })
     const payer = screen.getByRole("group", { name: "付款成員" })
     fireEvent.change(within(payer).getByLabelText("小雨的付款金額"), { target: { value: "800" } })
     expect(p.onChange).toHaveBeenLastCalledWith({ pinnedPayerAmounts: { a: "800" } })

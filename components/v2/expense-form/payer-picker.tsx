@@ -120,20 +120,25 @@ export function PayerPicker({
                       </span>
                     )}
                   </span>
-                  <label
-                    className={`flex w-24 shrink-0 items-center rounded-lg px-2.5 py-1.5 text-[13px] font-bold ${
-                      isPinned ? "border border-v2-lake-border bg-v2-surface" : "border border-v2-line bg-v2-surface"
-                    }`}
-                  >
-                    <span aria-hidden="true">$</span>
-                    <input
+                  {isPinned ? (
+                    <label className="flex w-24 shrink-0 items-center rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-[13px] font-bold">
+                      <span aria-hidden="true">$</span>
+                      <input
+                        aria-label={`${nameOf(p.memberId)}的付款金額`}
+                        value={value}
+                        inputMode="decimal"
+                        onChange={(e) => onSetAmount(p.memberId, e.target.value)}
+                        className="w-full min-w-0 bg-transparent text-right outline-none"
+                      />
+                    </label>
+                  ) : (
+                    <span
                       aria-label={`${nameOf(p.memberId)}的付款金額`}
-                      value={value}
-                      inputMode="decimal"
-                      onChange={(e) => onSetAmount(p.memberId, e.target.value)}
-                      className="w-full min-w-0 bg-transparent text-right outline-none"
-                    />
-                  </label>
+                      className="shrink-0 text-right text-[13px] font-bold"
+                    >
+                      {money(derivedAmount(p.memberId))}
+                    </span>
+                  )}
                 </span>
                 <button
                   type="button"
