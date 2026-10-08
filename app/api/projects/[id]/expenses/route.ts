@@ -9,7 +9,7 @@ import { primaryPayerId, validatePayers, type PayerShare } from "@/lib/expense-p
 import { expensePayersInclude } from "@/lib/expense-payers-include"
 import { getExchangeRate } from "@/lib/services/exchange-rate"
 import { resolveRate } from "@/lib/currency-conversion"
-import { computeProjectAmounts, type ProjectAmountResult } from "@/lib/expense-project-amounts"
+import { computeProjectAmounts } from "@/lib/expense-project-amounts"
 
 interface Participant {
   memberId: string
@@ -215,7 +215,7 @@ export async function POST(
 
     let snapshotRate: number | null = null
     let seedRate: number | null = null
-    let projectAmounts: ProjectAmountResult | null = null
+    let resolvedRate = 1
 
     if (expenseCurrency !== projectCurrency) {
       const providedRate =
@@ -238,22 +238,26 @@ export async function POST(
         customRate: customRates[expenseCurrency] ?? null,
         liveRate,
       })
+      resolvedRate = resolved.rate
       snapshotRate = resolved.rate
       if (resolved.shouldSeedFixed) seedRate = resolved.rate
-
-      projectAmounts = computeProjectAmounts({
-        amount: amountNum,
-        currency: expenseCurrency,
-        projectCurrency,
-        rate: resolved.rate,
-        participants: participants.map((p: Participant) => ({
-          memberId: p.memberId,
-          shareAmount: Number(p.shareAmount),
-        })),
-        payers: validatedPayers.map((p) => ({ memberId: p.memberId, amount: p.amount })),
-        discrepancy: new Map(projectMembers.map((m) => [m.id, m.remainderDiscrepancy ?? 0])),
-      })
     }
+
+    // Allocate the original and settlement totals for every currency (rate 1
+    // when they match) with one tail-account ordering, so the remainder lands
+    // on the same member in both.
+    const projectAmounts = computeProjectAmounts({
+      amount: amountNum,
+      currency: expenseCurrency,
+      projectCurrency,
+      rate: resolvedRate,
+      participants: participants.map((p: Participant) => ({
+        memberId: p.memberId,
+        shareAmount: Number(p.shareAmount),
+      })),
+      payers: validatedPayers.map((p) => ({ memberId: p.memberId, amount: p.amount })),
+      discrepancy: new Map(projectMembers.map((m) => [m.id, m.remainderDiscrepancy ?? 0])),
+    })
 
     const initialDiscrepancy = new Map(
       projectMembers.map((m) => [m.id, m.remainderDiscrepancy ?? 0])
@@ -281,26 +285,18 @@ export async function POST(
             create: validatedPayers.map((p) => ({
               memberId: p.memberId,
               amount: p.amount,
-              ...(projectAmounts
-                ? {
-                    amountProject: projectAmounts.payers.find((x) => x.memberId === p.memberId)
-                      ?.amountProject,
-                  }
-                : {}),
+              amountProject: projectAmounts.payers.find((x) => x.memberId === p.memberId)?.amountProject,
             })),
           },
           participants: {
-            create: participants.map((p: Participant) => ({
-              memberId: p.memberId,
-              shareAmount: Number(p.shareAmount),
-              ...(projectAmounts
-                ? {
-                    shareAmountProject: projectAmounts.participants.find(
-                      (x) => x.memberId === p.memberId
-                    )?.shareAmountProject,
-                  }
-                : {}),
-            })),
+            create: participants.map((p: Participant) => {
+              const allocated = projectAmounts.participants.find((x) => x.memberId === p.memberId)
+              return {
+                memberId: p.memberId,
+                shareAmount: allocated?.shareAmount ?? Number(p.shareAmount),
+                shareAmountProject: allocated?.shareAmountProject,
+              }
+            }),
           },
         },
         include: {
@@ -334,14 +330,12 @@ export async function POST(
         })
       }
 
-      if (projectAmounts) {
-        for (const [memberId, value] of projectAmounts.discrepancy) {
-          if ((initialDiscrepancy.get(memberId) ?? 0) !== value) {
-            await tx.projectMember.update({
-              where: { id: memberId },
-              data: { remainderDiscrepancy: value },
-            })
-          }
+      for (const [memberId, value] of projectAmounts.discrepancy) {
+        if ((initialDiscrepancy.get(memberId) ?? 0) !== value) {
+          await tx.projectMember.update({
+            where: { id: memberId },
+            data: { remainderDiscrepancy: value },
+          })
         }
       }
 

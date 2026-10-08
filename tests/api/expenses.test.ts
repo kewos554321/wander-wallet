@@ -595,7 +595,7 @@ describe("POST /api/projects/[id]/expenses", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           payers: {
-            create: [{ memberId: "member-123", amount: 1000 }],
+            create: [{ memberId: "member-123", amount: 1000, amountProject: 1000 }],
           },
         }),
       })
@@ -636,6 +636,57 @@ describe("POST /api/projects/[id]/expenses", () => {
     expect(call.data.exchangeRate).toBeCloseTo(0.031715)
     expect(call.data.participants.create[0].shareAmountProject).toBe(3172)
     expect(call.data.payers.create[0].amountProject).toBe(3172)
+  })
+
+  it("allocates and updates the ledger for a same-currency expense", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue({
+      currency: "TWD",
+      customRates: null,
+      exchangeRatePrecision: 2,
+      rateSource: "fixed",
+    } as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123", remainderDiscrepancy: 5 },
+      { id: "member-456", remainderDiscrepancy: 0 },
+      { id: "member-789", remainderDiscrepancy: 0 },
+    ] as never)
+    vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense as never)
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          amount: 1000,
+          currency: "TWD",
+          payers: [{ memberId: "member-123", amount: 1000 }],
+          participants: [
+            { memberId: "member-123", shareAmount: 333.33 },
+            { memberId: "member-456", shareAmount: 333.33 },
+            { memberId: "member-789", shareAmount: 333.34 },
+          ],
+        }),
+      }
+    )
+    const response = await POST(req, { params: createParams("project-123") })
+    expect(response.status).toBe(201)
+
+    const call = vi.mocked(prisma.expense.create).mock.calls[0][0]
+    // Same currency: no snapshot rate, but the settlement amounts are written.
+    expect(call.data.exchangeRate).toBeNull()
+    const created = call.data.participants.create as {
+      memberId: string
+      shareAmount: number
+      shareAmountProject: number
+    }[]
+    // member-456 has the lowest ledger, so the remainder lands on them in both.
+    expect(created.map((p) => p.shareAmountProject)).toEqual([333, 334, 333])
+    expect(created.map((p) => p.shareAmount)).toEqual([333, 334, 333])
+    expect(prisma.projectMember.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "member-456" }, data: { remainderDiscrepancy: 1 } }),
+    )
   })
 
   it("should create activity log after creating expense", async () => {
