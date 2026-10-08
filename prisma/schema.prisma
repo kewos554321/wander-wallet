@@ -42,6 +42,7 @@ model Project {
   mileageData Json?     @map("mileage_data") // 里程計算資料
   customRates Json?     @map("custom_rates") // 自訂匯率 { "JPY": 0.22, "USD": 31.5 }
   exchangeRatePrecision Int @default(2) @map("exchange_rate_precision") // 匯率計算精度（小數位數）
+  rateSource  String    @default("fixed") @map("rate_source") // 新支出預設匯率來源：fixed | live
   createdBy   String    @map("created_by") @db.Uuid
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
@@ -66,6 +67,7 @@ model ProjectMember {
   claimedAt   DateTime? @map("claimed_at")
   bankAccountId   String?  @map("bank_account_id") @db.Uuid
   showBankAccount Boolean  @default(false) @map("show_bank_account")
+  remainderDiscrepancy Int @default(0) @map("remainder_discrepancy") // 尾差帳（結算幣別最小單位整數）
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -110,6 +112,7 @@ model Expense {
   projectId   String   @map("project_id") @db.Uuid
   amount      Decimal  @db.Decimal(10, 2)
   currency    String   @default("TWD") // 費用幣別
+  exchangeRate Decimal? @db.Decimal(18, 8) @map("exchange_rate") // 綁定匯率快照；同幣別為 null
   description String?
   category    String?
   image       String?  @db.Text // 收據/消費圖片：base64 data URL
@@ -140,6 +143,7 @@ model ExpenseParticipant {
   expenseId  String  @map("expense_id") @db.Uuid
   memberId   String  @map("member_id") @db.Uuid
   shareAmount Decimal @map("share_amount") @db.Decimal(10, 2)
+  shareAmountProject Int? @map("share_amount_project") // 結算幣別最小單位整數（權威）
 
   expense Expense       @relation(fields: [expenseId], references: [id], onDelete: Cascade)
   member  ProjectMember @relation("ExpenseParticipant", fields: [memberId], references: [id], onDelete: Cascade)
@@ -155,6 +159,7 @@ model ExpensePayer {
   expenseId String  @map("expense_id") @db.Uuid
   memberId  String  @map("member_id") @db.Uuid
   amount    Decimal @db.Decimal(10, 2)
+  amountProject Int? @map("amount_project") // 結算幣別最小單位整數（權威）
 
   expense Expense       @relation(fields: [expenseId], references: [id], onDelete: Cascade)
   member  ProjectMember @relation("ExpensePayerMember", fields: [memberId], references: [id], onDelete: Cascade)

@@ -28,7 +28,10 @@
     "db:export": "export $(grep -E '^DATABASE_URL=' .env.dev | xargs) && echo $DATABASE_URL",
     "db:backfill-expense-payers": "dotenv -e .env -- node scripts/backfill-expense-payers.mjs",
     "db:backfill-expense-payers:dev": "dotenv -e .env.dev -- node scripts/backfill-expense-payers.mjs",
-    "db:backfill-expense-payers:main": "dotenv -e .env.main -- node scripts/backfill-expense-payers.mjs"
+    "db:backfill-expense-payers:main": "dotenv -e .env.main -- node scripts/backfill-expense-payers.mjs",
+    "db:backfill-multi-currency": "dotenv -e .env -- node scripts/backfill-multi-currency.mjs",
+    "db:backfill-multi-currency:dev": "dotenv -e .env.dev -- node scripts/backfill-multi-currency.mjs",
+    "db:backfill-multi-currency:main": "dotenv -e .env.main -- node scripts/backfill-multi-currency.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.958.0",
