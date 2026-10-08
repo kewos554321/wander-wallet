@@ -529,11 +529,11 @@ describe("ExpenseFormV2View", () => {
     const { rerender } = renderForm()
     const toggle = screen.getByRole("switch", { name: "先扣個人項目" })
     expect(toggle).toHaveAttribute("aria-checked", "false")
-    expect(screen.queryByText(/目前沒有人有個人項目/)).not.toBeInTheDocument()
+    expect(screen.queryByText("請選擇成員")).not.toBeInTheDocument()
     fireEvent.click(toggle)
     rerender()
     expect(screen.getByRole("switch", { name: "先扣個人項目" })).toHaveAttribute("aria-checked", "true")
-    expect(screen.getByText(/目前沒有人有個人項目/)).toBeInTheDocument()
+    expect(screen.getByText("請選擇成員")).toBeInTheDocument()
   })
 
   it("toggles a member's participation in the shared pool", () => {

@@ -138,7 +138,7 @@ export function SplitEditor({
           )}
           {!settleView && state.personalMembers.length === 0 ? (
             <p className="rounded-[14px] border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
-              目前沒有人有個人項目，點上面的名字挑一位。
+              請選擇成員
             </p>
           ) : state.personalMembers.length > 0 ? (
             <div className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
