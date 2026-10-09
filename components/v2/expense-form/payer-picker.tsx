@@ -100,7 +100,7 @@ export function PayerPicker({
         </p>
         {showConversionNote && (
           <p data-testid="conversion-note" className="mt-1 text-[11px] font-normal text-v2-ink-muted">
-            結算會先換匯，再以 {projectCurrency} 分攤
+            僅為換算預覽；實際結算會先換匯，金額可能略有差異。
           </p>
         )}
       </div>

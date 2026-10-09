@@ -116,7 +116,9 @@ describe("ExpenseFormV2View", () => {
     const payer = screen.getByRole("group", { name: "付款成員" })
     fireEvent.click(within(payer).getByRole("button", { name: "顯示 TWD" }))
     rerender()
-    expect(screen.getByTestId("conversion-note")).toHaveTextContent("結算會先換匯，再以 TWD 分攤")
+    expect(screen.getByTestId("conversion-note")).toHaveTextContent(
+      "僅為換算預覽；實際結算會先換匯，金額可能略有差異。",
+    )
   })
 
   it("hides the match badges in the settlement-currency preview", () => {

@@ -228,7 +228,9 @@ describe("PayerPicker", () => {
       displayCurrency: "USD",
       onDisplayCurrencyChange: vi.fn(),
     })
-    expect(screen.getByTestId("conversion-note")).toHaveTextContent("結算會先換匯，再以 USD 分攤")
+    expect(screen.getByTestId("conversion-note")).toHaveTextContent(
+      "僅為換算預覽；實際結算會先換匯，金額可能略有差異。",
+    )
   })
 
   it("hides the 金額相符 badge in the settlement-currency preview", () => {
