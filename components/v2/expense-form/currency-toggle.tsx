@@ -19,7 +19,7 @@ export function CurrencyToggle({
     <span
       role="group"
       aria-label="顯示幣別"
-      className="inline-flex shrink-0 items-center rounded-full bg-v2-lake-tint p-0.5 text-[11px] font-bold"
+      className="inline-flex h-5 shrink-0 items-center rounded-full bg-v2-lake-tint p-0.5 text-[11px] font-bold"
     >
       {[currency, projectCurrency].map((code) => {
         const active = code === displayCurrency
@@ -30,7 +30,7 @@ export function CurrencyToggle({
             aria-pressed={active}
             aria-label={`顯示 ${code}`}
             onClick={() => onChange(code)}
-            className={`rounded-full px-2 py-0.5 ${active ? "bg-v2-lake text-v2-on-lake" : "text-v2-lake"}`}
+            className={`flex h-full items-center rounded-full px-2 leading-none ${active ? "bg-v2-lake text-v2-on-lake" : "text-v2-lake"}`}
           >
             {code}
           </button>
