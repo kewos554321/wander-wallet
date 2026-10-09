@@ -134,7 +134,7 @@ export function RateSheet({
   const customValue = Number(customInput)
   const customUsable = customInput.trim() !== "" && Number.isFinite(customValue) && customValue > 0
 
-  const useButtonClass = (active: boolean) =>
+  const optionButtonClass = (active: boolean) =>
     `shrink-0 rounded-full border px-4 py-1.5 text-xs font-bold transition ${
       active
         ? "border-transparent bg-v2-lake-soft text-v2-lake"
@@ -208,7 +208,7 @@ export function RateSheet({
                     aria-label="使用即時匯率"
                     disabled={liveRate == null || applied === "live"}
                     onClick={() => liveRate != null && apply(liveRate, "live")}
-                    className={useButtonClass(applied === "live")}
+                    className={optionButtonClass(applied === "live")}
                   >
                     {applied === "live" ? "已使用" : "使用"}
                   </button>
@@ -269,7 +269,7 @@ export function RateSheet({
                       aria-label="使用歷史匯率"
                       disabled={applied === "history"}
                       onClick={() => apply(historyRate, "history")}
-                      className={useButtonClass(applied === "history")}
+                      className={optionButtonClass(applied === "history")}
                     >
                       {applied === "history" ? "已使用" : "使用"}
                     </button>
@@ -300,7 +300,7 @@ export function RateSheet({
                     aria-label="使用自訂匯率"
                     disabled={!customUsable || applied === "custom"}
                     onClick={() => customUsable && apply(customValue, "custom")}
-                    className={useButtonClass(applied === "custom")}
+                    className={optionButtonClass(applied === "custom")}
                   >
                     {applied === "custom" ? "已使用" : "使用"}
                   </button>
