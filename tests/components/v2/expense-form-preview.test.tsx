@@ -92,11 +92,13 @@ describe("ExpenseFormV2 conversion preview", () => {
     render(<ExpenseFormV2 projectId="p1" mode="create" />)
     fireEvent.change(await screen.findByLabelText("金額"), { target: { value: "1000" } })
     fireEvent.change(screen.getByLabelText("幣別"), { target: { value: "TWD" } })
-    // Pin the rate, then type a custom value.
-    fireEvent.click(await screen.findByRole("button", { name: "匯率自動，點擊自訂匯率" }))
-    fireEvent.change(screen.getByLabelText("匯率"), { target: { value: "0.05" } })
+    // The rate row opens the editor sheet; override with a custom value.
+    fireEvent.click(await screen.findByTestId("rate-row"))
+    fireEvent.click(screen.getByRole("tab", { name: "自訂" }))
+    fireEvent.change(screen.getByLabelText("自訂匯率"), { target: { value: "0.05" } })
+    fireEvent.click(screen.getByRole("button", { name: "使用自訂匯率" }))
     await waitFor(() => expect(screen.getByTestId("amount-conversion")).toHaveTextContent("≈ USD 50.00"))
-    expect(screen.getByText("自訂匯率")).toBeInTheDocument()
+    expect(screen.getByTestId("rate-source")).toHaveTextContent("自訂匯率")
   })
 
   it("switches the payer section to the settlement currency", async () => {

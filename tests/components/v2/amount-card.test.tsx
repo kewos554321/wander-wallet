@@ -197,6 +197,27 @@ describe("AmountCard", () => {
     expect(onToggleCustomRate).toHaveBeenCalledTimes(1)
   })
 
+  it("turns the whole rate row into an editor trigger when onOpenRate is provided", () => {
+    const onOpenRate = vi.fn()
+    setup({
+      currency: "TWD",
+      projectCurrency: "USD",
+      previewProjectAmount: 31.72,
+      rate: 0.031715,
+      rateEditable: true,
+      rateSource: "live",
+      onOpenRate,
+    })
+    const row = screen.getByTestId("rate-row")
+    expect(row.tagName).toBe("BUTTON")
+    expect(row).toHaveTextContent("調整")
+    fireEvent.click(row)
+    expect(onOpenRate).toHaveBeenCalledTimes(1)
+    // The legacy inline input and pin are replaced by the sheet trigger.
+    expect(screen.queryByLabelText("匯率")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /匯率自動/ })).not.toBeInTheDocument()
+  })
+
   it("hides the rate row for the project currency", () => {
     setup({ currency: "TWD", projectCurrency: "TWD" })
     expect(screen.queryByTestId("amount-conversion")).not.toBeInTheDocument()

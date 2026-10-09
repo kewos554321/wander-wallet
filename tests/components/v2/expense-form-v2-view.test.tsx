@@ -4,6 +4,11 @@ import { renderHook, act } from "@testing-library/react"
 
 vi.mock("@/components/v2/expense-form/location-picker-v2", () => ({ LocationPickerV2: () => <div data-testid="location-picker" /> }))
 vi.mock("@/components/v2/expense-form/v2-image-picker", () => ({ V2ImagePicker: () => <div data-testid="image-picker" /> }))
+const mockAuthFetch = vi.fn()
+vi.mock("@/components/auth/liff-provider", () => ({
+  useAuthFetch: () => mockAuthFetch,
+  useLiff: () => ({ user: { id: "u1" }, isDevMode: false, canSendMessages: false }),
+}))
 
 import { ExpenseFormV2View } from "@/components/v2/expense-form/expense-form-v2-view"
 import { useExpenseDraft } from "@/components/v2/expense-form/use-expense-draft"
@@ -108,6 +113,27 @@ describe("ExpenseFormV2View", () => {
     rerender()
     const note = screen.getByTestId("conversion-note")
     expect(note).toHaveTextContent("結算會先換匯，再以 TWD 分攤")
+  })
+
+  it("binds a custom rate from the rate sheet to this expense", () => {
+    const { hook, rerender } = renderForm({
+      projectCurrency: "USD",
+      previewRateInfo: () => ({ rate: 0.05, source: "fixed" as const }),
+      rateContext: () => ({ fixedRate: 0.05, liveRate: 0.04, liveTimestamp: Date.now() }),
+    })
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    fireEvent.click(screen.getByTestId("rate-row"))
+    expect(screen.getByRole("dialog", { name: "匯率" })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("tab", { name: "自訂" }))
+    fireEvent.change(screen.getByLabelText("自訂匯率"), { target: { value: "0.0625" } })
+    fireEvent.click(screen.getByRole("button", { name: "使用自訂匯率" }))
+    rerender()
+    expect(hook.result.current.state.ratePinned).toBe(true)
+    expect(hook.result.current.state.exchangeRate).toBe("0.0625")
+    expect(screen.getByTestId("rate-source")).toHaveTextContent("自訂匯率")
+    expect(screen.getByTestId("rate-row")).toHaveTextContent("0.0625")
+    expect(screen.getByTestId("amount-conversion")).toHaveTextContent("≈ USD 6.25")
   })
 
   it("hides the conversion note when the expense currency is the settlement currency", () => {

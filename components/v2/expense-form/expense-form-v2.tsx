@@ -179,7 +179,7 @@ function LoadedForm({
 }) {
   const router = useRouter()
   const { save, remove, saving, uploadingImage, deleting, canNotifyLine } = useSaveExpense(projectId)
-  const { exchangeRates, refetch: refetchRates } = useCurrencyConversion({
+  const { exchangeRates, ratesTimestamp, refetch: refetchRates } = useCurrencyConversion({
     projectCurrency,
     customRates,
     autoFetch: false,
@@ -187,6 +187,16 @@ function LoadedForm({
   const previewRateInfo = useCallback(
     (currency: string) => resolvePreviewRate(currency, projectCurrency, customRates, exchangeRates),
     [projectCurrency, customRates, exchangeRates],
+  )
+  // Extra detail for the rate editor sheet: the project fixed rate and the
+  // live rate (ignoring customRates) + when it was last fetched.
+  const rateContext = useCallback(
+    (currency: string) => ({
+      fixedRate: customRates?.[currency] ?? null,
+      liveRate: resolvePreviewRate(currency, projectCurrency, null, exchangeRates).rate,
+      liveTimestamp: ratesTimestamp,
+    }),
+    [customRates, projectCurrency, exchangeRates, ratesTimestamp],
   )
   const draft = useExpenseDraft(init, previewRateInfo)
   const selectedCurrency = draft.state.currency
@@ -327,6 +337,7 @@ function LoadedForm({
         onRequestDelete={mode === "edit" ? () => setShowDelete(true) : undefined}
         projectCurrency={projectCurrency}
         previewRateInfo={previewRateInfo}
+        rateContext={rateContext}
       />
       <ConfirmDeleteDialog
         open={showDelete}

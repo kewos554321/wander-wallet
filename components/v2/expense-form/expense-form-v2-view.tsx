@@ -4,7 +4,6 @@ import { useState } from "react"
 import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
 import { CalendarIcon, Check, Trash2 } from "lucide-react"
-import { roundRateForDisplay } from "@/lib/currency-conversion"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { LocationPickerV2 } from "./location-picker-v2"
@@ -17,6 +16,7 @@ import { CalculatorPad } from "./calculator-pad"
 import { CategoryPicker } from "./category-picker"
 import { PayerPicker } from "./payer-picker"
 import { SplitEditor } from "./split-editor"
+import { RateSheet } from "./rate-sheet"
 import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
 
 export interface ExpenseFormV2ViewProps {
@@ -33,6 +33,12 @@ export interface ExpenseFormV2ViewProps {
   projectCurrency?: string
   /** Resolve a display-only rate + its source (currency → settlement). */
   previewRateInfo?: (currency: string) => { rate: number | null; source: "same" | "fixed" | "live" | "none" }
+  /** Live + project-fixed rate details that feed the rate editor sheet. */
+  rateContext?: (currency: string) => {
+    fixedRate: number | null
+    liveRate: number | null
+    liveTimestamp: number | null
+  }
 }
 
 export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
@@ -42,15 +48,20 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
   const error = derived.error ?? props.submitError
   const amountLabel = formatCurrency(derived.splitInput.amount, state.currency)
   const submitLabel = props.mode === "create" ? `新增支出 · ${amountLabel}` : `儲存變更 · ${amountLabel}`
-  const { rate, autoRate, customRate, rateSource, rateInput: exchangeRateInput, rateEditable: isForeign } = derived
+  const { rate, customRate, rateSource, rateEditable: isForeign } = derived
   const previewProjectAmount = rate != null ? derived.splitInput.amount * rate : null
   // Display-only currency flip for the payer and split sections. The draft and
   // the save payload never change; the user just glances at the settlement
   // amounts and flips back to edit. The two sections share this state.
   const [showSettlement, setShowSettlement] = useState(false)
+  const [rateOpen, setRateOpen] = useState(false)
   const canConvert = props.projectCurrency != null && rate != null && state.currency !== props.projectCurrency
   const displayCurrency = canConvert && showSettlement ? props.projectCurrency! : state.currency
   const onDisplayCurrencyChange = (next: string) => setShowSettlement(next === props.projectCurrency)
+  const rateCtx =
+    props.rateContext && props.projectCurrency && state.currency !== props.projectCurrency
+      ? props.rateContext(state.currency)
+      : { fixedRate: null, liveRate: null, liveTimestamp: null }
 
   return (
     <form
@@ -83,20 +94,10 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
         projectCurrency={props.projectCurrency}
         previewProjectAmount={previewProjectAmount}
         rate={rate}
-        rateInput={exchangeRateInput}
         rateEditable={isForeign}
-        onRate={actions.setExchangeRate}
         customRate={customRate}
         rateSource={rateSource}
-        onToggleCustomRate={() => {
-          if (customRate) {
-            actions.setExchangeRate("")
-            actions.setRatePinned(false)
-          } else {
-            actions.setExchangeRate(autoRate != null ? String(roundRateForDisplay(autoRate)) : "")
-            actions.setRatePinned(true)
-          }
-        }}
+        onOpenRate={isForeign ? () => setRateOpen(true) : undefined}
         calculatorOpen={showCalculator}
         onToggleCalculator={() => setShowCalculator((v) => !v)}
         calculator={
@@ -111,6 +112,29 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
           />
         }
       />
+      {props.projectCurrency && isForeign && (
+        <RateSheet
+          open={rateOpen}
+          onClose={() => setRateOpen(false)}
+          fromCurrency={state.currency}
+          toCurrency={props.projectCurrency}
+          amount={derived.splitInput.amount}
+          rate={rate}
+          customRate={customRate}
+          projectFixedRate={rateCtx.fixedRate}
+          liveRate={rateCtx.liveRate}
+          liveTimestamp={rateCtx.liveTimestamp}
+          expenseDate={state.expenseDate}
+          onUseRate={(value) => {
+            actions.setExchangeRate(String(value))
+            actions.setRatePinned(true)
+          }}
+          onReset={() => {
+            actions.setExchangeRate("")
+            actions.setRatePinned(false)
+          }}
+        />
+      )}
       <div className={`${SECTION_CARD} mt-3.5`}>
         <label htmlFor="v2-desc" className={`block ${SECTION_TITLE} mb-1.5`}>
           描述

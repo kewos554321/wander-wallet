@@ -27,6 +27,11 @@ interface AmountCardProps {
   rateSource?: "same" | "fixed" | "live" | "none" | "custom"
   /** Toggle between the automatic rate and a custom one. */
   onToggleCustomRate?: () => void
+  /**
+   * When provided, the whole rate row becomes a button that opens the rate
+   * editor sheet instead of the inline input + pin (used by the expense form).
+   */
+  onOpenRate?: () => void
   /** Whether the in-card calculator slot is open. Defaults to closed. */
   calculatorOpen?: boolean
   /** Toggles the in-card calculator slot. */
@@ -49,12 +54,20 @@ export function AmountCard({
   customRate = false,
   rateSource,
   onToggleCustomRate,
+  onOpenRate,
   calculatorOpen = false,
   onToggleCalculator,
   calculator,
 }: AmountCardProps) {
   const open = calculatorOpen
   const showConversion = !open && !!projectCurrency && currency !== projectCurrency
+  const rateSourceLabel = customRate
+    ? "自訂匯率"
+    : rateSource === "fixed"
+      ? "專案固定匯率"
+      : rateSource === "live"
+        ? "即時匯率"
+        : ""
   return (
     // The amount card shares the calculator's dark lake face in both states so
     // opening the calculator reads as a continuation of the same surface.
@@ -106,42 +119,53 @@ export function AmountCard({
           <span data-testid="amount-conversion">
             {previewProjectAmount != null ? `≈ ${formatCurrency(previewProjectAmount, projectCurrency!)}` : "≈ —"}
           </span>
-          <span data-testid="rate-row" className="inline-flex flex-wrap items-center gap-1">
-            <span className="text-[10px] opacity-80" data-testid="rate-source">
-              {customRate
-                ? "自訂匯率"
-                : rateSource === "fixed"
-                  ? "專案固定匯率"
-                  : rateSource === "live"
-                    ? "即時匯率"
-                    : ""}
-            </span>
-            <span>1 {currency} =</span>
-            {customRate && rateEditable ? (
-              <input
-                aria-label="匯率"
-                inputMode="decimal"
-                value={rateInput ?? ""}
-                onChange={(e) => onRate?.(e.target.value)}
-                className="w-20 rounded bg-v2-paper/10 px-1.5 py-0.5 text-right tabular-nums text-v2-paper outline-none"
-              />
-            ) : (
+          {onOpenRate ? (
+            <button
+              type="button"
+              data-testid="rate-row"
+              onClick={onOpenRate}
+              className="-my-1 inline-flex w-full flex-wrap items-center gap-1 rounded-lg px-1.5 py-1 text-left transition hover:bg-v2-paper/10"
+            >
+              <span className="text-[10px] opacity-80" data-testid="rate-source">
+                {rateSourceLabel}
+              </span>
+              <span>1 {currency} =</span>
               <span className="tabular-nums">{rate != null ? roundRateForDisplay(rate) : "—"}</span>
-            )}
-            <span>{projectCurrency}</span>
-            {rateEditable && (
-              <button
-                type="button"
-                onClick={onToggleCustomRate}
-                aria-label={customRate ? "匯率使用自訂，點擊還原自動" : "匯率自動，點擊自訂匯率"}
-                className={`flex h-[18px] w-[18px] items-center justify-center rounded ${
-                  customRate ? "bg-v2-paper text-v2-lake" : "border border-v2-paper/50 text-v2-paper/80"
-                }`}
-              >
-                {customRate ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
-              </button>
-            )}
-          </span>
+              <span>{projectCurrency}</span>
+              <span className="ml-auto text-[11px] font-bold opacity-90">調整</span>
+            </button>
+          ) : (
+            <span data-testid="rate-row" className="inline-flex flex-wrap items-center gap-1">
+              <span className="text-[10px] opacity-80" data-testid="rate-source">
+                {rateSourceLabel}
+              </span>
+              <span>1 {currency} =</span>
+              {customRate && rateEditable ? (
+                <input
+                  aria-label="匯率"
+                  inputMode="decimal"
+                  value={rateInput ?? ""}
+                  onChange={(e) => onRate?.(e.target.value)}
+                  className="w-20 rounded bg-v2-paper/10 px-1.5 py-0.5 text-right tabular-nums text-v2-paper outline-none"
+                />
+              ) : (
+                <span className="tabular-nums">{rate != null ? roundRateForDisplay(rate) : "—"}</span>
+              )}
+              <span>{projectCurrency}</span>
+              {rateEditable && (
+                <button
+                  type="button"
+                  onClick={onToggleCustomRate}
+                  aria-label={customRate ? "匯率使用自訂，點擊還原自動" : "匯率自動，點擊自訂匯率"}
+                  className={`flex h-[18px] w-[18px] items-center justify-center rounded ${
+                    customRate ? "bg-v2-paper text-v2-lake" : "border border-v2-paper/50 text-v2-paper/80"
+                  }`}
+                >
+                  {customRate ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
+                </button>
+              )}
+            </span>
+          )}
         </div>
       )}
     </div>
