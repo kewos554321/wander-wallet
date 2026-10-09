@@ -1,9 +1,29 @@
 "use client"
 
-import { Calculator as CalculatorIcon, Pin, PinOff } from "lucide-react"
+import { Calculator as CalculatorIcon, ChevronRight, Pin, PinOff } from "lucide-react"
 import { CurrencySelect } from "@/components/ui/currency-select"
 import { formatCurrency, type CurrencyCode } from "@/lib/constants/currencies"
 import { roundRateForDisplay } from "@/lib/currency-conversion"
+import type { RateChip, RateChipTone } from "@/components/v2/currency/format"
+
+// Dot colour per rate kind, tuned for the dark lake card face.
+const CHIP_DOT: Record<RateChipTone, string> = {
+  market: "bg-v2-gold-tint",
+  project: "bg-v2-lake-tint",
+  custom: "bg-v2-coral-tint",
+}
+
+function RateTag({ chip }: { chip: RateChip }) {
+  return (
+    <span
+      data-testid="rate-source"
+      className="inline-flex shrink-0 items-center gap-1 rounded-full bg-v2-paper/15 px-2 py-[3px] text-[10px] font-bold leading-none text-v2-paper"
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${CHIP_DOT[chip.tone]}`} aria-hidden="true" />
+      {chip.chip}
+    </span>
+  )
+}
 
 interface AmountCardProps {
   amount: string
@@ -23,8 +43,8 @@ interface AmountCardProps {
   onRate?: (value: string) => void
   /** True when the bound rate differs from the project's fixed rate. */
   customRate?: boolean
-  /** Where the rate came from (for the label). */
-  rateSource?: "same" | "fixed" | "live" | "none" | "custom"
+  /** Bound-rate provenance (kind + context) for the chip. */
+  rateChip?: RateChip | null
   /** Toggle between the automatic rate and a custom one. */
   onToggleCustomRate?: () => void
   /**
@@ -52,7 +72,7 @@ export function AmountCard({
   rateEditable = false,
   onRate,
   customRate = false,
-  rateSource,
+  rateChip,
   onToggleCustomRate,
   onOpenRate,
   calculatorOpen = false,
@@ -61,13 +81,6 @@ export function AmountCard({
 }: AmountCardProps) {
   const open = calculatorOpen
   const showConversion = !open && !!projectCurrency && currency !== projectCurrency
-  const rateSourceLabel = customRate
-    ? "自訂匯率"
-    : rateSource === "fixed"
-      ? "專案固定匯率"
-      : rateSource === "live"
-        ? "即時匯率"
-        : ""
   return (
     // The amount card shares the calculator's dark lake face in both states so
     // opening the calculator reads as a continuation of the same surface.
@@ -124,21 +137,26 @@ export function AmountCard({
               type="button"
               data-testid="rate-row"
               onClick={onOpenRate}
+              aria-label="調整匯率"
               className="-my-1 inline-flex w-full flex-wrap items-center gap-1 rounded-lg px-1.5 py-1 text-left transition hover:bg-v2-paper/10"
             >
-              <span className="text-[10px] opacity-80" data-testid="rate-source">
-                {rateSourceLabel}
-              </span>
+              {rateChip && <RateTag chip={rateChip} />}
               <span>1 {currency} =</span>
               <span className="tabular-nums">{rate != null ? roundRateForDisplay(rate) : "—"}</span>
               <span>{projectCurrency}</span>
-              <span className="ml-auto text-[11px] font-bold opacity-90">調整</span>
+              {rateChip?.context && (
+                <span data-testid="rate-context" className="ml-auto text-[10px] opacity-70">
+                  {rateChip.context}
+                </span>
+              )}
+              <ChevronRight
+                className={`h-3.5 w-3.5 shrink-0 opacity-90 ${rateChip?.context ? "" : "ml-auto"}`}
+                aria-hidden="true"
+              />
             </button>
           ) : (
             <span data-testid="rate-row" className="inline-flex flex-wrap items-center gap-1">
-              <span className="text-[10px] opacity-80" data-testid="rate-source">
-                {rateSourceLabel}
-              </span>
+              {rateChip && <RateTag chip={rateChip} />}
               <span>1 {currency} =</span>
               {customRate && rateEditable ? (
                 <input
@@ -152,6 +170,11 @@ export function AmountCard({
                 <span className="tabular-nums">{rate != null ? roundRateForDisplay(rate) : "—"}</span>
               )}
               <span>{projectCurrency}</span>
+              {rateChip?.context && (
+                <span data-testid="rate-context" className="text-[10px] opacity-70">
+                  {rateChip.context}
+                </span>
+              )}
               {rateEditable && (
                 <button
                   type="button"

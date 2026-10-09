@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import { renderHook, act } from "@testing-library/react"
 import { useExpenseDraft, type DraftInit } from "@/components/v2/expense-form/use-expense-draft"
+import type { PreviewRateInfo } from "@/lib/currency-conversion"
 
 const members = [
   { id: "a", displayName: "小雨" },
@@ -272,5 +273,74 @@ describe("useExpenseDraft", () => {
       { memberId: "a", shareAmount: 33 },
       { memberId: "b", shareAmount: 33 },
     ])
+  })
+
+  describe("rate provenance", () => {
+    const foreignInit: DraftInit = { members, currency: "JPY", projectCurrency: "USD", paidBy: "a" }
+    const render = (preview: () => PreviewRateInfo, extra: Partial<DraftInit> = {}) =>
+      renderHook(() => useExpenseDraft({ ...foreignInit, ...extra }, preview))
+
+    it("marks the default rate as market when there is no fixed rate", () => {
+      const { result } = render(() => ({ rate: 0.0067, source: "live" }))
+      expect(result.current.derived.rateKind).toBe("market")
+      expect(result.current.derived.rateDate).toBeNull()
+    })
+
+    it("marks the default rate as project when the project has a fixed rate", () => {
+      const { result } = render(() => ({ rate: 0.0063, source: "fixed" }))
+      expect(result.current.derived.rateKind).toBe("project")
+      expect(result.current.derived.rateDate).toBeNull()
+    })
+
+    it("prefers an explicit override kind and its date", () => {
+      const { result } = render(() => ({ rate: 0.0067, source: "live" }))
+      act(() => {
+        result.current.actions.setExchangeRate("0.006")
+        result.current.actions.setRatePinned(true)
+        result.current.actions.setRateKind("custom")
+      })
+      expect(result.current.derived.rateKind).toBe("custom")
+      expect(result.current.derived.rateDate).toBeNull()
+
+      act(() => result.current.actions.setRateKind("market"))
+      act(() => result.current.actions.setRateDate("2026-10-06"))
+      expect(result.current.derived.rateKind).toBe("market")
+      expect(result.current.derived.rateDate).toBe("2026-10-06")
+    })
+
+    it("clears the stored kind and date when the currency changes", () => {
+      const { result } = render(() => ({ rate: 0.0067, source: "live" }))
+      act(() => {
+        result.current.actions.setRateKind("market")
+        result.current.actions.setRateDate("2026-10-06")
+      })
+      act(() => result.current.actions.setCurrency("TWD"))
+      expect(result.current.state.rateKind).toBeNull()
+      expect(result.current.state.rateDate).toBeNull()
+    })
+
+    it("seeds the bound kind and date from a loaded expense", () => {
+      const { result } = render(() => ({ rate: 0.0067, source: "live" }), {
+        expense: {
+          amount: 1000,
+          currency: "JPY",
+          exchangeRate: 0.0063,
+          rateKind: "market",
+          rateDate: "2026-10-06",
+          description: null,
+          category: null,
+          payers: [{ memberId: "a", amount: 1000 }],
+          expenseDate: new Date(2026, 9, 6, 12).toISOString(),
+          location: null,
+          latitude: null,
+          longitude: null,
+          image: null,
+          participants: [{ memberId: "a", shareAmount: 1000 }],
+          splitDetail: null,
+        },
+      })
+      expect(result.current.derived.rateKind).toBe("market")
+      expect(result.current.derived.rateDate).toBe("2026-10-06")
+    })
   })
 })

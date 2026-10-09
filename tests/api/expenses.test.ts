@@ -638,6 +638,137 @@ describe("POST /api/projects/[id]/expenses", () => {
     expect(call.data.payers.create[0].amountProject).toBe(3172)
   })
 
+  it("records a market rate meta (today) when a foreign expense falls back to the live rate", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue({
+      currency: "USD",
+      customRates: null,
+      exchangeRatePrecision: 2,
+      rateSource: "fixed",
+    } as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123", remainderDiscrepancy: 0 },
+    ] as never)
+    vi.mocked(getExchangeRate).mockResolvedValue(0.031715)
+    vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123/expenses", {
+      method: "POST",
+      body: JSON.stringify({
+        amount: 1000,
+        currency: "TWD",
+        payers: [{ memberId: "member-123", amount: 1000 }],
+        participants: [{ memberId: "member-123", shareAmount: 1000 }],
+      }),
+    })
+    const response = await POST(req, { params: createParams("project-123") })
+    expect(response.status).toBe(201)
+
+    const data = vi.mocked(prisma.expense.create).mock.calls[0][0].data
+    expect(data.rateKind).toBe("market")
+    expect(data.rateDate).toBeInstanceOf(Date)
+  })
+
+  it("records a project rate meta when the project has a fixed rate for the currency", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue({
+      currency: "TWD",
+      customRates: { USD: 30 },
+      exchangeRatePrecision: 2,
+      rateSource: "fixed",
+    } as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123", remainderDiscrepancy: 0 },
+    ] as never)
+    vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123/expenses", {
+      method: "POST",
+      body: JSON.stringify({
+        amount: 100,
+        currency: "USD",
+        payers: [{ memberId: "member-123", amount: 100 }],
+        participants: [{ memberId: "member-123", shareAmount: 100 }],
+      }),
+    })
+    const response = await POST(req, { params: createParams("project-123") })
+    expect(response.status).toBe(201)
+
+    const data = vi.mocked(prisma.expense.create).mock.calls[0][0].data
+    expect(data.exchangeRate).toBe(30)
+    expect(data.rateKind).toBe("project")
+    expect(data.rateDate).toBeNull()
+  })
+
+  it("records the queried date for a client-provided market rate", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue({
+      currency: "TWD",
+      customRates: null,
+      exchangeRatePrecision: 2,
+      rateSource: "fixed",
+    } as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123", remainderDiscrepancy: 0 },
+    ] as never)
+    vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123/expenses", {
+      method: "POST",
+      body: JSON.stringify({
+        amount: 100,
+        currency: "USD",
+        exchangeRate: 31.5,
+        rateKind: "market",
+        rateDate: "2026-10-06",
+        payers: [{ memberId: "member-123", amount: 100 }],
+        participants: [{ memberId: "member-123", shareAmount: 100 }],
+      }),
+    })
+    const response = await POST(req, { params: createParams("project-123") })
+    expect(response.status).toBe(201)
+
+    const data = vi.mocked(prisma.expense.create).mock.calls[0][0].data
+    expect(data.rateKind).toBe("market")
+    expect((data.rateDate as Date).toISOString()).toBe(new Date("2026-10-06").toISOString())
+  })
+
+  it("records a custom rate meta with no market date", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue({
+      currency: "TWD",
+      customRates: null,
+      exchangeRatePrecision: 2,
+      rateSource: "fixed",
+    } as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123", remainderDiscrepancy: 0 },
+    ] as never)
+    vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123/expenses", {
+      method: "POST",
+      body: JSON.stringify({
+        amount: 100,
+        currency: "USD",
+        exchangeRate: 30,
+        rateKind: "custom",
+        payers: [{ memberId: "member-123", amount: 100 }],
+        participants: [{ memberId: "member-123", shareAmount: 100 }],
+      }),
+    })
+    const response = await POST(req, { params: createParams("project-123") })
+    expect(response.status).toBe(201)
+
+    const data = vi.mocked(prisma.expense.create).mock.calls[0][0].data
+    expect(data.rateKind).toBe("custom")
+    expect(data.rateDate).toBeNull()
+  })
+
   it("allocates and updates the ledger for a same-currency expense", async () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
@@ -676,6 +807,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     const call = vi.mocked(prisma.expense.create).mock.calls[0][0]
     // Same currency: no snapshot rate, but the settlement amounts are written.
     expect(call.data.exchangeRate).toBeNull()
+    expect(call.data.rateKind).toBeNull()
     const created = call.data.participants.create as {
       memberId: string
       shareAmount: number
@@ -1135,6 +1267,162 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     expect(updateExpense).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ exchangeRate: 0.0317 }) }),
     )
+  })
+
+  // Captures the expense.update data written inside the PUT transaction.
+  function captureUpdate() {
+    const update = vi.fn().mockResolvedValue({})
+    vi.mocked(prisma.$transaction).mockImplementation(
+      async (cb: (tx: unknown) => Promise<unknown>) =>
+        cb({
+          expenseParticipant: {
+            deleteMany: vi.fn().mockResolvedValue({}),
+            createMany: vi.fn().mockResolvedValue({ count: 1 }),
+            update: vi.fn().mockResolvedValue({}),
+          },
+          expensePayer: {
+            deleteMany: vi.fn().mockResolvedValue({}),
+            createMany: vi.fn().mockResolvedValue({ count: 1 }),
+          },
+          expense: { update },
+          projectMember: { update: vi.fn().mockResolvedValue({}) },
+          project: { update: vi.fn().mockResolvedValue({}) },
+        }),
+    )
+    return update
+  }
+
+  function seedForeignExpense() {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue({
+      currency: "TWD",
+      customRates: null,
+      rateSource: "fixed",
+    } as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123", remainderDiscrepancy: 0 },
+    ] as never)
+    vi.mocked(prisma.expense.findFirst).mockResolvedValue({
+      ...mockExpense,
+      currency: "USD",
+      exchangeRate: 31,
+      participants: [
+        {
+          id: "pa",
+          memberId: "member-123",
+          shareAmount: 1000,
+          shareAmountProject: 31000,
+          member: { id: "member-123", displayName: "Test User" },
+        },
+      ],
+      payers: [
+        {
+          id: "py",
+          memberId: "member-123",
+          amount: 1000,
+          amountProject: 31000,
+          member: { id: "member-123", displayName: "Test User" },
+        },
+      ],
+    } as never)
+    vi.mocked(prisma.expense.findUnique).mockResolvedValue(mockExpense as never)
+  }
+
+  it("records a custom rate meta when the rate is edited by hand", async () => {
+    seedForeignExpense()
+    const update = captureUpdate()
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses/expense-123",
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          amount: 1000,
+          exchangeRate: 30,
+          rateKind: "custom",
+          payers: [{ memberId: "member-123", amount: 1000 }],
+          participants: [{ memberId: "member-123", shareAmount: 1000 }],
+        }),
+      }
+    )
+    const response = await PUT_EXPENSE(req, {
+      params: createExpenseParams("project-123", "expense-123"),
+    })
+    expect(response.status).toBe(200)
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ rateKind: "custom", rateDate: null }) }),
+    )
+  })
+
+  it("records the queried date for an edited market rate", async () => {
+    seedForeignExpense()
+    const update = captureUpdate()
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses/expense-123",
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          amount: 1000,
+          exchangeRate: 31.5,
+          rateKind: "market",
+          rateDate: "2026-10-06",
+          payers: [{ memberId: "member-123", amount: 1000 }],
+          participants: [{ memberId: "member-123", shareAmount: 1000 }],
+        }),
+      }
+    )
+    const response = await PUT_EXPENSE(req, {
+      params: createExpenseParams("project-123", "expense-123"),
+    })
+    expect(response.status).toBe(200)
+    const data = update.mock.calls[0][0].data as { rateKind: string; rateDate: Date }
+    expect(data.rateKind).toBe("market")
+    expect(data.rateDate.toISOString()).toBe(new Date("2026-10-06").toISOString())
+  })
+
+  it("clears rate meta when the currency changes to the settlement currency", async () => {
+    seedForeignExpense()
+    const update = captureUpdate()
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses/expense-123",
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          amount: 1000,
+          currency: "TWD",
+          payers: [{ memberId: "member-123", amount: 1000 }],
+          participants: [{ memberId: "member-123", shareAmount: 1000 }],
+        }),
+      }
+    )
+    const response = await PUT_EXPENSE(req, {
+      params: createExpenseParams("project-123", "expense-123"),
+    })
+    expect(response.status).toBe(200)
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ rateKind: null, rateDate: null }) }),
+    )
+  })
+
+  it("leaves rate meta untouched when only the description changes", async () => {
+    seedForeignExpense()
+    const update = captureUpdate()
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses/expense-123",
+      {
+        method: "PUT",
+        body: JSON.stringify({ description: "gogo", payers: [{ memberId: "member-123", amount: 1000 }] }),
+      }
+    )
+    const response = await PUT_EXPENSE(req, {
+      params: createExpenseParams("project-123", "expense-123"),
+    })
+    expect(response.status).toBe(200)
+    expect(update.mock.calls[0][0].data).not.toHaveProperty("rateKind")
   })
 
   it("rejects an expense with a non-positive exchange rate", async () => {

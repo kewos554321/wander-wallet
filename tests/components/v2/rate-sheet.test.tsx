@@ -65,10 +65,10 @@ describe("RateSheet", () => {
     expect(screen.getByTestId("rate-pane-custom")).toBeInTheDocument()
   })
 
-  it("applies the live rate", () => {
+  it("applies the live rate as a market kind", () => {
     const { props } = setup({ liveRate: 0.031715 })
     fireEvent.click(screen.getByRole("button", { name: "使用即時匯率" }))
-    expect(props.onUseRate).toHaveBeenCalledWith(0.031715)
+    expect(props.onUseRate).toHaveBeenCalledWith(0.031715, "market", undefined)
   })
 
   it("applies a custom rate", () => {
@@ -76,10 +76,10 @@ describe("RateSheet", () => {
     fireEvent.click(screen.getByRole("tab", { name: "自訂" }))
     fireEvent.change(screen.getByLabelText("自訂匯率"), { target: { value: "0.05" } })
     fireEvent.click(screen.getByRole("button", { name: "使用自訂匯率" }))
-    expect(props.onUseRate).toHaveBeenCalledWith(0.05)
+    expect(props.onUseRate).toHaveBeenCalledWith(0.05, "custom", undefined)
   })
 
-  it("queries a past date and applies the historical rate", async () => {
+  it("queries a past date and applies the historical rate with its date", async () => {
     authFetch.mockResolvedValue({
       ok: true,
       json: async () => ({ rates: { USD: 1, TWD: 31 } }),
@@ -93,7 +93,12 @@ describe("RateSheet", () => {
     )
     const use = await screen.findByRole("button", { name: "使用歷史匯率" })
     fireEvent.click(use)
-    expect(props.onUseRate).toHaveBeenCalledWith(1 / 31)
+    expect(props.onUseRate).toHaveBeenCalledWith(1 / 31, "market", "2026-09-20")
+  })
+
+  it("seeds the highlighted kind from the expense's bound rate", () => {
+    setup({ appliedKind: "custom" })
+    expect(screen.getByText("自訂匯率")).toBeInTheDocument()
   })
 
   it("shows an error when the historical rate cannot be found", async () => {

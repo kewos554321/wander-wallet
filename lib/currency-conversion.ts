@@ -175,6 +175,51 @@ export function previewRate(
   return resolvePreviewRate(currency, projectCurrency, customRates, exchangeRates).rate
 }
 
+/** Where a bound expense rate came from. */
+export type ExpenseRateKind = "project" | "market" | "custom"
+
+export interface ExpenseRateMeta {
+  kind: ExpenseRateKind | null
+  /** The market day a `market` rate reflects; null for other kinds. */
+  date: Date | null
+}
+
+const RATE_KINDS: readonly ExpenseRateKind[] = ["project", "market", "custom"]
+
+/**
+ * Resolve the provenance of an expense's bound rate. Same currency → none. A
+ * client-provided rate is a deliberate override whose kind the client supplies
+ * (market = taken from the feed on a date, custom = typed by hand, project =
+ * the project's standard); an unrecognised or absent kind reads as custom.
+ * Otherwise the expense follows the project default: its fixed rate when one
+ * exists, else today's market rate.
+ */
+export function resolveExpenseRateMeta(input: {
+  isForeign: boolean
+  providedRate: number | null
+  clientKind?: string | null
+  clientDate?: string | null
+  hasProjectFixedRate: boolean
+  now: Date
+}): ExpenseRateMeta {
+  const { isForeign, providedRate, clientKind, clientDate, hasProjectFixedRate, now } = input
+  if (!isForeign) return { kind: null, date: null }
+
+  let kind: ExpenseRateKind
+  if (providedRate != null) {
+    kind = RATE_KINDS.includes(clientKind as ExpenseRateKind) ? (clientKind as ExpenseRateKind) : "custom"
+  } else {
+    kind = hasProjectFixedRate ? "project" : "market"
+  }
+
+  if (kind !== "market") return { kind, date: null }
+  if (clientDate) {
+    const parsed = new Date(clientDate)
+    if (Number.isFinite(parsed.getTime())) return { kind, date: parsed }
+  }
+  return { kind, date: now }
+}
+
 /**
  * Round a rate for DISPLAY only: 6 significant digits, trailing zeros dropped.
  * 0.0317460317 → 0.031746; 149.5 → 149.5; 0.03 → 0.03. The conversion itself

@@ -17,6 +17,7 @@ import { CategoryPicker } from "./category-picker"
 import { PayerPicker } from "./payer-picker"
 import { SplitEditor } from "./split-editor"
 import { RateSheet } from "./rate-sheet"
+import { formatRelativeTime, rateChip } from "@/components/v2/currency/format"
 import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
 
 export interface ExpenseFormV2ViewProps {
@@ -48,7 +49,7 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
   const error = derived.error ?? props.submitError
   const amountLabel = formatCurrency(derived.splitInput.amount, state.currency)
   const submitLabel = props.mode === "create" ? `新增支出 · ${amountLabel}` : `儲存變更 · ${amountLabel}`
-  const { rate, customRate, rateSource, rateEditable: isForeign } = derived
+  const { rate, customRate, rateEditable: isForeign, rateKind, rateDate } = derived
   const previewProjectAmount = rate != null ? derived.splitInput.amount * rate : null
   // Display-only currency flip for the payer and split sections. The draft and
   // the save payload never change; the user just glances at the settlement
@@ -62,6 +63,20 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
     props.rateContext && props.projectCurrency && state.currency !== props.projectCurrency
       ? props.rateContext(state.currency)
       : { fixedRate: null, liveRate: null, liveTimestamp: null }
+  // Provenance chip for the amount card. The relative time only applies to the
+  // default live feed (an explicitly-bound market rate has no captured time).
+  const chip = isForeign
+    ? rateChip({
+        kind: rateKind,
+        // No stored date on a market rate means it reflects today.
+        date: rateDate ?? (rateKind === "market" ? new Date() : null),
+        now: new Date(),
+        relativeTime:
+          rateKind === "market" && state.rateKind == null && rateCtx.liveTimestamp
+            ? formatRelativeTime(rateCtx.liveTimestamp)
+            : null,
+      })
+    : null
 
   return (
     <form
@@ -96,7 +111,7 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
         rate={rate}
         rateEditable={isForeign}
         customRate={customRate}
-        rateSource={rateSource}
+        rateChip={chip}
         onOpenRate={isForeign ? () => setRateOpen(true) : undefined}
         calculatorOpen={showCalculator}
         onToggleCalculator={() => setShowCalculator((v) => !v)}
@@ -121,17 +136,22 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
           amount={derived.splitInput.amount}
           rate={rate}
           customRate={customRate}
+          appliedKind={rateKind}
           projectFixedRate={rateCtx.fixedRate}
           liveRate={rateCtx.liveRate}
           liveTimestamp={rateCtx.liveTimestamp}
           expenseDate={state.expenseDate}
-          onUseRate={(value) => {
+          onUseRate={(value, kind, date) => {
             actions.setExchangeRate(String(value))
             actions.setRatePinned(true)
+            actions.setRateKind(kind)
+            actions.setRateDate(kind === "market" ? date ?? null : null)
           }}
           onReset={() => {
             actions.setExchangeRate("")
             actions.setRatePinned(false)
+            actions.setRateKind(null)
+            actions.setRateDate(null)
           }}
         />
       )}

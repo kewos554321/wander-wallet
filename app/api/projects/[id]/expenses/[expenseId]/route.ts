@@ -8,7 +8,7 @@ import { validateSplitDetail } from "@/lib/expense-split"
 import { primaryPayerId, validatePayers } from "@/lib/expense-payers"
 import { expensePayersInclude } from "@/lib/expense-payers-include"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
-import { rollbackAllocation, resolveRate } from "@/lib/currency-conversion"
+import { rollbackAllocation, resolveRate, resolveExpenseRateMeta, type ExpenseRateMeta } from "@/lib/currency-conversion"
 import { computeProjectAmounts } from "@/lib/expense-project-amounts"
 import { getExchangeRate } from "@/lib/services/exchange-rate"
 
@@ -109,7 +109,7 @@ export async function PUT(
     }
 
     const body = await req.json()
-    const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail } = body
+    const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail, rateKind, rateDate } = body
     const hasSplitDetailField = Object.prototype.hasOwnProperty.call(body, "splitDetail")
 
     // 獲取現有費用（包含付款人和參與者資訊）
@@ -242,6 +242,8 @@ export async function PUT(
       amount?: number
       currency?: string
       exchangeRate?: number | null
+      rateKind?: string | null
+      rateDate?: Date | null
       description?: string | null
       category?: string | null
       image?: string | null
@@ -294,6 +296,8 @@ export async function PUT(
 
     let newRate: number | null = null
     let seedRate: number | null = null
+    // undefined = keep the stored provenance (no rate change was recomputed).
+    let rateMeta: ExpenseRateMeta | undefined
     if (isForeign) {
       const currencyChanged = currency !== undefined && currency !== existingCurrency
       const providedRate = exchangeRate !== undefined && exchangeRate !== null ? Number(exchangeRate) : null
@@ -318,9 +322,20 @@ export async function PUT(
         })
         newRate = resolved.rate
         if (resolved.shouldSeedFixed) seedRate = resolved.rate
+        rateMeta = resolveExpenseRateMeta({
+          isForeign: true,
+          providedRate,
+          clientKind: rateKind ?? null,
+          clientDate: rateDate ?? null,
+          hasProjectFixedRate: customRates[newCurrency] != null,
+          now: new Date(),
+        })
       } else {
         newRate = Number(existingExpense.exchangeRate)
       }
+    } else {
+      // Now in the settlement currency → no bound rate.
+      rateMeta = { kind: null, date: null }
     }
 
     const hadAllocation =
@@ -353,6 +368,10 @@ export async function PUT(
     ledger = projectAmounts.discrepancy
 
     updateData.exchangeRate = isForeign ? newRate : null
+    if (rateMeta !== undefined) {
+      updateData.rateKind = rateMeta.kind
+      updateData.rateDate = rateMeta.date
+    }
 
     // 成員名稱映射（付款人顯示用）
     const memberNameMap: Record<string, string> = Object.fromEntries(

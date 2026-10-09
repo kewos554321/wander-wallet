@@ -8,7 +8,7 @@ import { validateSplitDetail } from "@/lib/expense-split"
 import { primaryPayerId, validatePayers, type PayerShare } from "@/lib/expense-payers"
 import { expensePayersInclude } from "@/lib/expense-payers-include"
 import { getExchangeRate } from "@/lib/services/exchange-rate"
-import { resolveRate } from "@/lib/currency-conversion"
+import { resolveRate, resolveExpenseRateMeta } from "@/lib/currency-conversion"
 import { computeProjectAmounts } from "@/lib/expense-project-amounts"
 
 interface Participant {
@@ -107,7 +107,7 @@ export async function POST(
     }
 
     const body = await req.json()
-    const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail } = body
+    const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail, rateKind, rateDate } = body
 
     // 獲取專案幣別與匯率設定
     const project = await prisma.project.findUnique({
@@ -243,6 +243,17 @@ export async function POST(
       if (resolved.shouldSeedFixed) seedRate = resolved.rate
     }
 
+    // Provenance of the bound rate (project default / market on a date / custom),
+    // so the amount card can show what kind of rate this expense uses.
+    const rateMeta = resolveExpenseRateMeta({
+      isForeign: expenseCurrency !== projectCurrency,
+      providedRate: exchangeRate !== undefined && exchangeRate !== null ? Number(exchangeRate) : null,
+      clientKind: rateKind ?? null,
+      clientDate: rateDate ?? null,
+      hasProjectFixedRate: customRates[expenseCurrency] != null,
+      now: new Date(),
+    })
+
     // Allocate the original and settlement totals for every currency (rate 1
     // when they match) with one tail-account ordering, so the remainder lands
     // on the same member in both.
@@ -271,6 +282,8 @@ export async function POST(
           amount: amountNum,
           currency: expenseCurrency,
           exchangeRate: snapshotRate,
+          rateKind: rateMeta.kind,
+          rateDate: rateMeta.date,
           description: description?.trim() || null,
           category: category?.trim() || null,
           image: image || null,

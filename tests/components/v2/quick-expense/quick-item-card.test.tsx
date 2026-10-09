@@ -220,7 +220,7 @@ describe("QuickItemCard", () => {
       { projectCurrency: "USD", previewRateInfo: () => ({ rate: 0.0067, source: "live" as const }) }
     )
     expect(screen.getByTestId("amount-conversion")).toHaveTextContent("≈ USD 6.70")
-    expect(screen.getByTestId("rate-source")).toHaveTextContent("即時匯率")
+    expect(screen.getByTestId("rate-source")).toHaveTextContent("即時")
     const notes = screen.getAllByTestId("conversion-note")
     expect(notes).toHaveLength(2)
     expect(notes[0]).toHaveTextContent("僅為換算預覽；實際結算會先換匯，金額可能略有差異。")

@@ -25,6 +25,7 @@ import {
 } from "@/lib/split-draft"
 import { itemDerivedPayers, type QuickItem } from "@/lib/quick-expense/draft"
 import { roundRateForDisplay, type PreviewRateInfo } from "@/lib/currency-conversion"
+import { rateChip } from "@/components/v2/currency/format"
 import { AmountCard } from "@/components/v2/expense-form/amount-card"
 import { CalculatorPad } from "@/components/v2/expense-form/calculator-pad"
 import { CategoryPicker } from "@/components/v2/expense-form/category-picker"
@@ -60,6 +61,14 @@ export function QuickItemCard({ item, members, onChange, projectCurrency, previe
   const rate = customRate ? usableManual ?? autoRate : autoRate
   const previewProjectAmount = rate != null ? amount * rate : null
   const rateSource = customRate ? ("custom" as const) : rateInfo.source
+  // Same provenance vocabulary as the expense form (no history in quick-entry).
+  const chip = isForeign
+    ? rateChip({
+        kind: rateSource === "fixed" ? "project" : rateSource === "live" ? "market" : rateSource === "custom" ? "custom" : null,
+        date: rateSource === "live" ? new Date() : null,
+        now: new Date(),
+      })
+    : null
 
   // Drive the shared SplitEditor from the item's own split state so the AI
   // result card matches the expense form exactly.
@@ -138,7 +147,7 @@ export function QuickItemCard({ item, members, onChange, projectCurrency, previe
         rateEditable={isForeign}
         onRate={(v) => onChange({ exchangeRate: v })}
         customRate={customRate}
-        rateSource={rateSource}
+        rateChip={chip}
         onToggleCustomRate={() => {
           if (customRate) onChange({ exchangeRate: "", ratePinned: false })
           else onChange({ exchangeRate: autoRate != null ? String(roundRateForDisplay(autoRate)) : "", ratePinned: true })

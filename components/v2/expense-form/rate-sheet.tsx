@@ -31,10 +31,12 @@ export interface RateSheetProps {
   liveTimestamp?: number | null
   /** Default date for the historical lookup. */
   expenseDate: Date
-  /** Bind a concrete rate to this expense. */
-  onUseRate: (rate: number) => void
+  /** Bind a concrete rate to this expense. `kind` is market (feed) or custom. */
+  onUseRate: (rate: number, kind: "market" | "custom", date?: string) => void
   /** Drop the override and fall back to the project default. */
   onReset: () => void
+  /** The kind currently bound to this expense (for highlighting). */
+  appliedKind?: "project" | "market" | "custom" | null
 }
 
 const TABS: { id: Tab; label: string }[] = [
@@ -62,6 +64,7 @@ export function RateSheet({
   expenseDate,
   onUseRate,
   onReset,
+  appliedKind,
 }: RateSheetProps) {
   const authFetch = useAuthFetch()
   const [tab, setTab] = useState<Tab>("live")
@@ -77,7 +80,7 @@ export function RateSheet({
   useEffect(() => {
     if (!open) return
     setTab("live")
-    setApplied(customRate ? "custom" : "default")
+    setApplied(appliedKind === "custom" ? "custom" : appliedKind === "market" ? "live" : "default")
     setHistoryDate(format(expenseDate, "yyyy-MM-dd"))
     setHistoryRate(null)
     setHistoryError(null)
@@ -107,10 +110,10 @@ export function RateSheet({
           : "bg-v2-coral-soft text-v2-coral-strong"
   const approx = rate != null ? amount * rate : null
 
-  const apply = (value: number, kind: AppliedKind) => {
+  const apply = (value: number, kind: AppliedKind, date?: string) => {
     if (!(value > 0) || !Number.isFinite(value)) return
     setApplied(kind)
-    onUseRate(value)
+    onUseRate(value, kind === "custom" ? "custom" : "market", kind === "history" ? date : undefined)
   }
 
   const queryHistory = async () => {
@@ -268,7 +271,7 @@ export function RateSheet({
                       type="button"
                       aria-label="使用歷史匯率"
                       disabled={applied === "history"}
-                      onClick={() => apply(historyRate, "history")}
+                      onClick={() => apply(historyRate, "history", historyDate)}
                       className={optionButtonClass(applied === "history")}
                     >
                       {applied === "history" ? "已使用" : "使用"}

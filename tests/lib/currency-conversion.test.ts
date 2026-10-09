@@ -6,6 +6,7 @@ import {
   allocate,
   rollbackAllocation,
   resolveRate,
+  resolveExpenseRateMeta,
 } from "@/lib/currency-conversion"
 
 describe("minor units", () => {
@@ -91,5 +92,49 @@ describe("resolveRate", () => {
     expect(
       resolveRate({ currency: "TWD", projectCurrency: "USD", rateSource: "live", customRate: 0.03, liveRate: 0.0317 }).source,
     ).toBe("live")
+  })
+})
+
+describe("resolveExpenseRateMeta", () => {
+  const now = new Date("2026-10-09T04:00:00Z")
+  const base = { providedRate: null, hasProjectFixedRate: false, now }
+
+  it("same currency has no rate meta", () => {
+    expect(resolveExpenseRateMeta({ ...base, isForeign: false })).toEqual({ kind: null, date: null })
+  })
+  it("defaults to project when the project has a fixed rate", () => {
+    expect(resolveExpenseRateMeta({ ...base, isForeign: true, hasProjectFixedRate: true })).toEqual({
+      kind: "project",
+      date: null,
+    })
+  })
+  it("defaults to market today when there is no fixed rate", () => {
+    expect(resolveExpenseRateMeta({ ...base, isForeign: true })).toEqual({ kind: "market", date: now })
+  })
+  it("honours a provided market rate with its queried date", () => {
+    expect(
+      resolveExpenseRateMeta({ ...base, isForeign: true, providedRate: 31.5, clientKind: "market", clientDate: "2026-10-06" }),
+    ).toEqual({ kind: "market", date: new Date("2026-10-06") })
+  })
+  it("treats a provided market rate without a date as today", () => {
+    expect(resolveExpenseRateMeta({ ...base, isForeign: true, providedRate: 31.5, clientKind: "market" })).toEqual({
+      kind: "market",
+      date: now,
+    })
+  })
+  it("honours a custom rate and clears the market date", () => {
+    expect(resolveExpenseRateMeta({ ...base, isForeign: true, providedRate: 30, clientKind: "custom" })).toEqual({
+      kind: "custom",
+      date: null,
+    })
+  })
+  it("treats a provided rate with no or unknown kind as custom", () => {
+    expect(resolveExpenseRateMeta({ ...base, isForeign: true, providedRate: 30 }).kind).toBe("custom")
+    expect(resolveExpenseRateMeta({ ...base, isForeign: true, providedRate: 30, clientKind: "weird" }).kind).toBe("custom")
+  })
+  it("falls back to now for an unparsable market date", () => {
+    expect(
+      resolveExpenseRateMeta({ ...base, isForeign: true, providedRate: 30, clientKind: "market", clientDate: "nope" }).date,
+    ).toEqual(now)
   })
 })

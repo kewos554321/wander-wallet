@@ -113,6 +113,8 @@ model Expense {
   amount      Decimal  @db.Decimal(10, 2)
   currency    String   @default("TWD") // 費用幣別
   exchangeRate Decimal? @db.Decimal(18, 8) @map("exchange_rate") // 綁定匯率快照；同幣別為 null
+  rateKind    String?  @map("rate_kind") // 匯率來源種類：project | market | custom
+  rateDate    DateTime? @map("rate_date") // market 種類時，行情對應的日期（用以顯示即時/歷史）
   description String?
   category    String?
   image       String?  @db.Text // 收據/消費圖片：base64 data URL

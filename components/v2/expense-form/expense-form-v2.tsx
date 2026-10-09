@@ -22,6 +22,8 @@ interface LoadedExpense {
   amount: number
   currency: string | null
   exchangeRate?: number | null
+  rateKind?: string | null
+  rateDate?: string | null
   description: string | null
   category: string | null
   image: string | null
@@ -125,6 +127,8 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
           amount: Number(expense.amount),
           currency: expense.currency || projectCurrency,
           exchangeRate: expense.exchangeRate ?? null,
+          rateKind: expense.rateKind ?? null,
+          rateDate: expense.rateDate ?? null,
           description: expense.description,
           category: expense.category,
           payers: expense.payers.map((p) => ({ memberId: p.memberId, amount: Number(p.amount) })),
@@ -275,6 +279,9 @@ function LoadedForm({
           state.ratePinned && state.exchangeRate?.trim() && Number(state.exchangeRate) > 0
             ? Number(state.exchangeRate)
             : undefined,
+        rateKind: state.ratePinned ? state.rateKind ?? undefined : undefined,
+        rateDate:
+          state.ratePinned && state.rateKind === "market" ? state.rateDate ?? undefined : undefined,
         description,
         category,
         location: state.location.location,

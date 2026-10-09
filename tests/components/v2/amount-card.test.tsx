@@ -16,6 +16,10 @@ vi.mock("@/components/ui/currency-select", () => ({
 
 import { AmountCard } from "@/components/v2/expense-form/amount-card"
 
+const PROJECT_CHIP = { chip: "專案", tone: "project" as const, context: "專案設定" }
+const LIVE_CHIP = { chip: "即時", tone: "market" as const, context: "今天" }
+const CUSTOM_CHIP = { chip: "自訂", tone: "custom" as const, context: "手動輸入" }
+
 type AmountCardProps = Parameters<typeof AmountCard>[0]
 
 function setup(overrides: Partial<AmountCardProps> = {}) {
@@ -126,12 +130,13 @@ describe("AmountCard", () => {
       previewProjectAmount: 31.72,
       rate: 0.031715,
       rateEditable: true,
-      rateSource: "fixed",
+      rateChip: PROJECT_CHIP,
       onToggleCustomRate: vi.fn(),
     })
     expect(screen.getByTestId("amount-conversion")).toHaveTextContent("≈ USD 31.72")
     expect(screen.getByText("0.031715")).toBeInTheDocument()
-    expect(screen.getByTestId("rate-source")).toHaveTextContent("專案固定匯率")
+    expect(screen.getByTestId("rate-source")).toHaveTextContent("專案")
+    expect(screen.getByTestId("rate-context")).toHaveTextContent("專案設定")
     expect(screen.queryByLabelText("匯率")).not.toBeInTheDocument()
   })
 
@@ -142,7 +147,7 @@ describe("AmountCard", () => {
       previewProjectAmount: 31.72,
       rate: 0.031715,
       rateEditable: true,
-      rateSource: "fixed",
+      rateChip: PROJECT_CHIP,
       onToggleCustomRate: vi.fn(),
     })
     const conversion = screen.getByTestId("amount-conversion")
@@ -155,19 +160,33 @@ describe("AmountCard", () => {
     expect(rateRow).toHaveTextContent("USD")
   })
 
-  it("shows 即時匯率 as the source when derived from live rates", () => {
+  it("shows 即時 as the source (with the relative time) when derived from live rates", () => {
     setup({
       currency: "TWD",
       projectCurrency: "USD",
       rate: 0.0317,
       rateEditable: true,
-      rateSource: "live",
+      rateChip: { chip: "即時", tone: "market", context: "更新於 3 分鐘前" },
       onToggleCustomRate: vi.fn(),
     })
-    expect(screen.getByTestId("rate-source")).toHaveTextContent("即時匯率")
+    expect(screen.getByTestId("rate-source")).toHaveTextContent("即時")
+    expect(screen.getByTestId("rate-context")).toHaveTextContent("更新於 3 分鐘前")
   })
 
-  it("shows an editable input and the 自訂匯率 label when pinned", () => {
+  it("shows the market date for a past market rate", () => {
+    setup({
+      currency: "TWD",
+      projectCurrency: "USD",
+      rate: 0.0317,
+      rateEditable: true,
+      rateChip: { chip: "市場", tone: "market", context: "10/6" },
+      onToggleCustomRate: vi.fn(),
+    })
+    expect(screen.getByTestId("rate-source")).toHaveTextContent("市場")
+    expect(screen.getByTestId("rate-context")).toHaveTextContent("10/6")
+  })
+
+  it("shows an editable input and the 自訂 label when pinned", () => {
     setup({
       currency: "TWD",
       projectCurrency: "USD",
@@ -176,10 +195,11 @@ describe("AmountCard", () => {
       rateInput: "0.05",
       rateEditable: true,
       customRate: true,
+      rateChip: CUSTOM_CHIP,
       onRate: vi.fn(),
       onToggleCustomRate: vi.fn(),
     })
-    expect(screen.getByText("自訂匯率")).toBeInTheDocument()
+    expect(screen.getByTestId("rate-source")).toHaveTextContent("自訂")
     expect(screen.getByLabelText("匯率")).toHaveValue("0.05")
   })
 
@@ -190,7 +210,7 @@ describe("AmountCard", () => {
       projectCurrency: "USD",
       rate: 0.0317,
       rateEditable: true,
-      rateSource: "live",
+      rateChip: LIVE_CHIP,
       onToggleCustomRate,
     })
     fireEvent.click(screen.getByRole("button", { name: "匯率自動，點擊自訂匯率" }))
@@ -205,12 +225,12 @@ describe("AmountCard", () => {
       previewProjectAmount: 31.72,
       rate: 0.031715,
       rateEditable: true,
-      rateSource: "live",
+      rateChip: LIVE_CHIP,
       onOpenRate,
     })
     const row = screen.getByTestId("rate-row")
     expect(row.tagName).toBe("BUTTON")
-    expect(row).toHaveTextContent("調整")
+    expect(row).toHaveAttribute("aria-label", "調整匯率")
     fireEvent.click(row)
     expect(onOpenRate).toHaveBeenCalledTimes(1)
     // The legacy inline input and pin are replaced by the sheet trigger.

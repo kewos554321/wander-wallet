@@ -16,6 +16,8 @@ export interface ExpensePayload {
   amount: number
   currency: string
   exchangeRate?: number | null
+  rateKind?: "project" | "market" | "custom" | null
+  rateDate?: string | null
   description: string | null
   category: string
   location: string | null
