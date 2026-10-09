@@ -367,7 +367,7 @@ export function SplitEditor({
         </div>
       )}
 
-      {!showBreakdown && derived.splitInput.amount !== 0 && (
+      {!settleView && !showBreakdown && derived.splitInput.amount !== 0 && (
         <div className="mt-2 flex justify-end">
           <MatchBadge matches={derived.matches} diff={splitGap(draft)} hasNegative={splitHasNegative(draft)} currency={currency} />
         </div>

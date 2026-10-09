@@ -215,9 +215,32 @@ describe("PayerPicker", () => {
     expect(screen.queryByTestId("payer-project-estimate")).not.toBeInTheDocument()
   })
 
-  it("shows the conversion note under the title for a foreign expense", () => {
-    setup({ currency: "JPY", projectCurrency: "USD", rate: 0.05 })
+  it("hides the conversion note while editing in the expense currency", () => {
+    setup({ currency: "JPY", projectCurrency: "USD", rate: 0.05, onDisplayCurrencyChange: vi.fn() })
+    expect(screen.queryByTestId("conversion-note")).not.toBeInTheDocument()
+  })
+
+  it("shows the conversion note in the settlement-currency preview", () => {
+    setup({
+      currency: "JPY",
+      projectCurrency: "USD",
+      rate: 0.05,
+      displayCurrency: "USD",
+      onDisplayCurrencyChange: vi.fn(),
+    })
     expect(screen.getByTestId("conversion-note")).toHaveTextContent("結算會先換匯，再以 USD 分攤")
+  })
+
+  it("hides the 金額相符 badge in the settlement-currency preview", () => {
+    setup({
+      currency: "JPY",
+      projectCurrency: "USD",
+      rate: 0.05,
+      displayCurrency: "USD",
+      onDisplayCurrencyChange: vi.fn(),
+    })
+    const group = screen.getByRole("group", { name: "付款成員" })
+    expect(within(group).queryByText("金額相符")).not.toBeInTheDocument()
   })
 
   it("hides the conversion note for a same-currency expense", () => {

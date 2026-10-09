@@ -172,7 +172,7 @@ export function SplitSummary({
           </div>
         </div>
       </div>
-      {derived.splitInput.amount !== 0 && (
+      {!settleView && derived.splitInput.amount !== 0 && (
         <div className="mt-2 flex justify-end">
           <MatchBadge matches={derived.matches} diff={splitGap(draft)} hasNegative={splitHasNegative(draft)} currency={currency} />
         </div>

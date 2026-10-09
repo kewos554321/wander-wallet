@@ -101,7 +101,7 @@ describe("ExpenseFormV2View", () => {
     expect(hook.result.current.state.pool).toEqual(["a"])
   })
 
-  it("shows the conversion note under the payer title for a foreign expense", () => {
+  it("shows the settlement conversion note only in the settlement-currency preview", () => {
     const { hook, rerender } = renderForm({
       projectCurrency: "TWD",
       previewRateInfo: () => ({ rate: 0.2135, source: "live" as const }),
@@ -111,8 +111,35 @@ describe("ExpenseFormV2View", () => {
       hook.result.current.actions.setCurrency("JPY")
     })
     rerender()
-    const note = screen.getByTestId("conversion-note")
-    expect(note).toHaveTextContent("結算會先換匯，再以 TWD 分攤")
+    // Editing in the expense currency: no note.
+    expect(screen.queryByTestId("conversion-note")).not.toBeInTheDocument()
+    const payer = screen.getByRole("group", { name: "付款成員" })
+    fireEvent.click(within(payer).getByRole("button", { name: "顯示 TWD" }))
+    rerender()
+    expect(screen.getByTestId("conversion-note")).toHaveTextContent("結算會先換匯，再以 TWD 分攤")
+  })
+
+  it("hides the match badges in the settlement-currency preview", () => {
+    const { hook, rerender } = renderForm({
+      projectCurrency: "TWD",
+      previewRateInfo: () => ({ rate: 0.2135, source: "live" as const }),
+    })
+    act(() => {
+      hook.result.current.actions.setAmount("1000")
+      hook.result.current.actions.setCurrency("JPY")
+    })
+    rerender()
+    expect(within(screen.getByRole("group", { name: "付款成員" })).getByText("金額相符")).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "分攤成員" })).getByText("金額相符")).toBeInTheDocument()
+    const payer = screen.getByRole("group", { name: "付款成員" })
+    fireEvent.click(within(payer).getByRole("button", { name: "顯示 TWD" }))
+    rerender()
+    expect(
+      within(screen.getByRole("group", { name: "付款成員" })).queryByText("金額相符"),
+    ).not.toBeInTheDocument()
+    expect(
+      within(screen.getByRole("region", { name: "分攤成員" })).queryByText("金額相符"),
+    ).not.toBeInTheDocument()
   })
 
   it("binds a custom rate from the rate sheet to this expense", () => {

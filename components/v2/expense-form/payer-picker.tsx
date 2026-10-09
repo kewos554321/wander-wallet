@@ -78,9 +78,11 @@ export function PayerPicker({
   const showCurrencyToggle =
     onDisplayCurrencyChange != null && !!projectCurrency && rate != null && currency !== projectCurrency
   const showLegacyEstimate = displayCurrency == null && !!projectCurrency && rate != null && currency !== projectCurrency
-  // A one-line note under the title: the split below runs on the converted
-  // settlement amount. Shown only for foreign expenses.
-  const showConversionNote = !!projectCurrency && currency !== projectCurrency
+  // The conversion note explains the settlement conversion, so it only shows
+  // in the settlement-currency preview — or when this section has no currency
+  // toggle at all (quick-entry), where the settlement estimates always show.
+  const showConversionNote =
+    !!projectCurrency && currency !== projectCurrency && (!showCurrencyToggle || settleView)
 
   return (
     <div role="group" aria-label="付款成員" className={SECTION_CARD}>
@@ -233,7 +235,7 @@ export function PayerPicker({
         </div>
       )}
 
-      {amount !== 0 && (
+      {!settleView && amount !== 0 && (
         <div className="mt-2">
           <div className="flex items-center justify-end gap-2">
             {matches ? (
