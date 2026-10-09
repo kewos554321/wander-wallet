@@ -64,23 +64,35 @@ export function SplitEditor({
   const showLegacyEstimate = displayCurrency == null && !!projectCurrency && rate != null && currency !== projectCurrency
   const showCurrencyToggle =
     onDisplayCurrencyChange != null && !!projectCurrency && rate != null && currency !== projectCurrency
+  // Mirrors the payer section: the conversion note explains the settlement
+  // conversion, so it shows in the settlement preview (or when this section has
+  // no currency toggle, as in quick-entry).
+  const showConversionNote =
+    !!projectCurrency && currency !== projectCurrency && (!showCurrencyToggle || settleView)
 
   return (
     <section aria-label="分攤成員" className={SECTION_CARD}>
-      <div className="mb-2.5 flex items-center justify-between gap-2">
-        <p className={`m-0 flex items-center gap-2 ${SECTION_TITLE}`}>
-          分攤成員
-          {showCurrencyToggle && (
-            <CurrencyToggle
-              currency={currency}
-              projectCurrency={projectCurrency!}
-              displayCurrency={viewCurrency}
-              onChange={onDisplayCurrencyChange!}
-            />
+      <div className="mb-2.5 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className={`m-0 flex items-center gap-2 ${SECTION_TITLE}`}>
+            分攤成員
+            {showCurrencyToggle && (
+              <CurrencyToggle
+                currency={currency}
+                projectCurrency={projectCurrency!}
+                displayCurrency={viewCurrency}
+                onChange={onDisplayCurrencyChange!}
+              />
+            )}
+          </p>
+          {showConversionNote && (
+            <p data-testid="conversion-note" className="mt-1 text-[11px] font-normal text-v2-ink-muted">
+              僅為換算預覽；實際結算會先換匯，金額可能略有差異。
+            </p>
           )}
-        </p>
+        </div>
         {!settleView && (
-          <label className="flex items-center gap-1.5">
+          <label className="flex shrink-0 items-center gap-1.5">
             <span className="text-[13px] font-bold text-v2-lake">先扣個人項目</span>
             <button
               type="button"

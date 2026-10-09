@@ -221,8 +221,9 @@ describe("QuickItemCard", () => {
     )
     expect(screen.getByTestId("amount-conversion")).toHaveTextContent("≈ USD 6.70")
     expect(screen.getByTestId("rate-source")).toHaveTextContent("即時匯率")
-    const note = screen.getByTestId("conversion-note")
-    expect(note).toHaveTextContent("僅為換算預覽；實際結算會先換匯，金額可能略有差異。")
+    const notes = screen.getAllByTestId("conversion-note")
+    expect(notes).toHaveLength(2)
+    expect(notes[0]).toHaveTextContent("僅為換算預覽；實際結算會先換匯，金額可能略有差異。")
   })
 
   it("hides the conversion UI for a same-currency item", () => {
