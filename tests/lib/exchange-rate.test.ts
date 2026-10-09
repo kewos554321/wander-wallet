@@ -105,15 +105,14 @@ describe("exchange-rate service", () => {
   })
 
   describe("getHistoricalRates", () => {
-    it("should fetch historical rates", async () => {
+    it("should fetch true historical rates from Frankfurter for the requested date", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () =>
-          Promise.resolve({
-            result: "success",
-            base_code: "USD",
-            rates: { USD: 1, TWD: 30.5 },
-          }),
+          Promise.resolve([
+            { date: "2024-01-01", base: "USD", quote: "TWD", rate: 30.5 },
+            { date: "2024-01-01", base: "USD", quote: "JPY", rate: 141.2 },
+          ]),
       })
 
       const { getHistoricalRates } = await import(
@@ -121,19 +120,45 @@ describe("exchange-rate service", () => {
       )
       const result = await getHistoricalRates("2024-01-01")
 
+      const url = String((mockFetch.mock.calls[0] as unknown[])[0])
+      expect(url).toContain("api.frankfurter.dev")
+      expect(url).toContain("date=2024-01-01")
+      expect(url).toContain("base=USD")
       expect(result.base).toBe("USD")
-      expect(result.rates).toHaveProperty("TWD")
+      expect(result.rates.USD).toBe(1)
+      expect(result.rates.TWD).toBe(30.5)
+      expect(result.rates.JPY).toBe(141.2)
+      expect(result.timestamp).toBe(new Date("2024-01-01").getTime())
     })
 
-    it("should cache historical rates", async () => {
+    it("should pass the requested base currency to Frankfurter", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { date: "2024-01-01", base: "EUR", quote: "TWD", rate: 34.2 },
+          ]),
+      })
+
+      const { getHistoricalRates } = await import(
+        "@/lib/services/exchange-rate"
+      )
+      const result = await getHistoricalRates("2024-01-01", "EUR")
+
+      const url = String((mockFetch.mock.calls[0] as unknown[])[0])
+      expect(url).toContain("base=EUR")
+      expect(result.base).toBe("EUR")
+      expect(result.rates.EUR).toBe(1)
+      expect(result.rates.TWD).toBe(34.2)
+    })
+
+    it("should cache historical rates per date", async () => {
       mockFetch.mockResolvedValue({
         ok: true,
         json: () =>
-          Promise.resolve({
-            result: "success",
-            base_code: "USD",
-            rates: { USD: 1, TWD: 30.5 },
-          }),
+          Promise.resolve([
+            { date: "2024-01-01", base: "USD", quote: "TWD", rate: 30.5 },
+          ]),
       })
 
       const { getHistoricalRates } = await import(

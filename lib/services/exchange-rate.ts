@@ -93,9 +93,10 @@ export async function getHistoricalRates(
   }
 
   try {
-    // Note: Free tier doesn't support historical data, use current rates
+    // Frankfurter (v2) serves real historical rates and needs no API key.
+    // Response: [{ date, base, quote, rate }] — one row per quote.
     const response = await fetch(
-      `https://open.er-api.com/v6/latest/${baseCurrency}`,
+      `https://api.frankfurter.dev/v2/rates?date=${date}&base=${baseCurrency}`,
       { next: { revalidate: 86400 } } // Cache for 24 hours
     )
 
@@ -103,17 +104,24 @@ export async function getHistoricalRates(
       throw new Error("Failed to fetch historical rates")
     }
 
-    const data = await response.json()
+    const data = (await response.json()) as
+      | { date: string; base: string; quote: string; rate: number }[]
+      | unknown
 
-    if (data.result !== "success") {
-      throw new Error("API returned error: " + data["error-type"])
+    if (!Array.isArray(data)) {
+      throw new Error("Unexpected historical rates payload")
     }
 
-    // ExchangeRate-API format: { result, base_code, rates }
-    // Note: Free tier uses current rates for historical requests
+    const rates: Record<string, number> = { [baseCurrency]: 1 }
+    for (const row of data as { quote?: unknown; rate?: unknown }[]) {
+      if (row && typeof row.quote === "string" && typeof row.rate === "number") {
+        rates[row.quote] = row.rate
+      }
+    }
+
     const result: ExchangeRates = {
-      base: data.base_code || baseCurrency,
-      rates: data.rates,
+      base: baseCurrency,
+      rates,
       timestamp: new Date(date).getTime(),
     }
 
