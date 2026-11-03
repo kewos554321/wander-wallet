@@ -27,7 +27,8 @@ const DEV_MODE = !process.env.NEXT_PUBLIC_LIFF_ID
 
 // 公開路由：不需要登入
 export const PUBLIC_ROUTES = ["/", "/brand-preview"]
-export const PUBLIC_PREFIXES = ["/admin"]
+// "/demo" is an unauthenticated design-preview area (e.g. /demo/add-expense).
+export const PUBLIC_PREFIXES = ["/admin", "/demo"]
 
 interface AuthUser {
   id: string

@@ -300,7 +300,10 @@ export function RateSheet({
               {recentRates.length > 0 && (
                 <>
                   <p className="m-0 mb-2 mt-4 text-xs font-bold text-v2-ink-muted">最近用過</p>
-                  <div className="flex flex-col gap-2">
+                  <div
+                    data-testid="recent-rates-list"
+                    className="flex max-h-40 flex-col gap-2 overflow-y-auto overscroll-contain"
+                  >
                     {recentRates.map((r, i) => {
                       const when = r.date ? shortRateDate(r.date) : null
                       const applied = appliedKind === "custom" && sameRate(r.rate, rate)
@@ -345,10 +348,6 @@ export function RateSheet({
                   </div>
                 </>
               )}
-
-              <p className="m-0 mt-3 text-[11.5px] leading-relaxed text-v2-ink-muted">
-                只影響這一筆，不會改動專案匯率。
-              </p>
             </section>
           )}
         </div>

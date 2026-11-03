@@ -160,6 +160,13 @@ describe("RateSheet", () => {
     expect(props.onUseRate).toHaveBeenCalledWith(0.05, "custom")
   })
 
+  it("bounds the reuse list so it scrolls instead of growing the panel", () => {
+    setup({ recentRates: RECENT, appliedKind: "custom" })
+    const list = screen.getByTestId("recent-rates-list")
+    expect(list.className).toContain("overflow-y-auto")
+    expect(list.className).toContain("max-h-")
+  })
+
   it("lists recent rates with their source and expense", () => {
     setup({ recentRates: RECENT, appliedKind: "custom" })
     expect(screen.getByTestId("recent-rate-0")).toHaveTextContent("市場")
@@ -173,6 +180,7 @@ describe("RateSheet", () => {
     expect(screen.queryByText("自己輸入匯率")).not.toBeInTheDocument()
     expect(screen.queryByText(/這一筆會算成/)).not.toBeInTheDocument()
     expect(screen.queryByText(/這個專案/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/不會改動專案匯率/)).not.toBeInTheDocument()
   })
 
   it("keeps the rate card above the date field in 市場", () => {
