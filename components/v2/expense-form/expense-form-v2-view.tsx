@@ -130,7 +130,6 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
           onClose={() => setRateOpen(false)}
           fromCurrency={state.currency}
           toCurrency={props.projectCurrency}
-          amount={derived.splitInput.amount}
           rate={rate}
           customRate={customRate}
           appliedKind={rateKind}

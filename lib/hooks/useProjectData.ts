@@ -39,6 +39,7 @@ export interface Project {
   }
   members?: ProjectMember[]
   expenses?: {
+    id?: string
     currency: string
     /** Prisma Decimal over JSON (a string) or a number. */
     exchangeRate: number | string | null

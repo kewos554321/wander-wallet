@@ -52,10 +52,13 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
   const [expenseLoading, setExpenseLoading] = useState(mode === "edit")
 
   // Rates recently used on this project, for the sheet's reuse list. Memoised
-  // (and kept above the early returns, so the hook order is stable).
+  // (and kept above the early returns, so the hook order is stable). The
+  // expense being edited is excluded so the top row is the previous use, not
+  // the expense you're already editing.
   const recentRates = useCallback(
-    (currency: string) => recentRatesFor({ expenses: project?.expenses ?? [], fromCurrency: currency }),
-    [project],
+    (currency: string) =>
+      recentRatesFor({ expenses: project?.expenses ?? [], fromCurrency: currency, excludeExpenseId: expenseId }),
+    [project, expenseId],
   )
 
   useEffect(() => {

@@ -8,6 +8,8 @@ export interface RecentRate {
 }
 
 export interface RecentRateExpense {
+  /** The expense's id; used to drop the expense currently being edited. */
+  id?: string
   currency: string
   /** A number, or a string when the API serialized a Prisma Decimal over JSON. */
   exchangeRate: number | string | null
@@ -23,18 +25,22 @@ export interface RecentRateExpense {
  * a traveller can reapply a rate they used earlier in the trip. Legacy
  * `rateKind === "project"` rows read as `custom` (the project-fixed concept is
  * retired). `exchangeRate` may arrive as a string (Prisma Decimal), so it is
- * coerced with `Number`.
+ * coerced with `Number`. Pass `excludeExpenseId` when editing so the expense
+ * being edited never lists its own rate.
  */
 export function recentRatesFor(input: {
   expenses: RecentRateExpense[]
   fromCurrency: string
+  /** Drop this expense (the one being edited) from the list. */
+  excludeExpenseId?: string
   limit?: number
 }): RecentRate[] {
-  const { expenses, fromCurrency, limit = 5 } = input
+  const { expenses, fromCurrency, excludeExpenseId, limit = 5 } = input
   const seen = new Set<number>()
   const rows: RecentRate[] = []
 
   const sorted = expenses
+    .filter((x) => excludeExpenseId == null || x.id !== excludeExpenseId)
     .map((x) => ({ x, rate: Number(x.exchangeRate) }))
     .filter(({ x, rate }) => x.currency === fromCurrency && Number.isFinite(rate) && rate > 0)
     .sort((a, b) => new Date(b.x.expenseDate).getTime() - new Date(a.x.expenseDate).getTime())

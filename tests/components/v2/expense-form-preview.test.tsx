@@ -22,7 +22,8 @@ vi.mock("@/lib/hooks", async (orig) => ({
       currency: "USD",
       customRates: null,
       expenses: [
-        { currency: "JPY", exchangeRate: 0.215, rateKind: "market", rateDate: "2026-10-08", description: "晚餐", expenseDate: "2026-10-08" },
+        { id: "self", currency: "JPY", exchangeRate: 0.215, rateKind: "market", rateDate: "2026-10-08", description: "晚餐", expenseDate: "2026-10-08" },
+        { id: "prev", currency: "JPY", exchangeRate: 0.22, rateKind: "custom", rateDate: null, description: "藥妝", expenseDate: "2026-10-05" },
       ],
     },
     members: [
@@ -99,6 +100,42 @@ describe("ExpenseFormV2 conversion preview", () => {
     fireEvent.click(await screen.findByTestId("rate-row"))
     fireEvent.click(screen.getByRole("tab", { name: "自訂" }))
     expect(screen.getByTestId("recent-rate-0")).toHaveTextContent("0.215")
+  })
+
+  it("excludes the expense being edited from the recent list", async () => {
+    mockAuthFetch.mockImplementation(async (url: string) => {
+      if (url.includes("/api/exchange-rates")) {
+        return { ok: true, json: async () => ({ rates: { USD: 1, TWD: 31.5, JPY: 150 } }) }
+      }
+      if (url.includes("/expenses/self")) {
+        return {
+          ok: true,
+          json: async () => ({
+            amount: 1000,
+            currency: "JPY",
+            exchangeRate: 0.215,
+            rateKind: "market",
+            rateDate: "2026-10-08",
+            description: "晚餐",
+            category: "food",
+            image: null,
+            location: null,
+            latitude: null,
+            longitude: null,
+            expenseDate: "2026-10-08",
+            payers: [{ memberId: "a", amount: 1000 }],
+            participants: [{ memberId: "a", shareAmount: 1000 }],
+            splitDetail: null,
+          }),
+        }
+      }
+      return { ok: true, json: async () => ({}) }
+    })
+    render(<ExpenseFormV2 projectId="p1" expenseId="self" mode="edit" />)
+    fireEvent.click(await screen.findByTestId("rate-row"))
+    fireEvent.click(screen.getByRole("tab", { name: "自訂" }))
+    expect(screen.getByTestId("recent-rate-0")).toHaveTextContent("0.22")
+    expect(screen.queryByTestId("recent-rate-1")).not.toBeInTheDocument()
   })
 
   it("does not send promoteRate on save", async () => {

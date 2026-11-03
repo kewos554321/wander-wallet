@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest"
 import { recentRatesFor } from "@/lib/recent-rates"
 
 type Row = {
+  id?: string
   currency: string
   exchangeRate: number | null
   rateKind: string | null
@@ -10,6 +11,7 @@ type Row = {
   expenseDate: string
 }
 const e = (o: Partial<Row> = {}): Row => ({
+  id: "exp-1",
   currency: "JPY",
   exchangeRate: 0.215,
   rateKind: "market",
@@ -63,5 +65,17 @@ describe("recentRatesFor", () => {
     })
     expect(rows).toHaveLength(1)
     expect(rows[0].rate).toBe(0.215)
+  })
+
+  it("excludes the expense being edited, so the list shows earlier uses", () => {
+    const rows = recentRatesFor({
+      expenses: [
+        e({ id: "self", exchangeRate: 0.215 }),
+        e({ id: "prev", exchangeRate: 0.22, rateKind: "custom", expenseDate: "2026-10-06" }),
+      ],
+      fromCurrency: "JPY",
+      excludeExpenseId: "self",
+    })
+    expect(rows.map((r) => r.rate)).toEqual([0.22])
   })
 })

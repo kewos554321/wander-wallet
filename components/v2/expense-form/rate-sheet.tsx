@@ -1,10 +1,12 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { format } from "date-fns"
-import { X } from "lucide-react"
+import { format, parseISO } from "date-fns"
+import { zhTW } from "date-fns/locale"
+import { CalendarIcon, X } from "lucide-react"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useAuthFetch } from "@/components/auth/liff-provider"
-import { formatCurrency } from "@/lib/constants/currencies"
 import { roundRateForDisplay } from "@/lib/currency-conversion"
 import { formatRelativeTime, rateFromRates } from "@/components/v2/currency/format"
 import type { RecentRate } from "@/lib/recent-rates"
@@ -18,8 +20,6 @@ export interface RateSheetProps {
   fromCurrency: string
   /** Settlement currency. */
   toCurrency: string
-  /** Expense amount in the original currency (for the ≈ preview). */
-  amount: number
   /** The rate currently bound to this expense. */
   rate: number | null
   /** True when this expense overrides the default rate. */
@@ -39,6 +39,27 @@ export interface RateSheetProps {
 
 const todayStr = () => format(new Date(), "yyyy-MM-dd")
 
+/** True when two rates agree at display precision (6 significant digits). */
+function sameRate(a: number | null | undefined, b: number | null | undefined): boolean {
+  return a != null && b != null && Number.isFinite(a) && Number.isFinite(b) && roundRateForDisplay(a) === roundRateForDisplay(b)
+}
+
+/** Keep digits and a single decimal point; drop everything else. */
+function sanitizeRateInput(raw: string): string {
+  const cleaned = raw.replace(/[^\d.]/g, "")
+  const firstDot = cleaned.indexOf(".")
+  if (firstDot === -1) return cleaned
+  return cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, "")
+}
+
+/** Short `M/D` for a rate date; null on anything unparseable. */
+function shortRateDate(value: string): string | null {
+  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (m) return `${Number(m[2])}/${Number(m[3])}`
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? null : format(parsed, "M/d")
+}
+
 /**
  * Bottom-sheet editor for a single expense's bound rate. Two ways to get a
  * rate: 市場 (today by default; change the date for that day's rate) or 自訂
@@ -50,7 +71,6 @@ export function RateSheet({
   onClose,
   fromCurrency,
   toCurrency,
-  amount,
   rate,
   customRate,
   liveRate,
@@ -63,11 +83,11 @@ export function RateSheet({
   const authFetch = useAuthFetch()
   const [tab, setTab] = useState<Tab>("market")
   const [date, setDate] = useState(todayStr())
+  const [dateOpen, setDateOpen] = useState(false)
   const [historyRate, setHistoryRate] = useState<number | null>(null)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState<string | null>(null)
   const [customInput, setCustomInput] = useState("")
-  const [reused, setReused] = useState<number | null>(null)
   // Guards against an older date lookup resolving after a newer one.
   const reqIdRef = useRef(0)
 
@@ -80,7 +100,6 @@ export function RateSheet({
     setHistoryRate(null)
     setHistoryError(null)
     setHistoryLoading(false)
-    setReused(null)
     const seed =
       customRate && rate != null
         ? String(roundRateForDisplay(rate))
@@ -96,7 +115,6 @@ export function RateSheet({
   const isToday = date === todayStr()
   const marketRate = isToday ? liveRate : historyRate
   const marketUsable = marketRate != null
-  const approx = rate != null ? amount * rate : null
 
   const queryHistory = async (nextDate: string) => {
     setDate(nextDate)
@@ -128,12 +146,10 @@ export function RateSheet({
   const customValue = Number(customInput)
   const customUsable = customInput.trim() !== "" && Number.isFinite(customValue) && customValue > 0
 
-  const optionButtonClass = (active: boolean) =>
-    `shrink-0 rounded-full border px-4 py-1.5 text-xs font-bold transition ${
-      active
-        ? "border-transparent bg-v2-lake-soft text-v2-lake"
-        : "border-v2-lake text-v2-lake hover:bg-v2-lake-soft"
-    }`
+  // One button style for both panes; the applied rate is marked with 已使用
+  // text rather than a different fill, so the button always looks the same.
+  const optionButtonClass =
+    "shrink-0 rounded-full border border-v2-lake px-4 py-1.5 text-xs font-bold text-v2-lake transition hover:bg-v2-lake-soft"
 
   return (
     <div
@@ -155,12 +171,6 @@ export function RateSheet({
               <X className="h-[18px] w-[18px]" />
             </button>
           </div>
-          <p data-testid="rate-sheet-pair" className="m-0 mt-2 font-v2-serif text-xl font-bold tabular-nums text-v2-ink">
-            1 {fromCurrency} = {rate != null ? roundRateForDisplay(rate) : "—"} {toCurrency}
-          </p>
-          <p data-testid="rate-sheet-approx" className="m-0 mt-0.5 text-xs tabular-nums text-v2-ink-muted">
-            {approx != null ? `≈ ${formatCurrency(approx, toCurrency)}` : "≈ —"}
-          </p>
         </div>
 
         <div role="tablist" aria-label="匯率來源" className="mx-5 flex gap-1 rounded-xl bg-v2-sand p-1">
@@ -183,16 +193,7 @@ export function RateSheet({
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-2 pt-4">
           {tab === "market" && (
             <section data-testid="rate-pane-market">
-              <p className="m-0 mb-2 text-xs font-bold text-v2-ink-muted">查哪一天的匯率？</p>
-              <input
-                type="date"
-                aria-label="匯率日期"
-                max={todayStr()}
-                value={date}
-                onChange={(e) => queryHistory(e.target.value)}
-                className="w-full rounded-[11px] border border-v2-line bg-v2-paper px-3 py-2.5 text-[13px] text-v2-ink"
-              />
-              <div className="mt-3 rounded-[14px] border border-v2-line p-3.5">
+              <div className="rounded-[14px] border border-v2-line p-3.5">
                 <div className="flex items-center justify-between gap-2.5">
                   <div className="min-w-0">
                     <p data-testid="market-rate" className="m-0 font-v2-serif text-[17px] font-bold tabular-nums text-v2-ink">
@@ -217,12 +218,37 @@ export function RateSheet({
                       if (isToday) onUseRate(marketRate as number, "market")
                       else onUseRate(marketRate as number, "market", date)
                     }}
-                    className={optionButtonClass(!customRate && isToday)}
+                    className={optionButtonClass}
                   >
-                    使用
+                    {appliedKind === "market" && sameRate(marketRate, rate) ? "已使用" : "使用"}
                   </button>
                 </div>
               </div>
+              <p className="m-0 mb-2 mt-4 text-xs font-bold text-v2-ink-muted">查哪一天的匯率？</p>
+              <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="匯率日期"
+                    className="flex w-full items-center gap-2 rounded-[11px] border border-v2-line bg-v2-paper px-3 py-2.5 text-left text-[13px] text-v2-ink"
+                  >
+                    <CalendarIcon className="h-[15px] w-[15px] text-v2-ink-muted" aria-hidden="true" />
+                    <span className="tabular-nums">{format(parseISO(date), "yyyy/MM/dd（EEEEE）", { locale: zhTW })}</span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" collisionPadding={12} className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={parseISO(date)}
+                    disabled={{ after: new Date() }}
+                    onSelect={(d) => {
+                      if (!d) return
+                      setDateOpen(false)
+                      queryHistory(format(d, "yyyy-MM-dd"))
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
               {historyError && (
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <p role="alert" className="m-0 text-xs font-semibold text-v2-danger">
@@ -239,95 +265,89 @@ export function RateSheet({
                 </div>
               )}
               <p className="m-0 mt-3 text-[11.5px] leading-relaxed text-v2-ink-muted">
-                {isToday ? "預設就是今天。改上面的日期，就會變成那一天的歷史匯率。" : "你改了日期，所以這是歷史匯率。"}
+                {isToday ? "改下面的日期，就會看那一天的歷史匯率。" : "你改了日期，所以這是歷史匯率。"}
               </p>
             </section>
           )}
 
           {tab === "custom" && (
             <section data-testid="rate-pane-custom">
-              <p className="m-0 mb-2 text-xs font-bold text-v2-ink-muted">自己輸入匯率</p>
               <div className="rounded-[14px] border border-v2-line p-3.5">
                 <div className="flex items-center justify-between gap-2.5">
-                  <label className="flex min-w-0 flex-1 items-center gap-2">
-                    <span className="shrink-0 text-[13px] text-v2-ink-muted">1 {fromCurrency} =</span>
+                  <label className="flex min-w-0 flex-1 items-center gap-2 font-v2-serif text-[17px] font-bold text-v2-ink">
+                    <span className="shrink-0">1 {fromCurrency} =</span>
                     <input
                       aria-label="自訂匯率"
                       inputMode="decimal"
                       value={customInput}
-                      onChange={(e) => {
-                        setCustomInput(e.target.value)
-                        setReused(null)
-                      }}
-                      className="min-w-0 flex-1 bg-transparent text-right font-v2-serif text-base font-bold tabular-nums text-v2-ink outline-none"
+                      onChange={(e) => setCustomInput(sanitizeRateInput(e.target.value))}
+                      className="min-w-0 flex-1 bg-transparent text-right font-v2-serif text-[17px] font-bold tabular-nums text-v2-ink outline-none"
                     />
-                    <span className="shrink-0 text-[13px] text-v2-ink-muted">{toCurrency}</span>
+                    <span className="shrink-0">{toCurrency}</span>
                   </label>
                   <button
                     type="button"
                     aria-label="使用自訂匯率"
                     disabled={!customUsable}
                     onClick={() => customUsable && onUseRate(customValue, "custom")}
-                    className={optionButtonClass(customRate)}
+                    className={optionButtonClass}
                   >
-                    使用
+                    {appliedKind === "custom" ? "已使用" : "使用"}
                   </button>
                 </div>
               </div>
-              <p className="m-0 mt-2 text-[11.5px] text-v2-lake">
-                {reused != null
-                  ? `✓ 沿用 ${reused}（這一筆會算成「自訂」）`
-                  : recentRates[0] != null && customInput === String(recentRates[0].rate)
-                    ? "✎ 自動帶入你最近用過的匯率"
-                    : "這一筆會算成「自訂」"}
-              </p>
 
               {recentRates.length > 0 && (
                 <>
-                  <p className="m-0 mb-2 mt-4 text-xs font-bold text-v2-ink-muted">
-                    最近用過的匯率（這個專案 · {fromCurrency}→{toCurrency}）
-                  </p>
+                  <p className="m-0 mb-2 mt-4 text-xs font-bold text-v2-ink-muted">最近用過</p>
                   <div className="flex flex-col gap-2">
-                    {recentRates.map((r, i) => (
-                      <button
-                        key={`${r.rate}-${i}`}
-                        type="button"
-                        data-testid={`recent-rate-${i}`}
-                        onClick={() => {
-                          setCustomInput(String(r.rate))
-                          setReused(r.rate)
-                        }}
-                        className={`flex items-center justify-between rounded-[12px] border px-3.5 py-2.5 text-left transition ${
-                          reused === r.rate ? "border-v2-lake-border bg-v2-lake-soft" : "border-v2-line hover:bg-v2-paper"
-                        }`}
-                      >
-                        <span className="min-w-0">
-                          <span className="block font-v2-serif text-[15px] font-bold tabular-nums text-v2-ink">{r.rate}</span>
-                          <span className="block text-[11px] text-v2-ink-muted">
+                    {recentRates.map((r, i) => {
+                      const when = r.date ? shortRateDate(r.date) : null
+                      const applied = appliedKind === "custom" && sameRate(r.rate, rate)
+                      return (
+                        <button
+                          key={`${r.rate}-${i}`}
+                          type="button"
+                          data-testid={`recent-rate-${i}`}
+                          onClick={() => {
+                            setCustomInput(String(r.rate))
+                            onUseRate(r.rate, "custom")
+                          }}
+                          className={`flex items-center justify-between gap-3 rounded-[12px] border px-3.5 py-2.5 text-left transition ${
+                            applied ? "border-v2-lake-border bg-v2-lake-soft" : "border-v2-line hover:bg-v2-paper"
+                          }`}
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
                             <span
-                              className={`mr-1 rounded px-1 py-[1px] text-[10px] font-bold ${
+                              className={`shrink-0 rounded px-1 py-[1px] text-[10px] font-bold ${
                                 r.kind === "market" ? "bg-v2-gold-soft text-v2-gold" : "bg-v2-coral-soft text-v2-coral-strong"
                               }`}
                             >
                               {r.kind === "market" ? "市場" : "自訂"}
                             </span>
-                            {r.date ? `${r.date} · ` : ""}
-                            {r.description ?? ""}
+                            <span className="shrink-0 font-v2-serif text-[15px] font-bold tabular-nums text-v2-ink">
+                              {r.rate}
+                            </span>
+                            {(when || r.description) && (
+                              <span className="min-w-0 truncate text-[11px] text-v2-ink-muted">
+                                {when}
+                                {when && r.description ? " · " : ""}
+                                {r.description ?? ""}
+                              </span>
+                            )}
                           </span>
-                        </span>
-                        {reused === r.rate ? (
-                          <span className="shrink-0 text-[11px] font-bold text-v2-lake">已選</span>
-                        ) : (
-                          <span className="shrink-0 text-[11px] font-bold text-v2-lake">沿用</span>
-                        )}
-                      </button>
-                    ))}
+                          <span className="shrink-0 text-[11px] font-bold text-v2-lake">
+                            {applied ? "已使用" : "使用"}
+                          </span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </>
               )}
 
               <p className="m-0 mt-3 text-[11.5px] leading-relaxed text-v2-ink-muted">
-                自訂只影響這一筆，不會改動專案設定。
+                只影響這一筆，不會改動專案匯率。
               </p>
             </section>
           )}
@@ -336,12 +356,12 @@ export function RateSheet({
         <div className="flex gap-2.5 border-t border-v2-line-soft px-5 py-3.5">
           <button
             type="button"
-            aria-label="還原預設"
+            aria-label="還原"
             disabled={!customRate}
             onClick={onReset}
             className="flex-1 rounded-[13px] border border-v2-line py-3 text-sm font-bold text-v2-ink disabled:opacity-40"
           >
-            還原預設
+            還原
           </button>
           <button
             type="button"
