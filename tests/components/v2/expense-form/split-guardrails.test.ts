@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { DEMO_MEMBERS } from "@/app/demo/_data/fixtures"
-import { describeSplitIssue } from "@/app/demo/expense-prototype/guardrails"
+import { describeSplitIssue } from "@/components/v2/expense-form/split-guardrails"
 
 type Draft = Parameters<typeof describeSplitIssue>[0]
 

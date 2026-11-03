@@ -8,7 +8,7 @@ vi.mock("next/font/google", () => ({
 
 import { DEMO_MEMBERS } from "@/app/demo/_data/fixtures"
 import { useExpenseDraft, type DraftExpense } from "@/components/v2/expense-form/use-expense-draft"
-import { SplitDetailSheet } from "@/app/demo/expense-prototype/split-detail-sheet"
+import { SplitDetailSheet } from "@/components/v2/expense-form/split-detail-sheet"
 
 const SEED: DraftExpense = {
   amount: 1280,

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import { PersonalItemsEditor } from "@/app/demo/expense-prototype/split-detail/personal-items-editor"
+import { PersonalItemsEditor } from "@/components/v2/expense-form/split-detail/personal-items-editor"
 
 const baseProps = {
   currency: "JPY",

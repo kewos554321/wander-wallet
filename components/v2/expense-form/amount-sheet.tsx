@@ -11,7 +11,7 @@ import { MemberAvatar } from "@/components/v2/ui/member-avatar"
 import { formatAmount } from "@/lib/constants/currencies"
 import { derivePayerShares } from "@/lib/expense-payers"
 import type { DraftMember, useExpenseDraft } from "@/components/v2/expense-form/use-expense-draft"
-import { amountLimitNote, sanitizeAmountInput } from "./guardrails"
+import { amountLimitNote, sanitizeAmountInput } from "./split-guardrails"
 
 type Draft = ReturnType<typeof useExpenseDraft>
 

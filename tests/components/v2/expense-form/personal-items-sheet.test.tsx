@@ -3,7 +3,7 @@ import { useState } from "react"
 import { describe, expect, it } from "vitest"
 import { DEMO_MEMBERS } from "@/app/demo/_data/fixtures"
 import { useExpenseDraft, type DraftExpense } from "@/components/v2/expense-form/use-expense-draft"
-import { PersonalItemsSheet } from "@/app/demo/expense-prototype/personal-items-sheet"
+import { PersonalItemsSheet } from "@/components/v2/expense-form/personal-items-sheet"
 
 const SEED: DraftExpense = {
   amount: 1280,

@@ -27,8 +27,8 @@ import { formatCurrency } from "@/lib/constants/currencies"
 import { rateChip } from "@/components/v2/currency/format"
 import type { DraftMember, useExpenseDraft } from "@/components/v2/expense-form/use-expense-draft"
 import type { RecentRate } from "@/lib/recent-rates"
-import { amountLimitNote, describeSplitIssue, maxAmountFor, normalizeAmountForCurrency, sanitizeAmountInput } from "./guardrails"
-import { SplitPanel } from "./split-panel"
+import { amountLimitNote, describeSplitIssue, maxAmountFor, normalizeAmountForCurrency, sanitizeAmountInput } from "@/components/v2/expense-form/split-guardrails"
+import { SplitPanel } from "@/components/v2/expense-form/split-panel"
 
 type Draft = ReturnType<typeof useExpenseDraft>
 

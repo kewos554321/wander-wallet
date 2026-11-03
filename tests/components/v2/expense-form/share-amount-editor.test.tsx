@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import { ShareAmountEditor } from "@/app/demo/expense-prototype/split-detail/share-amount-editor"
+import { ShareAmountEditor } from "@/components/v2/expense-form/split-detail/share-amount-editor"
 
 const baseProps = {
   currency: "JPY",

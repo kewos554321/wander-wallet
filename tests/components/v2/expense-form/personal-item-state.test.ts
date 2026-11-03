@@ -4,7 +4,7 @@ import {
   isCompleteItem,
   isIncompleteItem,
   isTouchedItem,
-} from "@/app/demo/expense-prototype/personal-item-state"
+} from "@/components/v2/expense-form/personal-item-state"
 
 describe("personal item state", () => {
   it("treats an entirely blank row as untouched", () => {

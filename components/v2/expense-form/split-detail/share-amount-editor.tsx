@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Pin, RotateCcw } from "lucide-react"
 import { formatAmount } from "@/lib/constants/currencies"
-import { amountLimitNote, sanitizeAmountInput } from "../guardrails"
+import { amountLimitNote, sanitizeAmountInput } from "../split-guardrails"
 
 export function ShareAmountEditor({
   currency,

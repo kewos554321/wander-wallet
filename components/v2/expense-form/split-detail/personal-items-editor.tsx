@@ -7,7 +7,7 @@
 import { useState } from "react"
 import { Plus, X } from "lucide-react"
 import type { SplitDraftItem } from "@/lib/split-draft"
-import { amountLimitNote, sanitizeAmountInput } from "../guardrails"
+import { amountLimitNote, sanitizeAmountInput } from "../split-guardrails"
 import { isIncompleteItem } from "../personal-item-state"
 
 const itemInput = "min-w-0 rounded-xl border border-v2-line bg-v2-surface px-3 py-2.5 text-[13px] outline-none focus:border-v2-lake"
