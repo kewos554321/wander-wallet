@@ -1,18 +1,18 @@
 "use client"
 
-// PROTOTYPE (demo-only) — the redesigned "after" layout, v5 (method B).
+// The production platform layout (Apple/Google-style list rows + detail sheet).
 //
 // The split model lives in one dedicated component, SplitPanel, rendered INLINE
 // on the main screen (no sheet, no expand, no little links). The rest of the
 // screen stays lean: amount → description → 分帳 panel → 類別 → 選填 → save.
 //
-// Driven by the SAME `useExpenseDraft` as the real `ExpenseFormV2View`; the
-// amount card + rate sheet are the untouched originals.
+// Driven by the SAME `useExpenseDraft` as the rest of the form; the amount card
+// + rate sheet are the untouched originals.
 
 import { useEffect, useRef, useState } from "react"
 import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
-import { CalendarIcon, Camera, ChevronDown, ChevronRight, Image as ImageIcon, Paperclip, UserMinus } from "lucide-react"
+import { CalendarIcon, Camera, Check, ChevronDown, ChevronRight, Image as ImageIcon, Paperclip, Trash2 } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
@@ -32,7 +32,7 @@ import { SplitPanel } from "@/components/v2/expense-form/split-panel"
 
 type Draft = ReturnType<typeof useExpenseDraft>
 
-export interface ExpenseFormAfterViewProps {
+export interface ExpenseFormPlatformViewProps {
   mode: "create" | "edit"
   projectId: string
   members: DraftMember[]
@@ -50,8 +50,8 @@ export interface ExpenseFormAfterViewProps {
   variant?: "ledger" | "platform"
 }
 
-export function ExpenseFormAfterView(props: ExpenseFormAfterViewProps) {
-  const { draft, members } = props
+export function ExpenseFormPlatformView(props: ExpenseFormPlatformViewProps) {
+  const { draft, members, variant = "platform" } = props
   const { state, actions, derived } = draft
   const [showCalculator, setShowCalculator] = useState(false)
   const [showSettlement, setShowSettlement] = useState(false)
@@ -119,7 +119,10 @@ export function ExpenseFormAfterView(props: ExpenseFormAfterViewProps) {
   // Direct camera/gallery shortcuts on the receipt row: the sheet stays for
   // preview/removal, but the common actions skip it.
   const receiptSource = useImageSource({
-    onChange: (file) => actions.setImage({ image: null, pendingFile: file, preview: URL.createObjectURL(file) }),
+    onChange: (file) => {
+      if (state.image.preview) URL.revokeObjectURL(state.image.preview)
+      actions.setImage({ image: null, pendingFile: file, preview: URL.createObjectURL(file) })
+    },
   })
   const optParts = [format(state.expenseDate, "MM/dd"), state.location.location].filter((v): v is string =>
     Boolean(v),
@@ -139,7 +142,7 @@ export function ExpenseFormAfterView(props: ExpenseFormAfterViewProps) {
         actions={
           props.mode === "edit" && props.onRequestDelete ? (
             <button type="button" onClick={props.onRequestDelete} aria-label="刪除此筆" className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-v2-coral-soft text-v2-danger">
-              <UserMinus className="h-[15px] w-[15px]" />
+              <Trash2 className="h-[15px] w-[15px]" />
             </button>
           ) : undefined
         }
@@ -233,7 +236,7 @@ export function ExpenseFormAfterView(props: ExpenseFormAfterViewProps) {
       <CategoryPicker value={state.category} onChange={actions.setCategory} />
 
       {/* 分帳 — 專屬元件，直接內嵌。原/結算顯示只由底部那顆切換驅動 */}
-      <SplitPanel members={members} draft={draft} displayCurrency={displayCurrency} variant={props.variant} />
+      <SplitPanel members={members} draft={draft} displayCurrency={displayCurrency} variant={variant} />
 
       {/* 選填 — Material list: one row per field, whole row is the target */}
       <div className={SECTION_CARD}>
@@ -321,7 +324,10 @@ export function ExpenseFormAfterView(props: ExpenseFormAfterViewProps) {
               <div className="flex justify-end pb-1 pr-1">
                 <button
                   type="button"
-                  onClick={() => actions.setImage({ image: null, pendingFile: null, preview: null })}
+                  onClick={() => {
+                    if (state.image.preview) URL.revokeObjectURL(state.image.preview)
+                    actions.setImage({ image: null, pendingFile: null, preview: null })
+                  }}
                   className="min-h-9 rounded-lg px-2 text-[11px] font-semibold text-v2-danger transition-colors hover:bg-v2-danger/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-danger"
                 >
                   移除照片
@@ -338,6 +344,29 @@ export function ExpenseFormAfterView(props: ExpenseFormAfterViewProps) {
           </div>
         )}
       </div>
+
+      {props.canNotifyLine && (
+        <label className="mx-4 mb-4 flex items-center gap-[10px] rounded-[14px] border border-v2-line bg-v2-surface px-[14px] py-3">
+          <input
+            type="checkbox"
+            checked={state.notifyLine}
+            onChange={(e) => actions.setNotifyLine(e.target.checked)}
+            className="peer sr-only"
+          />
+          <span
+            aria-hidden="true"
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-v2-check bg-v2-surface text-transparent peer-checked:border-v2-lake peer-checked:bg-v2-lake peer-checked:text-v2-on-lake"
+          >
+            <Check className="h-3 w-3" />
+          </span>
+          <span>
+            <span className="block text-xs font-bold">通知 LINE 群組</span>
+            <span className="mt-px block text-xs text-v2-ink-muted">
+              {props.mode === "edit" ? "變更後自動發送通知到群組" : "儲存後自動發送通知到群組"}
+            </span>
+          </span>
+        </label>
+      )}
 
       <div style={{ height: footerHeight || 112 }} aria-hidden="true" />
 

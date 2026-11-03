@@ -2,7 +2,7 @@
 
 // /demo/expense-prototype — an OPERABLE before/after/platform switch (single state).
 //   改前 = the real ExpenseFormV2View (the product's actual component)
-//   改後 = the redesigned ledger layout (expense-form-after-view.tsx, demo-only)
+//   改後 = the redesigned ledger layout (shared ExpenseFormPlatformView, variant="ledger")
 //   平台式 = the Apple/Google-style list row + detail sheet
 // All are driven by the SAME useExpenseDraft, so the split/payer math is the
 // real engine and the modes share one draft (switching preserves what you
@@ -16,7 +16,7 @@ import { ExpenseFormV2View } from "@/components/v2/expense-form/expense-form-v2-
 import { useExpenseDraft, type DraftExpense } from "@/components/v2/expense-form/use-expense-draft"
 import type { PreviewRateInfo } from "@/lib/currency-conversion"
 import { DEMO_CURRENCY, DEMO_LIVE_RATE, DEMO_MEMBERS, DEMO_PROJECT_ID } from "@/app/demo/_data/fixtures"
-import { ExpenseFormAfterView } from "./expense-form-after-view"
+import { ExpenseFormPlatformView } from "@/components/v2/expense-form/expense-form-platform-view"
 
 const ALL_IDS = DEMO_MEMBERS.map((m) => m.id)
 
@@ -66,7 +66,7 @@ function Stage({ mode }: { mode: Mode }) {
     recentRates: () => [],
   }
   if (mode === "before") return <ExpenseFormV2View {...shared} />
-  return <ExpenseFormAfterView {...shared} variant={mode === "platform" ? "platform" : "ledger"} />
+  return <ExpenseFormPlatformView {...shared} variant={mode === "platform" ? "platform" : "ledger"} />
 }
 
 function Prototype() {
