@@ -7,7 +7,7 @@ describe("JoinModePicker", () => {
     const onChange = vi.fn()
     render(<JoinModePicker value="both" onChange={onChange} />)
     expect(screen.getByText("成員加入方式")).toBeInTheDocument()
-    expect(screen.getByRole("radio", { name: "兩者皆可" })).toBeChecked()
+    expect(screen.getByRole("radio", { name: "以上兩者皆可" })).toBeChecked()
     const unselected = screen.getByRole("radio", { name: "僅建立新成員" })
     expect(unselected).not.toBeChecked()
     fireEvent.click(unselected)
@@ -17,7 +17,7 @@ describe("JoinModePicker", () => {
   it("renders the settings variant without a duplicated title", () => {
     render(<JoinModePicker value="both" onChange={vi.fn()} variant="settings" />)
     expect(screen.queryByText("成員加入方式")).not.toBeInTheDocument()
-    expect(screen.getByRole("radio", { name: "兩者皆可" })).toBeChecked()
+    expect(screen.getByRole("radio", { name: "以上兩者皆可" })).toBeChecked()
     expect(screen.getByRole("radio", { name: "僅取代佔位成員" })).not.toBeChecked()
   })
 

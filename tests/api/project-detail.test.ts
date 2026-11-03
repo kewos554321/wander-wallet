@@ -566,6 +566,35 @@ describe("PUT /api/projects/[id] - additional tests", () => {
     expect(vi.mocked(prisma.project.update).mock.calls[0][0].data).not.toHaveProperty("exchangeRatePrecision")
   })
 
+  it("persists the project rate source", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue({ id: "member-1" } as never)
+    vi.mocked(prisma.project.update).mockResolvedValue(mockProjectAsMember as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123", {
+      method: "PUT",
+      body: JSON.stringify({ rateSource: "live" }),
+    })
+    const response = await PUT(req, { params: Promise.resolve({ id: "project-123" }) })
+
+    expect(response.status).toBe(200)
+    expect(vi.mocked(prisma.project.update).mock.calls[0][0].data).toMatchObject({ rateSource: "live" })
+  })
+
+  it("rejects an invalid rate source", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue({ id: "member-1" } as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123", {
+      method: "PUT",
+      body: JSON.stringify({ rateSource: "bogus" }),
+    })
+    const response = await PUT(req, { params: Promise.resolve({ id: "project-123" }) })
+
+    expect(response.status).toBe(400)
+    expect(prisma.project.update).not.toHaveBeenCalled()
+  })
+
   it("should handle update error", async () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue({ id: "member-1" } as never)

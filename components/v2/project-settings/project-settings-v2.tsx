@@ -65,7 +65,6 @@ export function ProjectSettingsV2({ projectId }: { projectId: string }) {
   const [project, setProject] = useState<ProjectRecord | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [expenseCurrencies, setExpenseCurrencies] = useState<string[]>([])
   const [rates, setRates] = useState<Record<string, number>>({})
   const [saving, setSaving] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -93,11 +92,6 @@ export function ProjectSettingsV2({ projectId }: { projectId: string }) {
         if (cancelled) return
         setProject(data)
         reset(mapProjectToForm(data))
-        const currencies = new Set<string>()
-        for (const exp of data.expenses ?? []) {
-          if (exp.currency && exp.currency !== data.currency) currencies.add(exp.currency)
-        }
-        setExpenseCurrencies(Array.from(currencies))
       } catch {
         if (!cancelled) setProject(null)
       } finally {
@@ -197,7 +191,6 @@ export function ProjectSettingsV2({ projectId }: { projectId: string }) {
         <ProjectSettingsV2View
           values={values}
           set={set}
-          expenseCurrencies={expenseCurrencies}
           rates={rates}
           isCreator={isCreator}
           saving={saving}

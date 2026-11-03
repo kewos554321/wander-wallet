@@ -23,6 +23,8 @@ function setup(overrides: Partial<Props> = {}) {
     expenseDate: new Date("2026-10-01T00:00:00"),
     onUseRate: vi.fn(),
     onReset: vi.fn(),
+    onPromoteChange: vi.fn(),
+    promoteFixedRate: false,
     ...overrides,
   }
   const utils = render(<RateSheet {...props} />)
@@ -99,6 +101,54 @@ describe("RateSheet", () => {
   it("seeds the highlighted kind from the expense's bound rate", () => {
     setup({ appliedKind: "custom" })
     expect(screen.getByText("自訂匯率")).toBeInTheDocument()
+  })
+
+  it("shows the toggle checked when the promote intent is on", () => {
+    setup({ promoteFixedRate: true })
+    expect(screen.getByLabelText("同時設為專案固定匯率")).toBeChecked()
+  })
+
+  it("shows the toggle unchecked when the promote intent is off", () => {
+    setup()
+    expect(screen.getByLabelText("同時設為專案固定匯率")).not.toBeChecked()
+  })
+
+  it("reports the intent immediately when checked", () => {
+    const { props } = setup()
+    fireEvent.click(screen.getByLabelText("同時設為專案固定匯率"))
+    expect(props.onPromoteChange).toHaveBeenCalledWith(true)
+  })
+
+  it("reports the intent immediately when unchecked", () => {
+    const { props } = setup({ promoteFixedRate: true })
+    fireEvent.click(screen.getByLabelText("同時設為專案固定匯率"))
+    expect(props.onPromoteChange).toHaveBeenCalledWith(false)
+  })
+
+  // Regression: the old design only committed the intent on 完成, so closing
+  // any other way (or reopening) could leave a stale promote flag behind.
+  it("never changes the promote intent from 完成 alone", () => {
+    const { props } = setup()
+    fireEvent.click(screen.getByRole("button", { name: "完成" }))
+    expect(props.onPromoteChange).not.toHaveBeenCalled()
+    expect(props.onClose).toHaveBeenCalled()
+  })
+
+  it("disables the toggle until a rate is known", () => {
+    setup({ rate: null })
+    expect(screen.getByLabelText("同時設為專案固定匯率")).toBeDisabled()
+  })
+
+  it("warns before overwriting an existing fixed rate", () => {
+    setup({ projectFixedRate: 0.03, promoteFixedRate: true })
+    const alert = screen.getByRole("alert")
+    expect(alert).toHaveTextContent("0.03")
+    expect(alert).toHaveTextContent("0.032")
+  })
+
+  it("does not warn when the rate already equals the fixed rate", () => {
+    setup({ projectFixedRate: 0.032, rate: 0.032, promoteFixedRate: true })
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })
 
   it("shows an error when the historical rate cannot be found", async () => {

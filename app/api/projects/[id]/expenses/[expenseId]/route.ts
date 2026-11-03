@@ -109,7 +109,7 @@ export async function PUT(
     }
 
     const body = await req.json()
-    const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail, rateKind, rateDate } = body
+    const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail, rateKind, rateDate, promoteRate } = body
     const hasSplitDetailField = Object.prototype.hasOwnProperty.call(body, "splitDetail")
 
     // 獲取現有費用（包含付款人和參與者資訊）
@@ -278,11 +278,10 @@ export async function PUT(
     // 計算結算幣別金額（含編輯回滾；與尾差帳同交易）
     const project = await prisma.project.findUnique({
       where: { id },
-      select: { currency: true, customRates: true, rateSource: true },
+      select: { currency: true, customRates: true },
     })
     const projectCurrency = project?.currency || existingExpense.currency || DEFAULT_CURRENCY
     const customRates = (project?.customRates as Record<string, number> | null) || {}
-    const rateSource = (project?.rateSource as "fixed" | "live") || "fixed"
 
     const existingCurrency = existingExpense.currency || projectCurrency
     const newCurrency = currency !== undefined ? currency : existingCurrency
@@ -295,15 +294,13 @@ export async function PUT(
         : existingExpense.participants.map((p) => ({ memberId: p.member.id, shareAmount: Number(p.shareAmount) }))
 
     let newRate: number | null = null
-    let seedRate: number | null = null
     // undefined = keep the stored provenance (no rate change was recomputed).
     let rateMeta: ExpenseRateMeta | undefined
     if (isForeign) {
       const currencyChanged = currency !== undefined && currency !== existingCurrency
       const providedRate = exchangeRate !== undefined && exchangeRate !== null ? Number(exchangeRate) : null
       if (currencyChanged || providedRate != null || !existingExpense.exchangeRate) {
-        const needsLive =
-          providedRate == null && (rateSource === "live" || customRates[newCurrency] == null)
+        const needsLive = providedRate == null && customRates[newCurrency] == null
         let liveRate: number | null = null
         if (needsLive) {
           try {
@@ -316,12 +313,10 @@ export async function PUT(
           currency: newCurrency,
           projectCurrency,
           provided: providedRate,
-          rateSource,
           customRate: customRates[newCurrency] ?? null,
           liveRate,
         })
         newRate = resolved.rate
-        if (resolved.shouldSeedFixed) seedRate = resolved.rate
         rateMeta = resolveExpenseRateMeta({
           isForeign: true,
           providedRate,
@@ -510,10 +505,11 @@ export async function PUT(
         data: updateData,
       })
 
-      if (seedRate != null) {
+      // 升級成專案固定匯率
+      if (promoteRate === true && isForeign && newRate != null) {
         await tx.project.update({
           where: { id },
-          data: { customRates: { ...customRates, [newCurrency]: seedRate } },
+          data: { customRates: { ...customRates, [newCurrency]: newRate } },
         })
       }
 

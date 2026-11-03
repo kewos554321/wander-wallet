@@ -101,7 +101,7 @@ describe("QuickItemCard", () => {
     fireEvent.change(screen.getByLabelText("描述"), { target: { value: "晚餐" } })
     expect(p.onChange).toHaveBeenLastCalledWith({ description: "晚餐" })
     fireEvent.change(screen.getByLabelText("幣別"), { target: { value: "JPY" } })
-    expect(p.onChange).toHaveBeenLastCalledWith({ currency: "JPY" })
+    expect(p.onChange).toHaveBeenLastCalledWith({ currency: "JPY", promoteFixedRate: false })
   })
 
   it("edits the amount only when the money input is valid", () => {
@@ -239,6 +239,24 @@ describe("QuickItemCard", () => {
     )
     fireEvent.click(screen.getByRole("button", { name: "匯率自動，點擊自訂匯率" }))
     expect(p.onChange).toHaveBeenLastCalledWith({ exchangeRate: "0.0067", ratePinned: true })
+  })
+
+  it("lets you promote the item's rate to a project fixed rate", () => {
+    const p = setup(
+      { currency: "JPY", amount: "1000" },
+      { projectCurrency: "USD", previewRateInfo: () => ({ rate: 0.0067, source: "live" as const }) }
+    )
+    fireEvent.click(screen.getByLabelText("設為專案固定匯率"))
+    expect(p.onChange).toHaveBeenLastCalledWith({ promoteFixedRate: true })
+  })
+
+  it("clears the promote intent when the currency changes", () => {
+    const p = setup(
+      { currency: "JPY", amount: "1000", promoteFixedRate: true },
+      { projectCurrency: "USD", previewRateInfo: () => ({ rate: 0.0067, source: "live" as const }) }
+    )
+    fireEvent.change(screen.getByLabelText("幣別"), { target: { value: "TWD" } })
+    expect(p.onChange).toHaveBeenLastCalledWith({ currency: "TWD", promoteFixedRate: false })
   })
 
   it("clears a pinned rate back to the automatic one", () => {

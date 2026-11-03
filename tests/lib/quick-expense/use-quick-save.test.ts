@@ -79,6 +79,24 @@ describe("useQuickSave", () => {
     expect(JSON.parse(authFetch.mock.calls[0][1].body)).not.toHaveProperty("exchangeRate")
   })
 
+  it("sends promoteRate when the item asks to promote its rate", async () => {
+    authFetch.mockResolvedValue(ok())
+    const r = setup()
+    await act(async () => {
+      await r.current.save([mk("1", { currency: "JPY", exchangeRate: "0.0067", ratePinned: true, promoteFixedRate: true })], { notifyLine: false })
+    })
+    expect(JSON.parse(authFetch.mock.calls[0][1].body).promoteRate).toBe(true)
+  })
+
+  it("omits promoteRate when the item does not promote", async () => {
+    authFetch.mockResolvedValue(ok())
+    const r = setup()
+    await act(async () => {
+      await r.current.save([mk("1", { currency: "JPY", exchangeRate: "0.0067", ratePinned: true })], { notifyLine: false })
+    })
+    expect(JSON.parse(authFetch.mock.calls[0][1].body)).not.toHaveProperty("promoteRate")
+  })
+
   it("uploads pending images and still saves when upload fails", async () => {
     authFetch.mockResolvedValue(ok())
     upload.mockResolvedValueOnce({ url: "https://img/1" }).mockRejectedValueOnce(new Error("x"))

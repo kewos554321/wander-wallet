@@ -55,7 +55,7 @@ interface UseProjectDataReturn {
   error: string | null
   /** 專案幣別（預設 TWD） */
   projectCurrency: string
-  /** 自訂匯率 */
+  /** 自訂匯率（固定匯率；未設定的幣別走即時） */
   customRates: Record<string, number> | null
   /** 匯率計算精度（預設 2） */
   precision: number

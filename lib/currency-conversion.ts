@@ -99,41 +99,35 @@ export function rollbackAllocation(
   return next
 }
 
-export type RateSource = "fixed" | "live"
 export interface ResolvedRate {
   rate: number
-  source: "same" | "provided" | "fixed" | "seeded" | "live"
-  shouldSeedFixed: boolean
+  source: "same" | "provided" | "fixed" | "live"
 }
 
 /**
  * Decide which rate a new expense should bind to. Same currency → 1. An
- * explicit provided rate wins. Otherwise, fixed rate source uses the project
- * custom rate (seeding from live when absent); live uses the live rate.
+ * explicit provided rate wins. Otherwise the project's fixed rate for the
+ * currency when one is set, else today's live rate. Never writes the project.
  */
 export function resolveRate(input: {
   currency: string
   projectCurrency: string
   provided?: number | null
-  rateSource: RateSource
   customRate?: number | null
   liveRate?: number | null
 }): ResolvedRate {
-  const { currency, projectCurrency, provided, rateSource, customRate, liveRate } = input
+  const { currency, projectCurrency, provided, customRate, liveRate } = input
 
   if (currency === projectCurrency) {
-    return { rate: 1, source: "same", shouldSeedFixed: false }
+    return { rate: 1, source: "same" }
   }
   if (provided != null) {
-    return { rate: provided, source: "provided", shouldSeedFixed: false }
-  }
-  if (rateSource === "live") {
-    return { rate: liveRate ?? 1, source: "live", shouldSeedFixed: false }
+    return { rate: provided, source: "provided" }
   }
   if (customRate != null) {
-    return { rate: customRate, source: "fixed", shouldSeedFixed: false }
+    return { rate: customRate, source: "fixed" }
   }
-  return { rate: liveRate ?? 1, source: "seeded", shouldSeedFixed: liveRate != null }
+  return { rate: liveRate ?? 1, source: "live" }
 }
 
 export interface PreviewRateInfo {
@@ -177,7 +171,6 @@ export function previewRate(
 
 /** Where a bound expense rate came from. */
 export type ExpenseRateKind = "project" | "market" | "custom"
-
 export interface ExpenseRateMeta {
   kind: ExpenseRateKind | null
   /** The market day a `market` rate reflects; null for other kinds. */
@@ -185,7 +178,6 @@ export interface ExpenseRateMeta {
 }
 
 const RATE_KINDS: readonly ExpenseRateKind[] = ["project", "market", "custom"]
-
 /**
  * Resolve the provenance of an expense's bound rate. Same currency → none. A
  * client-provided rate is a deliberate override whose kind the client supplies

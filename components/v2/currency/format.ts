@@ -1,6 +1,7 @@
 /** Relative time / staleness / rate helpers for the v2 currency screen (v1 parity). */
 
 import { format, isSameDay } from "date-fns"
+import { roundRateForDisplay } from "@/lib/currency-conversion"
 
 export type RateChipTone = "market" | "project" | "custom"
 
@@ -60,4 +61,15 @@ export function rateFromRates(from: string, to: string, rates: Record<string, nu
   const fromRate = rates[from] || 1
   const toRate = rates[to] || 1
   return toRate / fromRate
+}
+
+/**
+ * The live rate 1 `from` = X `to`, rounded for display (6 significant digits),
+ * or null when either leg is missing from `rates`.
+ */
+export function liveRateHint(rates: Record<string, number>, from: string, to: string): number | null {
+  const fromRate = rates[from]
+  const toRate = rates[to]
+  if (!fromRate || !toRate) return null
+  return roundRateForDisplay(toRate / fromRate)
 }

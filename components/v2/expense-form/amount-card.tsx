@@ -58,6 +58,8 @@ interface AmountCardProps {
   onToggleCalculator?: () => void
   /** Rendered inside the card, between the header and the value row, when open. */
   calculator?: React.ReactNode
+  /** Rendered at the bottom of the dark card (e.g. a promote toggle). */
+  footer?: React.ReactNode
 }
 
 export function AmountCard({
@@ -78,6 +80,7 @@ export function AmountCard({
   calculatorOpen = false,
   onToggleCalculator,
   calculator,
+  footer,
 }: AmountCardProps) {
   const open = calculatorOpen
   const showConversion = !open && !!projectCurrency && currency !== projectCurrency
@@ -191,6 +194,7 @@ export function AmountCard({
           )}
         </div>
       )}
+      {footer}
     </div>
   )
 }

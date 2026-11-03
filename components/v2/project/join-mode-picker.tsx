@@ -58,7 +58,7 @@ export function JoinModePicker({
               )}
               <span>
                 <span className={`block leading-5 tracking-[.1px] ${settings ? `text-[13px] ${checked ? "font-bold" : "font-semibold"}` : "text-sm font-bold"}`}>{option.label}</span>
-                <span className="mt-0.5 block text-xs text-v2-ink-muted">{option.description}</span>
+                {!settings && <span className="mt-0.5 block text-xs text-v2-ink-muted">{option.description}</span>}
               </span>
             </label>
           )

@@ -636,6 +636,8 @@ describe("POST /api/projects/[id]/expenses", () => {
     expect(call.data.exchangeRate).toBeCloseTo(0.031715)
     expect(call.data.participants.create[0].shareAmountProject).toBe(3172)
     expect(call.data.payers.create[0].amountProject).toBe(3172)
+    // A missing fixed rate is used live, never written back to the project.
+    expect(prisma.project.update).not.toHaveBeenCalled()
   })
 
   it("records a market rate meta (today) when a foreign expense falls back to the live rate", async () => {
@@ -734,6 +736,70 @@ describe("POST /api/projects/[id]/expenses", () => {
     const data = vi.mocked(prisma.expense.create).mock.calls[0][0].data
     expect(data.rateKind).toBe("market")
     expect((data.rateDate as Date).toISOString()).toBe(new Date("2026-10-06").toISOString())
+  })
+
+  it("writes a promoted rate into the project fixed rates", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue({
+      currency: "TWD",
+      customRates: null,
+      exchangeRatePrecision: 2,
+      rateSource: "fixed",
+    } as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123", remainderDiscrepancy: 0 },
+    ] as never)
+    vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123/expenses", {
+      method: "POST",
+      body: JSON.stringify({
+        amount: 100,
+        currency: "USD",
+        exchangeRate: 31.5,
+        promoteRate: true,
+        payers: [{ memberId: "member-123", amount: 100 }],
+        participants: [{ memberId: "member-123", shareAmount: 100 }],
+      }),
+    })
+    const response = await POST(req, { params: createParams("project-123") })
+    expect(response.status).toBe(201)
+    expect(prisma.project.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { customRates: { USD: 31.5 } } }),
+    )
+  })
+
+  it("honours a stored fixed rate even when a legacy rateSource says live", async () => {
+    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+    vi.mocked(prisma.project.findUnique).mockResolvedValue({
+      currency: "TWD",
+      customRates: { USD: 30 },
+      exchangeRatePrecision: 2,
+      rateSource: "live",
+    } as never)
+    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+      { id: "member-123", remainderDiscrepancy: 0 },
+    ] as never)
+    vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense as never)
+
+    const req = new NextRequest("http://localhost:3000/api/projects/project-123/expenses", {
+      method: "POST",
+      body: JSON.stringify({
+        amount: 100,
+        currency: "USD",
+        payers: [{ memberId: "member-123", amount: 100 }],
+        participants: [{ memberId: "member-123", shareAmount: 100 }],
+      }),
+    })
+    const response = await POST(req, { params: createParams("project-123") })
+    expect(response.status).toBe(201)
+
+    // rateSource is never read: a stored fixed rate always wins over live.
+    const data = vi.mocked(prisma.expense.create).mock.calls[0][0].data
+    expect(data.exchangeRate).toBe(30)
+    expect(data.rateKind).toBe("project")
   })
 
   it("records a custom rate meta with no market date", async () => {
@@ -1329,6 +1395,29 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     vi.mocked(prisma.expense.findUnique).mockResolvedValue(mockExpense as never)
   }
 
+  // Captures the project.update data written inside the PUT transaction.
+  function captureProjectUpdate() {
+    const project = { update: vi.fn().mockResolvedValue({}) }
+    vi.mocked(prisma.$transaction).mockImplementation(
+      (async (cb: (tx: unknown) => Promise<unknown>) =>
+        cb({
+          expenseParticipant: {
+            deleteMany: vi.fn().mockResolvedValue({}),
+            createMany: vi.fn().mockResolvedValue({ count: 1 }),
+            update: vi.fn().mockResolvedValue({}),
+          },
+          expensePayer: {
+            deleteMany: vi.fn().mockResolvedValue({}),
+            createMany: vi.fn().mockResolvedValue({ count: 1 }),
+          },
+          expense: { update: vi.fn().mockResolvedValue({}) },
+          projectMember: { update: vi.fn().mockResolvedValue({}) },
+          project,
+        })) as never,
+    )
+    return project.update
+  }
+
   it("records a custom rate meta when the rate is edited by hand", async () => {
     seedForeignExpense()
     const update = captureUpdate()
@@ -1423,6 +1512,60 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     })
     expect(response.status).toBe(200)
     expect(update.mock.calls[0][0].data).not.toHaveProperty("rateKind")
+  })
+
+  it("overwrites an existing fixed rate when a promoted rate is saved on edit", async () => {
+    seedForeignExpense()
+    vi.mocked(prisma.project.findUnique).mockResolvedValue({
+      currency: "TWD",
+      customRates: { USD: 25 },
+      rateSource: "fixed",
+    } as never)
+    const projectUpdate = captureProjectUpdate()
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses/expense-123",
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          amount: 1000,
+          exchangeRate: 30,
+          promoteRate: true,
+          payers: [{ memberId: "member-123", amount: 1000 }],
+          participants: [{ memberId: "member-123", shareAmount: 1000 }],
+        }),
+      }
+    )
+    const response = await PUT_EXPENSE(req, {
+      params: createExpenseParams("project-123", "expense-123"),
+    })
+    expect(response.status).toBe(200)
+    expect(projectUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { customRates: { USD: 30 } } }),
+    )
+  })
+
+  it("leaves the project fixed rates untouched on edit without promoteRate", async () => {
+    seedForeignExpense()
+    const projectUpdate = captureProjectUpdate()
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/projects/project-123/expenses/expense-123",
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          amount: 1000,
+          exchangeRate: 30,
+          payers: [{ memberId: "member-123", amount: 1000 }],
+          participants: [{ memberId: "member-123", shareAmount: 1000 }],
+        }),
+      }
+    )
+    const response = await PUT_EXPENSE(req, {
+      params: createExpenseParams("project-123", "expense-123"),
+    })
+    expect(response.status).toBe(200)
+    expect(projectUpdate).not.toHaveBeenCalled()
   })
 
   it("rejects an expense with a non-positive exchange rate", async () => {

@@ -395,6 +395,19 @@ describe("useProjectData", () => {
     })
   })
 
+  describe("rateSource", () => {
+    it("the project rate source no longer exists", async () => {
+      mockAuthFetch
+        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockProject) })
+        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockMembers) })
+
+      const { result } = renderHook(() => useProjectData("project-1"))
+      await waitFor(() => expect(result.current.loading).toBe(false))
+      expect(result.current).not.toHaveProperty("rateSource")
+      expect(result.current).not.toHaveProperty("effectiveCustomRates")
+    })
+  })
+
   describe("utility functions", () => {
     it("clearProjectCache should clear all caches", async () => {
       mockAuthFetch

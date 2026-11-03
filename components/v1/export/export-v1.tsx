@@ -76,6 +76,7 @@ interface Project {
   startDate: string | null
   endDate: string | null
   customRates: Record<string, number> | null
+  rateSource?: string
   creator: {
     id: string
     name: string | null
@@ -136,7 +137,7 @@ export function ExportV1({ projectId }: { projectId: string }) {
     const projectCurrency = project.currency || DEFAULT_CURRENCY
     if (fromCurrency === projectCurrency) return amount
 
-    // 優先使用自訂匯率
+    // 優先使用自訂匯率（未設定的幣別走即時）
     if (project.customRates && project.customRates[fromCurrency]) {
       return Math.round(amount * project.customRates[fromCurrency] * 100) / 100
     }

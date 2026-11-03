@@ -145,7 +145,7 @@ export async function PUT(
     }
 
     const body = await req.json()
-    const { name, description, cover, budget, currency, startDate, endDate, joinMode, customRates } = body
+    const { name, description, cover, budget, currency, startDate, endDate, joinMode, customRates, rateSource } = body
 
     if (cover !== undefined && !isValidCover(cover)) {
       return NextResponse.json({ error: "封面格式不正確" }, { status: 400 })
@@ -161,6 +161,7 @@ export async function PUT(
       endDate?: Date | null
       joinMode?: string
       customRates?: Prisma.InputJsonValue | typeof Prisma.DbNull
+      rateSource?: string
     } = {}
 
     if (name !== undefined) {
@@ -219,6 +220,14 @@ export async function PUT(
         }
         updateData.customRates = Object.keys(validatedRates).length > 0 ? validatedRates : Prisma.DbNull
       }
+    }
+
+    // 處理匯率來源（新支出預設：固定 / 即時）
+    if (rateSource !== undefined) {
+      if (rateSource !== "fixed" && rateSource !== "live") {
+        return NextResponse.json({ error: "匯率來源需為 fixed 或 live" }, { status: 400 })
+      }
+      updateData.rateSource = rateSource
     }
 
     // 處理日期更新

@@ -107,12 +107,12 @@ export async function POST(
     }
 
     const body = await req.json()
-    const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail, rateKind, rateDate } = body
+    const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail, rateKind, rateDate, promoteRate } = body
 
     // 獲取專案幣別與匯率設定
     const project = await prisma.project.findUnique({
       where: { id },
-      select: { currency: true, customRates: true, rateSource: true },
+      select: { currency: true, customRates: true },
     })
 
     if (!project) {
@@ -211,17 +211,14 @@ export async function POST(
     // 計算結算幣別金額（換算 + 整數分配 + 尾差帳）
     const projectCurrency = project.currency || DEFAULT_CURRENCY
     const customRates = (project.customRates as Record<string, number> | null) || {}
-    const rateSource = (project.rateSource as "fixed" | "live") || "fixed"
 
     let snapshotRate: number | null = null
-    let seedRate: number | null = null
     let resolvedRate = 1
 
     if (expenseCurrency !== projectCurrency) {
       const providedRate =
         exchangeRate !== undefined && exchangeRate !== null ? Number(exchangeRate) : null
-      const needsLive =
-        providedRate == null && (rateSource === "live" || customRates[expenseCurrency] == null)
+      const needsLive = providedRate == null && customRates[expenseCurrency] == null
       let liveRate: number | null = null
       if (needsLive) {
         try {
@@ -234,13 +231,11 @@ export async function POST(
         currency: expenseCurrency,
         projectCurrency,
         provided: providedRate,
-        rateSource,
         customRate: customRates[expenseCurrency] ?? null,
         liveRate,
       })
       resolvedRate = resolved.rate
       snapshotRate = resolved.rate
-      if (resolved.shouldSeedFixed) seedRate = resolved.rate
     }
 
     // Provenance of the bound rate (project default / market on a date / custom),
@@ -334,10 +329,11 @@ export async function POST(
         },
       })
 
-      if (seedRate != null) {
+      // Promote this expense's rate to the project's fixed rate for the currency.
+      if (promoteRate === true && expenseCurrency !== projectCurrency && snapshotRate != null) {
         await tx.project.update({
           where: { id },
-          data: { customRates: { ...customRates, [expenseCurrency]: seedRate } },
+          data: { customRates: { ...customRates, [expenseCurrency]: snapshotRate } },
         })
       }
 

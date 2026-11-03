@@ -7,7 +7,7 @@ const v = (o = {}) => ({ ...emptyProjectForm("TWD"), name: "京都", ...o })
 describe("project form", () => {
   it("defaults", () => {
     expect(emptyProjectForm("JPY")).toEqual({ name: "", description: "", cover: "icon:leaf;color:lake", startDate: null, endDate: null, currency: "JPY", budget: "", joinMode: "both", customRates: {} })
-    expect(JOIN_MODE_OPTIONS.map((o) => o.value)).toEqual(["both", "create_only", "claim_only"])
+    expect(JOIN_MODE_OPTIONS.map((o) => o.value)).toEqual(["create_only", "claim_only", "both"])
   })
   it("validates in order", () => {
     expect(validateProjectForm(v({ name: "  " }))).toBe("請輸入旅程名稱")

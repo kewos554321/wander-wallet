@@ -18,6 +18,8 @@ export interface ExpensePayload {
   exchangeRate?: number | null
   rateKind?: "project" | "market" | "custom" | null
   rateDate?: string | null
+  /** Promote this expense's rate to the project's fixed rate for the currency. */
+  promoteRate?: boolean
   description: string | null
   category: string
   location: string | null

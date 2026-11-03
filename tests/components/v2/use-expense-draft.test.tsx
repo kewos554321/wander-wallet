@@ -342,5 +342,14 @@ describe("useExpenseDraft", () => {
       expect(result.current.derived.rateKind).toBe("market")
       expect(result.current.derived.rateDate).toBe("2026-10-06")
     })
+
+    it("tracks the promote-fixed-rate intent and clears it on currency change", () => {
+      const { result } = render(() => ({ rate: 0.0067, source: "live" }))
+      expect(result.current.state.promoteFixedRate).toBe(false)
+      act(() => result.current.actions.setPromoteFixedRate(true))
+      expect(result.current.state.promoteFixedRate).toBe(true)
+      act(() => result.current.actions.setCurrency("TWD"))
+      expect(result.current.state.promoteFixedRate).toBe(false)
+    })
   })
 })

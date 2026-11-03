@@ -101,6 +101,7 @@ interface Project {
   description: string | null
   currency: string
   exchangeRatePrecision: number
+  rateSource?: string
   startDate: string | null
   endDate: string | null
   customRates: Record<string, number> | null
@@ -123,7 +124,6 @@ export function StatsV1({ projectId: id }: { projectId: string }) {
   const { convert: convertToProjectCurrency, exchangeRates } = useCurrencyConversion({
     projectCurrency: project?.currency || DEFAULT_CURRENCY,
     customRates: project?.customRates || null,
-    precision: project?.exchangeRatePrecision ?? 2,
   })
 
   useEffect(() => {

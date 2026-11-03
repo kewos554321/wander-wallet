@@ -139,7 +139,9 @@ export function QuickItemCard({ item, members, onChange, projectCurrency, previe
           const m = toMoneyInput(v)
           if (m !== null) onChange({ amount: m })
         }}
-        onCurrency={(c) => onChange({ currency: c })}
+        onCurrency={(c) =>
+          onChange(c === item.currency ? { currency: c } : { currency: c, promoteFixedRate: false })
+        }
         projectCurrency={projectCurrency}
         previewProjectAmount={previewProjectAmount}
         rate={rate}
@@ -163,6 +165,31 @@ export function QuickItemCard({ item, members, onChange, projectCurrency, previe
             }}
             onClose={() => setShowCalculator(false)}
           />
+        }
+        footer={
+          isForeign ? (
+            <label className="mt-3 flex cursor-pointer items-start gap-2 border-t border-v2-paper/20 pt-3">
+              <input
+                type="checkbox"
+                aria-label="設為專案固定匯率"
+                checked={item.promoteFixedRate ?? false}
+                onChange={(e) => onChange({ promoteFixedRate: e.target.checked })}
+                className="peer sr-only"
+              />
+              <span
+                aria-hidden="true"
+                className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border border-v2-paper/50 text-transparent peer-checked:border-v2-paper peer-checked:bg-v2-paper peer-checked:text-v2-lake peer-focus-visible:ring-2 peer-focus-visible:ring-v2-paper/70"
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}><path d="M20 6 9 17l-5-5" /></svg>
+              </span>
+              <span className="text-[12px] font-bold text-v2-paper">
+                設為專案固定匯率
+                <span className="mt-px block text-[11px] font-normal text-v2-paper/70">
+                  之後 {item.currency} 的新支出都會用這個值
+                </span>
+              </span>
+            </label>
+          ) : undefined
         }
       />
 

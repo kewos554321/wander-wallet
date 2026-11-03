@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Trash2 } from "lucide-react"
+import { ChevronRight, Plus, Trash2 } from "lucide-react"
 import { CoverTileButton } from "@/components/v2/cover/cover-tile-button"
 import { DateRangeField } from "@/components/v2/project/date-range-field"
 import { JoinModePicker } from "@/components/v2/project/join-mode-picker"
@@ -7,7 +7,7 @@ import { V2CurrencyField, moneySymbol } from "@/components/v2/ui/currency-field"
 import { roundRateForDisplay } from "@/lib/currency-conversion"
 import { minorUnitLabel } from "@/lib/constants/currencies"
 import type { ProjectFormValues } from "@/lib/hooks/use-project-form"
-import { ExchangeRateRow } from "./exchange-rate-row"
+import { FixedRateSheet } from "./fixed-rate-sheet"
 
 const cardClass = "flex flex-col gap-3.5 rounded-[18px] border border-v2-line bg-v2-surface p-4"
 const cardTitleClass = "m-0 text-[13px] font-bold text-v2-lake"
@@ -16,7 +16,6 @@ const fieldLabelClass = "mb-2 block text-xs font-semibold text-v2-ink-muted"
 export interface ProjectSettingsV2ViewProps {
   values: ProjectFormValues
   set: <K extends keyof ProjectFormValues>(key: K, value: ProjectFormValues[K]) => void
-  expenseCurrencies: string[]
   rates: Record<string, number>
   isCreator: boolean
   saving: boolean
@@ -26,20 +25,16 @@ export interface ProjectSettingsV2ViewProps {
   onRequestDelete: () => void
 }
 
-function liveRate(rates: Record<string, number>, from: string, to: string): number | null {
-  const fromRate = rates[from]
-  const toRate = rates[to]
-  if (!fromRate || !toRate) return null
-  return roundRateForDisplay(toRate / fromRate)
-}
-
 export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
   const { values, set } = props
   const descriptionCount = values.description.length
-  const [pendingCurrency, setPendingCurrency] = useState("")
-  const rateCurrencies = Array.from(
-    new Set([...props.expenseCurrencies, ...Object.keys(values.customRates)]),
-  ).filter((c) => c && c !== values.currency)
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [sheetCurrency, setSheetCurrency] = useState<string | null>(null)
+  const rateCurrencies = Object.keys(values.customRates).filter((c) => {
+    const raw = values.customRates[c] ?? ""
+    const n = Number(raw)
+    return c !== "" && c !== values.currency && raw.trim() !== "" && Number.isFinite(n) && n > 0
+  })
 
   return (
     <div className="flex flex-col gap-3.5 px-4 pb-32 pt-4">
@@ -133,50 +128,65 @@ export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-semibold text-v2-ink-muted">自訂匯率（選填）</label>
-          <p className="mb-2 text-xs text-v2-ink-subtle">不設定則使用即時匯率</p>
-          <div className="flex flex-col gap-3">
+          <label className="block text-xs font-semibold text-v2-ink-muted">固定匯率（選填）</label>
+          <p className="mb-2 mt-1 text-xs text-v2-ink-subtle">未設定的幣別一律使用即時匯率</p>
+          <div className="flex flex-col">
+            {rateCurrencies.length === 0 && (
+              <p className="text-xs text-v2-ink-subtle">尚未設定。新支出一律使用即時匯率。</p>
+            )}
             {rateCurrencies.map((curr) => (
-              <ExchangeRateRow
+              <button
                 key={curr}
-                currency={curr}
-                settlementCurrency={values.currency}
-                value={values.customRates[curr] ?? ""}
-                liveRate={liveRate(props.rates, curr, values.currency)}
-                minorUnit={minorUnitLabel(curr)}
-                onChange={(rate) => set("customRates", { ...values.customRates, [curr]: rate })}
-                disabled={props.saving}
-              />
+                type="button"
+                data-testid={`fixed-row-${curr}`}
+                onClick={() => {
+                  setSheetCurrency(curr)
+                  setSheetOpen(true)
+                }}
+                className="flex items-center justify-between border-b border-v2-line-soft py-3 text-left last:border-0"
+              >
+                <span className="text-[13px] font-semibold text-v2-ink">{curr}</span>
+                <span className="flex items-center gap-1.5 text-[13px] text-v2-ink-muted">
+                  <span className="tabular-nums">
+                    {`${roundRateForDisplay(Number(values.customRates[curr]))} ${values.currency}`}
+                  </span>
+                  <ChevronRight className="h-3.5 w-3.5 text-v2-ink-subtle" aria-hidden="true" />
+                </span>
+              </button>
             ))}
-          </div>
-          <div className="mt-3 flex items-center gap-2">
-            <div className="min-w-0 flex-1">
-              <V2CurrencyField
-                value={pendingCurrency}
-                onChange={setPendingCurrency}
-                disabled={props.saving}
-                placeholder="選擇要新增的幣別"
-                ariaLabel="新增幣別"
-                exclude={[values.currency, ...rateCurrencies]}
-              />
-            </div>
             <button
               type="button"
-              disabled={!pendingCurrency || props.saving}
               onClick={() => {
-                const live = liveRate(props.rates, pendingCurrency, values.currency)
-                set("customRates", {
-                  ...values.customRates,
-                  [pendingCurrency]: live != null ? String(live) : "",
-                })
-                setPendingCurrency("")
+                setSheetCurrency(null)
+                setSheetOpen(true)
               }}
-              className="shrink-0 rounded-xl border border-v2-line bg-v2-paper px-3 py-3 text-[13px] font-semibold text-v2-lake disabled:opacity-50"
+              className="mt-1 flex items-center gap-1 py-2 text-[13px] font-semibold text-v2-lake"
             >
-              新增
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+              新增固定匯率
             </button>
           </div>
         </div>
+
+        <FixedRateSheet
+          open={sheetOpen}
+          onClose={() => setSheetOpen(false)}
+          settlementCurrency={values.currency}
+          rates={props.rates}
+          takenCurrencies={rateCurrencies}
+          editingCurrency={sheetCurrency}
+          initialValue={sheetCurrency ? values.customRates[sheetCurrency] ?? "" : ""}
+          onApply={(curr, val) => {
+            set("customRates", { ...values.customRates, [curr]: val })
+            setSheetOpen(false)
+          }}
+          onRemove={(curr) => {
+            const next = { ...values.customRates }
+            delete next[curr]
+            set("customRates", next)
+            setSheetOpen(false)
+          }}
+        />
       </div>
 
       <div className={cardClass}>

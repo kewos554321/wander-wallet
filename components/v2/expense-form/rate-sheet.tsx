@@ -37,6 +37,10 @@ export interface RateSheetProps {
   onReset: () => void
   /** The kind currently bound to this expense (for highlighting). */
   appliedKind?: "project" | "market" | "custom" | null
+  /** Current promote intent, so the toggle reflects the draft's real state. */
+  promoteFixedRate: boolean
+  /** Report the promote intent when the sheet closes (always called). */
+  onPromoteChange: (value: boolean) => void
 }
 
 const TABS: { id: Tab; label: string }[] = [
@@ -65,6 +69,8 @@ export function RateSheet({
   onUseRate,
   onReset,
   appliedKind,
+  promoteFixedRate,
+  onPromoteChange,
 }: RateSheetProps) {
   const authFetch = useAuthFetch()
   const [tab, setTab] = useState<Tab>("live")
@@ -316,6 +322,35 @@ export function RateSheet({
           )}
         </div>
 
+        <div className="border-t border-v2-line-soft px-5 py-3">
+          <label className="flex cursor-pointer items-start gap-2.5">
+            <input
+              type="checkbox"
+              aria-label="同時設為專案固定匯率"
+              checked={promoteFixedRate}
+              disabled={rate == null}
+              onChange={(e) => onPromoteChange(e.target.checked)}
+              className="peer sr-only"
+            />
+            <span
+              aria-hidden="true"
+              className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-v2-check bg-v2-surface text-transparent peer-checked:border-v2-lake peer-checked:bg-v2-lake peer-checked:text-v2-on-lake peer-focus-visible:ring-2 peer-focus-visible:ring-v2-lake/40"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}><path d="M20 6 9 17l-5-5" /></svg>
+            </span>
+            <span>
+              <span className="block text-[13px] font-bold text-v2-ink">同時設為專案固定匯率</span>
+              <span className="mt-px block text-xs text-v2-ink-muted">之後 {fromCurrency} 的新支出都會用這個值</span>
+            </span>
+          </label>
+          {promoteFixedRate && projectFixedRate != null && rate !== projectFixedRate && (
+            <p role="alert" className="mt-2 text-xs font-semibold text-v2-coral-strong">
+              {fromCurrency} 目前已有固定匯率 {roundRateForDisplay(projectFixedRate)}，完成後會覆蓋為{" "}
+              {rate != null ? roundRateForDisplay(rate) : "—"}。
+            </p>
+          )}
+        </div>
+
         <div className="flex gap-2.5 border-t border-v2-line-soft px-5 py-3.5">
           <button
             type="button"
@@ -329,7 +364,9 @@ export function RateSheet({
           <button
             type="button"
             aria-label="完成"
-            onClick={onClose}
+            onClick={() => {
+              onClose()
+            }}
             className="flex-[1.4] rounded-[13px] bg-v2-lake py-3 text-sm font-bold text-v2-on-lake"
           >
             完成

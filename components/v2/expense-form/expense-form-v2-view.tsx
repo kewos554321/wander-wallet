@@ -147,11 +147,14 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
             actions.setRateKind(kind)
             actions.setRateDate(kind === "market" ? date ?? null : null)
           }}
+          promoteFixedRate={state.promoteFixedRate}
+          onPromoteChange={(value) => actions.setPromoteFixedRate(value)}
           onReset={() => {
             actions.setExchangeRate("")
             actions.setRatePinned(false)
             actions.setRateKind(null)
             actions.setRateDate(null)
+            actions.setPromoteFixedRate(false)
           }}
         />
       )}

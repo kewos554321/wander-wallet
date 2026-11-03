@@ -7,6 +7,7 @@ import {
   rollbackAllocation,
   resolveRate,
   resolveExpenseRateMeta,
+  resolvePreviewRate,
 } from "@/lib/currency-conversion"
 
 describe("minor units", () => {
@@ -67,31 +68,17 @@ describe("rollbackAllocation", () => {
 
 describe("resolveRate", () => {
   it("same currency → 1 and source 'same'", () => {
-    expect(resolveRate({ currency: "USD", projectCurrency: "USD", rateSource: "fixed" }))
-      .toMatchObject({ rate: 1, source: "same" })
+    expect(resolveRate({ currency: "USD", projectCurrency: "USD" })).toMatchObject({ rate: 1, source: "same" })
   })
   it("uses provided rate verbatim", () => {
-    expect(
-      resolveRate({ currency: "TWD", projectCurrency: "USD", provided: 0.0317, rateSource: "fixed" }).rate,
-    ).toBe(0.0317)
+    expect(resolveRate({ currency: "TWD", projectCurrency: "USD", provided: 0.0317 }).rate).toBe(0.0317)
   })
-  it("fixed: uses customRate; marks seeded when only live is available", () => {
-    expect(
-      resolveRate({ currency: "TWD", projectCurrency: "USD", rateSource: "fixed", customRate: 0.03 }).source,
-    ).toBe("fixed")
-    const seeded = resolveRate({
-      currency: "TWD",
-      projectCurrency: "USD",
-      rateSource: "fixed",
-      customRate: null,
-      liveRate: 0.0317,
-    })
-    expect(seeded).toMatchObject({ rate: 0.0317, source: "seeded", shouldSeedFixed: true })
+  it("uses the project custom rate when one is set", () => {
+    expect(resolveRate({ currency: "TWD", projectCurrency: "USD", customRate: 0.03 }).source).toBe("fixed")
   })
-  it("live: uses liveRate", () => {
-    expect(
-      resolveRate({ currency: "TWD", projectCurrency: "USD", rateSource: "live", customRate: 0.03, liveRate: 0.0317 }).source,
-    ).toBe("live")
+  it("falls back to live when there is no custom rate", () => {
+    const fallback = resolveRate({ currency: "TWD", projectCurrency: "USD", customRate: null, liveRate: 0.0317 })
+    expect(fallback).toMatchObject({ rate: 0.0317, source: "live" })
   })
 })
 
@@ -136,5 +123,20 @@ describe("resolveExpenseRateMeta", () => {
     expect(
       resolveExpenseRateMeta({ ...base, isForeign: true, providedRate: 30, clientKind: "market", clientDate: "nope" }).date,
     ).toEqual(now)
+  })
+})
+
+describe("resolvePreviewRate", () => {
+  it("uses the live rate when no custom rates are in effect (live mode)", () => {
+    expect(resolvePreviewRate("JPY", "TWD", null, { JPY: 150, TWD: 31.5 })).toEqual({
+      rate: 31.5 / 150,
+      source: "live",
+    })
+  })
+  it("prefers a custom rate when one is in effect", () => {
+    expect(resolvePreviewRate("JPY", "TWD", { JPY: 0.2 }, { JPY: 150, TWD: 31.5 })).toEqual({
+      rate: 0.2,
+      source: "fixed",
+    })
   })
 })

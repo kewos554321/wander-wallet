@@ -278,31 +278,22 @@ describe("minor-unit helpers — boundaries", () => {
 
 describe("resolveRate — full branch matrix", () => {
   it("same currency", () => {
-    expect(resolveRate({ currency: "USD", projectCurrency: "USD", rateSource: "live" })).toEqual({
-      rate: 1,
-      source: "same",
-      shouldSeedFixed: false,
-    })
+    expect(resolveRate({ currency: "USD", projectCurrency: "USD" })).toEqual({ rate: 1, source: "same" })
   })
-  it("explicit provided rate wins over source", () => {
+  it("explicit provided rate wins over the custom rate", () => {
     expect(
-      resolveRate({ currency: "TWD", projectCurrency: "USD", provided: 0.0321, rateSource: "live", customRate: 0.03, liveRate: 0.0317 }),
-    ).toEqual({ rate: 0.0321, source: "provided", shouldSeedFixed: false })
+      resolveRate({ currency: "TWD", projectCurrency: "USD", provided: 0.0321, customRate: 0.03, liveRate: 0.0317 }),
+    ).toEqual({ rate: 0.0321, source: "provided" })
   })
-  it("fixed with a custom rate", () => {
+  it("uses the custom rate when set", () => {
     expect(
-      resolveRate({ currency: "TWD", projectCurrency: "USD", rateSource: "fixed", customRate: 0.03, liveRate: 0.0317 }),
-    ).toEqual({ rate: 0.03, source: "fixed", shouldSeedFixed: false })
+      resolveRate({ currency: "TWD", projectCurrency: "USD", customRate: 0.03, liveRate: 0.0317 }),
+    ).toEqual({ rate: 0.03, source: "fixed" })
   })
-  it("fixed with no custom rate seeds from live", () => {
+  it("falls back to live when there is no custom rate", () => {
     expect(
-      resolveRate({ currency: "TWD", projectCurrency: "USD", rateSource: "fixed", customRate: null, liveRate: 0.0317 }),
-    ).toEqual({ rate: 0.0317, source: "seeded", shouldSeedFixed: true })
-  })
-  it("live ignores the custom rate", () => {
-    expect(
-      resolveRate({ currency: "TWD", projectCurrency: "USD", rateSource: "live", customRate: 0.03, liveRate: 0.0317 }),
-    ).toEqual({ rate: 0.0317, source: "live", shouldSeedFixed: false })
+      resolveRate({ currency: "TWD", projectCurrency: "USD", customRate: null, liveRate: 0.0317 }),
+    ).toEqual({ rate: 0.0317, source: "live" })
   })
 })
 

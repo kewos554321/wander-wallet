@@ -150,10 +150,37 @@ describe("ProjectSettingsV2", () => {
     expect(mockAuthFetch.mock.calls.some(([, opts]) => opts?.method === "PUT")).toBe(false)
   })
 
-  it("shows the loaded custom rate for JPY", async () => {
+  it("shows the stored fixed rate as a compact row", async () => {
     mockRoutes()
     render(<ProjectSettingsV2 projectId="p1" />)
-    expect(await screen.findByLabelText("JPY 匯率")).toHaveValue("0.21")
+    expect(await screen.findByTestId("fixed-row-JPY")).toHaveTextContent("0.21 TWD")
+  })
+
+  it("lists only currencies with a fixed rate", async () => {
+    mockRoutes({
+      projectRes: ok({
+        ...project,
+        expenses: [{ currency: "JPY" }, { currency: "USD" }, { currency: "TWD" }],
+      }),
+    })
+    render(<ProjectSettingsV2 projectId="p1" />)
+    expect(await screen.findByTestId("fixed-row-JPY")).toBeInTheDocument()
+    expect(screen.queryByTestId("fixed-row-USD")).not.toBeInTheDocument()
+  })
+
+  it("shows an empty state when no fixed rates are set", async () => {
+    mockRoutes({ projectRes: ok({ ...project, customRates: null }) })
+    render(<ProjectSettingsV2 projectId="p1" />)
+    await screen.findByLabelText("專案名稱")
+    expect(screen.getByText("尚未設定。新支出一律使用即時匯率。")).toBeInTheDocument()
+  })
+
+  it("normalises a full-precision stored rate for display", async () => {
+    mockRoutes({
+      projectRes: ok({ ...project, customRates: { JPY: 0.2022523994784094 } }),
+    })
+    render(<ProjectSettingsV2 projectId="p1" />)
+    expect(await screen.findByTestId("fixed-row-JPY")).toHaveTextContent("0.202252 TWD")
   })
 
   it("shows the settlement currency's minor unit", async () => {
@@ -163,39 +190,51 @@ describe("ProjectSettingsV2", () => {
     expect(screen.getByTestId("settlement-minor-unit")).toHaveTextContent("1 TWD（無小數）")
   })
 
-  it("labels each rate row with its currency's minor unit", async () => {
+  it("edits a fixed rate through the sheet and persists it", async () => {
     mockRoutes()
     render(<ProjectSettingsV2 projectId="p1" />)
-    await screen.findByLabelText("JPY 匯率")
-    expect(screen.getByTestId("rate-minor-unit-JPY")).toHaveTextContent("1 JPY（無小數）")
+    fireEvent.click(await screen.findByTestId("fixed-row-JPY"))
+    expect(screen.getByRole("dialog", { name: "固定匯率" })).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText("匯率"), { target: { value: "0.25" } })
+    fireEvent.click(screen.getByRole("button", { name: "完成" }))
+    fireEvent.click(screen.getByRole("button", { name: "儲存變更" }))
+    await waitFor(() =>
+      expect(mockAuthFetch).toHaveBeenCalledWith("/api/projects/p1", expect.objectContaining({ method: "PUT" }))
+    )
+    expect(JSON.parse(putCall()![1].body).customRates).toEqual({ JPY: 0.25 })
   })
 
-  it("prefills the live rate when adding a currency", async () => {
-    mockRoutes({ ratesRes: ok({ rates: { USD: 1, TWD: 31.5 } }) })
+  it("removes a fixed rate through the sheet", async () => {
+    mockRoutes()
     render(<ProjectSettingsV2 projectId="p1" />)
-    await screen.findByLabelText("專案名稱")
-    fireEvent.change(screen.getByLabelText("新增幣別"), { target: { value: "USD" } })
-    fireEvent.click(screen.getByRole("button", { name: "新增" }))
-    expect(screen.getByLabelText("USD 匯率")).toHaveValue("31.5")
+    fireEvent.click(await screen.findByTestId("fixed-row-JPY"))
+    fireEvent.click(screen.getByRole("button", { name: "移除固定匯率" }))
+    // The removed currency drops out of the list entirely.
+    expect(screen.queryByTestId("fixed-row-JPY")).not.toBeInTheDocument()
   })
 
-  it("keeps a newly added currency empty while rates are loading", async () => {
+  it("adds a currency through the sheet, prefilled with the live rate", async () => {
+    mockRoutes({ ratesRes: ok({ rates: { USD: 1, TWD: 31.5, JPY: 100 } }) })
+    render(<ProjectSettingsV2 projectId="p1" />)
+    fireEvent.click(await screen.findByRole("button", { name: "新增固定匯率" }))
+    expect(screen.getByRole("dialog", { name: "新增固定匯率" })).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText("幣別"), { target: { value: "USD" } })
+    expect(screen.getByLabelText("匯率")).toHaveValue("31.5")
+    fireEvent.click(screen.getByRole("button", { name: "完成" }))
+    fireEvent.click(screen.getByRole("button", { name: "儲存變更" }))
+    await waitFor(() =>
+      expect(mockAuthFetch).toHaveBeenCalledWith("/api/projects/p1", expect.objectContaining({ method: "PUT" }))
+    )
+    expect(JSON.parse(putCall()![1].body).customRates).toEqual({ JPY: 0.21, USD: 31.5 })
+  })
+
+  it("keeps the sheet value empty while rates are loading", async () => {
     mockRoutes({ ratesRes: ok({ rates: {} }) })
     render(<ProjectSettingsV2 projectId="p1" />)
-    await screen.findByLabelText("專案名稱")
-    fireEvent.change(screen.getByLabelText("新增幣別"), { target: { value: "USD" } })
-    fireEvent.click(screen.getByRole("button", { name: "新增" }))
-    expect(screen.getByLabelText("USD 匯率")).toHaveValue("")
+    fireEvent.click(await screen.findByRole("button", { name: "新增固定匯率" }))
+    fireEvent.change(screen.getByLabelText("幣別"), { target: { value: "USD" } })
+    expect(screen.getByLabelText("匯率")).toHaveValue("")
     expect(screen.getByText("即時匯率讀取中…")).toBeInTheDocument()
-  })
-
-  it("shows the custom hint for a filled row and the live hint once cleared", async () => {
-    mockRoutes()
-    render(<ProjectSettingsV2 projectId="p1" />)
-    const input = await screen.findByLabelText("JPY 匯率")
-    expect(screen.getByText(/使用自訂匯率/)).toBeInTheDocument()
-    fireEvent.change(input, { target: { value: "" } })
-    expect(screen.getByText(/使用即時匯率：/)).toBeInTheDocument()
   })
 
   it("hides the danger zone for a non-creator", async () => {
@@ -326,7 +365,9 @@ describe("ProjectSettingsV2", () => {
     await screen.findByLabelText("專案名稱")
 
     fireEvent.change(screen.getByLabelText("旅程預算"), { target: { value: "12345" } })
-    fireEvent.change(screen.getByLabelText("JPY 匯率"), { target: { value: "0.25" } })
+    fireEvent.click(screen.getByTestId("fixed-row-JPY"))
+    fireEvent.change(screen.getByLabelText("匯率"), { target: { value: "0.25" } })
+    fireEvent.click(screen.getByRole("button", { name: "完成" }))
     fireEvent.click(screen.getByRole("radio", { name: "僅建立新成員" }))
     fireEvent.change(screen.getByLabelText("結算幣別"), { target: { value: "JPY" } })
 
@@ -361,9 +402,8 @@ describe("ProjectSettingsV2", () => {
     render(<ProjectSettingsV2 projectId="p1" />)
     expect(await screen.findByLabelText("專案名稱")).toHaveValue("京都紅葉五日遊")
     await waitFor(() => expect(mockAuthFetch).toHaveBeenCalledWith("/api/exchange-rates"))
-    // JPY already has a custom value, so it shows the custom hint; no live rate needed.
-    expect(screen.getByText(/使用自訂匯率/)).toBeInTheDocument()
-    expect(screen.queryByText(/使用即時匯率：/)).not.toBeInTheDocument()
+    // JPY keeps its stored fixed rate even when live rates never loaded.
+    expect(screen.getByTestId("fixed-row-JPY")).toHaveTextContent("0.21 TWD")
   })
 
   it("updates the trip dates through the date-range calendar and saves them", async () => {

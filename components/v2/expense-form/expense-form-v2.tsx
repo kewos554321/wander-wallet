@@ -46,7 +46,7 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
   const router = useRouter()
   const authFetch = useAuthFetch()
   const { user } = useLiff()
-  const { project, members, loading: projectLoading, projectCurrency } = useProjectData(projectId)
+  const { project, members, loading: projectLoading, projectCurrency, customRates } = useProjectData(projectId)
   const [expense, setExpense] = useState<LoadedExpense | null>(null)
   const [expenseLoading, setExpenseLoading] = useState(mode === "edit")
 
@@ -158,7 +158,7 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
           init={init}
           original={expense}
           projectCurrency={projectCurrency}
-          customRates={project?.customRates ?? null}
+          customRates={customRates}
         />
       </div>
     </UiV2Scope>
@@ -282,6 +282,7 @@ function LoadedForm({
         rateKind: state.ratePinned ? state.rateKind ?? undefined : undefined,
         rateDate:
           state.ratePinned && state.rateKind === "market" ? state.rateDate ?? undefined : undefined,
+        promoteRate: state.promoteFixedRate || undefined,
         description,
         category,
         location: state.location.location,

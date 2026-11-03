@@ -79,7 +79,7 @@ describe("MembersV2View", () => {
   it("shows the current join method and its description", () => {
     renderView()
     const link = screen.getByRole("link", { name: /成員加入方式/ })
-    expect(within(link).getByText("兩者皆可")).toBeInTheDocument()
+    expect(within(link).getByText("以上兩者皆可")).toBeInTheDocument()
     expect(within(link).getByText("新成員可選擇建立新身份或取代佔位成員")).toBeInTheDocument()
   })
 
