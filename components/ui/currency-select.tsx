@@ -18,6 +18,8 @@ interface CurrencySelectProps {
   disabled?: boolean
   showName?: boolean
   className?: string
+  ariaLabel?: string
+  exclude?: string[]
 }
 
 export function CurrencySelect({
@@ -26,8 +28,11 @@ export function CurrencySelect({
   disabled,
   showName = true,
   className,
+  ariaLabel,
+  exclude,
 }: CurrencySelectProps) {
   const selectedCurrency = SUPPORTED_CURRENCIES.find((c) => c.code === value)
+  const options = exclude && exclude.length > 0 ? SUPPORTED_CURRENCIES.filter((c) => !exclude.includes(c.code)) : SUPPORTED_CURRENCIES
 
   return (
     <Select
@@ -35,7 +40,7 @@ export function CurrencySelect({
       onValueChange={(v) => onChange(v as CurrencyCode)}
       disabled={disabled}
     >
-      <SelectTrigger className={className}>
+      <SelectTrigger className={className} aria-label={ariaLabel}>
         <SelectValue>
           {selectedCurrency && (
             <span className="flex items-center gap-1.5">
@@ -45,7 +50,7 @@ export function CurrencySelect({
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
-        {SUPPORTED_CURRENCIES.map((currency) => (
+        {options.map((currency) => (
           <SelectItem key={currency.code} value={currency.code}>
             <span className="flex items-center gap-2">
               <span className="font-mono w-12 text-base">{currency.code}</span>

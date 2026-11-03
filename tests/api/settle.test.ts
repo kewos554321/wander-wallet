@@ -511,7 +511,7 @@ describe("GET /api/projects/[id]/settle", () => {
   })
 
   describe("multi-currency support", () => {
-    it("should return precision in summary", async () => {
+    it("reports the settlement currency's minor unit as the precision", async () => {
       vi.mocked(getAuthUser).mockResolvedValue(mockUser)
       vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
       vi.mocked(prisma.expense.findMany).mockResolvedValue([mockExpense] as never)
@@ -524,34 +524,15 @@ describe("GET /api/projects/[id]/settle", () => {
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data.summary.precision).toBe(2)
+      // TWD has no minor unit.
+      expect(data.summary.precision).toBe(0)
       expect(data.summary.currency).toBe("TWD")
     })
 
-    it("should use custom precision when set", async () => {
+    it("reports two decimals for a two-decimal settlement currency", async () => {
       vi.mocked(prisma.project.findUnique).mockResolvedValue({
         ...mockProject,
-        exchangeRatePrecision: 4,
-      } as never)
-      vi.mocked(getAuthUser).mockResolvedValue(mockUser)
-      vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
-      vi.mocked(prisma.expense.findMany).mockResolvedValue([mockExpense] as never)
-      vi.mocked(prisma.projectMember.findMany).mockResolvedValue(mockMembers as never)
-
-      const req = new NextRequest(
-        "http://localhost:3000/api/projects/project-123/settle"
-      )
-      const response = await GET(req, { params: createParams("project-123") })
-      const data = await response.json()
-
-      expect(data.summary.precision).toBe(4)
-    })
-
-    it("should default to precision 2 when not set", async () => {
-      vi.mocked(prisma.project.findUnique).mockResolvedValue({
-        currency: "TWD",
-        customRates: null,
-        exchangeRatePrecision: undefined,
+        currency: "USD",
       } as never)
       vi.mocked(getAuthUser).mockResolvedValue(mockUser)
       vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
@@ -565,6 +546,70 @@ describe("GET /api/projects/[id]/settle", () => {
       const data = await response.json()
 
       expect(data.summary.precision).toBe(2)
+    })
+
+    it("derives precision from the currency even without a stored field", async () => {
+      vi.mocked(prisma.project.findUnique).mockResolvedValue({
+        currency: "TWD",
+        customRates: null,
+      } as never)
+      vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+      vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+      vi.mocked(prisma.expense.findMany).mockResolvedValue([mockExpense] as never)
+      vi.mocked(prisma.projectMember.findMany).mockResolvedValue(mockMembers as never)
+
+      const req = new NextRequest(
+        "http://localhost:3000/api/projects/project-123/settle"
+      )
+      const response = await GET(req, { params: createParams("project-123") })
+      const data = await response.json()
+
+      expect(data.summary.precision).toBe(0)
+    })
+
+    it("rounds a legacy (no stored project amount) conversion to the currency's minor unit", async () => {
+      vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+      vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+      vi.mocked(prisma.projectMember.findMany).mockResolvedValue(mockMembers as never)
+      vi.mocked(convertCurrency).mockResolvedValue({ convertedAmount: 1, exchangeRate: 0.21 })
+      vi.mocked(prisma.expense.findMany).mockResolvedValue([
+        {
+          id: "legacy",
+          amount: 100,
+          currency: "JPY",
+          description: "legacy",
+          category: null,
+          deletedAt: null,
+          splitDetail: null,
+          payers: [
+            {
+              id: "p",
+              memberId: "member-123",
+              amount: 100,
+              amountProject: null,
+              member: { id: "member-123", displayName: "User 1", user: { image: null } },
+            },
+          ],
+          participants: [
+            {
+              id: "q",
+              memberId: "member-123",
+              shareAmount: 100,
+              shareAmountProject: null,
+              member: { id: "member-123", displayName: "User 1", user: { image: null } },
+            },
+          ],
+        },
+      ] as never)
+
+      const req = new NextRequest(
+        "http://localhost:3000/api/projects/project-123/settle"
+      )
+      const response = await GET(req, { params: createParams("project-123") })
+      const data = await response.json()
+
+      // 100 JPY × 0.21 = 21 TWD → integer (TWD has no minor unit).
+      expect(data.summary.totalAmount).toBe(21)
     })
   })
 })

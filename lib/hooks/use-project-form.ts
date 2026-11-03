@@ -20,12 +20,11 @@ export interface ProjectFormValues {
   currency: string
   budget: string
   joinMode: JoinMode
-  exchangeRatePrecision: number
   customRates: Record<string, string>
 }
 
 export function emptyProjectForm(currency: string): ProjectFormValues {
-  return { name: "", description: "", cover: DEFAULT_ICON_COVER, startDate: null, endDate: null, currency, budget: "", joinMode: "both", exchangeRatePrecision: 2, customRates: {} }
+  return { name: "", description: "", cover: DEFAULT_ICON_COVER, startDate: null, endDate: null, currency, budget: "", joinMode: "both", customRates: {} }
 }
 
 export function validateProjectForm(v: ProjectFormValues): string | null {
@@ -36,7 +35,6 @@ export function validateProjectForm(v: ProjectFormValues): string | null {
     const n = Number(v.budget)
     if (!Number.isFinite(n) || n < 0) return "預算需為 0 以上的數字"
   }
-  if (!Number.isInteger(v.exchangeRatePrecision) || v.exchangeRatePrecision < 0 || v.exchangeRatePrecision > 8) return "匯率精度需為 0 到 8 的整數"
   for (const rate of Object.values(v.customRates)) {
     if (rate.trim() === "") continue
     const n = Number(rate)
@@ -62,7 +60,6 @@ export function toUpdatePayload(v: ProjectFormValues): Record<string, unknown> {
   const rates = Object.entries(v.customRates).filter(([, r]) => r.trim() !== "")
   return {
     ...toCreatePayload(v),
-    exchangeRatePrecision: v.exchangeRatePrecision,
     customRates: rates.length > 0 ? Object.fromEntries(rates.map(([k, r]) => [k, Number(r)])) : null,
   }
 }

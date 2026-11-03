@@ -21,7 +21,7 @@ import { ImagePicker, type ImagePickerValue } from "@/components/ui/image-picker
 import { Calculator } from "@/components/ui/calculator"
 import { CurrencySelect } from "@/components/ui/currency-select"
 import { CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
-import { type CurrencyCode, DEFAULT_CURRENCY, formatCurrency } from "@/lib/constants/currencies"
+import { type CurrencyCode, DEFAULT_CURRENCY, formatCurrency, getCurrencyDecimals } from "@/lib/constants/currencies"
 import { mergePreferences } from "@/types/user-preferences"
 import {
   buildSplitDetail,
@@ -270,7 +270,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           setCustomRates(projectData.customRates)
         }
         // 設定精度
-        setPrecision(projectData.exchangeRatePrecision ?? 2)
+        setPrecision(getCurrencyDecimals(projCurrency))
       }
 
       if (membersRes.ok) {
@@ -316,7 +316,7 @@ export function ExpenseForm({ projectId, expenseId, mode }: ExpenseFormProps) {
           setCustomRates(projectData.customRates)
         }
         // 設定精度
-        setPrecision(projectData.exchangeRatePrecision ?? 2)
+        setPrecision(getCurrencyDecimals(projCurrency))
       }
 
       if (expenseRes.ok) {

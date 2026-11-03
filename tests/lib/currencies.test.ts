@@ -5,6 +5,7 @@ import {
   getCurrencyInfo,
   formatCurrency,
   getCurrencyDecimals,
+  minorUnitLabel,
   CURRENCY_SHORT_NAMES,
 } from "@/lib/constants/currencies"
 
@@ -165,5 +166,16 @@ describe("getCurrencyDecimals", () => {
   it("should return default currency decimals for unknown currency", () => {
     // Unknown currency returns TWD as default, which has 0 decimals
     expect(getCurrencyDecimals("UNKNOWN")).toBe(0)
+  })
+})
+
+describe("minorUnitLabel", () => {
+  it("labels a zero-decimal currency", () => {
+    expect(minorUnitLabel("TWD")).toBe("1 TWD（無小數）")
+    expect(minorUnitLabel("JPY")).toBe("1 JPY（無小數）")
+  })
+
+  it("labels a two-decimal currency", () => {
+    expect(minorUnitLabel("USD")).toBe("0.01 USD")
   })
 })

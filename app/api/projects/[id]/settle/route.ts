@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { DEFAULT_CURRENCY, getCurrencyDecimals } from "@/lib/constants/currencies"
 import { convertCurrency } from "@/lib/services/exchange-rate"
 import { fromMinorUnits } from "@/lib/currency-conversion"
 
@@ -149,12 +149,12 @@ export async function GET(
     // 獲取專案幣別、自訂匯率和精度設定
     const project = await prisma.project.findUnique({
       where: { id },
-      select: { currency: true, customRates: true, exchangeRatePrecision: true },
+      select: { currency: true, customRates: true },
     })
 
     const projectCurrency = project?.currency || DEFAULT_CURRENCY
     const customRates = (project?.customRates as Record<string, number> | null) || {}
-    const precision = project?.exchangeRatePrecision ?? 2
+    const precision = getCurrencyDecimals(projectCurrency)
 
     // 獲取所有費用（只取未刪除的）
     const expenses = await prisma.expense.findMany({

@@ -33,11 +33,17 @@ export function V2CurrencyField({
   onChange,
   disabled,
   short = false,
+  placeholder,
+  ariaLabel,
+  exclude,
 }: {
   value: string
   onChange: (value: string) => void
   disabled?: boolean
   short?: boolean
+  placeholder?: string
+  ariaLabel?: string
+  exclude?: string[]
 }) {
   return (
     <div className="relative">
@@ -45,13 +51,17 @@ export function V2CurrencyField({
         aria-hidden="true"
         className="flex w-full items-center justify-between rounded-[12px] border border-v2-line bg-v2-paper px-3.5 py-3 text-[13px] text-v2-ink"
       >
-        <span className={short ? "font-bold" : "font-semibold"}>{currencyLabel(value, short)}</span>
+        <span className={`${short ? "font-bold" : "font-semibold"} ${value ? "" : "font-normal text-v2-ink-subtle"}`}>
+          {value ? currencyLabel(value, short) : placeholder ?? ""}
+        </span>
         <ChevronDown className="h-3.5 w-3.5 text-v2-ink-subtle" />
       </div>
       <CurrencySelect
         value={value as CurrencyCode}
         onChange={(next) => onChange(next)}
         disabled={disabled}
+        ariaLabel={ariaLabel}
+        exclude={exclude}
         className="absolute inset-0 h-full w-full opacity-0"
       />
     </div>

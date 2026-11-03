@@ -6,21 +6,20 @@ const v = (o = {}) => ({ ...emptyProjectForm("TWD"), name: "京都", ...o })
 
 describe("project form", () => {
   it("defaults", () => {
-    expect(emptyProjectForm("JPY")).toEqual({ name: "", description: "", cover: "icon:leaf;color:lake", startDate: null, endDate: null, currency: "JPY", budget: "", joinMode: "both", exchangeRatePrecision: 2, customRates: {} })
+    expect(emptyProjectForm("JPY")).toEqual({ name: "", description: "", cover: "icon:leaf;color:lake", startDate: null, endDate: null, currency: "JPY", budget: "", joinMode: "both", customRates: {} })
     expect(JOIN_MODE_OPTIONS.map((o) => o.value)).toEqual(["both", "create_only", "claim_only"])
   })
   it("validates in order", () => {
     expect(validateProjectForm(v({ name: "  " }))).toBe("請輸入旅程名稱")
     expect(validateProjectForm(v({ startDate: "2026-11-16", endDate: "2026-11-12" }))).toBe("結束日需晚於出發日")
     for (const budget of ["-1", "abc"]) expect(validateProjectForm(v({ budget }))).toBe("預算需為 0 以上的數字")
-    for (const exchangeRatePrecision of [-1, 9, 1.5]) expect(validateProjectForm(v({ exchangeRatePrecision }))).toBe("匯率精度需為 0 到 8 的整數")
     expect(validateProjectForm(v({ customRates: { JPY: "0" } }))).toBe("自訂匯率需大於 0")
     expect(validateProjectForm(v({ budget: "", startDate: "2026-11-12", endDate: "2026-11-12", customRates: { JPY: "" } }))).toBeNull()
   })
   it("builds payloads", () => {
     const f = v({ name: " 京都 ", description: " ", budget: "50000", startDate: "2026-11-12", endDate: "2026-11-16", customRates: { JPY: "0.21", USD: "" } })
     expect(toCreatePayload(f)).toEqual({ name: "京都", description: null, cover: "icon:leaf;color:lake", startDate: "2026-11-12", endDate: "2026-11-16", budget: 50000, currency: "TWD", joinMode: "both" })
-    expect(toUpdatePayload(f)).toEqual({ ...toCreatePayload(f), exchangeRatePrecision: 2, customRates: { JPY: 0.21 } })
+    expect(toUpdatePayload(f)).toEqual({ ...toCreatePayload(f), customRates: { JPY: 0.21 } })
     expect(toUpdatePayload(v()).customRates).toBeNull()
     expect(toCreatePayload(v()).budget).toBeNull()
   })

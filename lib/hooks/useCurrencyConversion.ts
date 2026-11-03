@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { useAuthFetch } from "@/components/auth/liff-provider"
-import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { DEFAULT_CURRENCY, getCurrencyDecimals } from "@/lib/constants/currencies"
 
 interface ExchangeRates {
   [currency: string]: number
@@ -40,9 +40,12 @@ export function useCurrencyConversion(
   const {
     projectCurrency = DEFAULT_CURRENCY,
     customRates = null,
-    precision = 2,
+    precision,
     autoFetch = true,
   } = options
+  // Amounts round to the settlement currency's minor unit unless a caller
+  // overrides it explicitly with `precision`.
+  const decimals = precision ?? getCurrencyDecimals(projectCurrency)
 
   const authFetch = useAuthFetch()
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates | null>(null)
@@ -101,10 +104,10 @@ export function useCurrencyConversion(
       if (fromCurrency === projectCurrency) return amount
 
       const rate = getRate(fromCurrency, projectCurrency)
-      const factor = Math.pow(10, precision)
+      const factor = Math.pow(10, decimals)
       return Math.round(amount * rate * factor) / factor
     },
-    [projectCurrency, getRate, precision]
+    [projectCurrency, getRate, decimals]
   )
 
   return {

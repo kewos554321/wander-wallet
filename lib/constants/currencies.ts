@@ -63,3 +63,10 @@ export function getCurrencyDecimals(currencyCode: string): number {
   const info = getCurrencyInfo(currencyCode)
   return "decimals" in info ? info.decimals : 2
 }
+
+/** Human label for a currency's minor unit, e.g. "1 TWD（無小數）" / "0.01 USD". */
+export function minorUnitLabel(currencyCode: string): string {
+  const decimals = getCurrencyDecimals(currencyCode)
+  if (decimals === 0) return `1 ${currencyCode}（無小數）`
+  return `${(10 ** -decimals).toFixed(decimals)} ${currencyCode}`
+}

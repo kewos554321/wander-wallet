@@ -36,7 +36,6 @@ const EMPTY_VALUES: ProjectFormValues = {
   currency: "TWD",
   budget: "",
   joinMode: "both",
-  exchangeRatePrecision: 2,
   customRates: {},
 }
 
@@ -55,7 +54,6 @@ function mapProjectToForm(data: ProjectRecord): ProjectFormValues {
     currency: data.currency || "TWD",
     budget: data.budget ? String(Number(data.budget)) : "",
     joinMode: (data.joinMode as JoinMode) || "both",
-    exchangeRatePrecision: data.exchangeRatePrecision ?? 2,
     customRates,
   }
 }

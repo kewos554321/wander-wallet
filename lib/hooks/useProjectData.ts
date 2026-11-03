@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { useAuthFetch } from "@/components/auth/liff-provider"
-import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { DEFAULT_CURRENCY, getCurrencyDecimals } from "@/lib/constants/currencies"
 
 // 簡易快取（避免重複請求）
 const projectCache = new Map<string, { data: Project; timestamp: number }>()
@@ -177,7 +177,7 @@ export function useProjectData(
     error,
     projectCurrency: project?.currency || DEFAULT_CURRENCY,
     customRates: project?.customRates || null,
-    precision: project?.exchangeRatePrecision ?? 2,
+    precision: getCurrencyDecimals(project?.currency || DEFAULT_CURRENCY),
     refetch: fetchProject.bind(null, false),
     refetchMembers: fetchMembers.bind(null, false),
     invalidate,

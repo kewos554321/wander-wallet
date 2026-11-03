@@ -15,10 +15,11 @@ vi.mock("@/components/auth/liff-provider", () => ({
   useLiff: () => ({ user: { id: "u1", preferences: null }, updatePreferences: vi.fn() }),
 }))
 vi.mock("@/components/ui/currency-select", () => ({
-  CurrencySelect: ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
-    <select aria-label="結算幣別" value={value} onChange={(e) => onChange(e.target.value)}>
+  CurrencySelect: ({ value, onChange, ariaLabel }: { value: string; onChange: (v: string) => void; ariaLabel?: string }) => (
+    <select aria-label={ariaLabel} value={value} onChange={(e) => onChange(e.target.value)}>
       <option value="TWD">TWD</option>
       <option value="JPY">JPY</option>
+      <option value="USD">USD</option>
     </select>
   ),
 }))
@@ -135,7 +136,7 @@ describe("ProjectSettingsV2", () => {
     expect(body.name).toBe("京都楓葉五日遊")
     expect(body.cover).toBe("icon:leaf;color:lake")
     expect(body.customRates).toEqual({ JPY: 0.21 })
-    expect(body.exchangeRatePrecision).toBe(2)
+    expect(body).not.toHaveProperty("exchangeRatePrecision")
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/projects/p1"))
   })
 
@@ -153,6 +154,48 @@ describe("ProjectSettingsV2", () => {
     mockRoutes()
     render(<ProjectSettingsV2 projectId="p1" />)
     expect(await screen.findByLabelText("JPY 匯率")).toHaveValue("0.21")
+  })
+
+  it("shows the settlement currency's minor unit", async () => {
+    mockRoutes()
+    render(<ProjectSettingsV2 projectId="p1" />)
+    await screen.findByLabelText("專案名稱")
+    expect(screen.getByTestId("settlement-minor-unit")).toHaveTextContent("1 TWD（無小數）")
+  })
+
+  it("labels each rate row with its currency's minor unit", async () => {
+    mockRoutes()
+    render(<ProjectSettingsV2 projectId="p1" />)
+    await screen.findByLabelText("JPY 匯率")
+    expect(screen.getByTestId("rate-minor-unit-JPY")).toHaveTextContent("1 JPY（無小數）")
+  })
+
+  it("prefills the live rate when adding a currency", async () => {
+    mockRoutes({ ratesRes: ok({ rates: { USD: 1, TWD: 31.5 } }) })
+    render(<ProjectSettingsV2 projectId="p1" />)
+    await screen.findByLabelText("專案名稱")
+    fireEvent.change(screen.getByLabelText("新增幣別"), { target: { value: "USD" } })
+    fireEvent.click(screen.getByRole("button", { name: "新增" }))
+    expect(screen.getByLabelText("USD 匯率")).toHaveValue("31.5")
+  })
+
+  it("keeps a newly added currency empty while rates are loading", async () => {
+    mockRoutes({ ratesRes: ok({ rates: {} }) })
+    render(<ProjectSettingsV2 projectId="p1" />)
+    await screen.findByLabelText("專案名稱")
+    fireEvent.change(screen.getByLabelText("新增幣別"), { target: { value: "USD" } })
+    fireEvent.click(screen.getByRole("button", { name: "新增" }))
+    expect(screen.getByLabelText("USD 匯率")).toHaveValue("")
+    expect(screen.getByText("即時匯率讀取中…")).toBeInTheDocument()
+  })
+
+  it("shows the custom hint for a filled row and the live hint once cleared", async () => {
+    mockRoutes()
+    render(<ProjectSettingsV2 projectId="p1" />)
+    const input = await screen.findByLabelText("JPY 匯率")
+    expect(screen.getByText(/使用自訂匯率/)).toBeInTheDocument()
+    fireEvent.change(input, { target: { value: "" } })
+    expect(screen.getByText(/使用即時匯率：/)).toBeInTheDocument()
   })
 
   it("hides the danger zone for a non-creator", async () => {
@@ -199,6 +242,23 @@ describe("ProjectSettingsV2", () => {
     await screen.findByLabelText("專案名稱")
     expect(screen.getByText("TWD 新台幣")).toBeInTheDocument()
     expect(screen.getByText("$")).toBeInTheDocument()
+  })
+
+  it("places the budget help under its title", async () => {
+    mockRoutes()
+    render(<ProjectSettingsV2 projectId="p1" />)
+    await screen.findByLabelText("專案名稱")
+    const help = screen.getByText("設定預算後，可在旅程總覽查看花費進度")
+    expect(help.previousElementSibling?.tagName).toBe("LABEL")
+  })
+
+  it("places the settlement hint and minor unit under their title", async () => {
+    mockRoutes()
+    render(<ProjectSettingsV2 projectId="p1" />)
+    await screen.findByLabelText("專案名稱")
+    const hint = screen.getByText("所有費用將以此幣別進行結算計算")
+    expect(hint.tagName).toBe("P")
+    expect(screen.getByTestId("settlement-minor-unit").previousElementSibling).toBe(hint)
   })
 
   it("keeps the budget symbol inline with the value so they cannot overlap", async () => {
@@ -260,14 +320,13 @@ describe("ProjectSettingsV2", () => {
     expect(screen.getAllByText("成員加入方式")).toHaveLength(1)
   })
 
-  it("edits budget, custom rate, precision, join mode and settlement currency, then persists them", async () => {
+  it("edits budget, custom rate, join mode and settlement currency, then persists them", async () => {
     mockRoutes()
     render(<ProjectSettingsV2 projectId="p1" />)
     await screen.findByLabelText("專案名稱")
 
     fireEvent.change(screen.getByLabelText("旅程預算"), { target: { value: "12345" } })
     fireEvent.change(screen.getByLabelText("JPY 匯率"), { target: { value: "0.25" } })
-    fireEvent.change(screen.getByLabelText("匯率計算精度"), { target: { value: "3" } })
     fireEvent.click(screen.getByRole("radio", { name: "僅建立新成員" }))
     fireEvent.change(screen.getByLabelText("結算幣別"), { target: { value: "JPY" } })
 
@@ -278,17 +337,15 @@ describe("ProjectSettingsV2", () => {
     const body = JSON.parse(putCall()![1].body)
     expect(body.budget).toBe(12345)
     expect(body.customRates).toEqual({ JPY: 0.25 })
-    expect(body.exchangeRatePrecision).toBe(3)
     expect(body.joinMode).toBe("create_only")
     expect(body.currency).toBe("JPY")
   })
 
-  it("clamps an out-of-range precision to 0", async () => {
+  it("no longer shows the rate-precision field", async () => {
     mockRoutes()
     render(<ProjectSettingsV2 projectId="p1" />)
     await screen.findByLabelText("專案名稱")
-    fireEvent.change(screen.getByLabelText("匯率計算精度"), { target: { value: "-5" } })
-    expect(screen.getByLabelText("匯率計算精度")).toHaveValue(0)
+    expect(screen.queryByLabelText("匯率計算精度")).not.toBeInTheDocument()
   })
 
   it("navigates back to the project when the footer cancel is clicked", async () => {
@@ -304,8 +361,9 @@ describe("ProjectSettingsV2", () => {
     render(<ProjectSettingsV2 projectId="p1" />)
     expect(await screen.findByLabelText("專案名稱")).toHaveValue("京都紅葉五日遊")
     await waitFor(() => expect(mockAuthFetch).toHaveBeenCalledWith("/api/exchange-rates"))
-    // No live-rate hint because rates never loaded.
-    expect(screen.queryByText(/目前使用即時匯率/)).not.toBeInTheDocument()
+    // JPY already has a custom value, so it shows the custom hint; no live rate needed.
+    expect(screen.getByText(/使用自訂匯率/)).toBeInTheDocument()
+    expect(screen.queryByText(/使用即時匯率：/)).not.toBeInTheDocument()
   })
 
   it("updates the trip dates through the date-range calendar and saves them", async () => {

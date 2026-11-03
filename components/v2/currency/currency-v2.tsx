@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { useCurrencyConversion, useProjectData } from "@/lib/hooks"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
+import { getCurrencyDecimals } from "@/lib/constants/currencies"
 import { customRateDiff, rateFromRates } from "./format"
 import { CurrencyV2View, type CustomRateRow } from "./currency-v2-view"
 
@@ -43,7 +44,11 @@ export function CurrencyV2({ projectId }: { projectId: string }) {
       : rateFromRates(fromCurrency, toCurrency, rates)
 
   const numeric = Number.parseFloat(amount)
-  const convertedAmount = Number.isFinite(numeric) ? Math.round(numeric * rate * 100) / 100 : null
+  const currencyDecimals = getCurrencyDecimals(projectCurrency)
+  const currencyFactor = 10 ** currencyDecimals
+  const convertedAmount = Number.isFinite(numeric)
+    ? Math.round(numeric * rate * currencyFactor) / currencyFactor
+    : null
 
   const customRateRows = useMemo<CustomRateRow[]>(() => {
     if (!customRates) return []

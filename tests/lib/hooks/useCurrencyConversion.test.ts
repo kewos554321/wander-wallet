@@ -69,7 +69,7 @@ describe("useCurrencyConversion", () => {
       expect(result.current.convert(100, "USD")).toBe(3000)
     })
 
-    it("should round to default 2 decimal places", async () => {
+    it("should round by the settlement currency's minor unit by default", async () => {
       mockAuthFetch.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ rates: { USD: 1, TWD: 32.567 } }),
@@ -81,9 +81,25 @@ describe("useCurrencyConversion", () => {
 
       await waitFor(() => expect(result.current.exchangeRates).not.toBeNull())
 
-      // 100 * 32.567 = 3256.7, rounded to 2 decimals
+      // TWD has no minor unit: 100 * 32.567 = 3256.7 → 3257
       const converted = result.current.convert(100, "USD")
-      expect(converted).toBe(3256.7)
+      expect(converted).toBe(3257)
+    })
+
+    it("keeps cents for a two-decimal settlement currency", async () => {
+      mockAuthFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ rates: { JPY: 150, USD: 1 } }),
+      })
+
+      const { result } = renderHook(() =>
+        useCurrencyConversion({ projectCurrency: "USD" })
+      )
+
+      await waitFor(() => expect(result.current.exchangeRates).not.toBeNull())
+
+      // 100 JPY / 150 = 0.666… → 0.67
+      expect(result.current.convert(100, "JPY")).toBe(0.67)
     })
 
     it("should round to custom precision when specified", async () => {

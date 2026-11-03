@@ -4,7 +4,8 @@ import { CoverTileButton } from "@/components/v2/cover/cover-tile-button"
 import { DateRangeField } from "@/components/v2/project/date-range-field"
 import { JoinModePicker } from "@/components/v2/project/join-mode-picker"
 import { V2CurrencyField, moneySymbol } from "@/components/v2/ui/currency-field"
-import { SUPPORTED_CURRENCIES } from "@/lib/constants/currencies"
+import { roundRateForDisplay } from "@/lib/currency-conversion"
+import { minorUnitLabel } from "@/lib/constants/currencies"
 import type { ProjectFormValues } from "@/lib/hooks/use-project-form"
 import { ExchangeRateRow } from "./exchange-rate-row"
 
@@ -25,11 +26,11 @@ export interface ProjectSettingsV2ViewProps {
   onRequestDelete: () => void
 }
 
-function liveRate(rates: Record<string, number>, from: string, to: string, precision: number): number | null {
+function liveRate(rates: Record<string, number>, from: string, to: string): number | null {
   const fromRate = rates[from]
   const toRate = rates[to]
   if (!fromRate || !toRate) return null
-  return Number((toRate / fromRate).toFixed(precision))
+  return roundRateForDisplay(toRate / fromRate)
 }
 
 export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
@@ -96,9 +97,10 @@ export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
           disabled={props.saving}
         />
         <div>
-          <label htmlFor="v2-project-budget" className={fieldLabelClass}>
+          <label htmlFor="v2-project-budget" className="block text-xs font-semibold text-v2-ink-muted">
             旅程預算（選填）
           </label>
+          <p className="mb-2 mt-1 text-xs text-v2-ink-subtle">設定預算後，可在旅程總覽查看花費進度</p>
           <div className="flex items-center gap-1.5 rounded-xl border border-v2-line bg-v2-paper px-3.5 py-3">
             <span className="text-[13px] text-v2-ink-muted">{moneySymbol(values.currency)}</span>
             <input
@@ -111,16 +113,23 @@ export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
               className="w-full bg-transparent text-[13px] outline-none"
             />
           </div>
-          <p className="mt-1.5 text-xs text-v2-ink-subtle">設定預算後，可在旅程總覽查看花費進度</p>
         </div>
       </div>
 
       <div className={cardClass}>
         <p className={cardTitleClass}>幣別與匯率</p>
         <div>
-          <label className={fieldLabelClass}>結算幣別</label>
-          <V2CurrencyField value={values.currency} onChange={(c) => set("currency", c)} disabled={props.saving} />
-          <p className="mt-1.5 text-xs text-v2-ink-subtle">所有費用將以此幣別進行結算計算</p>
+          <label className="block text-xs font-semibold text-v2-ink-muted">結算幣別</label>
+          <p className="mt-1 text-xs text-v2-ink-subtle">所有費用將以此幣別進行結算計算</p>
+          <p data-testid="settlement-minor-unit" className="mb-2 mt-0.5 text-xs text-v2-ink-subtle">
+            最小單位：{minorUnitLabel(values.currency)}
+          </p>
+          <V2CurrencyField
+            value={values.currency}
+            onChange={(c) => set("currency", c)}
+            disabled={props.saving}
+            ariaLabel="結算幣別"
+          />
         </div>
 
         <div>
@@ -133,60 +142,39 @@ export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
                 currency={curr}
                 settlementCurrency={values.currency}
                 value={values.customRates[curr] ?? ""}
-                liveRate={liveRate(props.rates, curr, values.currency, values.exchangeRatePrecision)}
+                liveRate={liveRate(props.rates, curr, values.currency)}
+                minorUnit={minorUnitLabel(curr)}
                 onChange={(rate) => set("customRates", { ...values.customRates, [curr]: rate })}
                 disabled={props.saving}
               />
             ))}
           </div>
           <div className="mt-3 flex items-center gap-2">
-            <select
-              aria-label="新增幣別"
-              value={pendingCurrency}
-              onChange={(e) => setPendingCurrency(e.target.value)}
-              className="min-w-0 flex-1 rounded-xl border border-v2-line bg-v2-paper px-3 py-2 text-[13px]"
-            >
-              <option value="">選擇要新增的幣別</option>
-              {SUPPORTED_CURRENCIES.filter(
-                (c) => c.code !== values.currency && !rateCurrencies.includes(c.code),
-              ).map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.code} {c.name}
-                </option>
-              ))}
-            </select>
+            <div className="min-w-0 flex-1">
+              <V2CurrencyField
+                value={pendingCurrency}
+                onChange={setPendingCurrency}
+                disabled={props.saving}
+                placeholder="選擇要新增的幣別"
+                ariaLabel="新增幣別"
+                exclude={[values.currency, ...rateCurrencies]}
+              />
+            </div>
             <button
               type="button"
               disabled={!pendingCurrency || props.saving}
               onClick={() => {
-                set("customRates", { ...values.customRates, [pendingCurrency]: "" })
+                const live = liveRate(props.rates, pendingCurrency, values.currency)
+                set("customRates", {
+                  ...values.customRates,
+                  [pendingCurrency]: live != null ? String(live) : "",
+                })
                 setPendingCurrency("")
               }}
-              className="rounded-xl border border-v2-line bg-v2-paper px-3 py-2 text-[13px] font-semibold text-v2-lake disabled:opacity-50"
+              className="shrink-0 rounded-xl border border-v2-line bg-v2-paper px-3 py-3 text-[13px] font-semibold text-v2-lake disabled:opacity-50"
             >
               新增
             </button>
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor="v2-rate-precision" className={fieldLabelClass}>
-            匯率計算精度
-          </label>
-          <div className="flex items-center gap-2.5">
-            <input
-              id="v2-rate-precision"
-              aria-label="匯率計算精度"
-              type="number"
-              min={0}
-              max={8}
-              step={1}
-              value={values.exchangeRatePrecision}
-              onChange={(e) => set("exchangeRatePrecision", Math.max(0, Math.min(8, Number(e.target.value) || 0)))}
-              disabled={props.saving}
-              className="w-14 rounded-xl border border-v2-line bg-v2-paper px-3 py-2.5 text-center text-[13px] font-semibold outline-none"
-            />
-            <span className="text-xs text-v2-ink-muted">位小數，影響匯率顯示與結算四捨五入</span>
           </div>
         </div>
       </div>

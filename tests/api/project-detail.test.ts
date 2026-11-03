@@ -551,13 +551,10 @@ describe("PUT /api/projects/[id] - additional tests", () => {
     )
   })
 
-  it("should update exchangeRatePrecision", async () => {
+  it("ignores the removed rate-precision field", async () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue({ id: "member-1" } as never)
-    vi.mocked(prisma.project.update).mockResolvedValue({
-      ...mockProjectAsMember,
-      exchangeRatePrecision: 4,
-    } as never)
+    vi.mocked(prisma.project.update).mockResolvedValue(mockProjectAsMember as never)
 
     const req = new NextRequest("http://localhost:3000/api/projects/project-123", {
       method: "PUT",
@@ -566,6 +563,7 @@ describe("PUT /api/projects/[id] - additional tests", () => {
     const response = await PUT(req, { params: Promise.resolve({ id: "project-123" }) })
 
     expect(response.status).toBe(200)
+    expect(vi.mocked(prisma.project.update).mock.calls[0][0].data).not.toHaveProperty("exchangeRatePrecision")
   })
 
   it("should handle update error", async () => {
