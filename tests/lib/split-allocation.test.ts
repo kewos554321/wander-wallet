@@ -34,6 +34,22 @@ describe("allocateBothCurrencies", () => {
     expect(result.bumped).toEqual([])
   })
 
+  it("never gives the original or settlement remainder to a fixed member", () => {
+    const weights: WeightedMember[] = [
+      { id: "fixed", weight: 30, fixed: true },
+      { id: "a", weight: 70 / 3 },
+      { id: "b", weight: 70 / 3 },
+      { id: "c", weight: 70 / 3 },
+    ]
+    const result = allocateBothCurrencies(100, 100, weights, new Map([["fixed", -100]]))
+    expect(result.original.get("fixed")).toBe(30)
+    expect(result.settlement.get("fixed")).toBe(30)
+    expect(result.originalBumped).not.toContain("fixed")
+    expect(result.bumped).not.toContain("fixed")
+    expect([...result.original.values()].reduce((s, v) => s + v, 0)).toBe(100)
+    expect([...result.settlement.values()].reduce((s, v) => s + v, 0)).toBe(100)
+  })
+
   it("does not mutate the passed ledger", () => {
     const discrepancy = new Map([["a", 0], ["b", 0], ["c", 0]])
     allocateBothCurrencies(1000, 100, eq(100 / 3, 100 / 3, 100 / 3), discrepancy)

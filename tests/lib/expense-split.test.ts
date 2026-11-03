@@ -143,7 +143,7 @@ describe("computeIdealShares", () => {
 
   it("uses custom shares and splits the rest among the auto members", () => {
     expect(computeIdealShares(input({ amount: 100, participantIds: ["a", "b"], customShares: { a: 30 } }))).toEqual([
-      { memberId: "a", weight: 30 },
+      { memberId: "a", weight: 30, fixed: true },
       { memberId: "b", weight: 70 },
     ])
   })
@@ -154,7 +154,7 @@ describe("computeIdealShares", () => {
     ).toEqual([
       { memberId: "a", weight: 45 },
       { memberId: "b", weight: 45 },
-      { memberId: "c", weight: 10 },
+      { memberId: "c", weight: 10, fixed: true },
     ])
   })
 })

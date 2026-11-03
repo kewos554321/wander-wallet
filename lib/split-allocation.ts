@@ -3,6 +3,7 @@ import { allocate } from "@/lib/currency-conversion"
 export interface WeightedMember {
   id: string
   weight: number
+  fixed?: boolean
 }
 
 export interface DualAllocation {

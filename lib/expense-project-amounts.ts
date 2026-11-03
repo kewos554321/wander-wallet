@@ -15,6 +15,8 @@ export interface ProjectAmountInput {
   participants: { memberId: string; shareAmount: number }[]
   payers: { memberId: string; amount: number }[]
   discrepancy: Map<string, number>
+  /** Members whose share is exact and must not absorb a rounding unit. */
+  fixedParticipantIds?: string[]
   previous?: {
     totalMinor: number
     participants: { memberId: string; shareAmount: number; shareAmountProject: number }[]
@@ -57,7 +59,11 @@ export function computeProjectAmounts(input: ProjectAmountInput): ProjectAmountR
   const participantResult = allocateBothCurrencies(
     toMinorUnits(input.amount, input.currency),
     totalMinor,
-    input.participants.map((p) => ({ id: p.memberId, weight: p.shareAmount })),
+    input.participants.map((p) => ({
+      id: p.memberId,
+      weight: p.shareAmount,
+      fixed: input.fixedParticipantIds?.includes(p.memberId),
+    })),
     discrepancy,
   )
   for (const id of participantResult.bumped) {

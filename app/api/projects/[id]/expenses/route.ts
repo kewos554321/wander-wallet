@@ -259,6 +259,7 @@ export async function POST(
       })),
       payers: validatedPayers.map((p) => ({ memberId: p.memberId, amount: p.amount })),
       discrepancy: new Map(projectMembers.map((m) => [m.id, m.remainderDiscrepancy ?? 0])),
+      fixedParticipantIds: Object.keys(validatedSplitDetail?.customShares ?? {}),
     })
 
     const initialDiscrepancy = new Map(

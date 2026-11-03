@@ -26,7 +26,7 @@ export interface SplitState {
 export interface SplitDerived {
   splitInput: SplitInput
   /** Ideal (unrounded) weights; what the client sends to the server. */
-  weights: { memberId: string; weight: number }[]
+  weights: { memberId: string; weight: number; fixed?: boolean }[]
   shares: ParticipantShare[]
   /** Allocated settlement shares (minor-unit accurate); null without a context. */
   sharesProject: ParticipantShare[] | null
@@ -112,7 +112,7 @@ export function deriveSplit(amount: number, participantOrder: string[], state: S
         roundMajorToMinor(splitInput.amount * context.rate, context.projectCurrency),
         context.projectCurrency,
       ),
-      weights.map((w) => ({ id: w.memberId, weight: w.weight })),
+      weights.map((w) => ({ id: w.memberId, weight: w.weight, fixed: w.fixed })),
       new Map(Object.entries(context.discrepancy)),
     )
     shares = weights.map((w) => ({
@@ -124,12 +124,9 @@ export function deriveSplit(amount: number, participantOrder: string[], state: S
       shareAmount: fromMinorUnits(dual.settlement.get(w.memberId) ?? 0, context.projectCurrency),
     }))
     remainderMembers = dual.originalBumped
-    const totalWeight = weights.reduce((s, w) => s + w.weight, 0)
-    remainderMinor =
-      totalWeight > 0
-        ? originalTotalMinor -
-          weights.reduce((s, w) => s + Math.floor((originalTotalMinor * w.weight) / totalWeight), 0)
-        : 0
+    // Every distributed unit is one minor unit; this is the exact remainder
+    // after the (fixed-aware) allocation, not a separate floor calculation.
+    remainderMinor = dual.originalBumped.length
   } else {
     shares = computeShares(splitInput)
   }

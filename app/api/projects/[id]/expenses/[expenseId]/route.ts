@@ -215,6 +215,7 @@ export async function PUT(
 
     // splitDetail: explicit value wins; changed shares without it (old clients) clear it
     let splitDetailUpdate: Prisma.InputJsonValue | typeof Prisma.DbNull | undefined
+    let fixedParticipantIds: string[] = []
     if (hasSplitDetailField) {
       if (splitDetail === null) {
         splitDetailUpdate = Prisma.DbNull
@@ -232,9 +233,13 @@ export async function PUT(
         const isEmpty =
           Object.keys(result.detail.personalItems).length === 0 && Object.keys(result.detail.customShares).length === 0
         splitDetailUpdate = isEmpty ? Prisma.DbNull : (result.detail as unknown as Prisma.InputJsonValue)
+        fixedParticipantIds = Object.keys(result.detail.customShares)
       }
     } else if (participants && Array.isArray(participants)) {
       splitDetailUpdate = Prisma.DbNull
+    } else {
+      const existingDetail = existingExpense.splitDetail as { customShares?: Record<string, number> } | null
+      fixedParticipantIds = Object.keys(existingDetail?.customShares ?? {})
     }
 
     // 更新費用（匯率轉換在結算時執行）
@@ -355,6 +360,7 @@ export async function PUT(
       participants: settlementParticipants,
       payers: validatedPayers.map((p) => ({ memberId: p.memberId, amount: p.amount })),
       discrepancy: ledger,
+      fixedParticipantIds,
     })
     ledger = projectAmounts.discrepancy
 

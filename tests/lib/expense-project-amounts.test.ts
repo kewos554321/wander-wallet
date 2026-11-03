@@ -91,6 +91,23 @@ describe("computeProjectAmounts", () => {
     expect(r.payers.reduce((s, p) => s + p.amountProject, 0)).toBe(3172)
   })
 
+  it("never gives the settlement remainder to a fixed participant", () => {
+    const r = computeProjectAmounts({
+      amount: 1000,
+      currency: "TWD",
+      projectCurrency: "USD",
+      rate: 0.031715,
+      participants,
+      payers: [{ memberId: "a", amount: 1000 }],
+      discrepancy: new Map([["a", -100]]),
+      fixedParticipantIds: ["a"],
+    })
+    expect(r.totalMinor).toBe(3172)
+    expect(r.participants.find((p) => p.memberId === "a")?.shareAmountProject).toBe(1057)
+    expect(r.discrepancy.get("a")).toBe(-100)
+    expect(r.participants.reduce((s, p) => s + p.shareAmountProject, 0)).toBe(3172)
+  })
+
   it("does not double-count when recomputing the same split", () => {
     const first = computeProjectAmounts({
       amount: 1000,

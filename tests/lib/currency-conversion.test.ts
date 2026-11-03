@@ -44,6 +44,23 @@ describe("allocate", () => {
     expect(r.bumped).toEqual(["a"]) // tie → original order
     expect(r.allocations.get("a")).toBe(334)
   })
+  it("never gives a rounding unit to a fixed weight", () => {
+    const r = allocate(
+      100,
+      [
+        { id: "fixed", weight: 30, fixed: true },
+        { id: "a", weight: 70 / 3 },
+        { id: "b", weight: 70 / 3 },
+        { id: "c", weight: 70 / 3 },
+      ],
+      new Map([["fixed", -100]]),
+    )
+    expect(r.allocations.get("fixed")).toBe(30)
+    expect(r.bumped).not.toContain("fixed")
+    expect(r.bumped.length).toBe(1)
+    expect([...r.allocations.values()].reduce((s, v) => s + v, 0)).toBe(100)
+  })
+
   it("falls back to equal split when all weights are zero", () => {
     const r = allocate(100, [{ id: "a", weight: 0 }, { id: "b", weight: 0 }], new Map())
     expect(r.allocations.get("a")).toBe(50)

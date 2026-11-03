@@ -20,12 +20,19 @@ export function roundMajorToMinor(major: number, currencyCode: string): number {
 export interface AllocationWeights {
   id: string
   weight: number
+  /** A fixed member never absorbs a rounding unit. */
+  fixed?: boolean
 }
 
 export interface AllocationResult {
   allocations: Map<string, number>
   bumped: string[]
 }
+
+// Weights are derived from fractional equal shares; a mathematically exact
+// integer can arrive as 212.99999999999997. Flooring without tolerance would
+// steal a minor unit from a fixed member.
+const FLOOR_EPSILON = 1e-9
 
 /**
  * Split `totalMinor` across weighted members as integers. Everyone gets
@@ -44,7 +51,7 @@ export function allocate(
   const allocations = new Map<string, number>()
   let assigned = 0
   for (const w of effective) {
-    const v = Math.floor((totalMinor * w.weight) / effTotal)
+    const v = Math.floor((totalMinor * w.weight) / effTotal + FLOOR_EPSILON)
     allocations.set(w.id, v)
     assigned += v
   }
@@ -53,11 +60,14 @@ export function allocate(
   // Only members whose exact share was rounded down have a claim to a unit;
   // among them the lowest discrepancy wins (ties by original order). This keeps
   // every allocation within [floor(exact), ceil(exact)].
+  // Fixed members are exact obligations; only auto members are eligible for
+  // the rounding remainder. If every member is fixed, the caller's exact-sum
+  // check is the authority and no unit is assigned here.
   const fractional = effective.filter((w) => {
     const exact = (totalMinor * w.weight) / effTotal
-    return w.weight > 0 && exact > Math.floor(exact)
+    return !w.fixed && w.weight > 0 && exact - Math.floor(exact + FLOOR_EPSILON) > FLOOR_EPSILON
   })
-  const positive = effective.filter((w) => w.weight > 0)
+  const positive = effective.filter((w) => !w.fixed && w.weight > 0)
   const orderSource =
     fractional.length > 0 ? fractional : positive.length > 0 ? positive : effective
   const order = orderSource
@@ -92,7 +102,7 @@ export function rollbackAllocation(
 
   const next = new Map(discrepancy)
   for (const w of effective) {
-    const floorShare = Math.floor((totalMinor * w.weight) / effTotal)
+    const floorShare = Math.floor((totalMinor * w.weight) / effTotal + FLOOR_EPSILON)
     const extra = (stored.get(w.id) ?? 0) - floorShare
     next.set(w.id, (next.get(w.id) ?? 0) - extra)
   }

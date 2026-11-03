@@ -70,7 +70,7 @@ export function computeShares(input: SplitInput): ParticipantShare[] {
 // Unrounded split weights: personal items plus each auto member's even share of
 // the pool. These are the proportions fed to the tail-account allocator, which
 // is the single source of both the original and settlement share amounts.
-export function computeIdealShares(input: SplitInput): { memberId: string; weight: number }[] {
+export function computeIdealShares(input: SplitInput): { memberId: string; weight: number; fixed?: boolean }[] {
   const { amount, participantIds, personalItems, customShares } = input
   if (participantIds.length === 0) return []
 
@@ -80,10 +80,14 @@ export function computeIdealShares(input: SplitInput): { memberId: string; weigh
   const customTotal = participantIds.reduce((s, id) => s + (hasOwn(customShares, id) ? customShares[id] : 0), 0)
   const perAuto = autoIds.length > 0 ? (amount - personalTotal - customTotal) / autoIds.length : 0
 
-  return participantIds.map((id) => ({
-    memberId: id,
-    weight: hasOwn(customShares, id) ? personal(id) + customShares[id] : personal(id) + perAuto,
-  }))
+  return participantIds.map((id) => {
+    const fixed = hasOwn(customShares, id)
+    return {
+      memberId: id,
+      weight: fixed ? personal(id) + customShares[id] : personal(id) + perAuto,
+      ...(fixed ? { fixed: true } : {}),
+    }
+  })
 }
 
 export function buildSplitDetail(input: SplitInput): SplitDetail | null {
