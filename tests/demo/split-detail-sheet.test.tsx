@@ -63,7 +63,7 @@ describe("SplitDetailSheet", () => {
   it("renders the collapsed summary", () => {
     openSheet()
     expect(screen.getByRole("button", { name: /個人項目/ })).toHaveAttribute("aria-expanded", "false")
-    expect(screen.getByRole("button", { name: /共同分攤/ })).toHaveAttribute("aria-expanded", "false")
+    expect(screen.getByRole("button", { name: /均分/ })).toHaveAttribute("aria-expanded", "false")
     expect(screen.getByText("—")).toBeInTheDocument()
     expect(screen.getAllByText("$320")).toHaveLength(2)
     expect(screen.queryByLabelText("共同分攤金額")).not.toBeInTheDocument()
@@ -76,10 +76,10 @@ describe("SplitDetailSheet", () => {
     expect(screen.getByRole("region", { name: /個人項目/ })).toBeInTheDocument()
     expect(screen.getByText("尚未新增品項")).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole("button", { name: /共同分攤/ }))
+    fireEvent.click(screen.getByRole("button", { name: /均分/ }))
     expect(screen.queryByRole("region", { name: /個人項目/ })).not.toBeInTheDocument()
-    expect(screen.getByRole("region", { name: /共同分攤/ })).toBeInTheDocument()
-    expect(screen.getByLabelText("共同分攤金額")).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: /均分/ })).toBeInTheDocument()
+    expect(screen.getByLabelText("分攤金額")).toBeInTheDocument()
   })
 
   it("closes on Escape and returns focus to the trigger", () => {

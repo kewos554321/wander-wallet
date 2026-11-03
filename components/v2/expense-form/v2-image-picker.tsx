@@ -1,11 +1,8 @@
 "use client"
 
-import { useRef, useState } from "react"
 import { Camera, Image as ImageIcon, X } from "lucide-react"
-import { CameraStep } from "@/components/v2/quick-expense/camera-step"
 import { SECTION_CARD, SECTION_TITLE } from "./section-card"
-
-const MAX_SIZE_MB = 10
+import { useImageSource } from "./use-image-source"
 
 interface V2ImagePickerProps {
   label?: string
@@ -27,33 +24,7 @@ interface V2ImagePickerProps {
  * instead of the browser alert().
  */
 export function V2ImagePicker({ label = "收據/消費圖片", value, onChange, onRemove, onError }: V2ImagePickerProps) {
-  const [error, setError] = useState<string | null>(null)
-  const [cameraOpen, setCameraOpen] = useState(false)
-  const galleryRef = useRef<HTMLInputElement>(null)
-
-  function reportError(message: string) {
-    setError(message)
-    onError?.(message)
-  }
-
-  function acceptFile(file: File) {
-    if (!file.type.startsWith("image/")) {
-      reportError("請選擇圖片檔案")
-      return
-    }
-    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      reportError(`圖片大小不能超過 ${MAX_SIZE_MB}MB`)
-      return
-    }
-    setError(null)
-    onChange(file)
-  }
-
-  function handleSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    e.target.value = ""
-    if (file) acceptFile(file)
-  }
+  const { error, clearError, openCamera, openGallery, galleryInput, camera } = useImageSource({ onChange, onError })
 
   const tile = "flex flex-1 flex-col items-center justify-center gap-1.5 rounded-[14px] border-[1.5px] border-dashed border-v2-check bg-v2-paper px-2.5 py-4 text-v2-ink-muted"
 
@@ -75,7 +46,7 @@ export function V2ImagePicker({ label = "收據/消費圖片", value, onChange, 
             type="button"
             aria-label="移除圖片"
             onClick={() => {
-              setError(null)
+              clearError()
               onRemove?.()
             }}
             className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-v2-ink/60 text-v2-paper"
@@ -85,13 +56,13 @@ export function V2ImagePicker({ label = "收據/消費圖片", value, onChange, 
         </div>
       ) : (
         <div className="flex gap-2.5">
-          <button type="button" onClick={() => setCameraOpen(true)} className={tile}>
+          <button type="button" onClick={openCamera} className={tile}>
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-v2-coral-soft text-v2-coral" aria-hidden="true">
               <Camera className="h-[15px] w-[15px]" />
             </span>
             <span className="text-xs font-semibold">拍照</span>
           </button>
-          <button type="button" onClick={() => galleryRef.current?.click()} className={tile}>
+          <button type="button" onClick={openGallery} className={tile}>
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-v2-lake-soft text-v2-lake" aria-hidden="true">
               <ImageIcon className="h-[15px] w-[15px]" />
             </span>
@@ -100,17 +71,8 @@ export function V2ImagePicker({ label = "收據/消費圖片", value, onChange, 
         </div>
       )}
 
-      <input ref={galleryRef} type="file" accept="image/*" onChange={handleSelect} className="hidden" />
-
-      {cameraOpen && (
-        <CameraStep
-          onImage={(file) => {
-            setCameraOpen(false)
-            acceptFile(file)
-          }}
-          onClose={() => setCameraOpen(false)}
-        />
-      )}
+      {galleryInput}
+      {camera}
     </div>
   )
 }

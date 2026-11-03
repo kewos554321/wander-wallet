@@ -6,7 +6,7 @@
 // Editors keep the app's v2 theme; only the interaction patterns are borrowed.
 
 import { useEffect, useRef, useState } from "react"
-import { Pin, X } from "lucide-react"
+import { X } from "lucide-react"
 import { memberTone } from "@/components/v2/expense-form/payer-picker"
 import { MemberAvatar } from "@/components/v2/ui/member-avatar"
 import { formatAmount } from "@/lib/constants/currencies"
@@ -119,7 +119,12 @@ export function SplitDetailSheet({
   const personalSupporting = hasInvalidItems ? "尚未填完" : personal > 0 ? "個人項目先扣" : undefined
   // A fixed share is communicated by the pin beside the value, not a second
   // status sentence; auto still gets a short supporting line.
-  const shareSupporting = commonPinned ? undefined : "自動平分"
+  const hasAnyPersonal =
+    state.personalMode &&
+    Object.values(state.personalItems).some((items) =>
+      items.some((item) => item.name.trim() !== "" || item.amount.trim() !== ""),
+    )
+  const shareLabel = commonPinned ? "固定金額" : hasAnyPersonal ? "剩餘均分" : "均分"
 
   return (
     <div className="fixed inset-0 z-50">
@@ -136,7 +141,7 @@ export function SplitDetailSheet({
           <MemberAvatar image={member?.image ?? null} name={name} placeholder={member?.isPlaceholder} className="h-8 w-8 shrink-0 rounded-full" fallbackClassName={`text-[12px] font-bold ${tone}`} iconClassName="h-4 w-4" />
           <div className="min-w-0 flex-1">
             <h2 id="split-detail-title" className="m-0 font-v2-serif text-[16px] font-bold leading-tight text-v2-ink">{name} 的分帳明細</h2>
-            <p className="m-0 text-[11px] text-v2-ink-muted">個人項目先扣，剩下的才是共同分攤</p>
+            <p className="m-0 text-[11px] text-v2-ink-muted">個人項目先扣，剩下的再均分</p>
           </div>
           <button
             ref={closeButtonRef}
@@ -177,14 +182,12 @@ export function SplitDetailSheet({
 
           <SheetSectionRow
             id="share"
-            label="共同分攤"
+            label={shareLabel}
             value={
               <span className={`inline-flex items-center gap-1 ${common < 0 ? "text-v2-danger" : ""}`}>
-                {commonPinned && <Pin className="h-3 w-3 fill-current text-v2-lake" aria-hidden="true" />}
                 {money(common)}
               </span>
             }
-            supporting={shareSupporting}
             expanded={section === "share"}
             onToggle={() => openSection("share")}
           >
@@ -195,6 +198,7 @@ export function SplitDetailSheet({
               pinned={commonPinned}
               onChange={(value) => actions.setCustomShare(memberId, value)}
               onReset={() => actions.clearCustomShare(memberId)}
+              autoLabel={shareLabel}
               autoFocus
             />
           </SheetSectionRow>

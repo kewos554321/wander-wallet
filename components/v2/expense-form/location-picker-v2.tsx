@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { MapPin, Navigation, Search, X, Loader2 } from "lucide-react"
+import { ChevronRight, MapPin, Navigation, Search, X, Loader2 } from "lucide-react"
 
 interface LocationResult {
   displayName: string
@@ -24,10 +24,15 @@ interface LocationPickerV2Props {
     longitude: number | null
   }) => void
   className?: string
+  /**
+   * "row" renders a Material-style list row (icon · label · value · chevron)
+   * with the search panel expanding below it; "default" keeps the filled field.
+   */
+  variant?: "default" | "row"
 }
 
 // v2 copy of components/location-picker.tsx logic with v2 markup only.
-export function LocationPickerV2({ value, onChange, className }: LocationPickerV2Props) {
+export function LocationPickerV2({ value, onChange, className, variant = "default" }: LocationPickerV2Props) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<LocationResult[]>([])
@@ -153,6 +158,95 @@ export function LocationPickerV2({ value, onChange, className }: LocationPickerV
     return name.substring(0, maxLength) + "..."
   }
 
+  const panel = isOpen && (
+    <div className={`flex flex-col gap-2.5 rounded-xl border border-v2-line bg-v2-paper p-3 ${variant === "row" ? "mt-1" : ""}`}>
+      <button
+        type="button"
+        onClick={getCurrentLocation}
+        disabled={isGettingLocation}
+        className="flex w-full items-center gap-2 rounded-[10px] bg-v2-sand px-3 py-2.5 text-[13px] font-semibold disabled:opacity-50"
+      >
+        {isGettingLocation ? (
+          <Loader2 className="h-[15px] w-[15px] animate-spin text-v2-link" aria-hidden="true" />
+        ) : (
+          <Navigation className="h-[15px] w-[15px] text-v2-link" aria-hidden="true" />
+        )}
+        使用目前位置
+      </button>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-v2-ink-subtle" aria-hidden="true" />
+        <input
+          type="text"
+          placeholder="搜尋地點..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full rounded-[10px] border border-v2-line bg-v2-surface py-2.5 pl-[34px] pr-3 text-[13px] outline-none"
+        />
+        {isSearching && (
+          <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-v2-ink-subtle" aria-hidden="true" />
+        )}
+      </div>
+
+      {error && <p className="text-xs text-v2-danger">{error}</p>}
+
+      {searchResults.length > 0 && (
+        <div className="flex flex-col gap-0.5">
+          {searchResults.map((result, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => selectResult(result)}
+              className={`flex items-start gap-2 rounded-lg p-2 text-left text-xs ${index === 0 ? "bg-v2-lake-soft" : ""}`}
+            >
+              <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-v2-ink-muted" aria-hidden="true" />
+              <span className="break-words">{formatDisplayName(result.displayName, 80)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {variant === "row" && value?.location && (
+        <button
+          type="button"
+          onClick={() => {
+            clearLocation()
+            setIsOpen(false)
+          }}
+          className="w-full py-1.5 text-center text-xs font-semibold text-v2-danger"
+        >
+          清除地點
+        </button>
+      )}
+
+      <button type="button" onClick={cancel} className="w-full py-1.5 text-center text-xs font-semibold text-v2-ink-muted">
+        取消
+      </button>
+    </div>
+  )
+
+  if (variant === "row") {
+    return (
+      <div className={className}>
+        <button
+          type="button"
+          onClick={() => setIsOpen((open) => !open)}
+          aria-expanded={isOpen}
+          className="flex min-h-[56px] w-full items-center gap-3 px-1 text-left transition-colors hover:bg-v2-lake-tint/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
+        >
+          <MapPin className="h-[18px] w-[18px] shrink-0 text-v2-ink-muted" aria-hidden="true" />
+          <span className="flex-1 text-[13px] font-medium text-v2-ink">消費地點</span>
+          <span className="max-w-[11rem] truncate text-[13px] text-v2-ink-muted">{value?.location ?? "新增地點"}</span>
+          <ChevronRight
+            className={`h-4 w-4 shrink-0 text-v2-ink-subtle transition-transform ${isOpen ? "rotate-90" : ""}`}
+            aria-hidden="true"
+          />
+        </button>
+        {panel}
+      </div>
+    )
+  }
+
   return (
     <div className={className}>
       {value?.location ? (
@@ -187,59 +281,7 @@ export function LocationPickerV2({ value, onChange, className }: LocationPickerV
         )
       )}
 
-      {isOpen && (
-        <div className="flex flex-col gap-2.5 rounded-xl border border-v2-line bg-v2-paper p-3">
-          <button
-            type="button"
-            onClick={getCurrentLocation}
-            disabled={isGettingLocation}
-            className="flex w-full items-center gap-2 rounded-[10px] bg-v2-sand px-3 py-2.5 text-[13px] font-semibold disabled:opacity-50"
-          >
-            {isGettingLocation ? (
-              <Loader2 className="h-[15px] w-[15px] animate-spin text-v2-link" aria-hidden="true" />
-            ) : (
-              <Navigation className="h-[15px] w-[15px] text-v2-link" aria-hidden="true" />
-            )}
-            使用目前位置
-          </button>
-
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-v2-ink-subtle" aria-hidden="true" />
-            <input
-              type="text"
-              placeholder="搜尋地點..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-[10px] border border-v2-line bg-v2-surface py-2.5 pl-[34px] pr-3 text-[13px] outline-none"
-            />
-            {isSearching && (
-              <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-v2-ink-subtle" aria-hidden="true" />
-            )}
-          </div>
-
-          {error && <p className="text-xs text-v2-danger">{error}</p>}
-
-          {searchResults.length > 0 && (
-            <div className="flex flex-col gap-0.5">
-              {searchResults.map((result, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => selectResult(result)}
-                  className={`flex items-start gap-2 rounded-lg p-2 text-left text-xs ${index === 0 ? "bg-v2-lake-soft" : ""}`}
-                >
-                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-v2-ink-muted" aria-hidden="true" />
-                  <span className="break-words">{formatDisplayName(result.displayName, 80)}</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          <button type="button" onClick={cancel} className="w-full py-1.5 text-center text-xs font-semibold text-v2-ink-muted">
-            取消
-          </button>
-        </div>
-      )}
+      {panel}
     </div>
   )
 }

@@ -16,6 +16,7 @@ export function ShareAmountEditor({
   onChange,
   onReset,
   autoFocus = false,
+  autoLabel = "剩餘均分",
 }: {
   currency: string
   value: string
@@ -24,6 +25,7 @@ export function ShareAmountEditor({
   onChange: (value: string) => void
   onReset: () => void
   autoFocus?: boolean
+  autoLabel?: string
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [note, setNote] = useState<string | null>(null)
@@ -43,7 +45,7 @@ export function ShareAmountEditor({
         <input
           ref={inputRef}
           inputMode="decimal"
-          aria-label="共同分攤金額"
+          aria-label="分攤金額"
           aria-invalid={note ? "true" : undefined}
           aria-describedby={note ? "share-limit-note" : undefined}
           value={value}
@@ -63,12 +65,12 @@ export function ShareAmountEditor({
         </p>
       )}
       <p className="m-0 mt-2 text-[11px] text-v2-ink-muted">
-        {pinned ? "目前是固定金額；還原後會重新自動平分。" : `自動平分會是 ${money(auto)}`}
+        {pinned ? "目前是固定金額；改回後會重新依剩餘金額均分。" : `${autoLabel}會是 ${money(auto)}`}
       </p>
       {pinned && (
         <button type="button" onClick={onReset} className="mt-2 inline-flex min-h-12 items-center gap-1 rounded-lg px-2 text-[12px] font-bold text-v2-lake hover:bg-v2-lake-tint">
           <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-          還原自動平分
+          改回剩餘均分
         </button>
       )}
     </div>
