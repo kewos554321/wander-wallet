@@ -117,7 +117,9 @@ export function SplitDetailSheet({
   }
 
   const personalSupporting = hasInvalidItems ? "尚未填完" : personal > 0 ? "個人項目先扣" : undefined
-  const shareSupporting = commonPinned ? "已固定" : "自動平分"
+  // A fixed share is communicated by the pin beside the value, not a second
+  // status sentence; auto still gets a short supporting line.
+  const shareSupporting = commonPinned ? undefined : "自動平分"
 
   return (
     <div className="fixed inset-0 z-50">
