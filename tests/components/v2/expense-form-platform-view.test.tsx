@@ -219,6 +219,15 @@ describe("ExpenseFormPlatformView", () => {
     expect(onRequestDelete).toHaveBeenCalledTimes(1)
   })
 
+  it("keeps submit enabled after a server error so the user can retry", () => {
+    const { onSubmit } = renderForm({ submitError: "存檔失敗" })
+    expect(screen.getByRole("alert")).toHaveTextContent("存檔失敗")
+    const button = screen.getByRole("button", { name: /新增支出/ })
+    expect(button).toBeEnabled()
+    fireEvent.click(button)
+    expect(onSubmit).toHaveBeenCalledTimes(1)
+  })
+
   it("shows the server error and submitting state", () => {
     renderForm({ submitError: "存檔失敗", submitting: true })
     expect(screen.getByRole("alert")).toHaveTextContent("存檔失敗")

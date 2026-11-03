@@ -93,7 +93,9 @@ export function ExpenseFormPlatformView(props: ExpenseFormPlatformViewProps) {
   // The split panel gets the specific "who is over" message, not just
   // "分攤金額與支出金額不符".
   const splitIssue = describeSplitIssue(draft, members)
-  const error = amountIssue ?? splitIssue ?? derived.error ?? props.submitError
+  // submitError is display-only: a failed save must leave the button enabled
+  // so the user can retry without losing the draft.
+  const blockingError = amountIssue ?? splitIssue ?? derived.error
   // Split/payer issues already render inline in SplitPanel, next to the rows
   // that need fixing. Repeating them in the fixed footer both duplicated the
   // warning and let the taller bar cover the last section.
@@ -134,7 +136,7 @@ export function ExpenseFormPlatformView(props: ExpenseFormPlatformViewProps) {
     <form
       onSubmit={(e) => {
         e.preventDefault()
-        if (!error && !descMissing) props.onSubmit()
+        if (!blockingError && !descMissing) props.onSubmit()
       }}
     >
       <V2TopBar
@@ -232,7 +234,7 @@ export function ExpenseFormPlatformView(props: ExpenseFormPlatformViewProps) {
           placeholder="這筆是什麼？例如：一蘭拉麵晚餐"
           className="w-full rounded-xl border border-v2-line bg-v2-paper px-3.5 py-3 text-[13px] outline-none focus-visible:border-v2-lake"
         />
-        {descMissing && descTouched && <p className="mt-1.5 text-[11px] font-semibold text-v2-danger">請填寫描述，讓大家知道這筆是什麼</p>}
+        {descMissing && descTouched && <p role="alert" className="mt-1.5 text-[11px] font-semibold text-v2-danger">請填寫描述，讓大家知道這筆是什麼</p>}
       </div>
 
       <CategoryPicker value={state.category} onChange={actions.setCategory} />
@@ -390,7 +392,7 @@ export function ExpenseFormPlatformView(props: ExpenseFormPlatformViewProps) {
               </span>
             </div>
           )}
-          <button type="submit" disabled={!!error || descMissing || props.submitting} className="w-full rounded-[14px] bg-v2-lake py-[15px] text-[15px] font-bold text-v2-on-lake disabled:opacity-40">
+          <button type="submit" disabled={!!blockingError || descMissing || props.submitting} className="w-full rounded-[14px] bg-v2-lake py-[15px] text-[15px] font-bold text-v2-on-lake disabled:opacity-40">
             {props.submitting ? "儲存中..." : submitLabel}
           </button>
         </div>

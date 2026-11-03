@@ -104,7 +104,7 @@ function Prototype() {
           ? "改後：個人品項在共同分攤之前、明細收合成一行、單一狀態、顯示幣別在底部列。可直接操作；金額卡的匯率操作與原版相同（點匯率列開面板）。"
           : mode === "platform"
             ? "平台式：Google/Apple list 慣例——左邊名字、右邊金額＋箭頭，個人明細收進點擊後的 sheet。可直接操作。"
-            : "改前：產品真實元件，可直接操作。切換版本會保留你已輸入的內容。"}
+            : "改前：凍結的舊版表單快照，可直接操作。切換版本會保留你已輸入的內容。"}
       </p>
 
       {/* seed changes only on 重設, so the before/after switch keeps the draft. */}
