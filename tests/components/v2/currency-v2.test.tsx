@@ -32,7 +32,6 @@ import { CurrencyV2 } from "@/components/v2/currency/currency-v2"
 function renderView(overrides: Partial<Parameters<typeof CurrencyV2View>[0]> = {}) {
   const props: Parameters<typeof CurrencyV2View>[0] = {
     projectId: "p1",
-    projectCurrency: "TWD",
     fromCurrency: "JPY",
     toCurrency: "TWD",
     amount: "1000",
@@ -40,7 +39,6 @@ function renderView(overrides: Partial<Parameters<typeof CurrencyV2View>[0]> = {
     rate: 0.21,
     ratesTimestamp: Date.now() - 2 * 60 * 60 * 1000,
     usingFallback: false,
-    customRates: [{ currency: "JPY", customRate: 0.21, liveRate: 0.214, diff: -1.87 }],
     liveRates: [{ currency: "JPY", rate: 0.214 }],
     historicalDate: "2026-09-15",
     historicalRates: [{ currency: "JPY", rate: 0.2, diff: 7 }],
@@ -79,10 +77,9 @@ describe("CurrencyV2View", () => {
     expect(props.onSwap).toHaveBeenCalled()
   })
 
-  it("shows the custom-rate comparison", () => {
+  it("does not show a project custom-rate card (Review Focus 1)", () => {
     renderView()
-    expect(screen.getByText("JPY → TWD")).toBeInTheDocument()
-    expect(screen.getByText(/1\.9%/)).toBeInTheDocument()
+    expect(screen.queryByText("專案自訂匯率")).not.toBeInTheDocument()
   })
 
   it("toggles the live-rate and historical sections", () => {
@@ -102,11 +99,10 @@ describe("CurrencyV2View", () => {
 describe("CurrencyV2 container", () => {
   beforeEach(() => {
     mockProjectData.mockReset().mockReturnValue({
-      project: { name: "京都", currency: "TWD", customRates: null, exchangeRatePrecision: 2 },
+      project: { name: "京都", currency: "TWD", exchangeRatePrecision: 2 },
       members: [],
       loading: false,
       projectCurrency: "TWD",
-      customRates: null,
       precision: 2,
     })
     mockCurrencyConversion.mockReset().mockReturnValue({
@@ -126,11 +122,10 @@ describe("CurrencyV2 container", () => {
 
   it("defaults the target currency to the project currency, not TWD", () => {
     let state = {
-      project: { name: "Trip", currency: "TWD", customRates: null, exchangeRatePrecision: 2 },
+      project: { name: "Trip", currency: "TWD", exchangeRatePrecision: 2 },
       members: [],
       loading: true,
       projectCurrency: "TWD",
-      customRates: null,
       precision: 2,
     }
     mockProjectData.mockImplementation(() => state)
@@ -144,11 +139,10 @@ describe("CurrencyV2 container", () => {
     })
     const { rerender } = render(<CurrencyV2 projectId="p1" />)
     state = {
-      project: { name: "Japan", currency: "JPY", customRates: null, exchangeRatePrecision: 2 },
+      project: { name: "Japan", currency: "JPY", exchangeRatePrecision: 2 },
       members: [],
       loading: false,
       projectCurrency: "JPY",
-      customRates: null,
       precision: 2,
     }
     rerender(<CurrencyV2 projectId="p1" />)

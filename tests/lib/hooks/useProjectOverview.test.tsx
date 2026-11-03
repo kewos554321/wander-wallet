@@ -27,7 +27,6 @@ const mockProject: OverviewProject = {
   exchangeRatePrecision: 2,
   startDate: null,
   endDate: null,
-  customRates: null,
   creator: { id: "u1", name: "Emma", email: "e@x.com" },
   members: [{ id: "me", role: "owner", displayName: "Emma", user: { id: "u1", name: "Emma", email: "e@x.com", image: null } }],
   expenses: [],

@@ -20,7 +20,6 @@ interface ProjectRecord {
   startDate: string | null
   endDate: string | null
   joinMode: string
-  customRates: Record<string, number> | null
   exchangeRatePrecision: number
   createdBy: string
   creator?: { id: string }
@@ -36,15 +35,10 @@ const EMPTY_VALUES: ProjectFormValues = {
   currency: "TWD",
   budget: "",
   joinMode: "both",
-  customRates: {},
 }
 
 // Mirrors v1 fetchProject's mapping from the API record to form values.
 function mapProjectToForm(data: ProjectRecord): ProjectFormValues {
-  const customRates: Record<string, string> = {}
-  if (data.customRates) {
-    for (const [curr, rate] of Object.entries(data.customRates)) customRates[curr] = String(rate)
-  }
   return {
     name: data.name,
     description: data.description || "",
@@ -54,7 +48,6 @@ function mapProjectToForm(data: ProjectRecord): ProjectFormValues {
     currency: data.currency || "TWD",
     budget: data.budget ? String(Number(data.budget)) : "",
     joinMode: (data.joinMode as JoinMode) || "both",
-    customRates,
   }
 }
 
@@ -65,7 +58,6 @@ export function ProjectSettingsV2({ projectId }: { projectId: string }) {
   const [project, setProject] = useState<ProjectRecord | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [rates, setRates] = useState<Record<string, number>>({})
   const [saving, setSaving] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [showDelete, setShowDelete] = useState(false)
@@ -104,22 +96,6 @@ export function ProjectSettingsV2({ projectId }: { projectId: string }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId])
-
-  useEffect(() => {
-    let cancelled = false
-    authFetch("/api/exchange-rates")
-      .then(async (res) => {
-        if (res.ok) {
-          const data = await res.json()
-          if (!cancelled) setRates(data.rates || {})
-        }
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   async function handleSave() {
     if (formError) {
@@ -191,7 +167,6 @@ export function ProjectSettingsV2({ projectId }: { projectId: string }) {
         <ProjectSettingsV2View
           values={values}
           set={set}
-          rates={rates}
           isCreator={isCreator}
           saving={saving}
           submitError={submitError}

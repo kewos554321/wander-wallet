@@ -69,7 +69,6 @@ export function ProjectOverviewV2({ projectId }: { projectId: string }) {
           }))}
           currentUserMemberId={summary.currentMemberId || ""}
           currency={project.currency || DEFAULT_CURRENCY}
-          customRates={project.customRates}
           onSuccess={() => {
             refetch()
           }}

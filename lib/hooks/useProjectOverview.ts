@@ -18,7 +18,6 @@ export function useProjectOverview(projectId: string) {
 
   const { convert } = useCurrencyConversion({
     projectCurrency: project?.currency || DEFAULT_CURRENCY,
-    customRates: project?.customRates || null,
   })
 
   const refetch = useCallback(async () => {

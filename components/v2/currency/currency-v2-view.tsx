@@ -7,16 +7,8 @@ import { formatCurrency } from "@/lib/constants/currencies"
 import { cn } from "@/lib/utils"
 import { formatRelativeTime, isRatesStale } from "./format"
 
-export interface CustomRateRow {
-  currency: string
-  customRate: number
-  liveRate: number
-  diff: number
-}
-
 export interface CurrencyV2ViewProps {
   projectId: string
-  projectCurrency: string
   fromCurrency: string
   toCurrency: string
   amount: string
@@ -24,7 +16,6 @@ export interface CurrencyV2ViewProps {
   rate: number
   ratesTimestamp: number | null
   usingFallback: boolean
-  customRates: CustomRateRow[]
   liveRates: { currency: string; rate: number }[]
   historicalDate: string
   historicalRates: { currency: string; rate: number; diff: number }[]
@@ -57,14 +48,12 @@ function signed(diff: number): string {
 
 export function CurrencyV2View(props: CurrencyV2ViewProps) {
   const {
-    projectCurrency,
     fromCurrency,
     toCurrency,
     amount,
     convertedAmount,
     rate,
     ratesTimestamp,
-    customRates,
     liveRates,
     historicalDate,
     historicalRates,
@@ -124,25 +113,6 @@ export function CurrencyV2View(props: CurrencyV2ViewProps) {
           </span>
         </div>
       </div>
-
-      {customRates.length > 0 ? (
-        <div className="mx-4 mt-3.5 rounded-2xl border border-v2-line bg-v2-surface p-4">
-          <p className="mb-2.5 text-[13px] font-bold text-v2-lake">專案自訂匯率</p>
-          {customRates.map((row) => (
-            <div key={row.currency} className="flex items-center justify-between border-b border-v2-line-soft py-2 last:border-0">
-              <span className="text-[13px] font-semibold">
-                {row.currency} → {projectCurrency}
-              </span>
-              <div className="text-right">
-                <p className="m-0 text-[13px] font-bold">{formatRate(row.customRate)}（自訂）</p>
-                <p className={cn("m-0 text-[11px]", diffClass(row.diff))}>
-                  即時 {formatRate(row.liveRate)} · {signed(row.diff)}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : null}
 
       <div className="mx-4 mt-3.5 rounded-2xl border border-v2-line bg-v2-surface">
         <button type="button" onClick={onToggleRates} className="flex w-full items-center gap-2 p-4 text-left">

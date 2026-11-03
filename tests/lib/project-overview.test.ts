@@ -46,7 +46,6 @@ function project(overrides: Partial<OverviewProject> = {}): OverviewProject {
     exchangeRatePrecision: 2,
     startDate: null,
     endDate: null,
-    customRates: null,
     creator: { id: "u1", name: "Emma", email: "e@x.com" },
     members: [member("me", "u1"), member("chi", "u2")],
     expenses: [],

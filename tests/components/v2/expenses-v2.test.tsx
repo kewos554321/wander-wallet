@@ -211,7 +211,6 @@ describe("ExpensesV2 container", () => {
       members: [],
       loading: false,
       projectCurrency: "TWD",
-      customRates: {},
       precision: 2,
     })
     mocks.projectExpenses.mockReset().mockReturnValue({
@@ -345,7 +344,6 @@ describe("ExpensesV2 container", () => {
       members: [],
       loading: true,
       projectCurrency: "TWD",
-      customRates: {},
       precision: 2,
     })
     render(<ExpensesV2 projectId="p1" />)

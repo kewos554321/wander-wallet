@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest"
 import { convertToProjectCurrency, buildExportData, type ExportExpenseInput } from "@/components/v2/export/export-data"
 import type { ExportFilterOptions } from "@/lib/export/types"
 
-const ctx = { projectCurrency: "TWD", customRates: { JPY: 0.21 } as Record<string, number> | null, exchangeRates: null as Record<string, number> | null }
+const ctx = { projectCurrency: "TWD", exchangeRates: { TWD: 31.5, JPY: 150 } as Record<string, number> | null }
 const members = [
   { id: "m1", displayName: "志明" },
   { id: "m2", displayName: "小美" },
@@ -38,19 +38,17 @@ describe("convertToProjectCurrency", () => {
     expect(convertToProjectCurrency(1000, "TWD", ctx)).toBe(1000)
   })
 
-  it("uses a custom rate and rounds to 2 decimals", () => {
+  it("uses live rates and rounds to 2 decimals", () => {
     expect(convertToProjectCurrency(10000, "JPY", ctx)).toBe(2100)
   })
 
   it("returns the original amount when no rates are available (Review Focus 1)", () => {
-    expect(
-      convertToProjectCurrency(10000, "JPY", { projectCurrency: "TWD", customRates: null, exchangeRates: null })
-    ).toBe(10000)
+    expect(convertToProjectCurrency(10000, "JPY", { projectCurrency: "TWD", exchangeRates: null })).toBe(10000)
   })
 
   it("uses live rates via to/from", () => {
     expect(
-      convertToProjectCurrency(100, "JPY", { projectCurrency: "TWD", customRates: null, exchangeRates: { TWD: 31.5, JPY: 150 } })
+      convertToProjectCurrency(100, "JPY", { projectCurrency: "TWD", exchangeRates: { TWD: 31.5, JPY: 150 } })
     ).toBe(21)
   })
 })
@@ -84,7 +82,7 @@ describe("buildExportData", () => {
   })
 
   it("prefers stored settlement amounts over conversion", () => {
-    const usdCtx = { projectCurrency: "USD", customRates: null, exchangeRates: null }
+    const usdCtx = { projectCurrency: "USD", exchangeRates: null }
     const stored: ExportExpenseInput[] = [
       {
         id: "e1",

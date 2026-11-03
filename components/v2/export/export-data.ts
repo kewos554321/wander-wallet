@@ -23,7 +23,6 @@ export interface ExportExpenseInput {
 
 export interface ExportContext {
   projectCurrency: string
-  customRates: Record<string, number> | null
   exchangeRates: Record<string, number> | null
 }
 
@@ -41,15 +40,11 @@ function round2(value: number): number {
 }
 
 /**
- * Converts to the project currency the way the v1 export page did: an explicit
- * custom rate wins; with no rates at all the original amount is returned
- * unchanged (never NaN/0).
+ * Converts to the project currency using the live feed; with no rates at all
+ * the original amount is returned unchanged (never NaN/0).
  */
 export function convertToProjectCurrency(amount: number, fromCurrency: string, ctx: ExportContext): number {
   if (fromCurrency === ctx.projectCurrency) return amount
-  if (ctx.customRates && ctx.customRates[fromCurrency]) {
-    return round2(amount * ctx.customRates[fromCurrency])
-  }
   if (!ctx.exchangeRates) return amount
   const fromRate = ctx.exchangeRates[fromCurrency] || 1
   const toRate = ctx.exchangeRates[ctx.projectCurrency] || 1

@@ -27,8 +27,6 @@ type QuickExpenseV2Props = {
   currentUserMemberId: string
   onSuccess: () => void
   currency?: string
-  // Project custom rates, used to resolve a per-expense preview rate.
-  customRates?: Record<string, number> | null
   // Which step the flow opens on; "camera" skips straight to the viewfinder.
   initialStep?: "input" | "camera"
 }
@@ -40,14 +38,14 @@ export function QuickExpenseV2(props: QuickExpenseV2Props) {
   return props.open ? <QuickExpenseFlow {...props} /> : null
 }
 
-function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, currentUserMemberId, onSuccess, currency = DEFAULT_CURRENCY, customRates = null, initialStep = "input" }: QuickExpenseV2Props) {
+function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, currentUserMemberId, onSuccess, currency = DEFAULT_CURRENCY, initialStep = "input" }: QuickExpenseV2Props) {
   const authFetch = useAuthFetch()
   const plainMembers = members.map((m) => ({ id: m.id, displayName: m.displayName }))
   const { save, progress, canNotifyLine } = useQuickSave({ projectId, projectName, members: plainMembers })
   // The settlement currency is the project currency; the AI result card
   // resolves each item's preview rate against it (mirrors the expense form).
   const projectCurrency = currency
-  const { exchangeRates, refetch: refetchRates } = useCurrencyConversion({ projectCurrency, customRates, autoFetch: false })
+  const { exchangeRates, refetch: refetchRates } = useCurrencyConversion({ projectCurrency, autoFetch: false })
   const previewRateInfo = (c: string) => resolvePreviewRate(c, projectCurrency, exchangeRates)
   const [step, setStep] = useState<Step>(initialStep)
   const [mode, setMode] = useState<QuickInputMode>("text")

@@ -20,11 +20,10 @@ export interface ProjectFormValues {
   currency: string
   budget: string
   joinMode: JoinMode
-  customRates: Record<string, string>
 }
 
 export function emptyProjectForm(currency: string): ProjectFormValues {
-  return { name: "", description: "", cover: DEFAULT_ICON_COVER, startDate: null, endDate: null, currency, budget: "", joinMode: "both", customRates: {} }
+  return { name: "", description: "", cover: DEFAULT_ICON_COVER, startDate: null, endDate: null, currency, budget: "", joinMode: "both" }
 }
 
 export function validateProjectForm(v: ProjectFormValues): string | null {
@@ -34,11 +33,6 @@ export function validateProjectForm(v: ProjectFormValues): string | null {
   if (v.budget.trim() !== "") {
     const n = Number(v.budget)
     if (!Number.isFinite(n) || n < 0) return "預算需為 0 以上的數字"
-  }
-  for (const rate of Object.values(v.customRates)) {
-    if (rate.trim() === "") continue
-    const n = Number(rate)
-    if (!Number.isFinite(n) || n <= 0) return "自訂匯率需大於 0"
   }
   return null
 }
@@ -57,11 +51,7 @@ export function toCreatePayload(v: ProjectFormValues): Record<string, unknown> {
 }
 
 export function toUpdatePayload(v: ProjectFormValues): Record<string, unknown> {
-  const rates = Object.entries(v.customRates).filter(([, r]) => r.trim() !== "")
-  return {
-    ...toCreatePayload(v),
-    customRates: rates.length > 0 ? Object.fromEntries(rates.map(([k, r]) => [k, Number(r)])) : null,
-  }
+  return toCreatePayload(v)
 }
 
 export function useProjectForm(initial: ProjectFormValues) {

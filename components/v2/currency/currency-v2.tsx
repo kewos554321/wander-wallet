@@ -6,7 +6,7 @@ import { useCurrencyConversion, useProjectData } from "@/lib/hooks"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { getCurrencyDecimals } from "@/lib/constants/currencies"
 import { customRateDiff, rateFromRates } from "./format"
-import { CurrencyV2View, type CustomRateRow } from "./currency-v2-view"
+import { CurrencyV2View } from "./currency-v2-view"
 
 const COMMON_CURRENCIES = ["TWD", "JPY", "USD", "EUR", "CNY", "HKD", "KRW", "THB", "SGD", "GBP"]
 
@@ -18,10 +18,9 @@ function weekAgo(): string {
 
 export function CurrencyV2({ projectId }: { projectId: string }) {
   const authFetch = useAuthFetch()
-  const { projectCurrency, customRates, precision } = useProjectData(projectId)
+  const { projectCurrency, precision } = useProjectData(projectId)
   const { getRate, exchangeRates, ratesTimestamp, usingFallback, refetch } = useCurrencyConversion({
     projectCurrency,
-    customRates,
     precision,
   })
 
@@ -49,14 +48,6 @@ export function CurrencyV2({ projectId }: { projectId: string }) {
   const convertedAmount = Number.isFinite(numeric)
     ? Math.round(numeric * rate * currencyFactor) / currencyFactor
     : null
-
-  const customRateRows = useMemo<CustomRateRow[]>(() => {
-    if (!customRates) return []
-    return Object.entries(customRates).map(([currency, customRate]) => {
-      const liveRate = rateFromRates(currency, projectCurrency, rates)
-      return { currency, customRate, liveRate, diff: customRateDiff(customRate, liveRate) }
-    })
-  }, [customRates, projectCurrency, rates])
 
   const liveRates = useMemo(
     () => COMMON_CURRENCIES.filter((code) => code !== projectCurrency).map((code) => ({ currency: code, rate: rateFromRates(code, projectCurrency, rates) })),
@@ -94,7 +85,6 @@ export function CurrencyV2({ projectId }: { projectId: string }) {
       <div className="mx-auto max-w-md">
         <CurrencyV2View
           projectId={projectId}
-          projectCurrency={projectCurrency}
           fromCurrency={fromCurrency}
           toCurrency={toCurrency}
           amount={amount}
@@ -102,7 +92,6 @@ export function CurrencyV2({ projectId }: { projectId: string }) {
           rate={rate}
           ratesTimestamp={ratesTimestamp}
           usingFallback={usingFallback}
-          customRates={customRateRows}
           liveRates={liveRates}
           historicalDate={historicalDate}
           historicalRates={historicalRates}

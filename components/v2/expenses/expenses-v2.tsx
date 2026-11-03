@@ -17,11 +17,11 @@ import { loadFilters, saveFilters } from "./filter-storage"
 
 export function ExpensesV2({ projectId }: { projectId: string }) {
   const { user } = useLiff()
-  const { project, members, loading: projectLoading, projectCurrency, customRates, precision } = useProjectData(projectId)
+  const { project, members, loading: projectLoading, projectCurrency, precision } = useProjectData(projectId)
   const { expenses, loading, deleting, canNotifyLine, deleteExpense } =
     useProjectExpenses(projectId, { projectName: project?.name || "" })
   const f = useExpenseFilters(expenses)
-  const { convert } = useCurrencyConversion({ projectCurrency, customRates, precision })
+  const { convert } = useCurrencyConversion({ projectCurrency, precision })
 
   // Restore filters saved for this project when returning to the list (e.g.
   // pressing back from a card), then keep them persisted until cleared.

@@ -10,9 +10,9 @@ import { buildExportData } from "./export-data"
 import { ExportV2View } from "./export-v2-view"
 
 export function ExportV2({ projectId }: { projectId: string }) {
-  const { project, members, projectCurrency, customRates, precision } = useProjectData(projectId)
+  const { project, members, projectCurrency, precision } = useProjectData(projectId)
   const { expenses } = useProjectExpenses(projectId, { projectName: project?.name ?? "" })
-  const { exchangeRates } = useCurrencyConversion({ projectCurrency, customRates, precision })
+  const { exchangeRates } = useCurrencyConversion({ projectCurrency, precision })
 
   const [format, setFormat] = useState<ExportFormat>(defaultExportOptions.format)
   const [content, setContent] = useState<ExportContentOptions>(defaultExportOptions.content)
@@ -21,8 +21,8 @@ export function ExportV2({ projectId }: { projectId: string }) {
 
   const projectName = project?.name ?? ""
   const data = useMemo(
-    () => buildExportData({ projectName, projectCurrency, members, expenses, filters, ctx: { projectCurrency, customRates, exchangeRates } }),
-    [projectName, projectCurrency, members, expenses, filters, customRates, exchangeRates]
+    () => buildExportData({ projectName, projectCurrency, members, expenses, filters, ctx: { projectCurrency, exchangeRates } }),
+    [projectName, projectCurrency, members, expenses, filters, exchangeRates]
   )
 
   const handleExport = useCallback(async () => {

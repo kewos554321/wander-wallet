@@ -46,7 +46,6 @@ export interface OverviewProject {
   exchangeRatePrecision: number
   startDate: string | null
   endDate: string | null
-  customRates: Record<string, number> | null
   creator: {
     id: string
     name: string | null
