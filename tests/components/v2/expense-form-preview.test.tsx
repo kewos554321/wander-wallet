@@ -16,7 +16,15 @@ vi.mock("@/components/auth/liff-provider", () => ({
 vi.mock("@/lib/hooks", async (orig) => ({
   ...(await orig()),
   useProjectData: () => ({
-    project: { id: "p1", name: "東京", currency: "USD", customRates: null },
+    project: {
+      id: "p1",
+      name: "東京",
+      currency: "USD",
+      customRates: null,
+      expenses: [
+        { currency: "JPY", exchangeRate: 0.215, rateKind: "market", rateDate: "2026-10-08", description: "晚餐", expenseDate: "2026-10-08" },
+      ],
+    },
     members: [
       { id: "a", displayName: "小雨", userId: "u1", user: { id: "u1" } },
       { id: "b", displayName: "志明", userId: null, user: null },
@@ -26,9 +34,10 @@ vi.mock("@/lib/hooks", async (orig) => ({
   }),
 }))
 
+const { saveMock } = vi.hoisted(() => ({ saveMock: vi.fn() }))
 vi.mock("@/lib/hooks/useSaveExpense", () => ({
   useSaveExpense: () => ({
-    save: vi.fn(),
+    save: saveMock,
     remove: vi.fn(),
     saving: false,
     uploadingImage: false,
@@ -58,6 +67,7 @@ import { ExpenseFormV2 } from "@/components/v2/expense-form/expense-form-v2"
 describe("ExpenseFormV2 conversion preview", () => {
   beforeEach(() => {
     mockAuthFetch.mockReset()
+    saveMock.mockReset()
     mockAuthFetch.mockImplementation(async (url: string) =>
       url.includes("/api/exchange-rates")
         ? { ok: true, json: async () => ({ rates: { USD: 1, TWD: 31.5, JPY: 150 } }) }
@@ -75,11 +85,30 @@ describe("ExpenseFormV2 conversion preview", () => {
     expect(conv).toHaveTextContent("≈ USD 31.75")
   })
 
-  it("labels the automatic rate source as 即時 before pinning", async () => {
+  it("labels the automatic rate source as 市場 before pinning", async () => {
     render(<ExpenseFormV2 projectId="p1" mode="create" />)
     fireEvent.change(await screen.findByLabelText("金額"), { target: { value: "1000" } })
     fireEvent.change(screen.getByLabelText("幣別"), { target: { value: "TWD" } })
-    expect(await screen.findByTestId("rate-source")).toHaveTextContent("即時")
+    expect(await screen.findByTestId("rate-source")).toHaveTextContent("市場")
+  })
+
+  it("passes the project's recent JPY rates into the sheet", async () => {
+    render(<ExpenseFormV2 projectId="p1" mode="create" />)
+    fireEvent.change(await screen.findByLabelText("金額"), { target: { value: "1000" } })
+    fireEvent.change(screen.getByLabelText("幣別"), { target: { value: "JPY" } })
+    fireEvent.click(await screen.findByTestId("rate-row"))
+    fireEvent.click(screen.getByRole("tab", { name: "自訂" }))
+    expect(screen.getByTestId("recent-rate-0")).toHaveTextContent("0.215")
+  })
+
+  it("does not send promoteRate on save", async () => {
+    saveMock.mockResolvedValue({ ok: true })
+    render(<ExpenseFormV2 projectId="p1" mode="create" />)
+    fireEvent.change(await screen.findByLabelText("金額"), { target: { value: "1000" } })
+    fireEvent.change(screen.getByLabelText("幣別"), { target: { value: "TWD" } })
+    fireEvent.click(await screen.findByRole("button", { name: /新增支出/ }))
+    await waitFor(() => expect(saveMock).toHaveBeenCalled())
+    expect(saveMock.mock.calls[0][0].payload).not.toHaveProperty("promoteRate")
   })
 
   it("does not show a preview while the currency equals the settlement currency", async () => {

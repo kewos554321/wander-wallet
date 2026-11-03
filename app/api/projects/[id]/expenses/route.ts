@@ -107,12 +107,12 @@ export async function POST(
     }
 
     const body = await req.json()
-    const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail, rateKind, rateDate, promoteRate } = body
+    const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail, rateKind, rateDate } = body
 
-    // 獲取專案幣別與匯率設定
+    // 獲取專案幣別設定
     const project = await prisma.project.findUnique({
       where: { id },
-      select: { currency: true, customRates: true },
+      select: { currency: true },
     })
 
     if (!project) {
@@ -210,7 +210,6 @@ export async function POST(
 
     // 計算結算幣別金額（換算 + 整數分配 + 尾差帳）
     const projectCurrency = project.currency || DEFAULT_CURRENCY
-    const customRates = (project.customRates as Record<string, number> | null) || {}
 
     let snapshotRate: number | null = null
     let resolvedRate = 1
@@ -218,9 +217,8 @@ export async function POST(
     if (expenseCurrency !== projectCurrency) {
       const providedRate =
         exchangeRate !== undefined && exchangeRate !== null ? Number(exchangeRate) : null
-      const needsLive = providedRate == null && customRates[expenseCurrency] == null
       let liveRate: number | null = null
-      if (needsLive) {
+      if (providedRate == null) {
         try {
           liveRate = await getExchangeRate(expenseCurrency, projectCurrency)
         } catch {
@@ -231,21 +229,19 @@ export async function POST(
         currency: expenseCurrency,
         projectCurrency,
         provided: providedRate,
-        customRate: customRates[expenseCurrency] ?? null,
         liveRate,
       })
       resolvedRate = resolved.rate
       snapshotRate = resolved.rate
     }
 
-    // Provenance of the bound rate (project default / market on a date / custom),
-    // so the amount card can show what kind of rate this expense uses.
+    // Provenance of the bound rate (market on a date / custom), so the amount
+    // card can show what kind of rate this expense uses.
     const rateMeta = resolveExpenseRateMeta({
       isForeign: expenseCurrency !== projectCurrency,
       providedRate: exchangeRate !== undefined && exchangeRate !== null ? Number(exchangeRate) : null,
       clientKind: rateKind ?? null,
       clientDate: rateDate ?? null,
-      hasProjectFixedRate: customRates[expenseCurrency] != null,
       now: new Date(),
     })
 
@@ -328,14 +324,6 @@ export async function POST(
           },
         },
       })
-
-      // Promote this expense's rate to the project's fixed rate for the currency.
-      if (promoteRate === true && expenseCurrency !== projectCurrency && snapshotRate != null) {
-        await tx.project.update({
-          where: { id },
-          data: { customRates: { ...customRates, [expenseCurrency]: snapshotRate } },
-        })
-      }
 
       for (const [memberId, value] of projectAmounts.discrepancy) {
         if ((initialDiscrepancy.get(memberId) ?? 0) !== value) {

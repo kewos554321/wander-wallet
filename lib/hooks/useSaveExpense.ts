@@ -10,16 +10,15 @@ import { sendDeleteNotificationToChat, sendExpenseNotificationToChat, type Expen
 import type { ParticipantShare, SplitDetail } from "@/lib/expense-split"
 import type { PayerShare } from "@/lib/expense-payers"
 import { mergePreferences } from "@/types/user-preferences"
+import { invalidateProjectCache } from "./useProjectData"
 
 export interface ExpensePayload {
   payers: PayerShare[]
   amount: number
   currency: string
   exchangeRate?: number | null
-  rateKind?: "project" | "market" | "custom" | null
+  rateKind?: "market" | "custom" | null
   rateDate?: string | null
-  /** Promote this expense's rate to the project's fixed rate for the currency. */
-  promoteRate?: boolean
   description: string | null
   category: string
   location: string | null
@@ -95,6 +94,10 @@ export function useSaveExpense(projectId: string) {
           return { ok: false, error: data.error || fallback }
         }
 
+        // The saved expense changes the project's expense list; drop the cache
+        // so the next load (e.g. the rate sheet's recent-rates list) refetches.
+        invalidateProjectCache(projectId)
+
         if (req.image.pendingDeleteUrl && req.image.pendingDeleteUrl !== imageUrl) {
           authFetch(`/api/upload?url=${encodeURIComponent(req.image.pendingDeleteUrl)}`, { method: "DELETE" }).catch(
             (error) => console.error("刪除舊圖片失敗:", error)
@@ -137,6 +140,7 @@ export function useSaveExpense(projectId: string) {
           const data = await res.json().catch(() => ({}))
           return { ok: false, error: data.error || "刪除失敗" }
         }
+        invalidateProjectCache(projectId)
         const n = req.notification
         if (n.requested && canNotifyLine && prefs.expenseDeleted) {
           sendDeleteNotificationToChat({

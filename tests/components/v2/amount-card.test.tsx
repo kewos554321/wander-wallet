@@ -16,8 +16,7 @@ vi.mock("@/components/ui/currency-select", () => ({
 
 import { AmountCard } from "@/components/v2/expense-form/amount-card"
 
-const PROJECT_CHIP = { chip: "專案", tone: "project" as const, context: "專案設定" }
-const LIVE_CHIP = { chip: "即時", tone: "market" as const, context: "今天" }
+const LIVE_CHIP = { chip: "市場", tone: "market" as const, context: "今天" }
 const CUSTOM_CHIP = { chip: "自訂", tone: "custom" as const, context: "手動輸入" }
 
 type AmountCardProps = Parameters<typeof AmountCard>[0]
@@ -130,13 +129,13 @@ describe("AmountCard", () => {
       previewProjectAmount: 31.72,
       rate: 0.031715,
       rateEditable: true,
-      rateChip: PROJECT_CHIP,
+      rateChip: LIVE_CHIP,
       onToggleCustomRate: vi.fn(),
     })
     expect(screen.getByTestId("amount-conversion")).toHaveTextContent("≈ USD 31.72")
     expect(screen.getByText("0.031715")).toBeInTheDocument()
-    expect(screen.getByTestId("rate-source")).toHaveTextContent("專案")
-    expect(screen.getByTestId("rate-context")).toHaveTextContent("專案設定")
+    expect(screen.getByTestId("rate-source")).toHaveTextContent("市場")
+    expect(screen.getByTestId("rate-context")).toHaveTextContent("今天")
     expect(screen.queryByLabelText("匯率")).not.toBeInTheDocument()
   })
 
@@ -147,7 +146,7 @@ describe("AmountCard", () => {
       previewProjectAmount: 31.72,
       rate: 0.031715,
       rateEditable: true,
-      rateChip: PROJECT_CHIP,
+      rateChip: LIVE_CHIP,
       onToggleCustomRate: vi.fn(),
     })
     const conversion = screen.getByTestId("amount-conversion")
@@ -160,17 +159,17 @@ describe("AmountCard", () => {
     expect(rateRow).toHaveTextContent("USD")
   })
 
-  it("shows 即時 as the source (with the relative time) when derived from live rates", () => {
+  it("shows 市場 · 今天 as the source when derived from live rates", () => {
     setup({
       currency: "TWD",
       projectCurrency: "USD",
       rate: 0.0317,
       rateEditable: true,
-      rateChip: { chip: "即時", tone: "market", context: "更新於 3 分鐘前" },
+      rateChip: LIVE_CHIP,
       onToggleCustomRate: vi.fn(),
     })
-    expect(screen.getByTestId("rate-source")).toHaveTextContent("即時")
-    expect(screen.getByTestId("rate-context")).toHaveTextContent("更新於 3 分鐘前")
+    expect(screen.getByTestId("rate-source")).toHaveTextContent("市場")
+    expect(screen.getByTestId("rate-context")).toHaveTextContent("今天")
   })
 
   it("shows the market date for a past market rate", () => {

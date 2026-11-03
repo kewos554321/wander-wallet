@@ -71,32 +71,43 @@ describe("resolveRate", () => {
     expect(resolveRate({ currency: "USD", projectCurrency: "USD" })).toMatchObject({ rate: 1, source: "same" })
   })
   it("uses provided rate verbatim", () => {
-    expect(resolveRate({ currency: "TWD", projectCurrency: "USD", provided: 0.0317 }).rate).toBe(0.0317)
+    expect(resolveRate({ currency: "TWD", projectCurrency: "USD", provided: 0.0317 })).toMatchObject({
+      rate: 0.0317,
+      source: "provided",
+    })
   })
-  it("uses the project custom rate when one is set", () => {
-    expect(resolveRate({ currency: "TWD", projectCurrency: "USD", customRate: 0.03 }).source).toBe("fixed")
+  it("falls back to live when no rate is provided", () => {
+    expect(resolveRate({ currency: "TWD", projectCurrency: "USD", liveRate: 0.0317 })).toMatchObject({
+      rate: 0.0317,
+      source: "live",
+    })
   })
-  it("falls back to live when there is no custom rate", () => {
-    const fallback = resolveRate({ currency: "TWD", projectCurrency: "USD", customRate: null, liveRate: 0.0317 })
-    expect(fallback).toMatchObject({ rate: 0.0317, source: "live" })
+  it("ignores a legacy custom rate (project fixed removed)", () => {
+    const legacy = {
+      currency: "TWD",
+      projectCurrency: "USD",
+      customRate: 0.03,
+      liveRate: 0.0317,
+    } as Parameters<typeof resolveRate>[0] & { customRate: number }
+    expect(resolveRate(legacy)).toMatchObject({ rate: 0.0317, source: "live" })
   })
 })
 
 describe("resolveExpenseRateMeta", () => {
   const now = new Date("2026-10-09T04:00:00Z")
-  const base = { providedRate: null, hasProjectFixedRate: false, now }
+  const base = { providedRate: null, now }
 
   it("same currency has no rate meta", () => {
     expect(resolveExpenseRateMeta({ ...base, isForeign: false })).toEqual({ kind: null, date: null })
   })
-  it("defaults to project when the project has a fixed rate", () => {
-    expect(resolveExpenseRateMeta({ ...base, isForeign: true, hasProjectFixedRate: true })).toEqual({
-      kind: "project",
-      date: null,
-    })
-  })
-  it("defaults to market today when there is no fixed rate", () => {
+  it("defaults to market today when there is no provided rate", () => {
     expect(resolveExpenseRateMeta({ ...base, isForeign: true })).toEqual({ kind: "market", date: now })
+  })
+  it("ignores a legacy project-fixed flag", () => {
+    const legacy = { ...base, isForeign: true, hasProjectFixedRate: true } as Parameters<
+      typeof resolveExpenseRateMeta
+    >[0] & { hasProjectFixedRate: boolean }
+    expect(resolveExpenseRateMeta(legacy)).toEqual({ kind: "market", date: now })
   })
   it("honours a provided market rate with its queried date", () => {
     expect(
@@ -127,16 +138,13 @@ describe("resolveExpenseRateMeta", () => {
 })
 
 describe("resolvePreviewRate", () => {
-  it("uses the live rate when no custom rates are in effect (live mode)", () => {
-    expect(resolvePreviewRate("JPY", "TWD", null, { JPY: 150, TWD: 31.5 })).toEqual({
+  it("uses the live rate", () => {
+    expect(resolvePreviewRate("JPY", "TWD", { JPY: 150, TWD: 31.5 })).toEqual({
       rate: 31.5 / 150,
       source: "live",
     })
   })
-  it("prefers a custom rate when one is in effect", () => {
-    expect(resolvePreviewRate("JPY", "TWD", { JPY: 0.2 }, { JPY: 150, TWD: 31.5 })).toEqual({
-      rate: 0.2,
-      source: "fixed",
-    })
+  it("returns null when a currency leg is missing", () => {
+    expect(resolvePreviewRate("JPY", "TWD", { JPY: 150 })).toEqual({ rate: null, source: "none" })
   })
 })

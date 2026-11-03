@@ -61,7 +61,6 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
                 item.ratePinned && item.exchangeRate?.trim() && Number(item.exchangeRate) > 0
                   ? Number(item.exchangeRate)
                   : undefined,
-              promoteRate: item.promoteFixedRate || undefined,
               description: item.description.trim() || null,
               category: item.category,
               image,

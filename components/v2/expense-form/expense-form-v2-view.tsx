@@ -17,8 +17,9 @@ import { CategoryPicker } from "./category-picker"
 import { PayerPicker } from "./payer-picker"
 import { SplitEditor } from "./split-editor"
 import { RateSheet } from "./rate-sheet"
-import { formatRelativeTime, rateChip } from "@/components/v2/currency/format"
+import { rateChip } from "@/components/v2/currency/format"
 import type { DraftMember, useExpenseDraft } from "./use-expense-draft"
+import type { RecentRate } from "@/lib/recent-rates"
 
 export interface ExpenseFormV2ViewProps {
   mode: "create" | "edit"
@@ -33,13 +34,14 @@ export interface ExpenseFormV2ViewProps {
   /** Settlement currency; enables the ≈ conversion preview for foreign expenses. */
   projectCurrency?: string
   /** Resolve a display-only rate + its source (currency → settlement). */
-  previewRateInfo?: (currency: string) => { rate: number | null; source: "same" | "fixed" | "live" | "none" }
-  /** Live + project-fixed rate details that feed the rate editor sheet. */
+  previewRateInfo?: (currency: string) => { rate: number | null; source: "same" | "live" | "none" }
+  /** Live rate details that feed the rate editor sheet. */
   rateContext?: (currency: string) => {
-    fixedRate: number | null
     liveRate: number | null
     liveTimestamp: number | null
   }
+  /** Rates recently used on this project for a currency, newest first. */
+  recentRates?: (currency: string) => RecentRate[]
 }
 
 export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
@@ -62,19 +64,14 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
   const rateCtx =
     props.rateContext && props.projectCurrency && state.currency !== props.projectCurrency
       ? props.rateContext(state.currency)
-      : { fixedRate: null, liveRate: null, liveTimestamp: null }
-  // Provenance chip for the amount card. The relative time only applies to the
-  // default live feed (an explicitly-bound market rate has no captured time).
+      : { liveRate: null, liveTimestamp: null }
+  // Provenance chip for the amount card. No stored date on a market rate means
+  // it reflects today.
   const chip = isForeign
     ? rateChip({
         kind: rateKind,
-        // No stored date on a market rate means it reflects today.
         date: rateDate ?? (rateKind === "market" ? new Date() : null),
         now: new Date(),
-        relativeTime:
-          rateKind === "market" && state.rateKind == null && rateCtx.liveTimestamp
-            ? formatRelativeTime(rateCtx.liveTimestamp)
-            : null,
       })
     : null
 
@@ -137,24 +134,20 @@ export function ExpenseFormV2View(props: ExpenseFormV2ViewProps) {
           rate={rate}
           customRate={customRate}
           appliedKind={rateKind}
-          projectFixedRate={rateCtx.fixedRate}
           liveRate={rateCtx.liveRate}
           liveTimestamp={rateCtx.liveTimestamp}
-          expenseDate={state.expenseDate}
+          recentRates={props.recentRates?.(state.currency) ?? []}
           onUseRate={(value, kind, date) => {
             actions.setExchangeRate(String(value))
             actions.setRatePinned(true)
             actions.setRateKind(kind)
             actions.setRateDate(kind === "market" ? date ?? null : null)
           }}
-          promoteFixedRate={state.promoteFixedRate}
-          onPromoteChange={(value) => actions.setPromoteFixedRate(value)}
           onReset={() => {
             actions.setExchangeRate("")
             actions.setRatePinned(false)
             actions.setRateKind(null)
             actions.setRateDate(null)
-            actions.setPromoteFixedRate(false)
           }}
         />
       )}

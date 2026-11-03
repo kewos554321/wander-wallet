@@ -1,15 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { format } from "date-fns"
 import { X } from "lucide-react"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { formatCurrency } from "@/lib/constants/currencies"
 import { roundRateForDisplay } from "@/lib/currency-conversion"
-import { rateFromRates, formatRelativeTime } from "@/components/v2/currency/format"
+import { formatRelativeTime, rateFromRates } from "@/components/v2/currency/format"
+import type { RecentRate } from "@/lib/recent-rates"
 
-type Tab = "live" | "history" | "custom"
-type AppliedKind = "default" | "live" | "history" | "custom"
+type Tab = "market" | "custom"
 
 export interface RateSheetProps {
   open: boolean
@@ -22,37 +22,28 @@ export interface RateSheetProps {
   amount: number
   /** The rate currently bound to this expense. */
   rate: number | null
-  /** True when this expense overrides the project default rate. */
+  /** True when this expense overrides the default rate. */
   customRate: boolean
-  /** The project's fixed rate for `fromCurrency`, when one is configured. */
-  projectFixedRate: number | null
   /** The app's current live rate (from → to), when known. */
   liveRate: number | null
   liveTimestamp?: number | null
-  /** Default date for the historical lookup. */
-  expenseDate: Date
-  /** Bind a concrete rate to this expense. `kind` is market (feed) or custom. */
+  /** The kind currently bound to this expense (for the opening tab). */
+  appliedKind?: "market" | "custom" | null
+  /** Rates recently used on this project for fromCurrency, newest first. */
+  recentRates: RecentRate[]
+  /** Bind a rate to this expense. `kind` is market (feed, optional date) or custom. */
   onUseRate: (rate: number, kind: "market" | "custom", date?: string) => void
-  /** Drop the override and fall back to the project default. */
+  /** Drop the override and fall back to today's rate. */
   onReset: () => void
-  /** The kind currently bound to this expense (for highlighting). */
-  appliedKind?: "project" | "market" | "custom" | null
-  /** Current promote intent, so the toggle reflects the draft's real state. */
-  promoteFixedRate: boolean
-  /** Report the promote intent when the sheet closes (always called). */
-  onPromoteChange: (value: boolean) => void
 }
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "live", label: "即時" },
-  { id: "history", label: "歷史" },
-  { id: "custom", label: "自訂" },
-]
+const todayStr = () => format(new Date(), "yyyy-MM-dd")
 
 /**
- * Bottom-sheet editor for a single expense's bound rate. Three ways to get a
- * rate — live, a past date (Frankfurter history), or a manual value — plus a
- * reset back to the project default. Only ever affects this expense.
+ * Bottom-sheet editor for a single expense's bound rate. Two ways to get a
+ * rate: 市場 (today by default; change the date for that day's rate) or 自訂
+ * (type a value, or reuse one recently used in this project). Only ever
+ * affects this expense.
  */
 export function RateSheet({
   open,
@@ -62,81 +53,75 @@ export function RateSheet({
   amount,
   rate,
   customRate,
-  projectFixedRate,
   liveRate,
   liveTimestamp,
-  expenseDate,
+  appliedKind,
+  recentRates,
   onUseRate,
   onReset,
-  appliedKind,
-  promoteFixedRate,
-  onPromoteChange,
 }: RateSheetProps) {
   const authFetch = useAuthFetch()
-  const [tab, setTab] = useState<Tab>("live")
-  const [applied, setApplied] = useState<AppliedKind>("default")
-  const [historyDate, setHistoryDate] = useState("")
+  const [tab, setTab] = useState<Tab>("market")
+  const [date, setDate] = useState(todayStr())
   const [historyRate, setHistoryRate] = useState<number | null>(null)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState<string | null>(null)
   const [customInput, setCustomInput] = useState("")
+  const [reused, setReused] = useState<number | null>(null)
+  // Guards against an older date lookup resolving after a newer one.
+  const reqIdRef = useRef(0)
 
   // Re-seed whenever the sheet opens (not on every rate change, so a selection
   // stays highlighted after the parent echoes it back).
   useEffect(() => {
     if (!open) return
-    setTab("live")
-    setApplied(appliedKind === "custom" ? "custom" : appliedKind === "market" ? "live" : "default")
-    setHistoryDate(format(expenseDate, "yyyy-MM-dd"))
+    setTab(appliedKind === "custom" ? "custom" : "market")
+    setDate(todayStr())
     setHistoryRate(null)
     setHistoryError(null)
     setHistoryLoading(false)
-    setCustomInput(rate != null ? String(roundRateForDisplay(rate)) : "")
+    setReused(null)
+    const seed =
+      customRate && rate != null
+        ? String(roundRateForDisplay(rate))
+        : recentRates[0] != null
+          ? String(recentRates[0].rate)
+          : ""
+    setCustomInput(seed)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   if (!open) return null
 
-  const defaultLabel = projectFixedRate != null ? "專案固定匯率" : "即時匯率"
-  const chipLabel =
-    applied === "default"
-      ? defaultLabel
-      : applied === "live"
-        ? "即時匯率"
-        : applied === "history"
-          ? "歷史匯率"
-          : "自訂匯率"
-  const chipTone =
-    applied === "default" && projectFixedRate != null
-      ? "bg-v2-lake-soft text-v2-lake"
-      : applied === "live"
-        ? "bg-v2-gold-soft text-v2-gold"
-        : applied === "history"
-          ? "bg-v2-sky-soft text-v2-sky"
-          : "bg-v2-coral-soft text-v2-coral-strong"
+  const isToday = date === todayStr()
+  const marketRate = isToday ? liveRate : historyRate
+  const marketUsable = marketRate != null
   const approx = rate != null ? amount * rate : null
 
-  const apply = (value: number, kind: AppliedKind, date?: string) => {
-    if (!(value > 0) || !Number.isFinite(value)) return
-    setApplied(kind)
-    onUseRate(value, kind === "custom" ? "custom" : "market", kind === "history" ? date : undefined)
-  }
-
-  const queryHistory = async () => {
+  const queryHistory = async (nextDate: string) => {
+    setDate(nextDate)
+    if (nextDate === todayStr()) {
+      setHistoryRate(null)
+      setHistoryError(null)
+      return
+    }
+    const id = ++reqIdRef.current
     setHistoryLoading(true)
     setHistoryError(null)
     setHistoryRate(null)
     try {
-      const res = await authFetch(`/api/exchange-rates?date=${historyDate}`)
+      const res = await authFetch(`/api/exchange-rates?date=${nextDate}`)
+      if (id !== reqIdRef.current) return
       if (!res.ok) throw new Error("request failed")
       const data = await res.json()
       const derived = rateFromRates(fromCurrency, toCurrency, data.rates ?? {})
       if (!(derived > 0) || !Number.isFinite(derived)) throw new Error("no rate")
       setHistoryRate(derived)
     } catch {
+      if (id !== reqIdRef.current) return
       setHistoryError("查不到該日期的匯率，請換一天試試")
     } finally {
-      setHistoryLoading(false)
+      if (id === reqIdRef.current) setHistoryLoading(false)
     }
   }
 
@@ -176,121 +161,92 @@ export function RateSheet({
           <p data-testid="rate-sheet-approx" className="m-0 mt-0.5 text-xs tabular-nums text-v2-ink-muted">
             {approx != null ? `≈ ${formatCurrency(approx, toCurrency)}` : "≈ —"}
           </p>
-          <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${chipTone}`}>
-            {chipLabel}
-          </span>
         </div>
 
         <div role="tablist" aria-label="匯率來源" className="mx-5 flex gap-1 rounded-xl bg-v2-sand p-1">
-          {TABS.map((t) => (
+          {(["market", "custom"] as const).map((t) => (
             <button
-              key={t.id}
+              key={t}
               type="button"
               role="tab"
-              aria-selected={tab === t.id}
-              onClick={() => setTab(t.id)}
+              aria-selected={tab === t}
+              onClick={() => setTab(t)}
               className={`flex-1 rounded-[9px] py-2 text-[13px] font-bold transition ${
-                tab === t.id ? "bg-v2-surface text-v2-lake shadow-[0_1px_3px_rgba(27,24,21,.1)]" : "text-v2-ink-muted"
+                tab === t ? "bg-v2-surface text-v2-lake shadow-[0_1px_3px_rgba(27,24,21,.1)]" : "text-v2-ink-muted"
               }`}
             >
-              {t.label}
+              {t === "market" ? "市場" : "自訂"}
             </button>
           ))}
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-2 pt-4">
-          {tab === "live" && (
-            <section data-testid="rate-pane-live">
-              <p className="m-0 mb-2 text-xs font-bold text-v2-ink-muted">現在匯率</p>
-              <div className="rounded-[14px] border border-v2-line p-3.5">
+          {tab === "market" && (
+            <section data-testid="rate-pane-market">
+              <p className="m-0 mb-2 text-xs font-bold text-v2-ink-muted">查哪一天的匯率？</p>
+              <input
+                type="date"
+                aria-label="匯率日期"
+                max={todayStr()}
+                value={date}
+                onChange={(e) => queryHistory(e.target.value)}
+                className="w-full rounded-[11px] border border-v2-line bg-v2-paper px-3 py-2.5 text-[13px] text-v2-ink"
+              />
+              <div className="mt-3 rounded-[14px] border border-v2-line p-3.5">
                 <div className="flex items-center justify-between gap-2.5">
                   <div className="min-w-0">
-                    <p className="m-0 font-v2-serif text-[17px] font-bold tabular-nums text-v2-ink">
-                      1 {fromCurrency} = {liveRate != null ? roundRateForDisplay(liveRate) : "—"} {toCurrency}
+                    <p data-testid="market-rate" className="m-0 font-v2-serif text-[17px] font-bold tabular-nums text-v2-ink">
+                      1 {fromCurrency} = {marketRate != null ? roundRateForDisplay(marketRate) : "—"} {toCurrency}
                     </p>
                     <p className="m-0 mt-0.5 text-[11px] text-v2-ink-subtle">
-                      {liveTimestamp ? `更新於 ${formatRelativeTime(liveTimestamp)}` : "讀取中…"}
+                      {historyLoading
+                        ? "讀取中…"
+                        : isToday
+                          ? liveTimestamp
+                            ? `今天 · 更新於 ${formatRelativeTime(liveTimestamp)}`
+                            : "今天 · 即時匯率"
+                          : `${date} · 歷史匯率`}
                     </p>
                   </div>
                   <button
                     type="button"
-                    aria-label="使用即時匯率"
-                    disabled={liveRate == null || applied === "live"}
-                    onClick={() => liveRate != null && apply(liveRate, "live")}
-                    className={optionButtonClass(applied === "live")}
+                    aria-label="使用市場匯率"
+                    disabled={!marketUsable}
+                    onClick={() => {
+                      if (!marketUsable) return
+                      if (isToday) onUseRate(marketRate as number, "market")
+                      else onUseRate(marketRate as number, "market", date)
+                    }}
+                    className={optionButtonClass(!customRate && isToday)}
                   >
-                    {applied === "live" ? "已使用" : "使用"}
+                    使用
                   </button>
                 </div>
               </div>
-              <p
-                data-testid="rate-sheet-project"
-                className={`m-0 mt-3 rounded-xl border p-3 text-[11.5px] leading-relaxed ${
-                  projectFixedRate != null
-                    ? "border-v2-lake-border bg-v2-lake-soft text-v2-lake"
-                    : "border-v2-gold-soft bg-v2-gold-soft text-v2-gold"
-                }`}
-              >
-                {projectFixedRate != null
-                  ? `專案固定匯率 ${roundRateForDisplay(projectFixedRate)} 是新支出的預設；用即時匯率會把這一筆綁在當下值。`
-                  : "尚未設定專案固定匯率，預設使用即時匯率。"}
-              </p>
-            </section>
-          )}
-
-          {tab === "history" && (
-            <section data-testid="rate-pane-history">
-              <p className="m-0 mb-2 text-xs font-bold text-v2-ink-muted">查過去某天的匯率</p>
-              <div className="flex gap-2">
-                <input
-                  type="date"
-                  aria-label="歷史日期"
-                  max={format(new Date(), "yyyy-MM-dd")}
-                  value={historyDate}
-                  onChange={(e) => setHistoryDate(e.target.value)}
-                  className="min-w-0 flex-1 rounded-[11px] border border-v2-line bg-v2-paper px-3 py-2.5 text-[13px] text-v2-ink"
-                />
-                <button
-                  type="button"
-                  onClick={queryHistory}
-                  disabled={historyLoading}
-                  className="shrink-0 rounded-[11px] bg-v2-lake px-4 text-[13px] font-bold text-v2-on-lake disabled:opacity-50"
-                >
-                  {historyLoading ? "查詢中…" : "查詢"}
-                </button>
-              </div>
               {historyError && (
-                <p role="alert" className="m-0 mt-3 text-xs font-semibold text-v2-danger">
-                  {historyError}
-                </p>
-              )}
-              {historyRate != null && (
-                <div className="mt-3 rounded-[14px] border border-v2-line p-3.5">
-                  <div className="flex items-center justify-between gap-2.5">
-                    <div className="min-w-0">
-                      <p className="m-0 font-v2-serif text-[17px] font-bold tabular-nums text-v2-ink">
-                        1 {fromCurrency} = {roundRateForDisplay(historyRate)} {toCurrency}
-                      </p>
-                      <p className="m-0 mt-0.5 text-[11px] text-v2-ink-subtle">{historyDate}</p>
-                    </div>
-                    <button
-                      type="button"
-                      aria-label="使用歷史匯率"
-                      disabled={applied === "history"}
-                      onClick={() => apply(historyRate, "history", historyDate)}
-                      className={optionButtonClass(applied === "history")}
-                    >
-                      {applied === "history" ? "已使用" : "使用"}
-                    </button>
-                  </div>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <p role="alert" className="m-0 text-xs font-semibold text-v2-danger">
+                    {historyError}
+                  </p>
+                  <button
+                    type="button"
+                    aria-label="重新查詢"
+                    onClick={() => queryHistory(date)}
+                    className="shrink-0 rounded-full border border-v2-lake px-3 py-1 text-[11px] font-bold text-v2-lake"
+                  >
+                    重試
+                  </button>
                 </div>
               )}
+              <p className="m-0 mt-3 text-[11.5px] leading-relaxed text-v2-ink-muted">
+                {isToday ? "預設就是今天。改上面的日期，就會變成那一天的歷史匯率。" : "你改了日期，所以這是歷史匯率。"}
+              </p>
             </section>
           )}
 
           {tab === "custom" && (
             <section data-testid="rate-pane-custom">
-              <p className="m-0 mb-2 text-xs font-bold text-v2-ink-muted">自訂匯率</p>
+              <p className="m-0 mb-2 text-xs font-bold text-v2-ink-muted">自己輸入匯率</p>
               <div className="rounded-[14px] border border-v2-line p-3.5">
                 <div className="flex items-center justify-between gap-2.5">
                   <label className="flex min-w-0 flex-1 items-center gap-2">
@@ -299,7 +255,10 @@ export function RateSheet({
                       aria-label="自訂匯率"
                       inputMode="decimal"
                       value={customInput}
-                      onChange={(e) => setCustomInput(e.target.value)}
+                      onChange={(e) => {
+                        setCustomInput(e.target.value)
+                        setReused(null)
+                      }}
                       className="min-w-0 flex-1 bg-transparent text-right font-v2-serif text-base font-bold tabular-nums text-v2-ink outline-none"
                     />
                     <span className="shrink-0 text-[13px] text-v2-ink-muted">{toCurrency}</span>
@@ -307,47 +266,70 @@ export function RateSheet({
                   <button
                     type="button"
                     aria-label="使用自訂匯率"
-                    disabled={!customUsable || applied === "custom"}
-                    onClick={() => customUsable && apply(customValue, "custom")}
-                    className={optionButtonClass(applied === "custom")}
+                    disabled={!customUsable}
+                    onClick={() => customUsable && onUseRate(customValue, "custom")}
+                    className={optionButtonClass(customRate)}
                   >
-                    {applied === "custom" ? "已使用" : "使用"}
+                    使用
                   </button>
                 </div>
               </div>
+              <p className="m-0 mt-2 text-[11.5px] text-v2-lake">
+                {reused != null
+                  ? `✓ 沿用 ${reused}（這一筆會算成「自訂」）`
+                  : recentRates[0] != null && customInput === String(recentRates[0].rate)
+                    ? "✎ 自動帶入你最近用過的匯率"
+                    : "這一筆會算成「自訂」"}
+              </p>
+
+              {recentRates.length > 0 && (
+                <>
+                  <p className="m-0 mb-2 mt-4 text-xs font-bold text-v2-ink-muted">
+                    最近用過的匯率（這個專案 · {fromCurrency}→{toCurrency}）
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {recentRates.map((r, i) => (
+                      <button
+                        key={`${r.rate}-${i}`}
+                        type="button"
+                        data-testid={`recent-rate-${i}`}
+                        onClick={() => {
+                          setCustomInput(String(r.rate))
+                          setReused(r.rate)
+                        }}
+                        className={`flex items-center justify-between rounded-[12px] border px-3.5 py-2.5 text-left transition ${
+                          reused === r.rate ? "border-v2-lake-border bg-v2-lake-soft" : "border-v2-line hover:bg-v2-paper"
+                        }`}
+                      >
+                        <span className="min-w-0">
+                          <span className="block font-v2-serif text-[15px] font-bold tabular-nums text-v2-ink">{r.rate}</span>
+                          <span className="block text-[11px] text-v2-ink-muted">
+                            <span
+                              className={`mr-1 rounded px-1 py-[1px] text-[10px] font-bold ${
+                                r.kind === "market" ? "bg-v2-gold-soft text-v2-gold" : "bg-v2-coral-soft text-v2-coral-strong"
+                              }`}
+                            >
+                              {r.kind === "market" ? "市場" : "自訂"}
+                            </span>
+                            {r.date ? `${r.date} · ` : ""}
+                            {r.description ?? ""}
+                          </span>
+                        </span>
+                        {reused === r.rate ? (
+                          <span className="shrink-0 text-[11px] font-bold text-v2-lake">已選</span>
+                        ) : (
+                          <span className="shrink-0 text-[11px] font-bold text-v2-lake">沿用</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+
               <p className="m-0 mt-3 text-[11.5px] leading-relaxed text-v2-ink-muted">
-                自訂只影響這一筆，不會改動專案設定。按「還原預設」即回到預設匯率。
+                自訂只影響這一筆，不會改動專案設定。
               </p>
             </section>
-          )}
-        </div>
-
-        <div className="border-t border-v2-line-soft px-5 py-3">
-          <label className="flex cursor-pointer items-start gap-2.5">
-            <input
-              type="checkbox"
-              aria-label="同時設為專案固定匯率"
-              checked={promoteFixedRate}
-              disabled={rate == null}
-              onChange={(e) => onPromoteChange(e.target.checked)}
-              className="peer sr-only"
-            />
-            <span
-              aria-hidden="true"
-              className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-v2-check bg-v2-surface text-transparent peer-checked:border-v2-lake peer-checked:bg-v2-lake peer-checked:text-v2-on-lake peer-focus-visible:ring-2 peer-focus-visible:ring-v2-lake/40"
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}><path d="M20 6 9 17l-5-5" /></svg>
-            </span>
-            <span>
-              <span className="block text-[13px] font-bold text-v2-ink">同時設為專案固定匯率</span>
-              <span className="mt-px block text-xs text-v2-ink-muted">之後 {fromCurrency} 的新支出都會用這個值</span>
-            </span>
-          </label>
-          {promoteFixedRate && projectFixedRate != null && rate !== projectFixedRate && (
-            <p role="alert" className="mt-2 text-xs font-semibold text-v2-coral-strong">
-              {fromCurrency} 目前已有固定匯率 {roundRateForDisplay(projectFixedRate)}，完成後會覆蓋為{" "}
-              {rate != null ? roundRateForDisplay(rate) : "—"}。
-            </p>
           )}
         </div>
 
@@ -364,9 +346,7 @@ export function RateSheet({
           <button
             type="button"
             aria-label="完成"
-            onClick={() => {
-              onClose()
-            }}
+            onClick={onClose}
             className="flex-[1.4] rounded-[13px] bg-v2-lake py-3 text-sm font-bold text-v2-on-lake"
           >
             完成

@@ -17,6 +17,7 @@ import { getCurrentLocation } from "@/lib/geolocation"
 import type { SplitDetail } from "@/lib/expense-split"
 import { ExpenseFormV2View } from "./expense-form-v2-view"
 import { useExpenseDraft, type DraftInit } from "./use-expense-draft"
+import { recentRatesFor, type RecentRate } from "@/lib/recent-rates"
 
 interface LoadedExpense {
   amount: number
@@ -46,9 +47,16 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
   const router = useRouter()
   const authFetch = useAuthFetch()
   const { user } = useLiff()
-  const { project, members, loading: projectLoading, projectCurrency, customRates } = useProjectData(projectId)
+  const { project, members, loading: projectLoading, projectCurrency } = useProjectData(projectId)
   const [expense, setExpense] = useState<LoadedExpense | null>(null)
   const [expenseLoading, setExpenseLoading] = useState(mode === "edit")
+
+  // Rates recently used on this project, for the sheet's reuse list. Memoised
+  // (and kept above the early returns, so the hook order is stable).
+  const recentRates = useCallback(
+    (currency: string) => recentRatesFor({ expenses: project?.expenses ?? [], fromCurrency: currency }),
+    [project],
+  )
 
   useEffect(() => {
     if (mode !== "edit" || !expenseId) return
@@ -158,7 +166,7 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
           init={init}
           original={expense}
           projectCurrency={projectCurrency}
-          customRates={customRates}
+          recentRates={recentRates}
         />
       </div>
     </UiV2Scope>
@@ -173,34 +181,31 @@ function LoadedForm({
   init,
   original,
   projectCurrency,
-  customRates,
+  recentRates,
 }: Props & {
   projectName: string
   init: DraftInit
   original: LoadedExpense | null
   projectCurrency: string
-  customRates: Record<string, number> | null
+  recentRates: (currency: string) => RecentRate[]
 }) {
   const router = useRouter()
   const { save, remove, saving, uploadingImage, deleting, canNotifyLine } = useSaveExpense(projectId)
   const { exchangeRates, ratesTimestamp, refetch: refetchRates } = useCurrencyConversion({
     projectCurrency,
-    customRates,
     autoFetch: false,
   })
   const previewRateInfo = useCallback(
-    (currency: string) => resolvePreviewRate(currency, projectCurrency, customRates, exchangeRates),
-    [projectCurrency, customRates, exchangeRates],
+    (currency: string) => resolvePreviewRate(currency, projectCurrency, exchangeRates),
+    [projectCurrency, exchangeRates],
   )
-  // Extra detail for the rate editor sheet: the project fixed rate and the
-  // live rate (ignoring customRates) + when it was last fetched.
+  // Extra detail for the rate editor sheet: the live rate + when it was last fetched.
   const rateContext = useCallback(
     (currency: string) => ({
-      fixedRate: customRates?.[currency] ?? null,
-      liveRate: resolvePreviewRate(currency, projectCurrency, null, exchangeRates).rate,
+      liveRate: resolvePreviewRate(currency, projectCurrency, exchangeRates).rate,
       liveTimestamp: ratesTimestamp,
     }),
-    [customRates, projectCurrency, exchangeRates, ratesTimestamp],
+    [projectCurrency, exchangeRates, ratesTimestamp],
   )
   const draft = useExpenseDraft(init, previewRateInfo)
   const selectedCurrency = draft.state.currency
@@ -282,7 +287,6 @@ function LoadedForm({
         rateKind: state.ratePinned ? state.rateKind ?? undefined : undefined,
         rateDate:
           state.ratePinned && state.rateKind === "market" ? state.rateDate ?? undefined : undefined,
-        promoteRate: state.promoteFixedRate || undefined,
         description,
         category,
         location: state.location.location,
@@ -346,6 +350,7 @@ function LoadedForm({
         projectCurrency={projectCurrency}
         previewRateInfo={previewRateInfo}
         rateContext={rateContext}
+        recentRates={recentRates}
       />
       <ConfirmDeleteDialog
         open={showDelete}

@@ -71,7 +71,6 @@ function initialState(init: DraftInit) {
       ratePinned: false,
       rateKind: null,
       rateDate: null,
-      promoteFixedRate: false,
       description: "",
       category: "",
       payerIds: init.paidBy ? [init.paidBy] : ([] as string[]),
@@ -125,9 +124,8 @@ function initialState(init: DraftInit) {
       currency: e.currency,
       exchangeRate: e.exchangeRate != null ? String(e.exchangeRate) : "",
       ratePinned: e.exchangeRate != null,
-      rateKind: (e.rateKind as "project" | "market" | "custom" | null) ?? null,
+      rateKind: e.rateKind === "project" ? "custom" : ((e.rateKind as "market" | "custom" | null) ?? null),
       rateDate: e.rateDate ?? null,
-      promoteFixedRate: false,
       description: e.description ?? "",
       category: e.category ?? "",
       payerIds,
@@ -163,9 +161,8 @@ function initialState(init: DraftInit) {
     currency: e.currency,
     exchangeRate: e.exchangeRate != null ? String(e.exchangeRate) : "",
     ratePinned: e.exchangeRate != null,
-    rateKind: (e.rateKind as "project" | "market" | "custom" | null) ?? null,
+    rateKind: e.rateKind === "project" ? "custom" : ((e.rateKind as "market" | "custom" | null) ?? null),
     rateDate: e.rateDate ?? null,
-    promoteFixedRate: false,
     description: e.description ?? "",
     category: e.category ?? "",
     payerIds,
@@ -191,12 +188,11 @@ export function useExpenseDraft(init: DraftInit, previewRateInfo?: (currency: st
     setAmount: set("amount"),
     setCurrency: (code: string) =>
       // Changing currency invalidates a previously-bound rate for this expense.
-      setState((s) => ({ ...s, currency: code, exchangeRate: "", ratePinned: false, rateKind: null, rateDate: null, promoteFixedRate: false })),
+      setState((s) => ({ ...s, currency: code, exchangeRate: "", ratePinned: false, rateKind: null, rateDate: null })),
     setExchangeRate: set("exchangeRate"),
     setRatePinned: set("ratePinned"),
     setRateKind: set("rateKind"),
     setRateDate: set("rateDate"),
-    setPromoteFixedRate: set("promoteFixedRate"),
     setDescription: set("description"),
     setCategory: set("category"),
     setExpenseDate: set("expenseDate"),
@@ -269,10 +265,9 @@ export function useExpenseDraft(init: DraftInit, previewRateInfo?: (currency: st
   const rate = customRate ? usableManual ?? autoRate : autoRate
   const rateSource = customRate ? ("custom" as const) : rateInfo.source
   // Display provenance: an explicit override kind wins; otherwise the default
-  // follows the project (fixed rate) or the live feed. The market date stays
-  // null for "today"; the view resolves the 即時/市場 label.
-  const rateKindDisplay =
-    state.rateKind ?? (rateInfo.source === "fixed" ? "project" : rateInfo.source === "live" ? "market" : null)
+  // follows the live feed. The market date stays null for "today"; the view
+  // resolves the 市場 label.
+  const rateKindDisplay = state.rateKind ?? (rateInfo.source === "live" ? "market" : null)
   const rateDateDisplay = state.rateDate ?? null
 
   const derived = useMemo(() => {

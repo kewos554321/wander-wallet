@@ -9,7 +9,6 @@ import type { RateChip, RateChipTone } from "@/components/v2/currency/format"
 // Dot colour per rate kind, tuned for the dark lake card face.
 const CHIP_DOT: Record<RateChipTone, string> = {
   market: "bg-v2-gold-tint",
-  project: "bg-v2-lake-tint",
   custom: "bg-v2-coral-tint",
 }
 

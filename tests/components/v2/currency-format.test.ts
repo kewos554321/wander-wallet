@@ -48,27 +48,19 @@ describe("rateFromRates", () => {
 describe("rateChip", () => {
   const now = new Date("2026-10-09T12:00:00")
 
-  it("describes today's market rate as 即時 with the relative time", () => {
-    expect(rateChip({ kind: "market", date: now, now, relativeTime: "3 分鐘前" })).toEqual({
-      chip: "即時",
+  it("describes today's market rate as 市場 · 今天", () => {
+    expect(rateChip({ kind: "market", date: now, now })).toEqual({
+      chip: "市場",
       tone: "market",
-      context: "更新於 3 分鐘前",
+      context: "今天",
     })
-  })
-  it("falls back to 今天 when there is no relative time", () => {
-    expect(rateChip({ kind: "market", date: now, now })?.context).toBe("今天")
   })
   it("describes a past market rate as 市場 with its date", () => {
     const chip = rateChip({ kind: "market", date: new Date("2026-10-06T00:00:00"), now })
     expect(chip?.chip).toBe("市場")
     expect(chip?.context).toBe("10/6")
   })
-  it("describes project and custom kinds", () => {
-    expect(rateChip({ kind: "project", date: null, now })).toEqual({
-      chip: "專案",
-      tone: "project",
-      context: "專案設定",
-    })
+  it("describes the custom kind", () => {
     expect(rateChip({ kind: "custom", date: null, now })).toEqual({
       chip: "自訂",
       tone: "custom",

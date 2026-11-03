@@ -611,5 +611,129 @@ describe("GET /api/projects/[id]/settle", () => {
       // 100 JPY × 0.21 = 21 TWD → integer (TWD has no minor unit).
       expect(data.summary.totalAmount).toBe(21)
     })
+
+    it("uses the live rate even when the project has a fixed rate", async () => {
+      vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+      vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+      vi.mocked(prisma.projectMember.findMany).mockResolvedValue(mockMembers as never)
+      vi.mocked(prisma.project.findUnique).mockResolvedValue({
+        currency: "TWD",
+        customRates: { JPY: 30 },
+        exchangeRatePrecision: 2,
+      } as never)
+      vi.mocked(convertCurrency).mockResolvedValue({ convertedAmount: 1, exchangeRate: 0.21 })
+      vi.mocked(prisma.expense.findMany).mockResolvedValue([
+        {
+          id: "legacy",
+          amount: 100,
+          currency: "JPY",
+          description: "legacy",
+          category: null,
+          deletedAt: null,
+          splitDetail: null,
+          payers: [
+            {
+              id: "p",
+              memberId: "member-123",
+              amount: 100,
+              amountProject: null,
+              member: { id: "member-123", displayName: "User 1", user: { image: null } },
+            },
+          ],
+          participants: [
+            {
+              id: "q",
+              memberId: "member-123",
+              shareAmount: 100,
+              shareAmountProject: null,
+              member: { id: "member-123", displayName: "User 1", user: { image: null } },
+            },
+          ],
+        },
+      ] as never)
+
+      const req = new NextRequest(
+        "http://localhost:3000/api/projects/project-123/settle"
+      )
+      const response = await GET(req, { params: createParams("project-123") })
+      const data = await response.json()
+
+      // The project's fixed 30 is ignored: live 0.21 is used.
+      expect(data.summary.exchangeRatesUsed.JPY).toBe(0.21)
+      expect(data.summary.totalAmount).toBe(21)
+    })
+
+    it("uses a snapshotted expense's own rate for its breakdown, not the live rate", async () => {
+      vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+      vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+      vi.mocked(prisma.projectMember.findMany).mockResolvedValue(mockMembers as never)
+      vi.mocked(prisma.project.findUnique).mockResolvedValue({
+        currency: "TWD",
+        customRates: { JPY: 30 },
+        exchangeRatePrecision: 2,
+      } as never)
+      vi.mocked(convertCurrency).mockResolvedValue({ convertedAmount: 1, exchangeRate: 0.21 })
+      vi.mocked(prisma.expense.findMany).mockResolvedValue([
+        {
+          id: "snap",
+          amount: 1000,
+          currency: "JPY",
+          exchangeRate: 0.2,
+          description: "snap",
+          category: null,
+          deletedAt: null,
+          splitDetail: {
+            version: 1,
+            personalItems: { "member-123": [{ name: "item", amount: 100 }] },
+            customShares: {},
+          },
+          payers: [
+            {
+              id: "p",
+              memberId: "member-123",
+              amount: 1000,
+              amountProject: 200,
+              member: { id: "member-123", displayName: "User 1", user: { image: null } },
+            },
+          ],
+          participants: [
+            {
+              id: "q",
+              memberId: "member-123",
+              shareAmount: 1000,
+              shareAmountProject: 200,
+              member: { id: "member-123", displayName: "User 1", user: { image: null } },
+            },
+          ],
+        },
+      ] as never)
+
+      const req = new NextRequest(
+        "http://localhost:3000/api/projects/project-123/settle"
+      )
+      const response = await GET(req, { params: createParams("project-123") })
+      const data = await response.json()
+
+      const p = data.expenseDetails[0].participants[0]
+      // Stored rate 0.2 (not live 0.21 or the project fixed 30): 100 JPY × 0.2 = 20 TWD.
+      expect(p.convertedShareAmount).toBe(200)
+      expect(p.personalItems[0].convertedAmount).toBe(20)
+    })
+
+    it("does not expose usingCustomRates or hasCustomRates", async () => {
+      vi.mocked(getAuthUser).mockResolvedValue(mockUser)
+      vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
+      vi.mocked(prisma.expense.findMany).mockResolvedValue([mockExpense] as never)
+      vi.mocked(prisma.projectMember.findMany).mockResolvedValue(mockMembers as never)
+
+      const req = new NextRequest(
+        "http://localhost:3000/api/projects/project-123/settle"
+      )
+      const response = await GET(req, { params: createParams("project-123") })
+      const data = await response.json()
+
+      expect(data.summary).not.toHaveProperty("usingCustomRates")
+      expect(data.summary).not.toHaveProperty("hasCustomRates")
+    })
   })
 })

@@ -59,11 +59,10 @@ export function SettleV2View(props: SettleV2ViewProps) {
         <div className="mx-4 mt-3 flex items-start gap-2 rounded-xl border border-v2-line bg-v2-surface px-3 py-2.5 text-xs text-v2-ink-muted">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <div>
-            <p className="m-0 font-medium text-v2-ink">{data.summary.hasCustomRates ? "使用自訂匯率結算" : "使用即時匯率結算"}</p>
+            <p className="m-0 font-medium text-v2-ink">使用即時匯率結算</p>
             {Object.entries(rates).map(([code, rate]) => (
               <p key={code} className="m-0">
                 1 {code} = {rate.toFixed(data.summary.precision ?? 2)} {data.summary.currency}
-                {data.summary.usingCustomRates?.[code] ? "（自訂）" : ""}
               </p>
             ))}
             <Link href={`/projects/${props.projectId}/settings`} className="mt-1 inline-block font-semibold text-v2-link">

@@ -109,7 +109,7 @@ export async function PUT(
     }
 
     const body = await req.json()
-    const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail, rateKind, rateDate, promoteRate } = body
+    const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail, rateKind, rateDate } = body
     const hasSplitDetailField = Object.prototype.hasOwnProperty.call(body, "splitDetail")
 
     // 獲取現有費用（包含付款人和參與者資訊）
@@ -278,10 +278,9 @@ export async function PUT(
     // 計算結算幣別金額（含編輯回滾；與尾差帳同交易）
     const project = await prisma.project.findUnique({
       where: { id },
-      select: { currency: true, customRates: true },
+      select: { currency: true },
     })
     const projectCurrency = project?.currency || existingExpense.currency || DEFAULT_CURRENCY
-    const customRates = (project?.customRates as Record<string, number> | null) || {}
 
     const existingCurrency = existingExpense.currency || projectCurrency
     const newCurrency = currency !== undefined ? currency : existingCurrency
@@ -300,9 +299,8 @@ export async function PUT(
       const currencyChanged = currency !== undefined && currency !== existingCurrency
       const providedRate = exchangeRate !== undefined && exchangeRate !== null ? Number(exchangeRate) : null
       if (currencyChanged || providedRate != null || !existingExpense.exchangeRate) {
-        const needsLive = providedRate == null && customRates[newCurrency] == null
         let liveRate: number | null = null
-        if (needsLive) {
+        if (providedRate == null) {
           try {
             liveRate = await getExchangeRate(newCurrency, projectCurrency)
           } catch {
@@ -313,7 +311,6 @@ export async function PUT(
           currency: newCurrency,
           projectCurrency,
           provided: providedRate,
-          customRate: customRates[newCurrency] ?? null,
           liveRate,
         })
         newRate = resolved.rate
@@ -322,7 +319,6 @@ export async function PUT(
           providedRate,
           clientKind: rateKind ?? null,
           clientDate: rateDate ?? null,
-          hasProjectFixedRate: customRates[newCurrency] != null,
           now: new Date(),
         })
       } else {
@@ -504,14 +500,6 @@ export async function PUT(
         where: { id: expenseId },
         data: updateData,
       })
-
-      // 升級成專案固定匯率
-      if (promoteRate === true && isForeign && newRate != null) {
-        await tx.project.update({
-          where: { id },
-          data: { customRates: { ...customRates, [newCurrency]: newRate } },
-        })
-      }
 
       // 尾差帳（回滾舊 + 套用新）
       for (const [memberId, value] of ledger) {

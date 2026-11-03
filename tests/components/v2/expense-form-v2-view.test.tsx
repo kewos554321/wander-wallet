@@ -150,8 +150,8 @@ describe("ExpenseFormV2View", () => {
   it("binds a custom rate from the rate sheet to this expense", () => {
     const { hook, rerender } = renderForm({
       projectCurrency: "USD",
-      previewRateInfo: () => ({ rate: 0.05, source: "fixed" as const }),
-      rateContext: () => ({ fixedRate: 0.05, liveRate: 0.04, liveTimestamp: Date.now() }),
+      previewRateInfo: () => ({ rate: 0.05, source: "live" as const }),
+      rateContext: () => ({ liveRate: 0.04, liveTimestamp: Date.now() }),
     })
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
@@ -167,6 +167,32 @@ describe("ExpenseFormV2View", () => {
     expect(screen.getByTestId("rate-source")).toHaveTextContent("自訂")
     expect(screen.getByTestId("rate-row")).toHaveTextContent("0.0625")
     expect(screen.getByTestId("amount-conversion")).toHaveTextContent("≈ USD 6.25")
+  })
+
+  it("shows the 市場 chip for a live rate", () => {
+    const { hook, rerender } = renderForm({
+      projectCurrency: "TWD",
+      previewRateInfo: () => ({ rate: 0.2135, source: "live" as const }),
+    })
+    act(() => {
+      hook.result.current.actions.setAmount("1000")
+      hook.result.current.actions.setCurrency("JPY")
+    })
+    rerender()
+    expect(screen.getByTestId("rate-source")).toHaveTextContent("市場")
+  })
+
+  it("passes the project's recent rates into the sheet", () => {
+    const { hook, rerender } = renderForm({
+      projectCurrency: "USD",
+      previewRateInfo: () => ({ rate: 0.05, source: "live" as const }),
+      recentRates: () => [{ rate: 0.0625, kind: "market" as const, date: "2026-10-08", description: "晚餐" }],
+    })
+    act(() => hook.result.current.actions.setAmount("100"))
+    rerender()
+    fireEvent.click(screen.getByTestId("rate-row"))
+    fireEvent.click(screen.getByRole("tab", { name: "自訂" }))
+    expect(screen.getByTestId("recent-rate-0")).toHaveTextContent("0.0625")
   })
 
   it("hides the conversion note when the expense currency is the settlement currency", () => {

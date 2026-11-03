@@ -149,11 +149,10 @@ export async function GET(
     // 獲取專案幣別、自訂匯率和精度設定
     const project = await prisma.project.findUnique({
       where: { id },
-      select: { currency: true, customRates: true },
+      select: { currency: true },
     })
 
     const projectCurrency = project?.currency || DEFAULT_CURRENCY
-    const customRates = (project?.customRates as Record<string, number> | null) || {}
     const precision = getCurrencyDecimals(projectCurrency)
 
     // 獲取所有費用（只取未刪除的）
@@ -237,13 +236,11 @@ export async function GET(
       }
     })
 
-    // 預先獲取所有需要的匯率（優先使用自訂匯率）
+    // 預先獲取所有需要的匯率（一律使用即時匯率）
     for (const currency of uniqueCurrencies) {
       const conversion = await convertCurrency(1, currency, projectCurrency)
       defaultRates[currency] = conversion.exchangeRate
-
-      // 優先使用自訂匯率，否則使用即時匯率
-      exchangeRatesUsed[currency] = customRates[currency] ?? conversion.exchangeRate
+      exchangeRatesUsed[currency] = conversion.exchangeRate
     }
 
     // 計算每個成員的淨支出（使用專案幣別計算的金額）
@@ -252,10 +249,13 @@ export async function GET(
     const expenseDetails: ExpenseDetail[] = []
 
     for (const expense of expenses) {
-      // 即時換算
-      const rate = expense.currency === projectCurrency
-        ? 1
-        : (exchangeRatesUsed[expense.currency] || 1)
+      // 換算：優先用支出自己的匯率快照，否則即時（缺快照的舊資料）
+      const rate =
+        expense.currency === projectCurrency
+          ? 1
+          : expense.exchangeRate != null
+            ? Number(expense.exchangeRate)
+            : exchangeRatesUsed[expense.currency] || 1
 
       const payerDetails: ExpensePayerDetail[] = []
       let paidAmount = 0
@@ -343,13 +343,6 @@ export async function GET(
     // 計算最優結算方案
     const settlements = calculateOptimalSettlements(balances, precision)
 
-    // 判斷哪些幣別使用了自訂匯率
-    const usingCustomRates: Record<string, boolean> = {}
-    for (const currency of Object.keys(exchangeRatesUsed)) {
-      usingCustomRates[currency] = customRates[currency] !== undefined
-    }
-    const hasCustomRates = Object.values(usingCustomRates).some(Boolean)
-
     return NextResponse.json({
       balances,
       settlements,
@@ -363,8 +356,6 @@ export async function GET(
         precision,
         exchangeRatesUsed: Object.keys(exchangeRatesUsed).length > 0 ? exchangeRatesUsed : undefined,
         defaultRates: Object.keys(defaultRates).length > 0 ? defaultRates : undefined,
-        usingCustomRates: Object.keys(usingCustomRates).length > 0 ? usingCustomRates : undefined,
-        hasCustomRates,
       },
     })
   } catch (error) {

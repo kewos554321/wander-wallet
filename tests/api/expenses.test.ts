@@ -672,7 +672,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     expect(data.rateDate).toBeInstanceOf(Date)
   })
 
-  it("records a project rate meta when the project has a fixed rate for the currency", async () => {
+  it("defaults to a market rate meta even when the project has fixed rates", async () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
     vi.mocked(prisma.project.findUnique).mockResolvedValue({
@@ -684,6 +684,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
       { id: "member-123", remainderDiscrepancy: 0 },
     ] as never)
+    vi.mocked(getExchangeRate).mockResolvedValue(0.031715)
     vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense as never)
 
     const req = new NextRequest("http://localhost:3000/api/projects/project-123/expenses", {
@@ -699,9 +700,8 @@ describe("POST /api/projects/[id]/expenses", () => {
     expect(response.status).toBe(201)
 
     const data = vi.mocked(prisma.expense.create).mock.calls[0][0].data
-    expect(data.exchangeRate).toBe(30)
-    expect(data.rateKind).toBe("project")
-    expect(data.rateDate).toBeNull()
+    expect(data.exchangeRate).toBeCloseTo(0.031715)
+    expect(data.rateKind).toBe("market")
   })
 
   it("records the queried date for a client-provided market rate", async () => {
@@ -738,7 +738,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     expect((data.rateDate as Date).toISOString()).toBe(new Date("2026-10-06").toISOString())
   })
 
-  it("writes a promoted rate into the project fixed rates", async () => {
+  it("ignores a promoteRate flag", async () => {
     vi.mocked(getAuthUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
     vi.mocked(prisma.project.findUnique).mockResolvedValue({
@@ -765,41 +765,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     })
     const response = await POST(req, { params: createParams("project-123") })
     expect(response.status).toBe(201)
-    expect(prisma.project.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { customRates: { USD: 31.5 } } }),
-    )
-  })
-
-  it("honours a stored fixed rate even when a legacy rateSource says live", async () => {
-    vi.mocked(getAuthUser).mockResolvedValue(mockUser)
-    vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
-    vi.mocked(prisma.project.findUnique).mockResolvedValue({
-      currency: "TWD",
-      customRates: { USD: 30 },
-      exchangeRatePrecision: 2,
-      rateSource: "live",
-    } as never)
-    vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
-      { id: "member-123", remainderDiscrepancy: 0 },
-    ] as never)
-    vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense as never)
-
-    const req = new NextRequest("http://localhost:3000/api/projects/project-123/expenses", {
-      method: "POST",
-      body: JSON.stringify({
-        amount: 100,
-        currency: "USD",
-        payers: [{ memberId: "member-123", amount: 100 }],
-        participants: [{ memberId: "member-123", shareAmount: 100 }],
-      }),
-    })
-    const response = await POST(req, { params: createParams("project-123") })
-    expect(response.status).toBe(201)
-
-    // rateSource is never read: a stored fixed rate always wins over live.
-    const data = vi.mocked(prisma.expense.create).mock.calls[0][0].data
-    expect(data.exchangeRate).toBe(30)
-    expect(data.rateKind).toBe("project")
+    expect(prisma.project.update).not.toHaveBeenCalled()
   })
 
   it("records a custom rate meta with no market date", async () => {
@@ -1514,7 +1480,7 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     expect(update.mock.calls[0][0].data).not.toHaveProperty("rateKind")
   })
 
-  it("overwrites an existing fixed rate when a promoted rate is saved on edit", async () => {
+  it("ignores a promoteRate flag on edit", async () => {
     seedForeignExpense()
     vi.mocked(prisma.project.findUnique).mockResolvedValue({
       currency: "TWD",
@@ -1540,12 +1506,10 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
       params: createExpenseParams("project-123", "expense-123"),
     })
     expect(response.status).toBe(200)
-    expect(projectUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { customRates: { USD: 30 } } }),
-    )
+    expect(projectUpdate).not.toHaveBeenCalled()
   })
 
-  it("leaves the project fixed rates untouched on edit without promoteRate", async () => {
+  it("never updates the project fixed rates on edit", async () => {
     seedForeignExpense()
     const projectUpdate = captureProjectUpdate()
 

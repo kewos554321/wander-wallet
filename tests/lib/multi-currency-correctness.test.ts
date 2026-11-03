@@ -280,36 +280,28 @@ describe("resolveRate — full branch matrix", () => {
   it("same currency", () => {
     expect(resolveRate({ currency: "USD", projectCurrency: "USD" })).toEqual({ rate: 1, source: "same" })
   })
-  it("explicit provided rate wins over the custom rate", () => {
+  it("explicit provided rate wins over the live rate", () => {
     expect(
-      resolveRate({ currency: "TWD", projectCurrency: "USD", provided: 0.0321, customRate: 0.03, liveRate: 0.0317 }),
+      resolveRate({ currency: "TWD", projectCurrency: "USD", provided: 0.0321, liveRate: 0.0317 }),
     ).toEqual({ rate: 0.0321, source: "provided" })
   })
-  it("uses the custom rate when set", () => {
+  it("falls back to live when there is no provided rate", () => {
     expect(
-      resolveRate({ currency: "TWD", projectCurrency: "USD", customRate: 0.03, liveRate: 0.0317 }),
-    ).toEqual({ rate: 0.03, source: "fixed" })
-  })
-  it("falls back to live when there is no custom rate", () => {
-    expect(
-      resolveRate({ currency: "TWD", projectCurrency: "USD", customRate: null, liveRate: 0.0317 }),
+      resolveRate({ currency: "TWD", projectCurrency: "USD", liveRate: 0.0317 }),
     ).toEqual({ rate: 0.0317, source: "live" })
   })
 })
 
 describe("previewRate — display-only conversion", () => {
   it("returns null for the project currency", () => {
-    expect(previewRate("USD", "USD", null, null)).toBeNull()
+    expect(previewRate("USD", "USD", { TWD: 31.5, USD: 1 })).toBeNull()
   })
-  it("prefers the project fixed rate", () => {
-    expect(previewRate("TWD", "USD", { TWD: 0.0317 }, { TWD: 31.5, USD: 1 })).toBe(0.0317)
-  })
-  it("derives from live rates when no fixed rate is set", () => {
-    expect(previewRate("TWD", "USD", null, { TWD: 31.5, USD: 1 })).toBeCloseTo(1 / 31.5)
+  it("derives from live rates", () => {
+    expect(previewRate("TWD", "USD", { TWD: 31.5, USD: 1 })).toBeCloseTo(1 / 31.5)
   })
   it("returns null when no rate is known (no misleading 1:1)", () => {
-    expect(previewRate("TWD", "USD", null, null)).toBeNull()
-    expect(previewRate("TWD", "USD", null, { USD: 1 })).toBeNull()
+    expect(previewRate("TWD", "USD", null)).toBeNull()
+    expect(previewRate("TWD", "USD", { USD: 1 })).toBeNull()
   })
 })
 

@@ -15,8 +15,6 @@ export interface QuickItem extends Omit<ExpenseItemResult, "amount" | "selected"
   exchangeRate: string | null
   /** True when the user pinned a custom rate instead of the automatic one. */
   ratePinned: boolean
-  /** Promote this item's rate to the project's fixed rate on save. */
-  promoteFixedRate: boolean
   payerIds: string[]
   pinnedPayerAmounts: Record<string, string>
   expenseDate: Date
@@ -62,7 +60,6 @@ export function fromParsed(results: ExpenseItemResult[], today: Date = new Date(
       amount: String(amount),
       exchangeRate: null,
       ratePinned: false,
-      promoteFixedRate: false,
       payerIds,
       pinnedPayerAmounts,
       expenseDate: new Date(today),

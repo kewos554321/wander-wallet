@@ -48,7 +48,7 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
   // resolves each item's preview rate against it (mirrors the expense form).
   const projectCurrency = currency
   const { exchangeRates, refetch: refetchRates } = useCurrencyConversion({ projectCurrency, customRates, autoFetch: false })
-  const previewRateInfo = (c: string) => resolvePreviewRate(c, projectCurrency, customRates, exchangeRates)
+  const previewRateInfo = (c: string) => resolvePreviewRate(c, projectCurrency, exchangeRates)
   const [step, setStep] = useState<Step>(initialStep)
   const [mode, setMode] = useState<QuickInputMode>("text")
   const [text, setText] = useState("")

@@ -286,12 +286,6 @@ describe("useExpenseDraft", () => {
       expect(result.current.derived.rateDate).toBeNull()
     })
 
-    it("marks the default rate as project when the project has a fixed rate", () => {
-      const { result } = render(() => ({ rate: 0.0063, source: "fixed" }))
-      expect(result.current.derived.rateKind).toBe("project")
-      expect(result.current.derived.rateDate).toBeNull()
-    })
-
     it("prefers an explicit override kind and its date", () => {
       const { result } = render(() => ({ rate: 0.0067, source: "live" }))
       act(() => {
@@ -343,13 +337,27 @@ describe("useExpenseDraft", () => {
       expect(result.current.derived.rateDate).toBe("2026-10-06")
     })
 
-    it("tracks the promote-fixed-rate intent and clears it on currency change", () => {
-      const { result } = render(() => ({ rate: 0.0067, source: "live" }))
-      expect(result.current.state.promoteFixedRate).toBe(false)
-      act(() => result.current.actions.setPromoteFixedRate(true))
-      expect(result.current.state.promoteFixedRate).toBe(true)
-      act(() => result.current.actions.setCurrency("TWD"))
-      expect(result.current.state.promoteFixedRate).toBe(false)
+    it("maps a legacy project rate to custom when seeding an expense", () => {
+      const { result } = render(() => ({ rate: 0.0067, source: "live" }), {
+        expense: {
+          amount: 1000,
+          currency: "JPY",
+          exchangeRate: 0.0063,
+          rateKind: "project",
+          rateDate: null,
+          description: null,
+          category: null,
+          payers: [{ memberId: "a", amount: 1000 }],
+          expenseDate: new Date(2026, 9, 6, 12).toISOString(),
+          location: null,
+          latitude: null,
+          longitude: null,
+          image: null,
+          participants: [{ memberId: "a", shareAmount: 1000 }],
+          splitDetail: null,
+        },
+      })
+      expect(result.current.derived.rateKind).toBe("custom")
     })
   })
 })

@@ -108,6 +108,7 @@ describe("SettleV2View", () => {
   it("shows the exchange-rate note and sponsor card", () => {
     renderView()
     expect(screen.getByRole("link", { name: /前往專案設定調整匯率/ })).toHaveAttribute("href", "/projects/p1/settings")
+    expect(screen.getByText("使用即時匯率結算")).toBeInTheDocument()
     expect(screen.getByText("喜歡 Wander Wallet 嗎？")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /請我們喝杯咖啡/ })).toBeInTheDocument()
   })

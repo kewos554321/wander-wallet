@@ -38,7 +38,15 @@ export interface Project {
     email: string
   }
   members?: ProjectMember[]
-  expenses?: { expenseDate: string }[]
+  expenses?: {
+    currency: string
+    /** Prisma Decimal over JSON (a string) or a number. */
+    exchangeRate: number | string | null
+    rateKind: string | null
+    rateDate: string | null
+    description: string | null
+    expenseDate: string
+  }[]
 }
 
 interface UseProjectDataOptions {

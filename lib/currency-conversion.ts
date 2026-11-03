@@ -101,22 +101,20 @@ export function rollbackAllocation(
 
 export interface ResolvedRate {
   rate: number
-  source: "same" | "provided" | "fixed" | "live"
+  source: "same" | "provided" | "live"
 }
 
 /**
  * Decide which rate a new expense should bind to. Same currency → 1. An
- * explicit provided rate wins. Otherwise the project's fixed rate for the
- * currency when one is set, else today's live rate. Never writes the project.
+ * explicit provided rate wins, else today's live rate. Never writes the project.
  */
 export function resolveRate(input: {
   currency: string
   projectCurrency: string
   provided?: number | null
-  customRate?: number | null
   liveRate?: number | null
 }): ResolvedRate {
-  const { currency, projectCurrency, provided, customRate, liveRate } = input
+  const { currency, projectCurrency, provided, liveRate } = input
 
   if (currency === projectCurrency) {
     return { rate: 1, source: "same" }
@@ -124,32 +122,26 @@ export function resolveRate(input: {
   if (provided != null) {
     return { rate: provided, source: "provided" }
   }
-  if (customRate != null) {
-    return { rate: customRate, source: "fixed" }
-  }
   return { rate: liveRate ?? 1, source: "live" }
 }
 
 export interface PreviewRateInfo {
   rate: number | null
-  source: "same" | "fixed" | "live" | "none"
+  source: "same" | "live" | "none"
 }
 
 /**
  * Resolve a display-only conversion rate and its source. `source` is
- * "same" (no conversion), "fixed" (project custom rate), "live" (derived from
- * live rates) or "none" (unknown). `rate` is null when unknown, so callers can
- * hide the preview instead of showing a misleading 1:1.
+ * "same" (no conversion), "live" (derived from live rates) or "none"
+ * (unknown). `rate` is null when unknown, so callers can hide the preview
+ * instead of showing a misleading 1:1.
  */
 export function resolvePreviewRate(
   currency: string,
   projectCurrency: string,
-  customRates: Record<string, number> | null | undefined,
   exchangeRates: Record<string, number> | null | undefined,
 ): PreviewRateInfo {
   if (!currency || currency === projectCurrency) return { rate: null, source: "same" }
-  const custom = customRates?.[currency]
-  if (typeof custom === "number" && custom > 0) return { rate: custom, source: "fixed" }
   if (!exchangeRates) return { rate: null, source: "none" }
   const fromRate = exchangeRates[currency]
   const toRate = exchangeRates[projectCurrency]
@@ -163,45 +155,42 @@ export function resolvePreviewRate(
 export function previewRate(
   currency: string,
   projectCurrency: string,
-  customRates: Record<string, number> | null | undefined,
   exchangeRates: Record<string, number> | null | undefined,
 ): number | null {
-  return resolvePreviewRate(currency, projectCurrency, customRates, exchangeRates).rate
+  return resolvePreviewRate(currency, projectCurrency, exchangeRates).rate
 }
 
 /** Where a bound expense rate came from. */
-export type ExpenseRateKind = "project" | "market" | "custom"
+export type ExpenseRateKind = "market" | "custom"
 export interface ExpenseRateMeta {
   kind: ExpenseRateKind | null
   /** The market day a `market` rate reflects; null for other kinds. */
   date: Date | null
 }
 
-const RATE_KINDS: readonly ExpenseRateKind[] = ["project", "market", "custom"]
+const RATE_KINDS: readonly ExpenseRateKind[] = ["market", "custom"]
 /**
  * Resolve the provenance of an expense's bound rate. Same currency → none. A
  * client-provided rate is a deliberate override whose kind the client supplies
- * (market = taken from the feed on a date, custom = typed by hand, project =
- * the project's standard); an unrecognised or absent kind reads as custom.
- * Otherwise the expense follows the project default: its fixed rate when one
- * exists, else today's market rate.
+ * (market = taken from the feed on a date, custom = typed by hand); an
+ * unrecognised or absent kind reads as custom. Otherwise the expense follows
+ * today's market rate.
  */
 export function resolveExpenseRateMeta(input: {
   isForeign: boolean
   providedRate: number | null
   clientKind?: string | null
   clientDate?: string | null
-  hasProjectFixedRate: boolean
   now: Date
 }): ExpenseRateMeta {
-  const { isForeign, providedRate, clientKind, clientDate, hasProjectFixedRate, now } = input
+  const { isForeign, providedRate, clientKind, clientDate, now } = input
   if (!isForeign) return { kind: null, date: null }
 
   let kind: ExpenseRateKind
   if (providedRate != null) {
     kind = RATE_KINDS.includes(clientKind as ExpenseRateKind) ? (clientKind as ExpenseRateKind) : "custom"
   } else {
-    kind = hasProjectFixedRate ? "project" : "market"
+    kind = "market"
   }
 
   if (kind !== "market") return { kind, date: null }

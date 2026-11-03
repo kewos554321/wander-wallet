@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import { format } from "date-fns"
 
 const authFetch = vi.fn()
 vi.mock("@/components/auth/liff-provider", () => ({ useAuthFetch: () => authFetch }))
@@ -7,6 +8,13 @@ vi.mock("@/components/auth/liff-provider", () => ({ useAuthFetch: () => authFetc
 import { RateSheet } from "@/components/v2/expense-form/rate-sheet"
 
 type Props = Parameters<typeof RateSheet>[0]
+
+const TODAY = format(new Date(), "yyyy-MM-dd")
+
+const RECENT = [
+  { rate: 0.215, kind: "market" as const, date: "2026-10-08", description: "晚餐" },
+  { rate: 0.22, kind: "custom" as const, date: null, description: "藥妝" },
+]
 
 function setup(overrides: Partial<Props> = {}) {
   const props: Props = {
@@ -17,14 +25,11 @@ function setup(overrides: Partial<Props> = {}) {
     amount: 1000,
     rate: 0.032,
     customRate: false,
-    projectFixedRate: 0.032,
     liveRate: 0.031715,
     liveTimestamp: Date.now() - 3 * 60_000,
-    expenseDate: new Date("2026-10-01T00:00:00"),
+    recentRates: [],
     onUseRate: vi.fn(),
     onReset: vi.fn(),
-    onPromoteChange: vi.fn(),
-    promoteFixedRate: false,
     ...overrides,
   }
   const utils = render(<RateSheet {...props} />)
@@ -47,127 +52,98 @@ describe("RateSheet", () => {
     expect(screen.getByTestId("rate-sheet-approx")).toHaveTextContent("≈ USD 32.00")
   })
 
-  it("explains the project fixed rate when one is set", () => {
-    setup({ projectFixedRate: 0.032 })
-    expect(screen.getByTestId("rate-sheet-project")).toHaveTextContent("專案固定匯率")
-  })
-
-  it("says the project has no fixed rate when none is set", () => {
-    setup({ projectFixedRate: null, liveRate: 0.031715 })
-    expect(screen.getByTestId("rate-sheet-project")).toHaveTextContent("尚未設定")
-  })
-
-  it("switches between the live, history and custom panes", () => {
+  it("shows only the 市場 and 自訂 tabs", () => {
     setup()
-    expect(screen.getByTestId("rate-pane-live")).toBeInTheDocument()
-    fireEvent.click(screen.getByRole("tab", { name: "歷史" }))
-    expect(screen.getByTestId("rate-pane-history")).toBeInTheDocument()
-    expect(screen.queryByTestId("rate-pane-live")).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole("tab", { name: "自訂" }))
-    expect(screen.getByTestId("rate-pane-custom")).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "市場" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "自訂" })).toBeInTheDocument()
+    expect(screen.queryByRole("tab", { name: "歷史" })).not.toBeInTheDocument()
+    expect(screen.queryByText("專案固定匯率")).not.toBeInTheDocument()
   })
 
-  it("applies the live rate as a market kind", () => {
+  it("market tab defaults to today and applies the live rate", () => {
     const { props } = setup({ liveRate: 0.031715 })
-    fireEvent.click(screen.getByRole("button", { name: "使用即時匯率" }))
-    expect(props.onUseRate).toHaveBeenCalledWith(0.031715, "market", undefined)
+    expect(screen.getByRole("tab", { name: "市場" })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByLabelText("匯率日期")).toHaveValue(TODAY)
+    expect(screen.getByTestId("market-rate")).toHaveTextContent("0.031715")
+    fireEvent.click(screen.getByRole("button", { name: "使用市場匯率" }))
+    expect(props.onUseRate).toHaveBeenCalledWith(0.031715, "market")
   })
 
-  it("applies a custom rate", () => {
+  it("changing the date fetches that day's rate and applies it with the date", async () => {
+    authFetch.mockResolvedValue({ ok: true, json: async () => ({ rates: { USD: 1, TWD: 31 } }) })
     const { props } = setup()
-    fireEvent.click(screen.getByRole("tab", { name: "自訂" }))
-    fireEvent.change(screen.getByLabelText("自訂匯率"), { target: { value: "0.05" } })
-    fireEvent.click(screen.getByRole("button", { name: "使用自訂匯率" }))
-    expect(props.onUseRate).toHaveBeenCalledWith(0.05, "custom", undefined)
-  })
-
-  it("queries a past date and applies the historical rate with its date", async () => {
-    authFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ rates: { USD: 1, TWD: 31 } }),
-    })
-    const { props } = setup()
-    fireEvent.click(screen.getByRole("tab", { name: "歷史" }))
-    fireEvent.change(screen.getByLabelText("歷史日期"), { target: { value: "2026-09-20" } })
-    fireEvent.click(screen.getByRole("button", { name: "查詢" }))
-    await waitFor(() =>
-      expect(authFetch).toHaveBeenCalledWith("/api/exchange-rates?date=2026-09-20"),
-    )
-    const use = await screen.findByRole("button", { name: "使用歷史匯率" })
+    fireEvent.change(screen.getByLabelText("匯率日期"), { target: { value: "2026-09-20" } })
+    await waitFor(() => expect(authFetch).toHaveBeenCalledWith("/api/exchange-rates?date=2026-09-20"))
+    const use = await screen.findByRole("button", { name: "使用市場匯率" })
     fireEvent.click(use)
     expect(props.onUseRate).toHaveBeenCalledWith(1 / 31, "market", "2026-09-20")
   })
 
-  it("seeds the highlighted kind from the expense's bound rate", () => {
-    setup({ appliedKind: "custom" })
-    expect(screen.getByText("自訂匯率")).toBeInTheDocument()
-  })
-
-  it("shows the toggle checked when the promote intent is on", () => {
-    setup({ promoteFixedRate: true })
-    expect(screen.getByLabelText("同時設為專案固定匯率")).toBeChecked()
-  })
-
-  it("shows the toggle unchecked when the promote intent is off", () => {
-    setup()
-    expect(screen.getByLabelText("同時設為專案固定匯率")).not.toBeChecked()
-  })
-
-  it("reports the intent immediately when checked", () => {
-    const { props } = setup()
-    fireEvent.click(screen.getByLabelText("同時設為專案固定匯率"))
-    expect(props.onPromoteChange).toHaveBeenCalledWith(true)
-  })
-
-  it("reports the intent immediately when unchecked", () => {
-    const { props } = setup({ promoteFixedRate: true })
-    fireEvent.click(screen.getByLabelText("同時設為專案固定匯率"))
-    expect(props.onPromoteChange).toHaveBeenCalledWith(false)
-  })
-
-  // Regression: the old design only committed the intent on 完成, so closing
-  // any other way (or reopening) could leave a stale promote flag behind.
-  it("never changes the promote intent from 完成 alone", () => {
-    const { props } = setup()
-    fireEvent.click(screen.getByRole("button", { name: "完成" }))
-    expect(props.onPromoteChange).not.toHaveBeenCalled()
-    expect(props.onClose).toHaveBeenCalled()
-  })
-
-  it("disables the toggle until a rate is known", () => {
-    setup({ rate: null })
-    expect(screen.getByLabelText("同時設為專案固定匯率")).toBeDisabled()
-  })
-
-  it("warns before overwriting an existing fixed rate", () => {
-    setup({ projectFixedRate: 0.03, promoteFixedRate: true })
-    const alert = screen.getByRole("alert")
-    expect(alert).toHaveTextContent("0.03")
-    expect(alert).toHaveTextContent("0.032")
-  })
-
-  it("does not warn when the rate already equals the fixed rate", () => {
-    setup({ projectFixedRate: 0.032, rate: 0.032, promoteFixedRate: true })
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
-  })
-
-  it("shows an error when the historical rate cannot be found", async () => {
+  it("shows an error and keeps the rate when the lookup fails", async () => {
     authFetch.mockResolvedValue({ ok: false })
-    setup()
-    fireEvent.click(screen.getByRole("tab", { name: "歷史" }))
-    fireEvent.click(screen.getByRole("button", { name: "查詢" }))
+    const { props } = setup()
+    fireEvent.change(screen.getByLabelText("匯率日期"), { target: { value: "2026-09-20" } })
     expect(await screen.findByRole("alert")).toHaveTextContent("查不到")
+    expect(props.onUseRate).not.toHaveBeenCalled()
+  })
+
+  it("retries the failed lookup", async () => {
+    authFetch.mockResolvedValueOnce({ ok: false })
+    setup()
+    fireEvent.change(screen.getByLabelText("匯率日期"), { target: { value: "2026-09-20" } })
+    expect(await screen.findByRole("alert")).toHaveTextContent("查不到")
+    authFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ rates: { USD: 1, TWD: 30 } }) })
+    fireEvent.click(screen.getByRole("button", { name: "重新查詢" }))
+    await waitFor(() => expect(screen.getByTestId("market-rate")).toHaveTextContent("0.033333"))
+  })
+
+  it("ignores a stale history response that resolves after a newer one", async () => {
+    let resolveSlow: (v: unknown) => void = () => {}
+    authFetch.mockImplementation((url: string) =>
+      url.includes("2026-09-20")
+        ? new Promise((res) => {
+            resolveSlow = res
+          })
+        : Promise.resolve({ ok: true, json: async () => ({ rates: { USD: 1, TWD: 30 } }) }),
+    )
+    setup()
+    fireEvent.change(screen.getByLabelText("匯率日期"), { target: { value: "2026-09-20" } })
+    fireEvent.change(screen.getByLabelText("匯率日期"), { target: { value: "2026-09-21" } })
+    await waitFor(() => expect(screen.getByTestId("market-rate")).toHaveTextContent("0.033333"))
+    resolveSlow({ ok: true, json: async () => ({ rates: { USD: 1, TWD: 40 } }) })
+    await new Promise((r) => setTimeout(r, 10))
+    expect(screen.getByTestId("market-rate")).not.toHaveTextContent("0.025")
+  })
+
+  it("custom tab prefills the most recent rate and can reuse a listed one", () => {
+    const { props } = setup({ recentRates: RECENT, appliedKind: "custom" })
+    expect(screen.getByLabelText("自訂匯率")).toHaveValue("0.215")
+    fireEvent.click(screen.getByTestId("recent-rate-1"))
+    expect(screen.getByLabelText("自訂匯率")).toHaveValue("0.22")
+    fireEvent.click(screen.getByRole("button", { name: "使用自訂匯率" }))
+    expect(props.onUseRate).toHaveBeenCalledWith(0.22, "custom")
+  })
+
+  it("lists recent rates with their source and expense", () => {
+    setup({ recentRates: RECENT, appliedKind: "custom" })
+    expect(screen.getByTestId("recent-rate-0")).toHaveTextContent("市場")
+    expect(screen.getByTestId("recent-rate-0")).toHaveTextContent("晚餐")
+    expect(screen.getByTestId("recent-rate-1")).toHaveTextContent("自訂")
+  })
+
+  it("disables the custom use button for an invalid value", () => {
+    setup({ recentRates: [], appliedKind: "custom" })
+    const input = screen.getByLabelText("自訂匯率")
+    for (const bad of ["", "0", "-1", "abc"]) {
+      fireEvent.change(input, { target: { value: bad } })
+      expect(screen.getByRole("button", { name: "使用自訂匯率" })).toBeDisabled()
+    }
   })
 
   it("resets to the default rate", () => {
-    const { props } = setup({ customRate: true })
+    const { props } = setup({ customRate: true, appliedKind: "custom" })
     fireEvent.click(screen.getByRole("button", { name: "還原預設" }))
     expect(props.onReset).toHaveBeenCalledTimes(1)
-  })
-
-  it("disables reset when already on the default", () => {
-    setup({ customRate: false })
-    expect(screen.getByRole("button", { name: "還原預設" })).toBeDisabled()
   })
 
   it("closes via 完成", () => {

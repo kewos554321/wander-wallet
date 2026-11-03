@@ -70,7 +70,9 @@ export interface SettleData {
     precision?: number
     exchangeRatesUsed?: Record<string, number>
     defaultRates?: Record<string, number>
+    /** Legacy: no longer emitted by the API (project fixed rates removed). V1 still reads them. */
     usingCustomRates?: Record<string, boolean>
+    /** Legacy: no longer emitted by the API. */
     hasCustomRates?: boolean
   }
 }
