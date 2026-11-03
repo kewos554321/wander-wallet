@@ -88,4 +88,27 @@ describe("SplitDetailSheet", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     expect(trigger).toHaveFocus()
   })
+
+  it("keeps 完成 enabled for a blank placeholder and removes it on close", () => {
+    openSheet()
+    fireEvent.click(screen.getByRole("button", { name: /個人項目/ }))
+    fireEvent.click(screen.getByRole("button", { name: /新增品項/ }))
+    expect(screen.queryByText(/請填寫/)).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "完成" })).toBeEnabled()
+    fireEvent.click(screen.getByRole("button", { name: "完成" }))
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(JSON.parse(screen.getByTestId("items").textContent ?? "{}").me ?? []).toEqual([])
+  })
+
+  it("disables 完成 for a touched incomplete row", () => {
+    openSheet()
+    fireEvent.click(screen.getByRole("button", { name: /個人項目/ }))
+    fireEvent.click(screen.getByRole("button", { name: /新增品項/ }))
+    fireEvent.change(screen.getByLabelText("品項名稱 1"), { target: { value: "咖啡" } })
+    expect(screen.getByText("請填寫金額")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "完成" })).toBeDisabled()
+    fireEvent.click(screen.getByRole("button", { name: "關閉" }))
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(screen.getByTestId("items")).not.toHaveTextContent("{}")
+  })
 })
