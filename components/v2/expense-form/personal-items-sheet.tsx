@@ -74,7 +74,7 @@ export function PersonalItemsSheet({
 
   return (
     <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-black/40" onClick={close} aria-hidden="true" />
+      <div className="absolute inset-0 bg-v2-ink/40" onClick={close} aria-hidden="true" />
       <div
         role="dialog"
         aria-modal="true"

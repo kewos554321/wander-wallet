@@ -1,10 +1,10 @@
-// PROTOTYPE (demo-only) — the three guardrails we agreed on:
+// Client-side split guardrails shared by the product form and the demo:
 //   1. amount input: 8 integer digits, decimals only for currencies that use them
 //   2. invalid splits: say WHO is wrong and by how much, instead of a generic error
 //   3. negative shares: never render them as a normal total
 //
-// The real product should move these rules into lib/ + the API so the client
-// cannot bypass them; this file keeps the prototype honest while we design it.
+// The API still needs to enforce the same limits server-side; these checks
+// keep the client honest and explain the problem next to the field.
 
 import { formatAmount, formatCurrency, getCurrencyDecimals } from "@/lib/constants/currencies"
 import type { DraftMember, useExpenseDraft } from "@/components/v2/expense-form/use-expense-draft"

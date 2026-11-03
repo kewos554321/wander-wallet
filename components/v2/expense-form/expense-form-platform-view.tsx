@@ -58,6 +58,7 @@ export function ExpenseFormPlatformView(props: ExpenseFormPlatformViewProps) {
   const [optionalOpen, setOptionalOpen] = useState(false)
   const [rateOpen, setRateOpen] = useState(false)
   const [amountNote, setAmountNote] = useState<string | null>(null)
+  const [descTouched, setDescTouched] = useState(false)
   // The save bar is fixed, so the form needs matching bottom space or its last
   // section sits underneath it. Measure instead of guessing: the bar grows
   // when an amount error or the currency toggle appears.
@@ -227,10 +228,11 @@ export function ExpenseFormPlatformView(props: ExpenseFormPlatformViewProps) {
           id="after-desc"
           value={state.description}
           onChange={(e) => actions.setDescription(e.target.value)}
+          onBlur={() => setDescTouched(true)}
           placeholder="這筆是什麼？例如：一蘭拉麵晚餐"
           className="w-full rounded-xl border border-v2-line bg-v2-paper px-3.5 py-3 text-[13px] outline-none focus-visible:border-v2-lake"
         />
-        {descMissing && <p className="mt-1.5 text-[11px] font-semibold text-v2-danger">請填寫描述，讓大家知道這筆是什麼</p>}
+        {descMissing && descTouched && <p className="mt-1.5 text-[11px] font-semibold text-v2-danger">請填寫描述，讓大家知道這筆是什麼</p>}
       </div>
 
       <CategoryPicker value={state.category} onChange={actions.setCategory} />

@@ -1,6 +1,7 @@
 "use client"
 
-// PROTOTYPE (demo-only) — the dedicated 分帳 component, INLINE (method B).
+// The shared 分帳 component. The product renders variant="platform"; the
+// ledger variant remains for the demo comparison.
 //
 // One member list holds everything: who splits, how much each owes, and a sum of
 // each person's own items. Reading order = the real maths (個人項目 deducted
@@ -145,6 +146,7 @@ export function SplitPanel({
   // Say who is over and by how much; the generic "分攤金額與支出金額不符"
   // hides the row the user needs to fix.
   const splitIssue = describeSplitIssue(draft, members)
+  const amountInvalid = !Number.isFinite(derived.splitInput.amount) || derived.splitInput.amount <= 0
   let result: { ok: boolean; text: string }
   if (splitIssue) result = { ok: false, text: splitIssue }
   else if (derived.error) result = { ok: false, text: derived.error }
@@ -315,7 +317,7 @@ export function SplitPanel({
         <div className="mb-2 rounded-xl border border-v2-coral bg-v2-coral-soft px-3 py-2.5">
           <p className="m-0 text-[12px] text-v2-ink">關閉個人項目會忽略已記錄的 {personalItemCount} 筆品項（資料保留，重新開啟可復原）。</p>
           <div className="mt-2 flex gap-2">
-            <button type="button" onClick={confirmTurnOffPersonal} className="rounded-full bg-v2-danger px-3 py-1 text-[12px] font-bold text-white">確定關閉</button>
+            <button type="button" onClick={confirmTurnOffPersonal} className="rounded-full bg-v2-danger px-3 py-1 text-[12px] font-bold text-v2-on-lake">確定關閉</button>
             <button type="button" onClick={() => setConfirmPersonalOff(false)} className="rounded-full border border-v2-line bg-v2-surface px-3 py-1 text-[12px] font-bold text-v2-ink">取消</button>
           </div>
         </div>
@@ -460,11 +462,13 @@ export function SplitPanel({
         </div>
       ))}
 
-      {/* 即時結果 */}
-      <div className={`mt-3 flex items-center justify-end gap-1 text-right text-xs font-bold ${result.ok ? "text-v2-link" : "text-v2-danger"}`} role={result.ok ? undefined : "alert"}>
-        {result.ok && <CheckCircle2 className="h-3 w-3 shrink-0" aria-hidden="true" />}
-        {result.text}
-      </div>
+      {/* 即時結果；金額還不合法時由金額卡／footer 說明，不在這裡重複 */}
+      {!amountInvalid && (
+        <div className={`mt-3 flex items-center justify-end gap-1 text-right text-xs font-bold ${result.ok ? "text-v2-link" : "text-v2-danger"}`} role={result.ok ? undefined : "alert"}>
+          {result.ok && <CheckCircle2 className="h-3 w-3 shrink-0" aria-hidden="true" />}
+          {result.text}
+        </div>
+      )}
 
       </div>
 

@@ -1,6 +1,6 @@
 "use client"
 
-// PROTOTYPE (demo-only) — one sheet for BOTH parts of a member's split.
+// One shared sheet for BOTH parts of a member's split (product + demo).
 // The two summary rows are brand-styled accordions with Material-like UX
 // behavior: one value, supporting text, aria wiring, focus management.
 // Editors keep the app's v2 theme; only the interaction patterns are borrowed.
@@ -128,7 +128,7 @@ export function SplitDetailSheet({
 
   return (
     <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-black/40" onClick={close} aria-hidden="true" />
+      <div className="absolute inset-0 bg-v2-ink/40" onClick={close} aria-hidden="true" />
       <div
         ref={sheetRef}
         role="dialog"

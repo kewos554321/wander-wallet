@@ -55,6 +55,7 @@ describe("ExpenseFormV2", () => {
   it("creates with the current user as the sole payer and participant", async () => {
     render(<ExpenseFormV2 projectId="p1" mode="create" />)
     fireEvent.change(await screen.findByLabelText("金額"), { target: { value: "100" } })
+    fireEvent.change(screen.getByLabelText(/描述/), { target: { value: "晚餐" } })
     fireEvent.click(screen.getByRole("button", { name: "新增支出 · TWD 100" }))
     await waitFor(() => expect(mockSave).toHaveBeenCalled())
     const req = mockSave.mock.calls[0][0]
@@ -71,6 +72,7 @@ describe("ExpenseFormV2", () => {
     mockSave.mockResolvedValueOnce({ ok: false, error: "新增失敗" })
     render(<ExpenseFormV2 projectId="p1" mode="create" />)
     fireEvent.change(await screen.findByLabelText("金額"), { target: { value: "100" } })
+    fireEvent.change(screen.getByLabelText(/描述/), { target: { value: "晚餐" } })
     fireEvent.click(screen.getByRole("button", { name: "新增支出 · TWD 100" }))
     expect(await screen.findByRole("alert")).toHaveTextContent("新增失敗")
     expect(mockPush).not.toHaveBeenCalled()
@@ -174,6 +176,7 @@ describe("ExpenseFormV2", () => {
   it("prefills the current location in create mode via the shared geolocation helper", async () => {
     mockGetCurrentLocation.mockResolvedValueOnce({ location: "台北市", latitude: 25.03, longitude: 121.56 })
     render(<ExpenseFormV2 projectId="p1" mode="create" />)
+    fireEvent.click(screen.getByRole("button", { name: /日期 · 地點 · 收據圖片/ }))
     await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("台北市"))
   })
 

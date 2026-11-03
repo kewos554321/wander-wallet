@@ -27,7 +27,7 @@ interface Submitted {
 
 function renderForm(
   overrides: Partial<Parameters<typeof ExpenseFormPlatformView>[0]> = {},
-  { description = "晚餐", seedPool = true }: { description?: string | null; seedPool?: boolean } = {},
+  { description = "晚餐", seedPool = true, amount = "100" }: { description?: string | null; seedPool?: boolean; amount?: string } = {},
 ) {
   const hook = renderHook(() =>
     useExpenseDraft(
@@ -45,7 +45,7 @@ function renderForm(
   if (description !== null) {
     act(() => hook.result.current.actions.setDescription(description))
   }
-  act(() => hook.result.current.actions.setAmount("100"))
+  act(() => hook.result.current.actions.setAmount(amount))
 
   const submissions: Submitted[] = []
   const onSubmit = vi.fn(() => {
@@ -93,8 +93,9 @@ describe("ExpenseFormPlatformView", () => {
 
   it("requires a description before submit", () => {
     renderForm({}, { description: null })
-    expect(screen.getByText("請填寫描述，讓大家知道這筆是什麼")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /新增支出/ })).toBeDisabled()
+    fireEvent.blur(screen.getByLabelText(/描述/))
+    expect(screen.getByText("請填寫描述，讓大家知道這筆是什麼")).toBeInTheDocument()
   })
 
   it("sends description, shares and splitDetail on submit", () => {
@@ -105,6 +106,11 @@ describe("ExpenseFormPlatformView", () => {
     expect(submissions[0].amount).toBe(100)
     expect(submissions[0].shares.reduce((sum, s) => sum + s.shareAmount, 0)).toBe(100)
     expect(submissions[0].splitDetail).toBeNull()
+  })
+
+  it("shows the amount error only once", () => {
+    renderForm({}, { amount: "" })
+    expect(screen.getAllByRole("alert").map((el) => el.textContent?.trim())).toEqual(["請輸入金額"])
   })
 
   it("caps an over-limit amount instead of accepting it", () => {
@@ -146,13 +152,45 @@ describe("ExpenseFormPlatformView", () => {
   })
 
   it("shows the LINE notify toggle only when enabled", () => {
-    const { unmount } = renderForm({ canNotifyLine: true })
-    expect(screen.getByRole("checkbox")).toBeInTheDocument()
+    const { hook, unmount } = renderForm({ canNotifyLine: true })
+    const checkbox = screen.getByRole("checkbox")
+    expect(checkbox).toBeInTheDocument()
     expect(screen.getByText("儲存後自動發送通知到群組")).toBeInTheDocument()
+
+    fireEvent.click(checkbox)
+    expect(hook.result.current.state.notifyLine).toBe(false)
     unmount()
 
     renderForm({ canNotifyLine: false })
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
+  })
+
+  it("uses the edit LINE notify copy", () => {
+    renderForm({ mode: "edit", canNotifyLine: true })
+    expect(screen.getByText("變更後自動發送通知到群組")).toBeInTheDocument()
+  })
+
+  it("keeps personal items after the sheet closes", () => {
+    const { rerender, onSubmit, submissions } = renderForm()
+    fireEvent.click(screen.getByRole("button", { name: /查看小雨的分帳明細/ }))
+    const sheet = screen.getByRole("dialog")
+    fireEvent.click(within(sheet).getByRole("button", { name: /個人項目/ }))
+    fireEvent.click(within(sheet).getByRole("button", { name: "新增品項" }))
+    rerender()
+
+    fireEvent.change(within(sheet).getByLabelText("品項名稱 1"), { target: { value: "咖啡" } })
+    fireEvent.change(within(sheet).getByLabelText("品項金額 1"), { target: { value: "20" } })
+    rerender()
+
+    fireEvent.click(within(sheet).getByRole("button", { name: "完成" }))
+    rerender()
+    fireEvent.click(screen.getByRole("button", { name: /新增支出/ }))
+
+    expect(onSubmit).toHaveBeenCalledTimes(1)
+    expect(
+      (submissions[0].splitDetail as { personalItems: Record<string, { name: string; amount: number }[]> })
+        .personalItems.a,
+    ).toEqual([{ name: "咖啡", amount: 20 }])
   })
 
   it("revokes the previous preview URL when replacing an image", () => {
@@ -166,8 +204,12 @@ describe("ExpenseFormPlatformView", () => {
     rerender()
     createObjectURL.mockReturnValue("blob:second")
     fireEvent.change(input, { target: { files: [second] } })
+    rerender()
 
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:first")
+    fireEvent.click(screen.getByRole("button", { name: "移除照片" }))
+    rerender()
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:second")
   })
 
   it("shows the edit delete action", () => {
