@@ -69,19 +69,23 @@ describe("NewProjectV2", () => {
     expect(screen.getByText("京都")).toBeInTheDocument()
   })
 
-  it("renders the section cards and the short currency label", () => {
+  it("renders the section cards and the currency label", () => {
     render(<NewProjectV2 />)
-    for (const title of ["卡片預覽", "封面", "基本資訊", "描述（選填）", "成員加入方式"]) {
+    for (const title of ["卡片預覽", "基本資訊", "日期與預算", "結算幣別", "成員加入方式"]) {
       expect(screen.getByText(title)).toBeInTheDocument()
     }
     expect(screen.getByText("JPY 日圓")).toBeInTheDocument()
-    expect(screen.getByLabelText("預算").previousElementSibling).toHaveTextContent("JPY")
+    expect(screen.getByLabelText("旅程預算").previousElementSibling).toHaveTextContent("JPY")
   })
 
   it("blocks submit with an empty name", () => {
     render(<NewProjectV2 />)
+    const name = screen.getByLabelText("旅程名稱")
+    expect(name).toHaveAttribute("aria-required", "true")
     fireEvent.click(screen.getByRole("button", { name: "建立旅程" }))
     expect(screen.getByRole("alert")).toHaveTextContent("請輸入旅程名稱")
+    // The error is attached to the field, not only the footer.
+    expect(name).toHaveAttribute("aria-invalid", "true")
     expect(mockAuthFetch).not.toHaveBeenCalled()
   })
 
@@ -89,8 +93,10 @@ describe("NewProjectV2", () => {
     mockAuthFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ id: "new-id" }) })
     render(<NewProjectV2 />)
     fireEvent.change(screen.getByLabelText("旅程名稱"), { target: { value: "京都" } })
-    fireEvent.change(screen.getByLabelText("預算"), { target: { value: "10000" } })
+    fireEvent.change(screen.getByLabelText("旅程預算"), { target: { value: "10000" } })
     fireEvent.click(screen.getByLabelText("僅建立新成員"))
+    // Cover is a tile that opens the shared picker sheet.
+    fireEvent.click(screen.getByRole("button", { name: "更換封面" }))
     fireEvent.click(screen.getByRole("button", { name: "汽車" }))
 
     expect(screen.getByText("JPY 日圓")).toBeInTheDocument()
@@ -156,10 +162,10 @@ describe("NewProjectV2", () => {
     fireEvent.change(screen.getByLabelText("描述"), { target: { value: "賞楓五日" } })
     fireEvent.change(screen.getByLabelText("結算幣別"), { target: { value: "TWD" } })
 
-    expect(screen.getByText("TWD 台幣")).toBeInTheDocument()
+    expect(screen.getByText("TWD 新台幣")).toBeInTheDocument()
     // Budget prefix is the currency code; scoped to the field because the
     // currency select also renders a "TWD" option.
-    expect(screen.getByLabelText("預算").previousElementSibling).toHaveTextContent("TWD")
+    expect(screen.getByLabelText("旅程預算").previousElementSibling).toHaveTextContent("TWD")
 
     fireEvent.click(screen.getByRole("button", { name: "建立旅程" }))
     await waitFor(() => expect(mockAuthFetch).toHaveBeenCalled())
@@ -190,5 +196,20 @@ describe("NewProjectV2", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("建立失敗，請重試")
     expect(mockPush).not.toHaveBeenCalled()
     await waitFor(() => expect(screen.getByRole("button", { name: "建立旅程" })).toBeEnabled())
+  })
+
+  it("shows the join-mode explainer and a visible focus ring on text fields", () => {
+    render(<NewProjectV2 />)
+    expect(
+      screen.getByText("透過分享連結加入的人，只能建立自己的身份，或取代你建立的佔位成員。")
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText("旅程名稱").className).toContain("focus-visible:")
+  })
+
+  it("only accepts digits in the budget", () => {
+    render(<NewProjectV2 />)
+    const budget = screen.getByLabelText("旅程預算")
+    fireEvent.change(budget, { target: { value: "1a2b3.4.5" } })
+    expect(budget).toHaveValue("123.45")
   })
 })

@@ -26,15 +26,35 @@ export function emptyProjectForm(currency: string): ProjectFormValues {
   return { name: "", description: "", cover: DEFAULT_ICON_COVER, startDate: null, endDate: null, currency, budget: "", joinMode: "both" }
 }
 
-export function validateProjectForm(v: ProjectFormValues): string | null {
-  if (!v.name.trim()) return "請輸入旅程名稱"
+export type ProjectFormField = "name" | "dates" | "budget"
+
+/**
+ * Every validation failure, keyed by the field it belongs to, so a view can
+ * mark and message all of them at once instead of one per submit round-trip.
+ */
+export function validateProjectFormErrors(v: ProjectFormValues): Partial<Record<ProjectFormField, string>> {
+  const errors: Partial<Record<ProjectFormField, string>> = {}
+  if (!v.name.trim()) errors.name = "請輸入旅程名稱"
   // yyyy-MM-dd strings compare correctly as text.
-  if (v.startDate && v.endDate && v.endDate < v.startDate) return "結束日需晚於出發日"
+  if (v.startDate && v.endDate && v.endDate < v.startDate) errors.dates = "結束日需晚於出發日"
   if (v.budget.trim() !== "") {
     const n = Number(v.budget)
-    if (!Number.isFinite(n) || n < 0) return "預算需為 0 以上的數字"
+    if (!Number.isFinite(n) || n < 0) errors.budget = "預算需為 0 以上的數字"
   }
-  return null
+  return errors
+}
+
+/** The first failure and its field, for callers that only need one message. */
+export function validateProjectFormError(
+  v: ProjectFormValues,
+): { field: ProjectFormField; message: string } | null {
+  const errors = validateProjectFormErrors(v)
+  const field = (["name", "dates", "budget"] as const).find((f) => errors[f])
+  return field ? { field, message: errors[field]! } : null
+}
+
+export function validateProjectForm(v: ProjectFormValues): string | null {
+  return validateProjectFormError(v)?.message ?? null
 }
 
 export function toCreatePayload(v: ProjectFormValues): Record<string, unknown> {

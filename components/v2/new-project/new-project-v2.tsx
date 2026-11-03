@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
@@ -16,6 +16,12 @@ export function NewProjectV2() {
   const { values, set, error: formError } = useProjectForm(emptyProjectForm(preferences.defaultCurrency))
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Editing any field makes the previous submit error stale — clear it so a
+  // fixed form never keeps showing the old message.
+  useEffect(() => {
+    setError(null)
+  }, [values])
 
   async function handleCreate() {
     if (formError) {

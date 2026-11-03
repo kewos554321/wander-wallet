@@ -66,6 +66,12 @@ export function ProjectSettingsV2({ projectId }: { projectId: string }) {
 
   const { values, set, error: formError, reset } = useProjectForm(EMPTY_VALUES)
 
+  // Editing any field makes the previous save/validation error stale — clear it
+  // so a fixed form never keeps showing the old message.
+  useEffect(() => {
+    setSubmitError(null)
+  }, [values])
+
   useEffect(() => {
     let cancelled = false
     async function load() {
@@ -147,7 +153,7 @@ export function ProjectSettingsV2({ projectId }: { projectId: string }) {
   if (loading) {
     content = (
       <>
-        <V2TopBar title="專案設定" backHref={backHref} />
+        <V2TopBar title="旅程設定" backHref={backHref} />
         <div data-testid="v2-project-settings-skeleton" className="space-y-3 p-4">
           <div className="h-64 animate-pulse rounded-2xl bg-v2-sand" />
         </div>
@@ -156,14 +162,14 @@ export function ProjectSettingsV2({ projectId }: { projectId: string }) {
   } else if (!project) {
     content = (
       <>
-        <V2TopBar title="專案設定" backHref={backHref} />
-        <p className="py-8 text-center text-v2-ink-muted">專案不存在</p>
+        <V2TopBar title="旅程設定" backHref={backHref} />
+        <p className="py-8 text-center text-v2-ink-muted">旅程不存在</p>
       </>
     )
   } else {
     content = (
       <>
-        <V2TopBar title="專案設定" backHref={backHref} />
+        <V2TopBar title="旅程設定" backHref={backHref} />
         <ProjectSettingsV2View
           values={values}
           set={set}

@@ -8,6 +8,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { roundRateForDisplay } from "@/lib/currency-conversion"
+import { sanitizeDecimal } from "@/lib/numeric-input"
 import { formatRelativeTime, rateFromRates } from "@/components/v2/currency/format"
 import type { RecentRate } from "@/lib/recent-rates"
 
@@ -42,14 +43,6 @@ const todayStr = () => format(new Date(), "yyyy-MM-dd")
 /** True when two rates agree at display precision (6 significant digits). */
 function sameRate(a: number | null | undefined, b: number | null | undefined): boolean {
   return a != null && b != null && Number.isFinite(a) && Number.isFinite(b) && roundRateForDisplay(a) === roundRateForDisplay(b)
-}
-
-/** Keep digits and a single decimal point; drop everything else. */
-function sanitizeRateInput(raw: string): string {
-  const cleaned = raw.replace(/[^\d.]/g, "")
-  const firstDot = cleaned.indexOf(".")
-  if (firstDot === -1) return cleaned
-  return cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, "")
 }
 
 /** Short `M/D` for a rate date; null on anything unparseable. */
@@ -280,7 +273,7 @@ export function RateSheet({
                       aria-label="自訂匯率"
                       inputMode="decimal"
                       value={customInput}
-                      onChange={(e) => setCustomInput(sanitizeRateInput(e.target.value))}
+                      onChange={(e) => setCustomInput(sanitizeDecimal(e.target.value))}
                       className="min-w-0 flex-1 bg-transparent text-right font-v2-serif text-[17px] font-bold tabular-nums text-v2-ink outline-none"
                     />
                     <span className="shrink-0">{toCurrency}</span>

@@ -2,13 +2,24 @@ import { Trash2 } from "lucide-react"
 import { CoverTileButton } from "@/components/v2/cover/cover-tile-button"
 import { DateRangeField } from "@/components/v2/project/date-range-field"
 import { JoinModePicker } from "@/components/v2/project/join-mode-picker"
-import { V2CurrencyField, moneySymbol } from "@/components/v2/ui/currency-field"
+import {
+  BUDGET_ROW,
+  CARD,
+  CARD_TITLE,
+  CTA_PRIMARY,
+  CTA_SECONDARY,
+  ERROR_RING,
+  FIELD_ERROR,
+  FIELD_LABEL,
+  HELP_TEXT,
+  NAME_INPUT,
+  NAME_PLACEHOLDER,
+  TEXTAREA,
+} from "@/components/v2/project/trip-form-styles"
+import { V2CurrencyField, currencySymbol } from "@/components/v2/ui/currency-field"
 import { minorUnitLabel } from "@/lib/constants/currencies"
-import type { ProjectFormValues } from "@/lib/hooks/use-project-form"
-
-const cardClass = "flex flex-col gap-3.5 rounded-[18px] border border-v2-line bg-v2-surface p-4"
-const cardTitleClass = "m-0 text-[13px] font-bold text-v2-lake"
-const fieldLabelClass = "mb-2 block text-xs font-semibold text-v2-ink-muted"
+import { sanitizeDecimal } from "@/lib/numeric-input"
+import { validateProjectFormErrors, type ProjectFormValues } from "@/lib/hooks/use-project-form"
 
 export interface ProjectSettingsV2ViewProps {
   values: ProjectFormValues
@@ -21,41 +32,45 @@ export interface ProjectSettingsV2ViewProps {
   onRequestDelete: () => void
 }
 
+/**
+ * Presentational edit-trip form. Shares its card order and field styles with the
+ * create view (`NewProjectV2View`): 基本資訊 / 日期與預算 / 結算幣別 / 成員加入方式,
+ * plus a danger zone that only the creator sees.
+ */
 export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
   const { values, set } = props
-  const descriptionCount = values.description.length
+  // `submitError` is only set after a save attempt, so fields are only marked red then.
+  const fieldErrors = props.submitError ? validateProjectFormErrors(values) : {}
+  const hasFieldError = Object.keys(fieldErrors).length > 0
 
   return (
     <div className="flex flex-col gap-3.5 px-4 pb-32 pt-4">
-      <div className={cardClass}>
-        <p className={cardTitleClass}>基本資訊</p>
-        <div>
-          <label htmlFor="v2-project-name" className={fieldLabelClass}>
-            專案名稱
+      <div className={CARD}>
+        <p className={CARD_TITLE}>基本資訊</p>
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3">
+          <p className={FIELD_LABEL}>封面</p>
+          <label htmlFor="v2-project-name" className={FIELD_LABEL}>
+            旅程名稱 <span className="text-v2-danger" aria-hidden="true">*</span>
+            <span className="sr-only">必填</span>
           </label>
+          <CoverTileButton cover={values.cover} onChange={(cover) => set("cover", cover)} disabled={props.saving} />
           <input
             id="v2-project-name"
-            aria-label="專案名稱"
+            aria-label="旅程名稱"
+            aria-required="true"
+            aria-invalid={fieldErrors.name ? true : undefined}
             value={values.name}
             onChange={(e) => set("name", e.target.value)}
             disabled={props.saving}
-            className="w-full rounded-xl border border-v2-line bg-v2-paper px-3.5 py-3 text-[13px] font-semibold outline-none"
+            placeholder={NAME_PLACEHOLDER}
+            className={`${NAME_INPUT} ${fieldErrors.name ? ERROR_RING : ""}`}
           />
         </div>
+        {fieldErrors.name && <p role="alert" className={FIELD_ERROR}>{fieldErrors.name}</p>}
         <div>
-          <p className={fieldLabelClass}>封面圖示與顏色</p>
-          <div className="flex items-center gap-2.5">
-            <CoverTileButton cover={values.cover} onChange={(cover) => set("cover", cover)} disabled={props.saving} />
-            <span className="text-xs text-v2-ink-muted">點擊更換圖示與底色</span>
-          </div>
-        </div>
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <label htmlFor="v2-project-desc" className="block text-xs font-semibold text-v2-ink-muted">
-              描述（選填）
-            </label>
-            <span className={`text-xs ${descriptionCount > 60 ? "text-v2-danger" : "text-v2-ink-subtle"}`}>{descriptionCount}/60</span>
-          </div>
+          <label htmlFor="v2-project-desc" className={FIELD_LABEL}>
+            描述（選填）
+          </label>
           <textarea
             id="v2-project-desc"
             aria-label="描述"
@@ -63,13 +78,13 @@ export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
             onChange={(e) => set("description", e.target.value)}
             disabled={props.saving}
             rows={4}
-            className="min-h-16 w-full rounded-xl border border-v2-line bg-v2-paper px-3.5 py-3 text-[13px] outline-none"
+            className={TEXTAREA}
           />
         </div>
       </div>
 
-      <div className={cardClass}>
-        <p className={cardTitleClass}>日期與預算</p>
+      <div className={CARD}>
+        <p className={CARD_TITLE}>日期與預算</p>
         <DateRangeField
           label="出發日與結束日"
           startDate={values.startDate}
@@ -80,55 +95,46 @@ export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
           }}
           disabled={props.saving}
         />
+        {fieldErrors.dates && <p role="alert" className={FIELD_ERROR}>{fieldErrors.dates}</p>}
         <div>
-          <label htmlFor="v2-project-budget" className="block text-xs font-semibold text-v2-ink-muted">
+          <label htmlFor="v2-project-budget" className={FIELD_LABEL}>
             旅程預算（選填）
           </label>
-          <p className="mb-2 mt-1 text-xs text-v2-ink-subtle">設定預算後，可在旅程總覽查看花費進度</p>
-          <div className="flex items-center gap-1.5 rounded-xl border border-v2-line bg-v2-paper px-3.5 py-3">
-            <span className="text-[13px] text-v2-ink-muted">{moneySymbol(values.currency)}</span>
+          <div className={BUDGET_ROW}>
+            <span className="text-[13px] text-v2-ink-muted">{currencySymbol(values.currency)}</span>
             <input
               id="v2-project-budget"
               aria-label="旅程預算"
               inputMode="decimal"
               value={values.budget}
-              onChange={(e) => set("budget", e.target.value)}
+              onChange={(e) => set("budget", sanitizeDecimal(e.target.value))}
               disabled={props.saving}
               className="w-full bg-transparent text-[13px] outline-none"
             />
           </div>
+          {fieldErrors.budget && <p role="alert" className={`${FIELD_ERROR} mt-1.5`}>{fieldErrors.budget}</p>}
         </div>
       </div>
 
-      <div className={cardClass}>
-        <p className={cardTitleClass}>幣別與匯率</p>
-        <div>
-          <label className="block text-xs font-semibold text-v2-ink-muted">結算幣別</label>
-          <p className="mt-1 text-xs text-v2-ink-subtle">所有費用將以此幣別進行結算計算</p>
-          <p data-testid="settlement-minor-unit" className="mb-2 mt-0.5 text-xs text-v2-ink-subtle">
-            最小單位：{minorUnitLabel(values.currency)}
-          </p>
-          <V2CurrencyField
-            value={values.currency}
-            onChange={(c) => set("currency", c)}
-            disabled={props.saving}
-            ariaLabel="結算幣別"
-          />
-        </div>
+      <div className={CARD}>
+        <p className={CARD_TITLE}>結算幣別</p>
+        <p className={HELP_TEXT}>所有費用將以此幣別進行結算計算</p>
+        <p data-testid="settlement-minor-unit" className={HELP_TEXT}>
+          最小單位：{minorUnitLabel(values.currency)}
+        </p>
+        <V2CurrencyField value={values.currency} onChange={(c) => set("currency", c)} disabled={props.saving} ariaLabel="結算幣別" />
       </div>
 
-      <div className={cardClass}>
-        <div>
-          <p className={cardTitleClass}>成員加入方式</p>
-          <p className="mt-1 text-xs text-v2-ink-subtle">設定新成員透過分享連結加入時的方式</p>
-        </div>
+      <div className={CARD}>
+        <p className={CARD_TITLE}>成員加入方式</p>
+        <p className={HELP_TEXT}>透過分享連結加入的人，只能建立自己的身份，或取代你建立的佔位成員。</p>
         <JoinModePicker variant="settings" value={values.joinMode} onChange={(v) => set("joinMode", v)} disabled={props.saving} />
       </div>
 
       {props.isCreator && (
         <div className="rounded-[18px] border border-v2-danger-border bg-v2-danger-tint p-4">
           <p className="m-0 mb-1 text-[13px] font-bold text-v2-danger-strong">危險區域</p>
-          <p className="m-0 mb-3 text-xs text-v2-danger-strong">刪除專案後，所有成員、支出紀錄都會永久移除，此操作無法復原。</p>
+          <p className="m-0 mb-3 text-xs text-v2-danger-strong">刪除旅程後，所有成員、支出紀錄都會永久移除，此操作無法復原。</p>
           <button
             type="button"
             onClick={props.onRequestDelete}
@@ -136,33 +142,23 @@ export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
             className="inline-flex items-center gap-1.5 rounded-full bg-v2-danger-strong px-4 py-[9px] text-xs font-bold text-v2-on-lake disabled:opacity-40"
           >
             <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-            刪除專案
+            刪除旅程
           </button>
         </div>
       )}
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-v2-line bg-v2-surface px-4 py-3.5">
         <div className="mx-auto max-w-md">
-          {props.submitError && (
+          {props.submitError && !hasFieldError && (
             <p role="alert" className="mb-2 text-center text-xs font-semibold text-v2-danger">
               {props.submitError}
             </p>
           )}
           <div className="flex gap-2.5">
-            <button
-              type="button"
-              onClick={props.onCancel}
-              disabled={props.saving}
-              className="flex-1 rounded-[14px] border border-v2-line bg-v2-surface py-3.5 text-sm font-bold disabled:opacity-40"
-            >
+            <button type="button" onClick={props.onCancel} disabled={props.saving} className={`flex-1 ${CTA_SECONDARY}`}>
               取消
             </button>
-            <button
-              type="button"
-              onClick={props.onSave}
-              disabled={props.saving}
-              className="flex-1 rounded-[14px] bg-v2-lake py-3.5 text-sm font-bold text-v2-on-lake disabled:opacity-40"
-            >
+            <button type="button" onClick={props.onSave} disabled={props.saving} className={`flex-1 ${CTA_PRIMARY}`}>
               {props.saving ? "儲存中…" : "儲存變更"}
             </button>
           </div>

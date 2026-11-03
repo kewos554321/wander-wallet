@@ -17,6 +17,6 @@ import DemoProjectSettingsPage from "@/app/demo/project-settings/page"
 describe("demo project-settings page", () => {
   it("shows the project name field", () => {
     render(<DemoProjectSettingsPage />)
-    expect(screen.getByLabelText("專案名稱")).toHaveValue("東京之旅")
+    expect(screen.getByLabelText("旅程名稱")).toHaveValue("東京之旅")
   })
 })

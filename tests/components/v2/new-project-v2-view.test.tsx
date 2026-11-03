@@ -31,10 +31,10 @@ describe("NewProjectV2View", () => {
     expect(onCreate).toHaveBeenCalled()
   })
 
-  it("shows a submit error", () => {
+  it("shows a server error in the footer when the form itself is valid", () => {
     render(
       <NewProjectV2View
-        values={emptyProjectForm("TWD")}
+        values={DEMO_FORM_VALUES}
         set={vi.fn()}
         submitting={false}
         error="建立失敗，請重試"
@@ -42,5 +42,14 @@ describe("NewProjectV2View", () => {
       />,
     )
     expect(screen.getByRole("alert")).toHaveTextContent("建立失敗，請重試")
+  })
+
+  it("shows a validation error next to the field, not in the footer", () => {
+    render(
+      <NewProjectV2View values={emptyProjectForm("TWD")} set={vi.fn()} submitting={false} error="請輸入旅程名稱" onCreate={vi.fn()} />,
+    )
+    const alert = screen.getByRole("alert")
+    expect(alert).toHaveTextContent("請輸入旅程名稱")
+    expect(alert.closest("div.rounded-\\[18px\\]")).toContainElement(screen.getByLabelText("旅程名稱"))
   })
 })

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import { renderHook, act } from "@testing-library/react"
-import { emptyProjectForm, validateProjectForm, toCreatePayload, toUpdatePayload, useProjectForm, JOIN_MODE_OPTIONS } from "@/lib/hooks/use-project-form"
+import { emptyProjectForm, validateProjectForm, validateProjectFormError, toCreatePayload, toUpdatePayload, useProjectForm, JOIN_MODE_OPTIONS } from "@/lib/hooks/use-project-form"
 
 const v = (o = {}) => ({ ...emptyProjectForm("TWD"), name: "京都", ...o })
 
@@ -21,6 +21,12 @@ describe("project form", () => {
     expect(toUpdatePayload(f)).toEqual(toCreatePayload(f))
     expect(toUpdatePayload(f)).not.toHaveProperty("customRates")
     expect(toCreatePayload(v()).budget).toBeNull()
+  })
+  it("maps a validation failure to its field", () => {
+    expect(validateProjectFormError(v({ name: "" }))).toEqual({ field: "name", message: "請輸入旅程名稱" })
+    expect(validateProjectFormError(v({ startDate: "2026-11-16", endDate: "2026-11-12" }))?.field).toBe("dates")
+    expect(validateProjectFormError(v({ budget: "abc" }))?.field).toBe("budget")
+    expect(validateProjectFormError(v())).toBeNull()
   })
   it("hook sets values and exposes the error", () => {
     const h = renderHook(() => useProjectForm(v({ name: "" })))
