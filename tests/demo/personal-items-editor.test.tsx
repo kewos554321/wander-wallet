@@ -60,16 +60,20 @@ describe("PersonalItemsEditor", () => {
     expect(onRemove).toHaveBeenCalledWith("i1")
   })
 
-  it("reports the currency limit when the amount is clamped", () => {
+  it("reports and links the currency limit when the amount is clamped", () => {
     const onLimitNote = vi.fn()
     render(
       <PersonalItemsEditor
         {...baseProps}
         items={[{ id: "i1", name: "咖啡", amount: "120" }]}
         onLimitNote={onLimitNote}
+        limitNoteId="item-limit-note"
       />,
     )
-    fireEvent.change(screen.getByLabelText("品項金額 1"), { target: { value: "999999999" } })
+    const input = screen.getByLabelText("品項金額 1")
+    fireEvent.change(input, { target: { value: "999999999" } })
     expect(onLimitNote).toHaveBeenLastCalledWith(expect.stringContaining("上限"))
+    expect(input).toHaveAttribute("aria-describedby", "item-limit-note")
+    expect(input).toHaveAttribute("aria-invalid", "true")
   })
 })

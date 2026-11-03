@@ -44,6 +44,8 @@ export function ShareAmountEditor({
           ref={inputRef}
           inputMode="decimal"
           aria-label="共同分攤金額"
+          aria-invalid={note ? "true" : undefined}
+          aria-describedby={note ? "share-limit-note" : undefined}
           value={value}
           placeholder={String(auto)}
           onFocus={(e) => e.target.select()}
@@ -55,7 +57,11 @@ export function ShareAmountEditor({
           className="w-full min-w-0 bg-transparent text-right text-[22px] font-bold tabular-nums text-v2-ink outline-none"
         />
       </label>
-      {note && <p className="m-0 mt-2 text-[11px] font-semibold text-v2-danger">{note}</p>}
+      {note && (
+        <p id="share-limit-note" role="status" aria-live="polite" className="m-0 mt-2 text-[11px] font-semibold text-v2-danger">
+          {note}
+        </p>
+      )}
       <p className="m-0 mt-2 text-[11px] text-v2-ink-muted">
         {pinned ? "目前是固定金額；還原後會重新自動平分。" : `自動平分會是 ${money(auto)}`}
       </p>

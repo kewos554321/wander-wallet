@@ -100,6 +100,30 @@ describe("SplitDetailSheet", () => {
     expect(JSON.parse(screen.getByTestId("items").textContent ?? "{}").me ?? []).toEqual([])
   })
 
+  it("announces a clamped personal amount", () => {
+    openSheet()
+    fireEvent.click(screen.getByRole("button", { name: /個人項目/ }))
+    fireEvent.click(screen.getByRole("button", { name: /新增品項/ }))
+    fireEvent.change(screen.getByLabelText("品項名稱 1"), { target: { value: "咖啡" } })
+    fireEvent.change(screen.getByLabelText("品項金額 1"), { target: { value: "999999999" } })
+    const note = screen.getByText(/上限/)
+    expect(note).toHaveAttribute("role", "status")
+    expect(note).toHaveAttribute("id", "personal-limit-note")
+    expect(screen.getByLabelText("品項金額 1")).toHaveAttribute("aria-describedby", "personal-limit-note")
+  })
+
+  it("returns the summary to — after deleting the last item", () => {
+    openSheet()
+    fireEvent.click(screen.getByRole("button", { name: /個人項目/ }))
+    fireEvent.click(screen.getByRole("button", { name: /新增品項/ }))
+    fireEvent.change(screen.getByLabelText("品項名稱 1"), { target: { value: "咖啡" } })
+    fireEvent.change(screen.getByLabelText("品項金額 1"), { target: { value: "120" } })
+    expect(screen.getByText("$120")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "刪除項目" }))
+    expect(screen.getByText("—")).toBeInTheDocument()
+    expect(screen.getAllByText("$320")).toHaveLength(2)
+  })
+
   it("disables 完成 for a touched incomplete row", () => {
     openSheet()
     fireEvent.click(screen.getByRole("button", { name: /個人項目/ }))

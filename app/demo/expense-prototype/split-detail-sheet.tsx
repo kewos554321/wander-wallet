@@ -164,8 +164,13 @@ export function SplitDetailSheet({
               onAmount={(id, value) => actions.updateItem(memberId, id, "amount", value)}
               onRemove={(id) => actions.removeItem(memberId, id)}
               onLimitNote={(text) => setNote(text ? { section: "personal", text } : null)}
+              limitNoteId="personal-limit-note"
             />
-            {note?.section === "personal" && <p className="m-0 px-1 pb-2 text-[11px] font-semibold text-v2-danger">{note.text}</p>}
+            {note?.section === "personal" && (
+              <p id="personal-limit-note" role="status" aria-live="polite" className="m-0 px-1 pb-2 text-[11px] font-semibold text-v2-danger">
+                {note.text}
+              </p>
+            )}
           </SheetSectionRow>
 
           <SheetSectionRow

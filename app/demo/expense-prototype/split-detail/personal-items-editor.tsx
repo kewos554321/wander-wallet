@@ -4,6 +4,7 @@
 // (one add entry, inline errors, 48dp targets), but the inputs, colors,
 // type and button shapes stay on the app's v2 theme.
 
+import { useState } from "react"
 import { Plus, X } from "lucide-react"
 import type { SplitDraftItem } from "@/lib/split-draft"
 import { amountLimitNote, sanitizeAmountInput } from "../guardrails"
@@ -27,6 +28,7 @@ export function PersonalItemsEditor({
   onAmount,
   onRemove,
   onLimitNote,
+  limitNoteId,
 }: {
   items: SplitDraftItem[]
   currency: string
@@ -35,11 +37,16 @@ export function PersonalItemsEditor({
   onAmount: (id: string, value: string) => void
   onRemove: (id: string) => void
   onLimitNote: (text: string | null) => void
+  /** id of the parent-owned live region that announces a clamped amount. */
+  limitNoteId?: string
 }) {
+  const [limit, setLimit] = useState<{ itemId: string; text: string } | null>(null)
   const setAmount = (id: string, raw: string) => {
     const { value, limited } = sanitizeAmountInput(raw, currency)
+    const text = amountLimitNote(limited, currency)
     onAmount(id, value)
-    onLimitNote(amountLimitNote(limited, currency))
+    setLimit(text ? { itemId: id, text } : null)
+    onLimitNote(text)
   }
 
   return (
@@ -81,8 +88,8 @@ export function PersonalItemsEditor({
                         inputMode="decimal"
                         value={item.amount}
                         onChange={(e) => setAmount(item.id, e.target.value)}
-                        aria-invalid={amountMissing && incomplete ? "true" : undefined}
-                        aria-describedby={amountMissing && incomplete ? errorId : undefined}
+                        aria-invalid={amountMissing && incomplete ? "true" : limit?.itemId === item.id ? "true" : undefined}
+                        aria-describedby={amountMissing && incomplete ? errorId : limit?.itemId === item.id ? limitNoteId : undefined}
                         className="w-full min-w-0 bg-transparent text-right tabular-nums outline-none"
                       />
                     </label>

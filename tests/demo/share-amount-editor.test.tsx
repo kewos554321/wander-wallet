@@ -33,9 +33,14 @@ describe("ShareAmountEditor", () => {
     expect(onChange).toHaveBeenLastCalledWith("12")
   })
 
-  it("shows the currency limit note when the amount is clamped", () => {
+  it("announces the currency limit note when the amount is clamped", () => {
     render(<ShareAmountEditor {...baseProps} />)
-    fireEvent.change(screen.getByLabelText(/共同分攤金額/), { target: { value: "999999999" } })
-    expect(screen.getByText(/上限/)).toBeInTheDocument()
+    const input = screen.getByLabelText(/共同分攤金額/)
+    fireEvent.change(input, { target: { value: "999999999" } })
+    const note = screen.getByText(/上限/)
+    expect(note).toHaveAttribute("role", "status")
+    expect(note).toHaveAttribute("id", "share-limit-note")
+    expect(input).toHaveAttribute("aria-describedby", "share-limit-note")
+    expect(input).toHaveAttribute("aria-invalid", "true")
   })
 })

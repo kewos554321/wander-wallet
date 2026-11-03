@@ -35,11 +35,20 @@ export function PersonalItemsSheet({
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose()
+      if (e.key !== "Escape") return
+      // Escape must run the same cleanup as X/backdrop: drop blank placeholders
+      // so a dismissed sheet cannot leave a form-blocking ghost row.
+      if (memberId) {
+        const items = state.personalItems[memberId] ?? []
+        for (const item of items) {
+          if (!isTouchedItem(item)) actions.removeItem(memberId, item.id)
+        }
+      }
+      onClose()
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [open, onClose])
+  }, [open, onClose, memberId, state.personalItems, actions])
 
   if (!open || !memberId) return null
 
@@ -94,8 +103,13 @@ export function PersonalItemsSheet({
             onAmount={(id, value) => actions.updateItem(memberId, id, "amount", value)}
             onRemove={(id) => actions.removeItem(memberId, id)}
             onLimitNote={(text) => setNote(text ? { memberId, text } : null)}
+            limitNoteId="personal-limit-note"
           />
-          {noteText && <p className="m-0 mt-2 text-[11px] font-semibold text-v2-danger">{noteText}</p>}
+          {noteText && (
+            <p id="personal-limit-note" role="status" aria-live="polite" className="m-0 mt-2 text-[11px] font-semibold text-v2-danger">
+              {noteText}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center justify-between border-t border-v2-line bg-v2-surface px-4 py-3.5">
