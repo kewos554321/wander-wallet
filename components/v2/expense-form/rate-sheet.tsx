@@ -174,8 +174,8 @@ export function RateSheet({
               role="tab"
               aria-selected={tab === t}
               onClick={() => setTab(t)}
-              className={`flex-1 rounded-[9px] py-2 text-[13px] font-bold transition ${
-                tab === t ? "bg-v2-surface text-v2-lake shadow-[0_1px_3px_rgba(27,24,21,.1)]" : "text-v2-ink-muted"
+              className={`flex-1 rounded-v2-sm py-2 text-[13px] font-bold transition ${
+                tab === t ? "bg-v2-surface text-v2-lake shadow-v2-sm" : "text-v2-ink-muted"
               }`}
             >
               {t === "market" ? "市場" : "自訂"}
@@ -186,7 +186,7 @@ export function RateSheet({
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-2 pt-4">
           {tab === "market" && (
             <section data-testid="rate-pane-market">
-              <div className="rounded-[14px] border border-v2-line p-3.5">
+              <div className="rounded-v2-md border border-v2-line p-3.5">
                 <div className="flex items-center justify-between gap-2.5">
                   <div className="min-w-0">
                     <p data-testid="market-rate" className="m-0 font-v2-serif text-[17px] font-bold tabular-nums text-v2-ink">
@@ -223,7 +223,7 @@ export function RateSheet({
                   <button
                     type="button"
                     aria-label="匯率日期"
-                    className="flex w-full items-center gap-2 rounded-[11px] border border-v2-line bg-v2-paper px-3 py-2.5 text-left text-[13px] text-v2-ink"
+                    className="flex w-full items-center gap-2 rounded-v2-sm border border-v2-line bg-v2-paper px-3 py-2.5 text-left text-[13px] text-v2-ink"
                   >
                     <CalendarIcon className="h-[15px] w-[15px] text-v2-ink-muted" aria-hidden="true" />
                     <span className="tabular-nums">{format(parseISO(date), "yyyy/MM/dd（EEEEE）", { locale: zhTW })}</span>
@@ -265,7 +265,7 @@ export function RateSheet({
 
           {tab === "custom" && (
             <section data-testid="rate-pane-custom">
-              <div className="rounded-[14px] border border-v2-line p-3.5">
+              <div className="rounded-v2-md border border-v2-line p-3.5">
                 <div className="flex items-center justify-between gap-2.5">
                   <label className="flex min-w-0 flex-1 items-center gap-2 font-v2-serif text-[17px] font-bold text-v2-ink">
                     <span className="shrink-0">1 {fromCurrency} =</span>
@@ -309,7 +309,7 @@ export function RateSheet({
                             setCustomInput(String(r.rate))
                             onUseRate(r.rate, "custom")
                           }}
-                          className={`flex items-center justify-between gap-3 rounded-[12px] border px-3.5 py-2.5 text-left transition ${
+                          className={`flex items-center justify-between gap-3 rounded-v2-md border px-3.5 py-2.5 text-left transition ${
                             applied ? "border-v2-lake-border bg-v2-lake-soft" : "border-v2-line hover:bg-v2-paper"
                           }`}
                         >
@@ -351,7 +351,7 @@ export function RateSheet({
             aria-label="還原"
             disabled={!customRate}
             onClick={onReset}
-            className="flex-1 rounded-[13px] border border-v2-line py-3 text-sm font-bold text-v2-ink disabled:opacity-40"
+            className="flex-1 rounded-v2-md border border-v2-line py-3 text-sm font-bold text-v2-ink disabled:opacity-40"
           >
             還原
           </button>
@@ -359,7 +359,7 @@ export function RateSheet({
             type="button"
             aria-label="完成"
             onClick={onClose}
-            className="flex-[1.4] rounded-[13px] bg-v2-lake py-3 text-sm font-bold text-v2-on-lake"
+            className="flex-[1.4] rounded-v2-md bg-v2-lake py-3 text-sm font-bold text-v2-on-lake"
           >
             完成
           </button>

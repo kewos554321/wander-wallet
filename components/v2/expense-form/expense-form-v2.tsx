@@ -102,7 +102,7 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
         <div className="mx-auto max-w-md">
           <V2TopBar title={title} backHref={`/projects/${projectId}`} />
           <div data-testid="v2-expense-form-skeleton" className="space-y-3 p-4">
-            <div className="h-28 animate-pulse rounded-[20px] bg-v2-sand" />
+            <div className="h-28 animate-pulse rounded-v2-lg bg-v2-sand" />
             <div className="h-40 animate-pulse rounded-2xl bg-v2-sand" />
           </div>
         </div>

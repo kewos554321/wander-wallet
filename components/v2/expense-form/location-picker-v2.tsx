@@ -164,7 +164,7 @@ export function LocationPickerV2({ value, onChange, className, variant = "defaul
         type="button"
         onClick={getCurrentLocation}
         disabled={isGettingLocation}
-        className="flex w-full items-center gap-2 rounded-[10px] bg-v2-sand px-3 py-2.5 text-[13px] font-semibold disabled:opacity-50"
+        className="flex w-full items-center gap-2 rounded-v2-sm bg-v2-sand px-3 py-2.5 text-[13px] font-semibold disabled:opacity-50"
       >
         {isGettingLocation ? (
           <Loader2 className="h-[15px] w-[15px] animate-spin text-v2-link" aria-hidden="true" />
@@ -181,7 +181,7 @@ export function LocationPickerV2({ value, onChange, className, variant = "defaul
           placeholder="搜尋地點..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-[10px] border border-v2-line bg-v2-surface py-2.5 pl-[34px] pr-3 text-[13px] outline-none"
+          className="w-full rounded-v2-sm border border-v2-line bg-v2-surface py-2.5 pl-[34px] pr-3 text-[13px] outline-none"
         />
         {isSearching && (
           <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-v2-ink-subtle" aria-hidden="true" />

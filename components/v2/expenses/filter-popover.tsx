@@ -91,7 +91,7 @@ export function FilterPopover({
   align = "left",
   widthClass,
   boundsRef,
-  panelRadiusClass = "rounded-[12px]",
+  panelRadiusClass = "rounded-v2-md",
   ariaLabel,
   children,
 }: FilterPopoverProps) {
@@ -157,7 +157,7 @@ export function FilterPopover({
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={onToggle}
-        className={`flex w-full items-center gap-[5px] rounded-[10px] px-2.5 py-[9px] text-xs ${stateClass}`}
+        className={`flex w-full items-center gap-[5px] rounded-v2-sm px-2.5 py-[9px] text-xs ${stateClass}`}
       >
         <span className={active ? "text-v2-lake" : open ? "text-v2-ink" : "text-v2-ink-subtle"}>{icon}</span>
         <span className="flex-1 truncate text-left">{label}</span>
@@ -178,7 +178,7 @@ export function FilterPopover({
           ref={attachPanel}
           data-testid="filter-panel"
           style={{ top: pos?.top, left: pos?.left, visibility: pos ? "visible" : "hidden" }}
-          className={`fixed z-20 overflow-hidden ${panelRadiusClass} border border-v2-line bg-v2-surface shadow-[0_10px_28px_rgba(27,24,21,.18)] ${widthClass}`}
+          className={`fixed z-20 overflow-hidden ${panelRadiusClass} border border-v2-line bg-v2-surface shadow-v2-lg ${widthClass}`}
         >
           {children}
         </div>

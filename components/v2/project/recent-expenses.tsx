@@ -20,7 +20,7 @@ export function RecentExpenses({ projectId, expenses, members, currentMemberId }
 
   return (
     <section className="px-4 pb-44 pt-[22px]">
-      <div data-testid="v2-recent-expenses-card" className="overflow-hidden rounded-[16px] border border-v2-line bg-v2-surface">
+      <div data-testid="v2-recent-expenses-card" className="overflow-hidden rounded-v2-md border border-v2-line bg-v2-surface">
         <div className="flex items-baseline justify-between px-3.5 pb-2 pt-3.5">
           <p className="m-0 text-[13px] font-bold text-v2-lake">最近支出</p>
           <Link href={`/projects/${projectId}/expenses`} className="text-xs font-medium tracking-[.5px] text-v2-link">

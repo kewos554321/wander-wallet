@@ -147,13 +147,13 @@ export function PayerPicker({
       )}
 
       {!settleView && payerIds.length === 0 && (
-        <p className="rounded-[14px] border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
+        <p className="rounded-v2-md border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
           請選擇付款成員
         </p>
       )}
 
       {payerIds.length > 0 && (
-        <div className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
+        <div className="overflow-hidden rounded-v2-md border border-v2-line bg-v2-paper">
           {payers.map((p, idx) => {
             const isPinned = Object.prototype.hasOwnProperty.call(pinned, p.memberId)
             const editable = isPinned && !settleView

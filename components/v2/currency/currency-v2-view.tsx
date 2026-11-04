@@ -86,7 +86,7 @@ export function CurrencyV2View(props: CurrencyV2ViewProps) {
         }
       />
 
-      <div className="mx-4 mt-3.5 overflow-hidden rounded-[20px] bg-v2-lake p-[18px] px-5 text-v2-paper">
+      <div className="mx-4 mt-3.5 overflow-hidden rounded-v2-lg bg-v2-lake p-[18px] px-5 text-v2-paper">
         <p className="mb-3 text-[13px] font-semibold opacity-85">匯率換算</p>
         <p className="mb-1 text-[11px] opacity-70">金額</p>
         <input
@@ -94,7 +94,7 @@ export function CurrencyV2View(props: CurrencyV2ViewProps) {
           inputMode="decimal"
           value={amount}
           onChange={(e) => onAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-          className="mb-3.5 w-full rounded-[12px] border border-v2-paper/30 bg-v2-paper/10 px-3.5 py-3 font-v2-serif text-xl font-bold text-v2-paper outline-none"
+          className="mb-3.5 w-full rounded-v2-md border border-v2-paper/30 bg-v2-paper/10 px-3.5 py-3 font-v2-serif text-xl font-bold text-v2-paper outline-none"
         />
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           <V2CurrencyField value={fromCurrency} onChange={onFrom} short />
@@ -122,13 +122,13 @@ export function CurrencyV2View(props: CurrencyV2ViewProps) {
         {showRates ? (
           <div className="px-4 pb-4">
             {stale ? (
-              <div className="mb-2.5 flex items-center gap-1.5 rounded-[10px] border border-v2-danger-border bg-v2-danger-tint px-2.5 py-2 text-[11px] text-v2-danger-strong">
+              <div className="mb-2.5 flex items-center gap-1.5 rounded-v2-sm border border-v2-danger-border bg-v2-danger-tint px-2.5 py-2 text-[11px] text-v2-danger-strong">
                 部分匯率已超過24小時未更新
               </div>
             ) : null}
             <div className="grid grid-cols-3 gap-2">
               {liveRates.map((item) => (
-                <div key={item.currency} className="rounded-[10px] bg-v2-lake-soft p-2.5 text-center">
+                <div key={item.currency} className="rounded-v2-sm bg-v2-lake-soft p-2.5 text-center">
                   <p className="m-0 text-[11px] text-v2-ink-muted">{item.currency}</p>
                   <p className="m-0 mt-0.5 font-v2-serif text-[14px] font-bold">{formatRate(item.rate)}</p>
                 </div>
@@ -152,16 +152,16 @@ export function CurrencyV2View(props: CurrencyV2ViewProps) {
                 max={new Date().toISOString().split("T")[0]}
                 value={historicalDate}
                 onChange={(e) => onHistoricalDate(e.target.value)}
-                className="flex-1 rounded-[10px] border border-v2-line bg-v2-paper px-3 py-2.5 text-[13px] text-v2-ink-muted"
+                className="flex-1 rounded-v2-sm border border-v2-line bg-v2-paper px-3 py-2.5 text-[13px] text-v2-ink-muted"
               />
-              <button type="button" onClick={onQueryHistorical} disabled={loadingHistorical} className="rounded-[10px] bg-v2-lake px-4 text-[13px] font-bold text-v2-paper disabled:opacity-50">
+              <button type="button" onClick={onQueryHistorical} disabled={loadingHistorical} className="rounded-v2-sm bg-v2-lake px-4 text-[13px] font-bold text-v2-paper disabled:opacity-50">
                 {loadingHistorical ? "載入中..." : "查詢"}
               </button>
             </div>
             {historicalRates.length > 0 ? (
               <div className="mt-3 grid grid-cols-3 gap-2">
                 {historicalRates.map((item) => (
-                  <div key={item.currency} className="rounded-[10px] bg-v2-lake-soft p-2.5 text-center">
+                  <div key={item.currency} className="rounded-v2-sm bg-v2-lake-soft p-2.5 text-center">
                     <p className="m-0 text-[11px] text-v2-ink-muted">{item.currency}</p>
                     <p className="m-0 mt-0.5 font-v2-serif text-[14px] font-bold">{formatRate(item.rate)}</p>
                     <p className={cn("m-0 text-[10px]", diffClass(item.diff))}>{signed(item.diff)}</p>

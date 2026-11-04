@@ -26,8 +26,8 @@ export function ProjectOverviewV2({ projectId }: { projectId: string }) {
     content = (
       <div data-testid="v2-overview-skeleton" className="space-y-3 p-4">
         <div className="h-8 w-48 animate-pulse rounded-lg bg-v2-sand" />
-        <div className="h-36 animate-pulse rounded-[20px] bg-v2-sand" />
-        <div className="h-20 animate-pulse rounded-[18px] bg-v2-sand" />
+        <div className="h-36 animate-pulse rounded-v2-lg bg-v2-sand" />
+        <div className="h-20 animate-pulse rounded-v2-lg bg-v2-sand" />
       </div>
     )
   } else if (joinInfo) {

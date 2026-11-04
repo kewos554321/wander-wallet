@@ -12,7 +12,7 @@ export interface SearchFieldProps {
 /** v2 token search input, shared by list screens. */
 export function SearchField({ value, onChange, placeholder, ariaLabel }: SearchFieldProps) {
   return (
-    <div className="flex items-center gap-2 rounded-[12px] border border-v2-line bg-v2-surface px-3 py-2.5">
+    <div className="flex items-center gap-2 rounded-v2-md border border-v2-line bg-v2-surface px-3 py-2.5">
       <Search className="h-3.5 w-3.5 shrink-0 text-v2-ink-subtle" />
       <input
         aria-label={ariaLabel}

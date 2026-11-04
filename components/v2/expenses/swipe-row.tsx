@@ -54,7 +54,7 @@ export function SwipeRow({ onDelete, disabled = false, children }: SwipeRowProps
   )
 
   return (
-    <div className="relative overflow-hidden rounded-[14px]">
+    <div className="relative overflow-hidden rounded-v2-md">
       {action("left")}
       {action("right")}
       <div

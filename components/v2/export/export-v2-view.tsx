@@ -35,7 +35,7 @@ function toInputDate(value: Date | null | undefined): string | null {
   return `${y}-${m}-${d}`
 }
 
-const FORMAT_TILE = "flex flex-col items-center gap-1.5 rounded-[12px] p-3.5 text-center"
+const FORMAT_TILE = "flex flex-col items-center gap-1.5 rounded-v2-md p-3.5 text-center"
 
 export function ExportV2View({
   projectId,
@@ -162,12 +162,12 @@ export function ExportV2View({
         </div>
 
         {showLargeDataWarning ? (
-          <div data-testid="export-warning" className="mt-3.5 rounded-[12px] border border-v2-danger-border bg-v2-danger-tint px-3.5 py-3 text-[12px] text-v2-danger-strong">
+          <div data-testid="export-warning" className="mt-3.5 rounded-v2-md border border-v2-danger-border bg-v2-danger-tint px-3.5 py-3 text-[12px] text-v2-danger-strong">
             大量資料警告：目前有 {filteredCount} 筆支出，PDF 生成可能需要較長時間。建議使用日期篩選或改用 CSV 格式。
           </div>
         ) : null}
 
-        <div data-testid="export-summary" className="mt-3.5 rounded-[14px] border border-v2-lake-border bg-v2-lake-soft p-3.5 text-[11px] text-v2-lake">
+        <div data-testid="export-summary" className="mt-3.5 rounded-v2-md border border-v2-lake-border bg-v2-lake-soft p-3.5 text-[11px] text-v2-lake">
           <p className="m-0 mb-1">專案：{projectName}</p>
           <p className="m-0 mb-1">支出筆數：{filteredCount} 筆（共 {expenseCount} 筆）</p>
           <p className="m-0">成員人數：{memberCount} 人</p>
@@ -180,7 +180,7 @@ export function ExportV2View({
           data-testid="export-submit"
           onClick={onExport}
           disabled={disabled}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-v2-lake text-[15px] font-bold text-v2-paper disabled:opacity-50"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-v2-md bg-v2-lake text-[15px] font-bold text-v2-paper disabled:opacity-50"
         >
           <Download className="h-[17px] w-[17px]" />
           {exporting ? "匯出中..." : `匯出 ${format === "csv" ? "CSV" : "PDF"}`}

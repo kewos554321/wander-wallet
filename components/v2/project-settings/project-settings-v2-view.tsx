@@ -132,7 +132,7 @@ export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
       </div>
 
       {props.isCreator && (
-        <div className="rounded-[18px] border border-v2-danger-border bg-v2-danger-tint p-4">
+        <div className="rounded-v2-lg border border-v2-danger-border bg-v2-danger-tint p-4">
           <p className="m-0 mb-1 text-[13px] font-bold text-v2-danger-strong">危險區域</p>
           <p className="m-0 mb-3 text-xs text-v2-danger-strong">刪除旅程後，所有成員、支出紀錄都會永久移除，此操作無法復原。</p>
           <button

@@ -49,7 +49,7 @@ export function V2CurrencyField({
     <div className="group relative">
       <div
         aria-hidden="true"
-        className="flex w-full items-center justify-between rounded-[12px] border border-v2-line bg-v2-paper px-3.5 py-3 text-[13px] text-v2-ink transition group-focus-within:border-v2-lake group-focus-within:ring-2 group-focus-within:ring-v2-lake/30"
+        className="flex w-full items-center justify-between rounded-v2-md border border-v2-line bg-v2-paper px-3.5 py-3 text-[13px] text-v2-ink transition group-focus-within:border-v2-lake group-focus-within:ring-2 group-focus-within:ring-v2-lake/30"
       >
         <span className={`${short ? "font-bold" : "font-semibold"} ${value ? "" : "font-normal text-v2-ink-subtle"}`}>
           {value ? currencyLabel(value, short) : placeholder ?? ""}

@@ -34,9 +34,9 @@ export interface MileageV2ViewProps {
   onCalculate: () => void
 }
 
-const INPUT = "w-full rounded-[10px] border border-v2-line bg-v2-paper px-3 py-2.5 text-[14px] font-bold text-v2-ink outline-none"
+const INPUT = "w-full rounded-v2-sm border border-v2-line bg-v2-paper px-3 py-2.5 text-[14px] font-bold text-v2-ink outline-none"
 const LABEL = "mb-1 block text-[11px] text-v2-ink-muted"
-const PRIMARY_BUTTON = "flex w-full items-center justify-center gap-2 rounded-[12px] bg-v2-lake py-[13px] text-[14px] font-bold text-v2-paper disabled:opacity-50"
+const PRIMARY_BUTTON = "flex w-full items-center justify-center gap-2 rounded-v2-md bg-v2-lake py-[13px] text-[14px] font-bold text-v2-paper disabled:opacity-50"
 
 export function MileageV2View({
   projectId,
@@ -72,7 +72,7 @@ export function MileageV2View({
       <div className="pt-3.5">
         <div className={SECTION_CARD}>
           <p className={cn(SECTION_TITLE, "mb-3")}>路線規劃</p>
-          <div className="mb-3 rounded-[10px] border border-v2-lake-border bg-v2-lake-soft px-3 py-2.5 text-[11px] text-v2-lake">
+          <div className="mb-3 rounded-v2-sm border border-v2-lake-border bg-v2-lake-soft px-3 py-2.5 text-[11px] text-v2-lake">
             加入沿途地點，計算總里程並開啟Google Maps導航
           </div>
           <div className="flex flex-col gap-2">
@@ -108,7 +108,7 @@ export function MileageV2View({
 
         <div className={SECTION_CARD}>
           <p className={cn(SECTION_TITLE, "mb-3")}>油費計算</p>
-          <div className="mb-3 rounded-[10px] border border-v2-lake-border bg-v2-lake-soft px-3 py-2.5 text-[11px] leading-[1.6] text-v2-lake">
+          <div className="mb-3 rounded-v2-sm border border-v2-lake-border bg-v2-lake-soft px-3 py-2.5 text-[11px] leading-[1.6] text-v2-lake">
             油費＝總里程 ÷ 油耗 × 油價，再除以分攤人數
             <br />
             參考油耗：汽油車約 12-15 km/L
@@ -172,7 +172,7 @@ export function MileageV2View({
         </div>
 
         {showResult && canCalculate ? (
-          <div className="mx-4 mt-3.5 overflow-hidden rounded-[18px] bg-v2-lake p-[18px] px-5 text-v2-paper">
+          <div className="mx-4 mt-3.5 overflow-hidden rounded-v2-lg bg-v2-lake p-[18px] px-5 text-v2-paper">
             <p className="m-0 mb-2.5 text-[12px] opacity-75">
               {totalKm}km ÷ {fuelEfficiency}km/L × {fuelPrice} ÷ {participants}人
             </p>

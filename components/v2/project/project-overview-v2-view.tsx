@@ -22,7 +22,7 @@ interface ProjectOverviewV2ViewProps {
 }
 
 const pill =
-  "flex h-8 items-center gap-1.5 rounded-[9px] border border-v2-lake-edge bg-v2-lake-soft px-2.5 text-[12px] font-semibold text-v2-lake"
+  "flex h-8 items-center gap-1.5 rounded-v2-sm border border-v2-lake-edge bg-v2-lake-soft px-2.5 text-[12px] font-semibold text-v2-lake"
 
 export function ProjectOverviewV2View({
   project,

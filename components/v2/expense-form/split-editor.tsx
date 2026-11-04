@@ -152,11 +152,11 @@ export function SplitEditor({
             </div>
           )}
           {!settleView && state.personalMembers.length === 0 ? (
-            <p className="rounded-[14px] border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
+            <p className="rounded-v2-md border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
               請選擇成員
             </p>
           ) : state.personalMembers.length > 0 ? (
-            <div className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
+            <div className="overflow-hidden rounded-v2-md border border-v2-line bg-v2-paper">
               {state.personalMembers.map((id) => {
                 const items = state.personalItems[id] ?? []
                 const sum = items.reduce((s, i) => s + (Number(i.amount) || 0), 0)
@@ -303,12 +303,12 @@ export function SplitEditor({
         </div>
       )}
       {!settleView && state.pool.length === 0 && (
-        <p className="mt-2.5 rounded-[14px] border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
+        <p className="mt-2.5 rounded-v2-md border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
           請選擇分攤成員
         </p>
       )}
       {state.pool.length > 0 && (
-        <div className="mt-2.5 overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
+        <div className="mt-2.5 overflow-hidden rounded-v2-md border border-v2-line bg-v2-paper">
           {state.pool.map((id) => {
             const custom = state.customShares[id]
             const isCustom = custom !== undefined

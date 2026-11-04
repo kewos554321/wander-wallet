@@ -134,7 +134,7 @@ export function SplitDetailSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby="split-detail-title"
-        className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[92vh] max-w-md flex-col rounded-t-[20px] bg-v2-paper shadow-2xl"
+        className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[92vh] max-w-md flex-col rounded-t-v2-lg bg-v2-paper shadow-2xl"
       >
         <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-v2-check" aria-hidden="true" />
         <div className="flex items-center gap-3 border-b border-v2-line px-4 pb-3 pt-2">
@@ -217,7 +217,7 @@ export function SplitDetailSheet({
             type="button"
             onClick={close}
             disabled={hasInvalidItems}
-            className="min-h-12 rounded-[14px] bg-v2-lake px-8 text-[15px] font-bold text-v2-on-lake disabled:opacity-40"
+            className="min-h-12 rounded-v2-md bg-v2-lake px-8 text-[15px] font-bold text-v2-on-lake disabled:opacity-40"
           >
             完成
           </button>

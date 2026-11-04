@@ -29,7 +29,7 @@ const APPEARANCE_OPTIONS = [
   { value: "system", label: "系統", Icon: Monitor },
 ] as const
 
-const cardClass = "rounded-[18px] border border-v2-line bg-v2-surface p-4"
+const cardClass = "rounded-v2-lg border border-v2-line bg-v2-surface p-4"
 const cardTitleClass = "m-0 text-[13px] font-bold text-v2-lake"
 
 export function GeneralSettingsV2() {
@@ -65,7 +65,7 @@ export function GeneralSettingsV2() {
             type="button"
             aria-label="編輯個人資料"
             onClick={() => router.push("/settings/profile")}
-            className="flex items-center gap-3.5 rounded-[18px] bg-v2-lake p-4 text-left text-v2-paper"
+            className="flex items-center gap-3.5 rounded-v2-lg bg-v2-lake p-4 text-left text-v2-paper"
           >
             <V2Avatar
               image={user?.image ?? null}

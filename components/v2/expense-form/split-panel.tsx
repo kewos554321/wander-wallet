@@ -30,7 +30,7 @@ import { SplitDetailSheet } from "./split-detail-sheet"
 
 type Draft = ReturnType<typeof useExpenseDraft>
 
-const rowsBox = "overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper"
+const rowsBox = "overflow-hidden rounded-v2-md border border-v2-line bg-v2-paper"
 // Per-cell outline helper. Empty = off (was used as a temporary inspection aid).
 const cellOutline = ""
 // Both ledgers (誰付這筆 / 誰一起分) share the same header, row and money styling.

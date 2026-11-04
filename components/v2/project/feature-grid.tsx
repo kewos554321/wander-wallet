@@ -59,7 +59,7 @@ export function FeatureGrid({ projectId }: { projectId: string }) {
 
   return (
     <nav aria-label="功能" className="px-4 pt-5">
-      <div className="rounded-[18px] border border-v2-line bg-v2-surface px-3 pb-3 pt-4">
+      <div className="rounded-v2-lg border border-v2-line bg-v2-surface px-3 pb-3 pt-4">
         <p className="mb-3 px-1 text-[13px] font-bold text-v2-lake">功能</p>
 
         <div className="flex items-start justify-between">

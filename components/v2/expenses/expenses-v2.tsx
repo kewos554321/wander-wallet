@@ -82,7 +82,7 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
       <div className="mx-auto max-w-md">
         {loading || projectLoading ? (
           <div data-testid="v2-expenses-skeleton" className="space-y-3 p-4">
-            <div className="h-32 animate-pulse rounded-[18px] bg-v2-sand" />
+            <div className="h-32 animate-pulse rounded-v2-lg bg-v2-sand" />
             <div className="h-24 animate-pulse rounded-2xl bg-v2-sand" />
             <div className="h-24 animate-pulse rounded-2xl bg-v2-sand" />
           </div>

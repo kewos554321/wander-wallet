@@ -86,7 +86,7 @@ export function MapV2View({ projectId, projectCurrency, expenses, loading }: Map
       <V2TopBar title="消費地圖" backHref={`/projects/${projectId}`} titleClassName="text-[17px] font-semibold" />
 
       {loading ? (
-        <div data-testid="v2-map-skeleton" className="mx-4 mt-3.5 h-[400px] animate-pulse rounded-[18px] bg-v2-sand" />
+        <div data-testid="v2-map-skeleton" className="mx-4 mt-3.5 h-[400px] animate-pulse rounded-v2-lg bg-v2-sand" />
       ) : withLocation.length === 0 ? (
         <div className="mx-4 mt-10 flex flex-col items-center gap-3 text-center">
           <MapPin className="h-8 w-8 text-v2-ink-subtle" />
@@ -110,7 +110,7 @@ export function MapV2View({ projectId, projectCurrency, expenses, loading }: Map
             <button
               type="button"
               onClick={() => setShowList((v) => !v)}
-              className="flex items-center gap-1.5 rounded-[8px] border border-v2-lake-edge bg-v2-lake-soft px-2.5 py-1.5 text-[12px] font-semibold text-v2-lake"
+              className="flex items-center gap-1.5 rounded-v2-sm border border-v2-lake-edge bg-v2-lake-soft px-2.5 py-1.5 text-[12px] font-semibold text-v2-lake"
             >
               <List className="h-[13px] w-[13px]" />
               {showList ? "隱藏列表" : "顯示列表"}
@@ -121,14 +121,14 @@ export function MapV2View({ projectId, projectCurrency, expenses, loading }: Map
             <CategoryChips items={chipItems} totalCount={withLocation.length} selected={selectedCategory} onSelect={setSelectedCategory} />
           </div>
 
-          <div className="relative mx-4 mt-3 h-[400px] overflow-hidden rounded-[18px] border border-v2-line bg-v2-lake-soft">
+          <div className="relative mx-4 mt-3 h-[400px] overflow-hidden rounded-v2-lg border border-v2-line bg-v2-lake-soft">
             <ExpenseMap
               expenses={mapExpenses}
               projectCurrency={projectCurrency}
               mapStyle={mapStyle}
               onExpenseClick={(id) => router.push(`/projects/${projectId}/expenses/${id}/edit`)}
             />
-            <div className="absolute left-2.5 top-2.5 flex items-center gap-1.5 rounded-[10px] border border-v2-line bg-v2-surface px-2.5 py-1.5 text-[11px] font-semibold text-v2-lake shadow-[0_2px_6px_rgba(27,24,21,.08)]">
+            <div className="absolute left-2.5 top-2.5 flex items-center gap-1.5 rounded-v2-sm border border-v2-line bg-v2-surface px-2.5 py-1.5 text-[11px] font-semibold text-v2-lake shadow-v2-sm">
               篩選中：{selectedCategory ? getCategoryLabel(selectedCategory) : "全部"}
             </div>
             <button
@@ -136,12 +136,12 @@ export function MapV2View({ projectId, projectCurrency, expenses, loading }: Map
               data-testid="map-style-toggle"
               aria-label="地圖樣式"
               onClick={() => setShowStylePicker((v) => !v)}
-              className="absolute right-2.5 top-2.5 rounded-[10px] border border-v2-line bg-v2-surface px-2 py-1.5 text-[14px] shadow-[0_2px_6px_rgba(27,24,21,.08)]"
+              className="absolute right-2.5 top-2.5 rounded-v2-sm border border-v2-line bg-v2-surface px-2 py-1.5 text-[14px] shadow-v2-sm"
             >
               {STYLE_OPTIONS.find((s) => s.key === mapStyle)?.emoji}
             </button>
             {showStylePicker ? (
-              <div className="absolute right-2.5 top-[54px] z-10 flex flex-col gap-0.5 rounded-[10px] border border-v2-line bg-v2-surface p-1 shadow-[0_10px_28px_rgba(27,24,21,.18)]">
+              <div className="absolute right-2.5 top-[54px] z-10 flex flex-col gap-0.5 rounded-v2-sm border border-v2-line bg-v2-surface p-1 shadow-v2-lg">
                 {STYLE_OPTIONS.map((option) => (
                   <button
                     key={option.key}
@@ -151,7 +151,7 @@ export function MapV2View({ projectId, projectCurrency, expenses, loading }: Map
                       setMapStyle(option.key)
                       setShowStylePicker(false)
                     }}
-                    className="whitespace-nowrap rounded-[7px] px-2.5 py-1.5 text-left text-[12px]"
+                    className="whitespace-nowrap rounded-v2-sm px-2.5 py-1.5 text-left text-[12px]"
                   >
                     {option.emoji} {option.name}
                   </button>
@@ -169,9 +169,9 @@ export function MapV2View({ projectId, projectCurrency, expenses, loading }: Map
                     key={expense.id}
                     type="button"
                     onClick={() => router.push(`/projects/${projectId}/expenses/${expense.id}/edit`)}
-                    className="flex items-center gap-3 rounded-[12px] border border-v2-line bg-v2-surface px-3 py-2.5 text-left"
+                    className="flex items-center gap-3 rounded-v2-md border border-v2-line bg-v2-surface px-3 py-2.5 text-left"
                   >
-                    <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-[17px]", CATEGORY_TONES[key])}>{CATEGORY_EMOJI[key]}</span>
+                    <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-v2-md text-[17px]", CATEGORY_TONES[key])}>{CATEGORY_EMOJI[key]}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[14px]">{expense.description || "無描述"}</span>
                       <span className="block text-[12px] text-v2-ink-muted">

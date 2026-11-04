@@ -26,7 +26,7 @@ interface V2ImagePickerProps {
 export function V2ImagePicker({ label = "收據/消費圖片", value, onChange, onRemove, onError }: V2ImagePickerProps) {
   const { error, clearError, openCamera, openGallery, galleryInput, camera } = useImageSource({ onChange, onError })
 
-  const tile = "flex flex-1 flex-col items-center justify-center gap-1.5 rounded-[14px] border-[1.5px] border-dashed border-v2-check bg-v2-paper px-2.5 py-4 text-v2-ink-muted"
+  const tile = "flex flex-1 flex-col items-center justify-center gap-1.5 rounded-v2-md border-[1.5px] border-dashed border-v2-check bg-v2-paper px-2.5 py-4 text-v2-ink-muted"
 
   return (
     <div className={SECTION_CARD}>
@@ -39,7 +39,7 @@ export function V2ImagePicker({ label = "收據/消費圖片", value, onChange, 
       )}
 
       {value ? (
-        <div className="relative overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
+        <div className="relative overflow-hidden rounded-v2-md border border-v2-line bg-v2-paper">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={value} alt="圖片預覽" className="max-h-48 w-full object-contain" />
           <button

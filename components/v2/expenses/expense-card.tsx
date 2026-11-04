@@ -48,7 +48,7 @@ export function ExpenseCard({
 
   const body = (
     <div className="flex items-start gap-3">
-      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] ${CATEGORY_TONES[key]}`} aria-hidden="true">
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-v2-md ${CATEGORY_TONES[key]}`} aria-hidden="true">
         <Icon className="h-[17px] w-[17px]" strokeWidth={1.6} />
       </span>
       <div className="min-w-0 flex-1">
@@ -117,7 +117,7 @@ export function ExpenseCard({
       ) : (
         <span
           aria-label="未附明細圖片"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-v2-line-soft text-v2-check"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-v2-sm bg-v2-line-soft text-v2-check"
         >
           <ImageIcon className="h-3.5 w-3.5" strokeWidth={1.7} aria-hidden="true" />
         </span>
@@ -126,7 +126,7 @@ export function ExpenseCard({
   )
 
   const card = (
-    <div className="relative rounded-[14px] border border-v2-line bg-v2-surface p-[11px] shadow-[0_1px_2px_rgba(27,24,21,.05)]">
+    <div className="relative rounded-v2-md border border-v2-line bg-v2-surface p-[11px] shadow-v2-xs">
       <Link href={`/projects/${projectId}/expenses/${expense.id}/edit`} className="block">
         {body}
         {footer}
@@ -140,7 +140,7 @@ export function ExpenseCard({
             e.stopPropagation()
             onViewImage(expense.image!)
           }}
-          className="absolute bottom-[11px] right-[11px] flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-v2-lake-border text-v2-lake"
+          className="absolute bottom-[11px] right-[11px] flex h-8 w-8 shrink-0 items-center justify-center rounded-v2-sm bg-v2-lake-border text-v2-lake"
         >
           <ImageIcon className="h-3.5 w-3.5" strokeWidth={1.7} aria-hidden="true" />
         </button>

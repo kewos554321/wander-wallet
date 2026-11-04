@@ -138,7 +138,7 @@ export function SplitSummary({
           <span role="columnheader" className="text-right">共同分攤</span>
           <span role="columnheader" className="text-right">小計</span>
         </div>
-        <div role="rowgroup" className="overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
+        <div role="rowgroup" className="overflow-hidden rounded-v2-md border border-v2-line bg-v2-paper">
           {visibleRows.map((r) => (
             <div key={r.id} role="row" className={`${cols} border-t border-v2-line-soft bg-v2-lake-soft py-2.5 first:border-t-0`}>
               <span role="rowheader" className="flex min-w-0 items-center gap-2 text-left text-[13px] font-semibold">

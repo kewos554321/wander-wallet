@@ -85,7 +85,7 @@ export function SettlementCalcDialog({ open, onOpenChange, data }: SettlementCal
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative max-h-[85vh] w-[350px] max-w-[calc(100vw-40px)] overflow-y-auto rounded-[20px] bg-v2-surface p-[22px] outline-none"
+        className="relative max-h-[85vh] w-[350px] max-w-[calc(100vw-40px)] overflow-y-auto rounded-v2-lg bg-v2-surface p-[22px] outline-none"
       >
         <button
           type="button"
@@ -109,7 +109,7 @@ export function SettlementCalcDialog({ open, onOpenChange, data }: SettlementCal
         <div className="mb-[18px] ml-8 flex max-h-[150px] flex-col gap-1.5 overflow-y-auto v2-scroll">
           {data.expenseDetails && data.expenseDetails.length > 0 ? (
             data.expenseDetails.map((expense) => (
-              <div key={expense.id} className="rounded-[10px] bg-v2-paper px-3 py-[9px]">
+              <div key={expense.id} className="rounded-v2-sm bg-v2-paper px-3 py-[9px]">
                 <p className="mb-[3px] mt-0 text-[13px] font-semibold">
                   {expense.description} ·{" "}
                   {expense.currency !== currency
@@ -144,7 +144,7 @@ export function SettlementCalcDialog({ open, onOpenChange, data }: SettlementCal
           <p className="m-0 text-[13px] font-bold text-v2-lake">計算各人總額</p>
         </div>
         <div className="mb-[18px] ml-8">
-          <table className="w-full overflow-hidden rounded-[10px] bg-v2-paper text-[12px]">
+          <table className="w-full overflow-hidden rounded-v2-sm bg-v2-paper text-[12px]">
             <thead className="bg-v2-lake-soft">
               <tr>
                 <th className="p-[7px] text-left text-[11px] font-medium text-v2-lake">成員</th>
@@ -181,7 +181,7 @@ export function SettlementCalcDialog({ open, onOpenChange, data }: SettlementCal
         <div className="ml-8">
           {settlements.length > 0 ? (
             <>
-              <div className="rounded-[10px] bg-v2-lake-soft px-3 py-2.5">
+              <div className="rounded-v2-sm bg-v2-lake-soft px-3 py-2.5">
                 {settlements.map((s, idx) => (
                   <div
                     key={`${s.from.memberId}-${s.to.memberId}-${idx}`}
@@ -203,7 +203,7 @@ export function SettlementCalcDialog({ open, onOpenChange, data }: SettlementCal
               </p>
             </>
           ) : (
-            <div className="rounded-[10px] bg-v2-lake-soft px-3 py-4 text-center">
+            <div className="rounded-v2-sm bg-v2-lake-soft px-3 py-4 text-center">
               <CheckCircle2 className="mx-auto mb-2 h-8 w-8 text-v2-lake" aria-hidden="true" />
               <p className="m-0 text-[13px] text-v2-lake">
                 {summary.totalExpenses === 0 ? "尚無支出記錄" : "所有人都已結清，無需轉帳！"}

@@ -13,7 +13,7 @@ export function V2BrandMark({ className, iconClassName }: V2BrandMarkProps) {
       aria-hidden="true"
       className={
         className ??
-        "flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-v2-link to-v2-lake text-v2-paper shadow-[0_2px_6px_rgba(27,88,71,.35)]"
+        "flex h-8 w-8 shrink-0 items-center justify-center rounded-v2-sm bg-gradient-to-br from-v2-link to-v2-lake text-v2-paper shadow-v2-lake-sm"
       }
     >
       <svg viewBox="0 0 32 32" className={iconClassName ?? "h-[19px] w-[19px]"} fill="none" aria-hidden="true">

@@ -41,7 +41,7 @@ export function SettleSummaryGrid({ count, total, dailyAverage, perPerson, curre
       </div>
       <div className="grid grid-cols-2 gap-2.5">
         {tiles.map(({ label, value, icon: Icon, tone, testId }) => (
-          <div key={label} data-testid={testId} className={`flex flex-col items-center rounded-[12px] px-1 py-3 ${tone.bg}`}>
+          <div key={label} data-testid={testId} className={`flex flex-col items-center rounded-v2-md px-1 py-3 ${tone.bg}`}>
             <div className={`mb-1.5 flex h-8 w-8 items-center justify-center rounded-full ${tone.iconBg} ${tone.text}`} aria-hidden="true">
               <Icon className="h-[15px] w-[15px]" strokeWidth={1.7} />
             </div>

@@ -158,7 +158,7 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-v2-line bg-v2-surface px-4 py-3.5">
         <div className="mx-auto max-w-md">
           {canNotifyLine && (
-            <label className="mb-2.5 flex items-center gap-[10px] rounded-[14px] border border-v2-line bg-v2-surface px-[14px] py-3">
+            <label className="mb-2.5 flex items-center gap-[10px] rounded-v2-md border border-v2-line bg-v2-surface px-[14px] py-3">
               <input type="checkbox" checked={notifyLine} onChange={(e) => onNotifyLineChange(e.target.checked)} className="peer sr-only" />
               <span
                 aria-hidden="true"
@@ -177,16 +177,16 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
               {error}
             </p>
           )}
-          <div className="mb-2.5 flex items-center justify-between rounded-[14px] bg-v2-lake-soft px-4 py-3">
+          <div className="mb-2.5 flex items-center justify-between rounded-v2-md bg-v2-lake-soft px-4 py-3">
             <span className="text-xs font-semibold text-v2-lake">{`共 ${items.length} 筆`}</span>
             <span className="font-v2-serif text-[17px] font-bold text-v2-lake">{totals}</span>
           </div>
           <div className="flex gap-2.5">
-            <button type="button" onClick={onReinput} className="flex flex-1 items-center justify-center gap-1.5 rounded-[14px] border-[1.5px] border-v2-line bg-v2-surface py-[13px] text-[13px] font-bold">
+            <button type="button" onClick={onReinput} className="flex flex-1 items-center justify-center gap-1.5 rounded-v2-md border-[1.5px] border-v2-line bg-v2-surface py-[13px] text-[13px] font-bold">
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
               重新輸入
             </button>
-            <button type="button" onClick={() => onSubmit(canNotifyLine && notifyLine)} className="flex flex-1 items-center justify-center gap-1.5 rounded-[14px] bg-v2-lake py-[13px] text-[13px] font-bold text-v2-on-lake">
+            <button type="button" onClick={() => onSubmit(canNotifyLine && notifyLine)} className="flex flex-1 items-center justify-center gap-1.5 rounded-v2-md bg-v2-lake py-[13px] text-[13px] font-bold text-v2-on-lake">
               <Send className="h-3.5 w-3.5" aria-hidden="true" />
               {`新增 ${items.length} 筆`}
             </button>

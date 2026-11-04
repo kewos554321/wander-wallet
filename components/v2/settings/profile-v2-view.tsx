@@ -88,7 +88,7 @@ export function ProfileV2View({
           type="button"
           data-testid="profile-logout"
           onClick={() => onLogoutOpenChange(true)}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-v2-danger text-[15px] font-bold text-v2-on-lake"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-v2-md bg-v2-danger text-[15px] font-bold text-v2-on-lake"
         >
           <LogOut className="h-4 w-4" />
           登出
@@ -97,16 +97,16 @@ export function ProfileV2View({
 
       {logoutOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-v2-overlay p-4">
-          <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="logout-title" className="w-[320px] max-w-[calc(100vw-40px)] rounded-[20px] bg-v2-surface p-[22px]">
+          <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="logout-title" className="w-[320px] max-w-[calc(100vw-40px)] rounded-v2-lg bg-v2-surface p-[22px]">
             <h3 id="logout-title" className="m-0 mb-2 font-v2-serif text-[17px] font-bold text-v2-ink">
               確認登出
             </h3>
             <p className="m-0 mb-4 text-[13px] text-v2-ink-muted">確定要登出嗎？登出後需要重新登入才能使用應用程式。</p>
             <div className="flex gap-2">
-              <button type="button" onClick={() => onLogoutOpenChange(false)} className="h-11 flex-1 rounded-[12px] border border-v2-line bg-v2-surface text-[14px] font-semibold text-v2-ink-muted">
+              <button type="button" onClick={() => onLogoutOpenChange(false)} className="h-11 flex-1 rounded-v2-md border border-v2-line bg-v2-surface text-[14px] font-semibold text-v2-ink-muted">
                 取消
               </button>
-              <button type="button" data-testid="logout-confirm-button" onClick={onLogout} className="h-11 flex-1 rounded-[12px] bg-v2-danger text-[14px] font-bold text-v2-on-lake">
+              <button type="button" data-testid="logout-confirm-button" onClick={onLogout} className="h-11 flex-1 rounded-v2-md bg-v2-danger text-[14px] font-bold text-v2-on-lake">
                 確認登出
               </button>
             </div>

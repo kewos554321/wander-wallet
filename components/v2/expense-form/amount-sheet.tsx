@@ -104,7 +104,7 @@ export function AmountSheet({
         role="dialog"
         aria-modal="true"
         aria-label={isPayer ? `${name}的付款金額` : `${name}的共同分攤`}
-        className="absolute inset-x-0 bottom-0 mx-auto flex max-w-md flex-col rounded-t-[20px] bg-v2-paper shadow-2xl"
+        className="absolute inset-x-0 bottom-0 mx-auto flex max-w-md flex-col rounded-t-v2-lg bg-v2-paper shadow-2xl"
       >
         <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-v2-check" aria-hidden="true" />
         <div className="flex items-center gap-3 border-b border-v2-line px-4 pb-3 pt-2">
@@ -158,7 +158,7 @@ export function AmountSheet({
           ) : (
             <span />
           )}
-          <button type="button" onClick={onClose} className="rounded-[14px] bg-v2-lake px-8 py-[13px] text-[15px] font-bold text-v2-on-lake">
+          <button type="button" onClick={onClose} className="rounded-v2-md bg-v2-lake px-8 py-[13px] text-[15px] font-bold text-v2-on-lake">
             完成
           </button>
         </div>

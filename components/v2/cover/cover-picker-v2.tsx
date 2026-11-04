@@ -75,7 +75,7 @@ export function CoverPickerV2({ value, onChange, disabled }: { value: string | n
                 aria-pressed={selected}
                 data-cover-art=""
                 data-cover-color-tile=""
-                className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[12px]"
+                className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-v2-md"
                 style={
                   {
                     "--cover-bg": color.fg,

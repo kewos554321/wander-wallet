@@ -72,7 +72,7 @@ export function ProjectsV2View({ projects, loading, userName, userImage, now, ad
         <Link
           href="/projects/new"
           aria-label="建立新旅程"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-v2-lake text-v2-on-lake shadow-[0_4px_10px_rgba(27,88,71,.25)]"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-v2-lake text-v2-on-lake shadow-v2-lake-md"
         >
           <Plus className="h-[19px] w-[19px]" strokeWidth={2.2} />
         </Link>
@@ -138,7 +138,7 @@ function ProjectCard({ project }: { project: ProjectListItem }) {
   return (
     <Link
       href={`/projects/${project.id}`}
-      className="flex items-start gap-3 rounded-2xl border border-v2-line bg-v2-surface p-3 shadow-[0_2px_8px_rgba(27,24,21,.05)]"
+      className="flex items-start gap-3 rounded-2xl border border-v2-line bg-v2-surface p-3 shadow-v2-card"
     >
       <CoverThumb cover={project.cover} />
       <div className="min-w-0 flex-1">

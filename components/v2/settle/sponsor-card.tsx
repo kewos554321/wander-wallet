@@ -7,7 +7,7 @@ const secondaryLink = "inline-flex items-center gap-1 text-xs font-medium text-v
 
 export function SponsorCard() {
   return (
-    <div className="mx-4 mt-4 rounded-2xl border border-v2-line bg-gradient-to-br from-v2-rose-soft to-v2-surface px-4 py-4 shadow-[0_2px_8px_rgba(27,24,21,.05)]">
+    <div className="mx-4 mt-4 rounded-2xl border border-v2-line bg-gradient-to-br from-v2-rose-soft to-v2-surface px-4 py-4 shadow-v2-card">
       <div className="flex items-center gap-2.5">
         <span
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-v2-rose text-v2-on-dark"
@@ -25,7 +25,7 @@ export function SponsorCard() {
         href={SPONSOR_LINKS.buyMeACoffee}
         target="_blank"
         rel="noreferrer"
-        className="mt-3.5 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-v2-rose text-sm font-semibold text-v2-on-dark shadow-[0_4px_10px_rgba(161,74,104,.25)]"
+        className="mt-3.5 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-v2-rose text-sm font-semibold text-v2-on-dark shadow-v2-plum"
       >
         <Coffee className="h-[18px] w-[18px]" aria-hidden="true" />
         請我們喝杯咖啡

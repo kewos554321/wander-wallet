@@ -16,13 +16,13 @@ export interface CheckboxRowProps {
 export function CheckboxRow({ checked, onCheckedChange, label, description, disabled }: CheckboxRowProps) {
   const id = useId()
   return (
-    <div className="flex items-center gap-2.5 rounded-[12px] border border-v2-line p-[11px]">
+    <div className="flex items-center gap-2.5 rounded-v2-md border border-v2-line p-[11px]">
       <Checkbox.Root
         id={id}
         checked={checked}
         disabled={disabled}
         onCheckedChange={(value) => onCheckedChange(value === true)}
-        className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border border-v2-line bg-v2-surface data-[state=checked]:border-v2-lake data-[state=checked]:bg-v2-lake disabled:opacity-50"
+        className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-v2-xs border border-v2-line bg-v2-surface data-[state=checked]:border-v2-lake data-[state=checked]:bg-v2-lake disabled:opacity-50"
       >
         <Checkbox.Indicator>
           <Check className="h-3 w-3 text-v2-on-lake" />

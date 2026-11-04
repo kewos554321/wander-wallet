@@ -350,7 +350,7 @@ export function ExpenseFormPlatformView(props: ExpenseFormPlatformViewProps) {
       </div>
 
       {props.canNotifyLine && (
-        <label className="mx-4 mb-4 flex items-center gap-[10px] rounded-[14px] border border-v2-line bg-v2-surface px-[14px] py-3">
+        <label className="mx-4 mb-4 flex items-center gap-[10px] rounded-v2-md border border-v2-line bg-v2-surface px-[14px] py-3">
           <input
             type="checkbox"
             checked={state.notifyLine}
@@ -392,7 +392,7 @@ export function ExpenseFormPlatformView(props: ExpenseFormPlatformViewProps) {
               </span>
             </div>
           )}
-          <button type="submit" disabled={!!blockingError || descMissing || props.submitting} className="w-full rounded-[14px] bg-v2-lake py-[15px] text-[15px] font-bold text-v2-on-lake disabled:opacity-40">
+          <button type="submit" disabled={!!blockingError || descMissing || props.submitting} className="w-full rounded-v2-md bg-v2-lake py-[15px] text-[15px] font-bold text-v2-on-lake disabled:opacity-40">
             {props.submitting ? "儲存中..." : submitLabel}
           </button>
         </div>

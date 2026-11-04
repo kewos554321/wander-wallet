@@ -24,7 +24,7 @@ export interface MembersV2ViewProps {
 }
 
 const pillButton =
-  "inline-flex h-8 items-center gap-[5px] rounded-[8px] border border-v2-lake-edge bg-v2-lake-soft px-2.5 text-xs font-semibold text-v2-lake"
+  "inline-flex h-8 items-center gap-[5px] rounded-v2-sm border border-v2-lake-edge bg-v2-lake-soft px-2.5 text-xs font-semibold text-v2-lake"
 const badge = "rounded-full px-[7px] text-xs font-bold"
 
 export function MembersV2View(props: MembersV2ViewProps) {
@@ -95,7 +95,7 @@ export function MembersV2View(props: MembersV2ViewProps) {
                   aria-label={`移除${member.displayName}`}
                   disabled={props.removing === member.id}
                   onClick={() => props.onRemove(member.id)}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] text-v2-danger disabled:opacity-40"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-v2-sm text-v2-danger disabled:opacity-40"
                 >
                   <UserMinus className="h-4 w-4" strokeWidth={1.7} />
                 </button>

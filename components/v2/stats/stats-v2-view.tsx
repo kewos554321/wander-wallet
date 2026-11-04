@@ -38,7 +38,7 @@ export function StatsV2View({ projectId, currency, stats, currentMemberId }: Sta
         </div>
       </section>
       <section aria-labelledby={TREND_HEADING_ID} className="px-4 pt-[22px]">
-        <figure aria-label="每日趨勢" className="m-0 rounded-[14px] border border-v2-line bg-v2-surface px-4 pb-2.5 pt-4">
+        <figure aria-label="每日趨勢" className="m-0 rounded-v2-md border border-v2-line bg-v2-surface px-4 pb-2.5 pt-4">
           <p id={TREND_HEADING_ID} className={heading}>每日趨勢</p>
           <DailyTrend daily={stats.daily} />
         </figure>

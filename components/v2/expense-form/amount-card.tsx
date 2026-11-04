@@ -88,7 +88,7 @@ export function AmountCard({
     // opening the calculator reads as a continuation of the same surface.
     <div
       data-testid="amount-card"
-      className="mx-4 mt-4 rounded-[20px] border border-v2-lake bg-v2-lake px-5 py-[18px] shadow-[0_2px_8px_rgba(27,88,71,.07)]"
+      className="mx-4 mt-4 rounded-v2-lg border border-v2-lake bg-v2-lake px-5 py-[18px] shadow-v2-lake-card"
     >
       <div className="mb-3 flex items-center justify-between">
         {open ? (
@@ -102,7 +102,7 @@ export function AmountCard({
           type="button"
           onClick={onToggleCalculator}
           aria-label={open ? "關閉計算機" : "開啟計算機"}
-          className="inline-flex items-center gap-1 rounded-full bg-v2-paper px-3.5 py-1.5 text-xs font-bold text-v2-lake shadow-[0_1px_2px_rgba(27,24,21,.06)]"
+          className="inline-flex items-center gap-1 rounded-full bg-v2-paper px-3.5 py-1.5 text-xs font-bold text-v2-lake shadow-v2-xs"
         >
           <CalculatorIcon className="h-3.5 w-3.5" aria-hidden="true" />
           計算機

@@ -40,7 +40,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
   const canParse = mode === "image" ? Boolean(image) : Boolean(text.trim())
 
   const tabClass = (active: boolean) =>
-    `rounded-[11px] px-3 py-2 text-[13px] font-bold ${active ? "bg-v2-lake text-v2-on-lake" : "text-v2-ink-muted"}`
+    `rounded-v2-sm px-3 py-2 text-[13px] font-bold ${active ? "bg-v2-lake text-v2-on-lake" : "text-v2-ink-muted"}`
 
   return (
     <div className="flex min-h-full flex-col">
@@ -53,7 +53,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
       </div>
 
       {/* 語音/文字與圖片解析只能擇一，用兩段式切換讓模式一開始就看得見 */}
-      <div className="mx-4 mt-5 grid grid-cols-2 gap-1 rounded-[14px] border border-v2-line bg-v2-surface p-1">
+      <div className="mx-4 mt-5 grid grid-cols-2 gap-1 rounded-v2-md border border-v2-line bg-v2-surface p-1">
         <button type="button" aria-pressed={mode === "text"} onClick={() => onModeChange("text")} className={tabClass(mode === "text")}>
           文字／語音
         </button>
@@ -74,7 +74,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
                 value={text}
                 onChange={(e) => onTextChange(e.target.value)}
                 placeholder="例如：晚餐 600 大家分、我付 800 小明 480"
-                className="min-h-20 w-full resize-none rounded-[14px] border border-v2-line bg-v2-paper px-3.5 py-3.5 pr-[104px] text-[13px] outline-none"
+                className="min-h-20 w-full resize-none rounded-v2-md border border-v2-line bg-v2-paper px-3.5 py-3.5 pr-[104px] text-[13px] outline-none"
               />
               {text.trim() && (
                 <button
@@ -104,7 +104,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
                   aria-label="AI 解析"
                   disabled={!canParse || busy}
                   onClick={onParse}
-                  className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-v2-lake text-v2-on-lake shadow-[0_4px_10px_rgba(27,88,71,.3)] disabled:bg-v2-line disabled:text-v2-ink-subtle disabled:shadow-none"
+                  className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-v2-lake text-v2-on-lake shadow-v2-lake-md disabled:bg-v2-line disabled:text-v2-ink-subtle disabled:shadow-none"
                 >
                   <SendHorizontal className="h-[17px] w-[17px]" aria-hidden="true" />
                 </button>
@@ -125,7 +125,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
           <p className="mb-1 text-[13px] font-bold text-v2-lake">收據/消費圖片</p>
           <p className="mb-3 text-xs text-v2-ink-subtle">{image ? "只會辨識這張圖片，忽略文字" : "AI 自動辨識金額與品項"}</p>
           {image ? (
-            <div className="relative overflow-hidden rounded-[14px] border border-v2-line bg-v2-paper">
+            <div className="relative overflow-hidden rounded-v2-md border border-v2-line bg-v2-paper">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={image} alt="圖片預覽" className="max-h-48 w-full object-contain" />
               <button
@@ -142,7 +142,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
               <button
                 type="button"
                 onClick={onCamera}
-                className="flex flex-1 flex-col items-center justify-center gap-1.5 rounded-[14px] border-[1.5px] border-dashed border-v2-check bg-v2-paper px-2.5 py-4 text-v2-ink-muted"
+                className="flex flex-1 flex-col items-center justify-center gap-1.5 rounded-v2-md border-[1.5px] border-dashed border-v2-check bg-v2-paper px-2.5 py-4 text-v2-ink-muted"
               >
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-v2-coral-soft text-v2-coral" aria-hidden="true">
                   <Camera className="h-[15px] w-[15px]" />
@@ -152,7 +152,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
               <button
                 type="button"
                 onClick={onGallery}
-                className="flex flex-1 flex-col items-center justify-center gap-1.5 rounded-[14px] border-[1.5px] border-dashed border-v2-check bg-v2-paper px-2.5 py-4 text-v2-ink-muted"
+                className="flex flex-1 flex-col items-center justify-center gap-1.5 rounded-v2-md border-[1.5px] border-dashed border-v2-check bg-v2-paper px-2.5 py-4 text-v2-ink-muted"
               >
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-v2-lake-soft text-v2-lake" aria-hidden="true">
                   <ImageIcon className="h-[15px] w-[15px]" />
@@ -167,7 +167,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
               aria-label="AI 解析"
               disabled={!canParse || busy}
               onClick={onParse}
-              className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-v2-lake text-v2-on-lake shadow-[0_4px_10px_rgba(27,88,71,.3)] disabled:bg-v2-line disabled:text-v2-ink-subtle disabled:shadow-none"
+              className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-v2-lake text-v2-on-lake shadow-v2-lake-md disabled:bg-v2-line disabled:text-v2-ink-subtle disabled:shadow-none"
             >
               <SendHorizontal className="h-[17px] w-[17px]" aria-hidden="true" />
             </button>

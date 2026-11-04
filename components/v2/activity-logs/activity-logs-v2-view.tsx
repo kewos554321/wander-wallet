@@ -164,7 +164,7 @@ export function ActivityLogsV2View(props: ActivityLogsV2ViewProps) {
               onToggle={() => togglePanel("expense")}
               align="right"
               widthClass="w-[236px]"
-              panelRadiusClass="rounded-[10px]"
+              panelRadiusClass="rounded-v2-sm"
               boundsRef={gridRef}
             >
               <DatePanel range={filters.expenseRange} onChange={onExpenseRange} />
@@ -173,7 +173,7 @@ export function ActivityLogsV2View(props: ActivityLogsV2ViewProps) {
               <button
                 type="button"
                 onClick={onClear}
-                className="flex items-center gap-[5px] rounded-[10px] border border-dashed border-v2-danger-edge bg-v2-danger-wash px-2.5 py-[9px] text-xs font-semibold text-v2-danger"
+                className="flex items-center gap-[5px] rounded-v2-sm border border-dashed border-v2-danger-edge bg-v2-danger-wash px-2.5 py-[9px] text-xs font-semibold text-v2-danger"
               >
                 <CircleX className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span className="flex-1 truncate text-left">移除篩選</span>
@@ -199,7 +199,7 @@ export function ActivityLogsV2View(props: ActivityLogsV2ViewProps) {
                   <div key={log.id} data-testid={`activity-card-${log.id}`} className="overflow-hidden rounded-2xl border border-v2-line bg-v2-surface">
                     <div data-testid={`activity-card-header-${log.id}`} className={cn("flex items-center justify-between px-3.5 py-2.5", tone.header)}>
                       <span className="flex items-center gap-1.5 text-[12px] font-bold">
-                        <span className={cn("flex h-5 w-5 items-center justify-center rounded-[6px]", tone.icon)}>{actionIcon(log.action)}</span>
+                        <span className={cn("flex h-5 w-5 items-center justify-center rounded-v2-xs", tone.icon)}>{actionIcon(log.action)}</span>
                         {getActionText(log.action, log.entityType)}
                       </span>
                       <span className="text-[11px] text-v2-ink-muted">{relative(log.createdAt)}</span>
@@ -212,7 +212,7 @@ export function ActivityLogsV2View(props: ActivityLogsV2ViewProps) {
                         <span className="text-[12px]">{log.actor?.displayName ?? "系統"}</span>
                       </div>
                       {log.metadata ? (
-                        <div className="flex items-center justify-between rounded-[10px] bg-v2-paper px-3 py-2.5">
+                        <div className="flex items-center justify-between rounded-v2-sm bg-v2-paper px-3 py-2.5">
                           <div className="min-w-0">
                             <p className="m-0 truncate text-[13px] font-semibold">{log.metadata.description || "無描述"}</p>
                             <p className="m-0 mt-0.5 text-[11px] text-v2-ink-muted">
@@ -231,7 +231,7 @@ export function ActivityLogsV2View(props: ActivityLogsV2ViewProps) {
                         </div>
                       ) : null}
                       {formatChanges(log.changes, log.metadata?.currency || projectCurrency).map((change, index) => (
-                        <div key={`${change.label}-${index}`} data-testid={`activity-change-${log.id}-${index}`} className="mt-2 w-fit rounded-[8px] border border-v2-line bg-v2-paper px-2 py-1 text-[11px]">
+                        <div key={`${change.label}-${index}`} data-testid={`activity-change-${log.id}-${index}`} className="mt-2 w-fit rounded-v2-sm border border-v2-line bg-v2-paper px-2 py-1 text-[11px]">
                           {change.label}：<span className="text-v2-danger line-through">{change.from}</span> → <span className="text-v2-lake">{change.to}</span>
                         </div>
                       ))}

@@ -88,7 +88,7 @@ export function CameraStep({ onImage, onClose }: { onImage: (file: File) => void
       >
         {mode === "live" ? (
           <>
-            <button type="button" aria-label="從相簿選擇" onClick={() => galleryInput.current?.click()} className="flex h-11 w-11 items-center justify-center rounded-[12px] border border-[rgba(255,255,255,.25)] bg-[rgba(255,255,255,.14)]">
+            <button type="button" aria-label="從相簿選擇" onClick={() => galleryInput.current?.click()} className="flex h-11 w-11 items-center justify-center rounded-v2-md border border-[rgba(255,255,255,.25)] bg-[rgba(255,255,255,.14)]">
               <Images className="h-[19px] w-[19px]" aria-hidden="true" />
             </button>
             <button type="button" aria-label="拍照" onClick={shoot} className="flex h-[70px] w-[70px] items-center justify-center rounded-full border-4 border-[rgba(255,255,255,.35)] bg-v2-on-dark">

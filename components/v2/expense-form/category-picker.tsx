@@ -16,7 +16,7 @@ export function CategoryPicker({ value, onChange }: { value: string; onChange: (
               type="button"
               aria-pressed={active}
               onClick={() => onChange(active ? "" : key)}
-              className={`flex items-center justify-center gap-[5px] rounded-[14px] px-1 py-2 text-xs ${
+              className={`flex items-center justify-center gap-[5px] rounded-v2-md px-1 py-2 text-xs ${
                 active
                   ? `border-[1.5px] ${CATEGORY_PICKER_TONES[key].border} ${CATEGORY_PICKER_TONES[key].tone} font-bold`
                   : `border-[1.5px] border-v2-line font-semibold ${CATEGORY_PICKER_TONES[key].tone}`

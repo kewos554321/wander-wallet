@@ -15,9 +15,9 @@ const LINE_PATH =
 export function LoginV2({ isDevMode, onLogin }: LoginV2Props) {
   return (
     <UiV2Scope className="flex min-h-screen items-center justify-center p-4">
-      <div data-testid="login-v2" className="w-[320px] rounded-[20px] border border-v2-line bg-v2-surface px-[26px] py-8 text-center">
+      <div data-testid="login-v2" className="w-[320px] rounded-v2-lg border border-v2-line bg-v2-surface px-[26px] py-8 text-center">
         <V2BrandMark
-          className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[20px] bg-gradient-to-br from-v2-link to-v2-lake text-v2-paper shadow-[0_2px_6px_rgba(27,88,71,.35)]"
+          className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-v2-lg bg-gradient-to-br from-v2-link to-v2-lake text-v2-paper shadow-v2-lake-sm"
           iconClassName="h-[38px] w-[38px]"
         />
         <h1 className="m-0 font-v2-serif text-[22px] font-bold text-v2-ink">Wander Wallet</h1>
@@ -27,7 +27,7 @@ export function LoginV2({ isDevMode, onLogin }: LoginV2Props) {
         </p>
 
         {isDevMode ? (
-          <p className="mb-3 rounded-[12px] border border-v2-gold-tint bg-v2-gold-soft px-3 py-2 text-[12px] text-v2-gold">
+          <p className="mb-3 rounded-v2-md border border-v2-gold-tint bg-v2-gold-soft px-3 py-2 text-[12px] text-v2-gold">
             LIFF ID 未設定，使用模擬登入
           </p>
         ) : null}
@@ -35,7 +35,7 @@ export function LoginV2({ isDevMode, onLogin }: LoginV2Props) {
         <button
           type="button"
           onClick={onLogin}
-          className="flex h-[50px] w-full items-center justify-center gap-2 rounded-[14px] bg-v2-lake text-[15px] font-bold text-v2-paper"
+          className="flex h-[50px] w-full items-center justify-center gap-2 rounded-v2-md bg-v2-lake text-[15px] font-bold text-v2-paper"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d={LINE_PATH} />

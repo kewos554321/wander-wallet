@@ -139,7 +139,7 @@ function isOperator(char: string): boolean {
   return (OPERATORS as readonly string[]).includes(char)
 }
 
-const KEY_BASE = "h-[42px] rounded-[11px] text-base font-bold transition-transform active:scale-95"
+const KEY_BASE = "h-[42px] rounded-v2-sm text-base font-bold transition-transform active:scale-95"
 
 function keyClass(kind: Key["kind"]): string {
   switch (kind) {
@@ -192,7 +192,7 @@ export function CalculatorPad({ initialValue, onApply, onClose }: CalculatorPadP
 
   return (
     <div className="space-y-3">
-      <div data-testid="calc-display" className="rounded-[14px] bg-v2-surface p-3.5">
+      <div data-testid="calc-display" className="rounded-v2-md bg-v2-surface p-3.5">
         <p
           data-testid="calc-expression"
           className="min-h-[16px] overflow-hidden whitespace-nowrap text-right font-mono text-xs text-v2-ink-subtle"

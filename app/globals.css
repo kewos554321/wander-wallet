@@ -367,6 +367,24 @@
   --color-v2-lightbox: var(--v2-lightbox);
   --font-v2-serif: var(--font-noto-serif-tc), serif;
   --font-v2-sans: var(--font-noto-sans-tc), sans-serif;
+
+  /* Radius scale — collapse the ad-hoc rounded-[3..20px] values into 4 steps. */
+  --radius-v2-xs: 6px;
+  --radius-v2-sm: 10px;
+  --radius-v2-md: 14px;
+  --radius-v2-lg: 20px;
+
+  /* Shadow scale — replace the ad-hoc shadow-[…rgba(…)] values. */
+  --shadow-v2-xs: 0 1px 2px rgba(27, 24, 21, 0.06);
+  --shadow-v2-sm: 0 2px 6px rgba(27, 24, 21, 0.08);
+  --shadow-v2-card: 0 2px 8px rgba(27, 24, 21, 0.05);
+  --shadow-v2-lg: 0 10px 28px rgba(27, 24, 21, 0.18);
+  --shadow-v2-lake-sm: 0 2px 6px rgba(27, 88, 71, 0.35);
+  --shadow-v2-lake-md: 0 4px 10px rgba(27, 88, 71, 0.3);
+  --shadow-v2-lake-card: 0 2px 8px rgba(27, 88, 71, 0.07);
+  --shadow-v2-lake-strong: 0 6px 16px rgba(27, 88, 71, 0.4);
+  --shadow-v2-coral: 0 4px 10px rgba(232, 130, 90, 0.35);
+  --shadow-v2-plum: 0 4px 10px rgba(161, 74, 104, 0.25);
 }
 
 [data-ui="v2"] {
@@ -419,6 +437,53 @@
   --v2-on-dark: #FFFFFF;
   --v2-gold-tint: #F0E0AD;
   --v2-lightbox: rgb(23 20 18 / 0.96);
+
+  /* Map the legacy shadcn tokens onto v2 so imported primitives (popover,
+     calendar, dialog, select, confirm…) inherit the v2 palette instead of the
+     v1 teal/OKLCH one. They reference --v2-*, so dark mode follows automatically. */
+  --background: var(--v2-paper);
+  --foreground: var(--v2-ink);
+  --card: var(--v2-surface);
+  --card-foreground: var(--v2-ink);
+  --popover: var(--v2-surface);
+  --popover-foreground: var(--v2-ink);
+  --primary: var(--v2-lake);
+  --primary-foreground: var(--v2-on-lake);
+  --secondary: var(--v2-sand);
+  --secondary-foreground: var(--v2-ink);
+  --muted: var(--v2-sand);
+  --muted-foreground: var(--v2-ink-muted);
+  --accent: var(--v2-sand);
+  --accent-foreground: var(--v2-ink);
+  --destructive: var(--v2-danger);
+  --border: var(--v2-line);
+  --input: var(--v2-line);
+  --ring: var(--v2-lake);
+  --radius: var(--radius-v2-sm);
+}
+
+/* Explicit v1 island: lets a v1 subtree render inside a v2 page (comparison /
+   embedded legacy screens). Mirrors the :root values. */
+[data-ui="v1"] {
+  --background: oklch(0.995 0.005 90);
+  --foreground: oklch(0.22 0.02 175);
+  --card: oklch(0.995 0.003 90);
+  --card-foreground: oklch(0.22 0.02 175);
+  --popover: oklch(0.995 0.003 90);
+  --popover-foreground: oklch(0.22 0.02 175);
+  --primary: oklch(0.65 0.11 175);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.92 0.015 30);
+  --secondary-foreground: oklch(0.35 0.06 175);
+  --muted: oklch(0.92 0.015 30);
+  --muted-foreground: oklch(0.5 0.02 175);
+  --accent: oklch(0.92 0.02 30);
+  --accent-foreground: oklch(0.35 0.06 175);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.9 0.015 30);
+  --input: oklch(0.9 0.015 30);
+  --ring: oklch(0.65 0.11 175);
+  --radius: 0.625rem;
 }
 
 [data-cover-art] { background-color: var(--cover-bg); color: var(--cover-fg); }

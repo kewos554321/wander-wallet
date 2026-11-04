@@ -94,7 +94,7 @@ export function ExpenseFilterBar(props: ExpenseFilterBarProps) {
           <AmountPanel range={filters.amountRange} max={props.maxAmount} currency={props.currency} onChange={props.onAmountRange} onClear={() => props.onAmountRange([0, 0])} />
         </FilterPopover>
 
-        <FilterPopover label={rangeLabel(filters.expenseDateRange, "付款日期")} ariaLabel="付款日期" icon={<CalendarDays className={icon} />} count={filters.expenseDateRange?.from ? 1 : 0} open={openId === "date"} onToggle={() => toggle("date")} align="right" widthClass="w-[236px]" panelRadiusClass="rounded-[10px]" boundsRef={gridRef}>
+        <FilterPopover label={rangeLabel(filters.expenseDateRange, "付款日期")} ariaLabel="付款日期" icon={<CalendarDays className={icon} />} count={filters.expenseDateRange?.from ? 1 : 0} open={openId === "date"} onToggle={() => toggle("date")} align="right" widthClass="w-[236px]" panelRadiusClass="rounded-v2-sm" boundsRef={gridRef}>
           <DatePanel range={filters.expenseDateRange} onChange={props.onExpenseRange} />
         </FilterPopover>
 
@@ -102,7 +102,7 @@ export function ExpenseFilterBar(props: ExpenseFilterBarProps) {
           <button
             type="button"
             onClick={props.onClearFilters}
-            className="flex items-center gap-[5px] rounded-[10px] border border-dashed border-v2-danger-edge bg-v2-danger-wash px-2.5 py-[9px] text-xs font-semibold text-v2-danger"
+            className="flex items-center gap-[5px] rounded-v2-sm border border-dashed border-v2-danger-edge bg-v2-danger-wash px-2.5 py-[9px] text-xs font-semibold text-v2-danger"
           >
             <CircleX className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span className="flex-1 truncate text-left">移除篩選</span>

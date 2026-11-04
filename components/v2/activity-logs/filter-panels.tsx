@@ -33,7 +33,7 @@ function PanelHeader({ title, onClear, showClear }: { title: string; onClear: ()
 function CheckBox({ checked }: { checked: boolean }) {
   return (
     <span
-      className={`flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-[4px] ${
+      className={`flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-v2-xs ${
         checked ? "bg-v2-lake" : "border-[1.5px] border-v2-line bg-v2-surface"
       }`}
     >

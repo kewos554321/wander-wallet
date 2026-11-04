@@ -79,7 +79,7 @@ export function PersonalItemsSheet({
         role="dialog"
         aria-modal="true"
         aria-label={`${name}的個人項目`}
-        className="absolute inset-x-0 bottom-0 mx-auto flex max-w-md flex-col rounded-t-[20px] bg-v2-paper shadow-2xl"
+        className="absolute inset-x-0 bottom-0 mx-auto flex max-w-md flex-col rounded-t-v2-lg bg-v2-paper shadow-2xl"
         style={{ maxHeight: "85vh" }}
       >
         <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-v2-check" aria-hidden="true" />
@@ -116,7 +116,7 @@ export function PersonalItemsSheet({
           <span className="text-[13px] font-semibold text-v2-ink-muted">
             小計 <span className="font-bold text-v2-ink">{money(sum)}</span>
           </span>
-          <button type="button" onClick={close} className="min-h-12 rounded-[14px] bg-v2-lake px-8 text-[15px] font-bold text-v2-on-lake">
+          <button type="button" onClick={close} className="min-h-12 rounded-v2-md bg-v2-lake px-8 text-[15px] font-bold text-v2-on-lake">
             完成
           </button>
         </div>

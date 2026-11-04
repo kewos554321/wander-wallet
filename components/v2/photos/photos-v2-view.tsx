@@ -120,7 +120,7 @@ export function PhotosV2View({ projectId, currency, expenses, loading }: PhotosV
                     type="button"
                     data-testid={`photo-tile-${expense.id}`}
                     onClick={() => setSelectedIndex(index)}
-                    className="relative aspect-square overflow-hidden rounded-[14px]"
+                    className="relative aspect-square overflow-hidden rounded-v2-md"
                   >
                     <Image src={expense.image!} alt={expense.description || "收據照片"} fill sizes="(max-width:640px) 50vw, 33vw" className="object-cover" />
                     <span className={cn("absolute left-[7px] top-[7px] rounded-full bg-v2-surface px-2 py-[3px] text-[10px] font-semibold", CATEGORY_TONES[key])}>

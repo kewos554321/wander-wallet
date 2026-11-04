@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>新增支出 · P0+P1 改前改後（依真實 V2 重繪）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap">
+<style>
+  /* ── 真實 V2 token（app/globals.css [data-ui="v2"]）──────────────────── */
+  :root{
+    --v2-paper:#FAF7F2; --v2-surface:#fff; --v2-ink:#1B1815; --v2-ink-muted:#6E6860; --v2-ink-subtle:#B7AE9D;
+    --v2-line:#E7DFD2; --v2-sand:#F1EBE0; --v2-check:#C9BFAC; --v2-lake:#1B5847; --v2-lake-soft:#EAF5F1;
+    --v2-link:#24735D; --v2-coral:#E8825A; --v2-coral-soft:#FBEAE0; --v2-coral-tint:#F6DCCB; --v2-coral-deep:#8F3714;
+    --v2-plum:#6B5B95; --v2-plum-soft:#EFEAF7; --v2-olive:#6B7A3A; --v2-olive-soft:#EEF0E1;
+    --v2-rose:#A14A68; --v2-rose-soft:#F6E9EE; --v2-sky:#4A6FA5; --v2-sky-soft:#E8EEF7;
+    --v2-gold:#9C7A28; --v2-gold-soft:#F7EFDD; --v2-gold-tint:#F0E0AD; --v2-danger:#C4472F; --v2-danger-soft:#F6DCD3; --v2-danger-strong:#C4432A;
+    --v2-line-soft:#F0EAE0; --v2-lake-tint:#D2EAE1; --v2-lake-border:#DDEDE6; --v2-lake-mid:#2F8F74; --v2-on-lake:#fff; --v2-knob:#fff;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:#EFEAE2;color:var(--v2-ink);font-family:'Noto Sans TC',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;text-decoration:none;}
+  .serif{font-family:'Noto Serif TC',serif;}
+  svg[data-lucide]{display:block;}
+
+  .wrap{max-width:1320px;margin:0 auto;padding:40px 24px 80px;}
+  .page-head h1{margin:0;font-family:'Noto Serif TC',serif;font-size:30px;font-weight:700;}
+  .page-head p{margin:10px 0 0;color:var(--v2-ink-muted);font-size:14px;line-height:1.75;max-width:820px;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+  .chip{border:1px solid var(--v2-line);background:#fff;border-radius:999px;padding:6px 13px;font-size:12px;font-weight:600;color:var(--v2-ink-muted);}
+  .chip b{color:var(--v2-ink);}
+  .chip.warn{background:var(--v2-coral-soft);border-color:#F0C9B4;color:var(--v2-coral-deep);}
+  .chip.good{background:var(--v2-lake-soft);border-color:var(--v2-lake-border);color:var(--v2-lake);}
+
+  .sect{margin:44px 0 14px;font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--v2-lake);}
+
+  .frames{display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start;}
+  .frame-wrap{flex:1 1 390px;max-width:430px;}
+  .cap{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .cap h2{margin:0;font-size:16px;font-weight:800;}
+  .tag{font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;}
+  .tag.before{background:var(--v2-danger-soft);color:var(--v2-danger-strong);}
+  .tag.after{background:var(--v2-lake);color:#fff;}
+  .frame{background:var(--v2-paper);border:1px solid var(--v2-line);border-radius:26px;box-shadow:0 18px 40px -22px rgba(27,24,21,.35);overflow:hidden;}
+
+  /* ── top bar ── */
+  .topbar{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--v2-line);padding:16px 14px;}
+  .topbar h1{margin:0;font-family:'Noto Serif TC',serif;line-height:24px;letter-spacing:.15px;font-size:16px;font-weight:500;}
+  .back{display:flex;height:34px;width:34px;align-items:center;justify-content:center;border-radius:9999px;border:1px solid var(--v2-line);background:var(--v2-surface);color:var(--v2-ink);}
+  .back svg{width:18px;height:18px;}
+  .top-actions{display:flex;min-width:34px;justify-content:flex-end;gap:6px;}
+  .trash{display:flex;height:34px;width:34px;align-items:center;justify-content:center;border-radius:9999px;background:var(--v2-coral-soft);color:var(--v2-danger);}
+  .trash svg{width:15px;height:15px;}
+
+  /* ── amount card (dark lake) ── */
+  .amt{margin:16px;border:1px solid var(--v2-lake);border-radius:20px;background:var(--v2-lake);padding:18px 20px;box-shadow:0 2px 8px rgba(27,88,71,.07);color:var(--v2-paper);}
+  .amt-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .amt-head .lbl{font-size:13px;font-weight:700;color:var(--v2-paper);}
+  .amt-tools{display:flex;align-items:center;gap:8px;}
+  .calc{display:inline-flex;align-items:center;gap:4px;background:var(--v2-paper);color:var(--v2-lake);border-radius:9999px;padding:6px 14px;font-size:12px;font-weight:700;box-shadow:0 1px 2px rgba(27,24,21,.06);}
+  .calc svg{width:14px;height:14px;}
+  .amt-row{display:flex;align-items:center;gap:10px;}
+  .cur{display:inline-flex;flex-shrink:0;align-items:center;gap:4px;background:var(--v2-paper);color:var(--v2-lake);border:1px solid var(--v2-paper);border-radius:12px;padding:10px 12px;font-size:14px;font-weight:700;}
+  .cur svg{width:11px;height:11px;stroke:var(--v2-ink-subtle);}
+  .amt-num{flex:1;min-width:0;font-family:'Noto Serif TC',serif;font-weight:700;font-size:36px;line-height:44px;color:var(--v2-paper);font-variant-numeric:tabular-nums;}
+  .conv{margin-top:8px;display:flex;flex-direction:column;gap:4px;font-size:12px;color:rgba(250,247,242,.85);}
+  .rate-row{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px;color:rgba(250,247,242,.9);}
+  .rate-chip{display:inline-flex;align-items:center;gap:4px;border-radius:9999px;background:rgba(250,247,242,.15);padding:3px 8px;font-size:10px;font-weight:700;line-height:1;color:var(--v2-paper);}
+  .rate-chip i{display:inline-block;height:6px;width:6px;border-radius:9999px;background:var(--v2-gold-tint);}
+  .rate-row .chev{margin-left:auto;}
+  .rate-row .chev svg{width:14px;height:14px;}
+
+  /* ── section card ── */
+  .card{margin:0 16px 16px;border:1px solid var(--v2-line);border-radius:16px;background:var(--v2-surface);padding:16px;}
+  .card.first{margin-top:14px;}
+  .ctitle{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-size:13px;font-weight:700;color:var(--v2-lake);}
+  .ctitle .grow{flex:1;min-width:0;}
+
+  .field{width:100%;border:1px solid var(--v2-line);border-radius:12px;background:var(--v2-paper);padding:12px 14px;font-size:13px;color:var(--v2-ink);}
+  .field.empty{color:var(--v2-ink-muted);display:flex;align-items:center;gap:8px;}
+  .field.cal{display:flex;align-items:center;gap:8px;}
+  .field svg{width:15px;height:15px;}
+
+  /* category */
+  .cats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+  .cat{display:flex;align-items:center;justify-content:center;gap:5px;border-radius:14px;padding:8px 4px;font-size:12px;font-weight:600;border:1.5px solid var(--v2-line);}
+  .cat svg{width:16px;height:16px;}
+  .cat.food{background:var(--v2-coral-soft);color:var(--v2-coral-deep);border-color:var(--v2-coral-deep);font-weight:700;}
+  .cat.transport{background:var(--v2-lake-soft);color:var(--v2-lake-mid);}
+  .cat.acc{background:var(--v2-plum-soft);color:var(--v2-plum);}
+  .cat.ticket{background:var(--v2-olive-soft);color:var(--v2-olive);}
+  .cat.shop{background:var(--v2-rose-soft);color:var(--v2-rose);}
+  .cat.ent{background:var(--v2-sky-soft);color:var(--v2-sky);}
+  .cat.gift{background:var(--v2-gold-soft);color:var(--v2-gold);}
+  .cat.other{background:var(--v2-sand);color:var(--v2-ink-muted);}
+
+  /* member pills */
+  .pills{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{display:inline-flex;align-items:center;gap:4px;border-radius:9999px;padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--v2-lake-border);background:var(--v2-lake-soft);color:var(--v2-ink);opacity:.5;}
+  .pill.on{border-color:var(--v2-lake);background:var(--v2-lake);color:var(--v2-on-lake);opacity:1;}
+  .av{display:flex;height:16px;width:16px;flex-shrink:0;align-items:center;justify-content:center;border-radius:9999px;font-size:8px;font-weight:700;}
+  .av.me{background:var(--v2-lake-tint);color:var(--v2-lake);}
+  .av.m2{background:var(--v2-coral-soft);color:var(--v2-coral-deep);}
+  .av.m3{background:var(--v2-plum-soft);color:var(--v2-plum);}
+  .av.m4{background:var(--v2-rose-soft);color:var(--v2-rose);}
+  .av.lg{height:28px;width:28px;font-size:11px;}
+
+  /* list rows */
+  .listrow-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px;}
+  .hint{font-size:12px;font-weight:600;color:var(--v2-ink-muted);}
+  .hint b{color:var(--v2-ink);}
+  .selectall{font-size:12px;font-weight:700;color:var(--v2-lake);}
+  .rows{overflow:hidden;border:1px solid var(--v2-line);border-radius:14px;background:var(--v2-paper);}
+  .row{display:flex;align-items:center;gap:10px;background:var(--v2-lake-soft);padding:12px 14px;border-bottom:1px solid var(--v2-line-soft);}
+  .row:last-child{border-bottom:0;}
+  .row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600;}
+  .row .am{flex-shrink:0;text-align:right;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .ibtn{display:flex;height:22px;width:22px;flex-shrink:0;align-items:center;justify-content:center;border-radius:6px;}
+  .ibtn svg{width:12px;height:12px;}
+  .ibtn.off{border:1.5px solid var(--v2-check);color:var(--v2-ink-muted);}
+  .ibtn.on{background:var(--v2-lake);color:var(--v2-on-lake);}
+  .ibtn.rm{background:var(--v2-danger-soft);color:var(--v2-danger-strong);}
+
+  .status{display:flex;align-items:center;justify-content:flex-end;gap:4px;margin-top:8px;font-size:12px;font-weight:700;color:var(--v2-link);}
+  .status svg{width:12px;height:12px;}
+
+  /* segmented currency toggle */
+  .seg{display:inline-flex;height:20px;flex-shrink:0;align-items:center;border-radius:9999px;background:var(--v2-lake-tint);padding:2px;font-size:11px;font-weight:800;}
+  .seg .on,.seg .off{display:flex;height:100%;align-items:center;border-radius:9999px;padding:0 8px;line-height:1;}
+  .seg .on{background:var(--v2-lake);color:var(--v2-on-lake);}
+  .seg .off{color:var(--v2-lake);}
+
+  /* switch */
+  .switch{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--v2-lake);}
+  .track{position:relative;display:inline-block;height:14px;width:24px;border-radius:9999px;background:var(--v2-check);}
+  .track i{position:absolute;top:2px;left:2px;height:10px;width:10px;border-radius:9999px;background:var(--v2-knob);}
+
+  /* image tiles */
+  .tiles{display:flex;gap:10px;}
+  .tile{display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1.5px dashed var(--v2-check);border-radius:14px;background:var(--v2-paper);padding:16px 10px;color:var(--v2-ink-muted);}
+  .tile .circ{display:flex;height:32px;width:32px;align-items:center;justify-content:center;border-radius:9999px;}
+  .tile .circ svg{width:15px;height:15px;}
+  .tile.cam .circ{background:var(--v2-coral-soft);color:var(--v2-coral);}
+  .tile.gal .circ{background:var(--v2-lake-soft);color:var(--v2-lake);}
+  .tile span.t{font-size:12px;font-weight:600;}
+
+  /* collapsed summary (after) */
+  .sumline{display:flex;align-items:center;gap:8px;margin-top:12px;border:1px solid var(--v2-line);border-radius:12px;background:var(--v2-paper);padding:10px 12px;font-size:12px;font-weight:600;color:var(--v2-ink-muted);}
+  .sumline .chev{margin-left:auto;color:var(--v2-ink-subtle);}
+  .sumline .chev svg{width:14px;height:14px;}
+  .disc{margin:0 16px 16px;display:flex;align-items:center;gap:10px;border:1px solid var(--v2-line);border-radius:16px;background:var(--v2-surface);padding:14px 16px;font-size:13px;font-weight:700;color:var(--v2-ink);}
+  .disc.adv{background:var(--v2-lake-soft);border-color:var(--v2-lake-border);color:var(--v2-lake);}
+  .disc .chev{margin-left:auto;color:var(--v2-ink-subtle);}
+  .disc.adv .chev{color:var(--v2-lake);}
+  .disc .chev svg{width:14px;height:14px;}
+  .disc .e{font-size:14px;}
+
+  .statuscard{display:flex;align-items:center;gap:8px;margin-top:12px;border:1px solid var(--v2-lake-border);background:var(--v2-lake-soft);border-radius:12px;padding:10px 12px;}
+  .statuscard .ok{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--v2-link);}
+  .statuscard .ok svg{width:13px;height:13px;}
+
+  .displaybar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:12px;font-weight:700;color:var(--v2-ink-muted);}
+  .personaltoggle{display:flex;align-items:center;gap:8px;margin-bottom:12px;border:1px dashed var(--v2-check);border-radius:12px;background:var(--v2-paper);padding:10px 12px;font-size:12px;font-weight:700;color:var(--v2-lake);}
+  .personaltoggle svg{width:14px;height:14px;flex-shrink:0;}
+  .personaltoggle .sub{margin-left:auto;font-weight:600;color:var(--v2-ink-muted);}
+  .subhead{margin:0 0 8px;font-size:12px;font-weight:600;color:var(--v2-ink-muted);}
+
+  .submit{border-top:1px solid var(--v2-line);background:var(--v2-surface);padding:14px 16px;}
+  .submit .err{margin:0 0 8px;text-align:center;font-size:12px;font-weight:600;color:var(--v2-danger);}
+  .submit button{width:100%;border:0;border-radius:14px;background:var(--v2-lake);color:var(--v2-on-lake);padding:15px;font-size:15px;font-weight:700;font-family:inherit;}
+
+  /* annotation markers */
+  .mk{display:inline-flex;width:17px;height:17px;flex-shrink:0;align-items:center;justify-content:center;border-radius:9999px;font-size:10px;font-weight:800;color:#fff;vertical-align:middle;}
+  .mk.b{background:var(--v2-danger);}
+  .mk.g{background:var(--v2-lake);}
+
+  .legend{margin-top:16px;border:1px solid var(--v2-line);border-radius:16px;background:#fff;padding:6px 16px;}
+  .legend li{list-style:none;display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--v2-line-soft);font-size:13px;line-height:1.6;color:var(--v2-ink-muted);}
+  .legend li:first-child{border-top:0;}
+  .legend li b{color:var(--v2-ink);}
+  .legend li .txt{flex:1;}
+
+  .cmp{margin-top:20px;overflow:hidden;border:1px solid var(--v2-line);border-radius:16px;background:#fff;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:13px 16px;border-top:1px solid var(--v2-line-soft);vertical-align:top;line-height:1.55;}
+  thead th{border-top:0;background:var(--v2-paper);font-size:12px;letter-spacing:.06em;color:var(--v2-ink-muted);text-transform:uppercase;}
+  td:first-child{white-space:nowrap;font-weight:800;}
+  .sev{font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;}
+  .sev.p0{background:var(--v2-danger-soft);color:var(--v2-danger-strong);}
+  .sev.p1{background:var(--v2-coral-soft);color:var(--v2-coral-deep);}
+  .bad-txt{color:var(--v2-danger);font-weight:700;}
+  .good-txt{color:var(--v2-lake);font-weight:700;}
+  .foot{margin-top:26px;font-size:12px;color:var(--v2-ink-subtle);line-height:1.8;}
+  code{background:#fff;border:1px solid var(--v2-line);border-radius:5px;padding:1px 5px;font-size:12px;}
+  @media (max-width:900px){ .frames{flex-direction:column;} .frame-wrap{max-width:none;} }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"></svg>
+<div class="wrap">
+
+  <div class="page-head">
+    <h1>新增支出 · P0+P1 改前改後</h1>
+    <p>依<b>真實 V2 元件原始碼</b>重繪（同一組 lucide 圖示、同一組 token、對齊 <code>expense-form-v2-view.tsx</code> 的標籤／間距／卡片）。
+       為呈現痛點，畫面採「已填好」的代表情境：東京之旅 4 人、我付 <b>JPY 1,280</b>、四人均分（每人 $320）。左為現況、右為建議。此為設計預覽，未更動任何程式。</p>
+    <div class="chips">
+      <span class="chip">Nielsen 健康分 <b>21 / 40</b></span>
+      <span class="chip warn">P0 × 1 · 資料遺失</span>
+      <span class="chip warn">P1 × 4</span>
+      <span class="chip">deterministic scan <b>0 findings</b></span>
+      <span class="chip good">目標：happy path 3 步</span>
+    </div>
+  </div>
+
+  <div class="sect">Before / After</div>
+  <div class="frames">
+
+    <!-- ======================= BEFORE ======================= -->
+    <div class="frame-wrap">
+      <div class="cap"><h2>現況</h2><span class="tag before">Before · 真實 V2（已填）</span></div>
+      <div class="frame">
+        <div class="topbar">
+          <span class="back"><i data-lucide="chevron-left"></i></span>
+          <h1>新增支出</h1>
+          <div class="top-actions"></div>
+        </div>
+
+        <div class="amt">
+          <div class="amt-head">
+            <span class="lbl">輸入金額</span>
+            <span class="calc"><i data-lucide="calculator"></i>計算機</span>
+          </div>
+          <div class="amt-row">
+            <span class="cur">JPY<i data-lucide="chevron-down"></i></span>
+            <span class="amt-num">1280</span>
+          </div>
+          <div class="conv">
+            <span>≈ TWD 275</span>
+            <span class="rate-row">
+              <span class="rate-chip"><i></i>市場</span>
+              <span>1 JPY =</span><span>0.215</span><span>TWD</span>
+              <span class="chev"><i data-lucide="chevron-right"></i></span>
+            </span>
+          </div>
+        </div>
+
+        <div class="card first">
+          <p class="ctitle">描述</p>
+          <div class="field">一蘭拉麵晚餐</div>
+        </div>
+
+        <div class="card">
+          <p class="ctitle">類別</p>
+          <div class="cats">
+            <span class="cat food"><i data-lucide="utensils"></i>餐飲</span>
+            <span class="cat transport"><i data-lucide="car"></i>交通</span>
+            <span class="cat acc"><i data-lucide="home"></i>住宿</span>
+            <span class="cat ticket"><i data-lucide="ticket"></i>票券</span>
+            <span class="cat shop"><i data-lucide="shopping-bag"></i>購物</span>
+            <span class="cat ent"><i data-lucide="gamepad-2"></i>娛樂</span>
+            <span class="cat gift"><i data-lucide="gift"></i>禮品</span>
+            <span class="cat other"><i data-lucide="wallet"></i>其他</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="ctitle">付款成員
+            <span class="seg"><span class="on">JPY</span><span class="off">TWD</span></span>
+            <span class="mk b">1</span>
+          </p>
+          <div class="listrow-head">
+            <span class="hint">付款明細</span>
+            <span class="selectall">全選 <span class="mk b">2</span></span>
+          </div>
+          <div class="pills" style="margin-bottom:10px;">
+            <span class="pill on"><span class="av me">我</span>我</span>
+            <span class="pill"><span class="av m2">明</span>阿明</span>
+            <span class="pill"><span class="av m3">凱</span>阿凱</span>
+            <span class="pill"><span class="av m4">婷</span>小婷</span>
+          </div>
+          <div class="rows">
+            <div class="row">
+              <span class="av lg me">我</span><span class="nm">我</span><span class="am">$1,280</span>
+              <span class="ibtn off"><i data-lucide="pin-off"></i></span>
+              <span class="ibtn rm"><i data-lucide="user-minus"></i></span>
+            </div>
+          </div>
+          <div class="status"><i data-lucide="check-circle-2"></i>金額相符 <span class="mk b">3</span></div>
+        </div>
+
+        <div class="card">
+          <p class="ctitle">分攤成員
+            <span class="seg"><span class="on">JPY</span><span class="off">TWD</span></span>
+            <span class="switch" style="margin-left:auto;">先扣個人項目<span class="track"><i></i></span></span>
+            <span class="mk b">4</span>
+          </p>
+          <div class="listrow-head">
+            <span class="hint">共同分攤 <b>（$1,280）</b></span>
+            <span class="selectall">全選 <span class="mk b">2</span></span>
+          </div>
+          <div class="pills" style="margin-bottom:10px;">
+            <span class="pill on"><span class="av me">我</span>我</span>
+            <span class="pill on"><span class="av m2">明</span>阿明</span>
+            <span class="pill on"><span class="av m3">凱</span>阿凱</span>
+            <span class="pill on"><span class="av m4">婷</span>小婷</span>
+          </div>
+          <div class="rows">
+            <div class="row"><span class="av lg me">我</span><span class="nm">我</span><span class="am">$320</span><span class="ibtn off"><i data-lucide="pin-off"></i></span><span class="ibtn rm"><i data-lucide="user-minus"></i></span></div>
+            <div class="row"><span class="av lg m2">明</span><span class="nm">阿明</span><span class="am">$320</span><span class="ibtn off"><i data-lucide="pin-off"></i></span><span class="ibtn rm"><i data-lucide="user-minus"></i></span></div>
+            <div class="row"><span class="av lg m3">凱</span><span class="nm">阿凱</span><span class="am">$320</span><span class="ibtn off"><i data-lucide="pin-off"></i></span><span class="ibtn rm"><i data-lucide="user-minus"></i></span></div>
+            <div class="row"><span class="av lg m4">婷</span><span class="nm">小婷</span><span class="am">$320</span><span class="ibtn off"><i data-lucide="pin-off"></i></span><span class="ibtn rm"><i data-lucide="user-minus"></i></span></div>
+          </div>
+          <div class="status"><i data-lucide="check-circle-2"></i>金額相符 <span class="mk b">3</span></div>
+        </div>
+
+        <div class="card">
+          <p class="ctitle">支出日期</p>
+          <div class="field cal"><i data-lucide="calendar"></i>2026/10/11（日）</div>
+        </div>
+
+        <div class="card">
+          <p class="ctitle">消費地點</p>
+          <div class="field empty" style="color:var(--v2-ink-muted)"><i data-lucide="map-pin" style="color:var(--v2-coral)"></i>新增地點</div>
+        </div>
+
+        <div class="card">
+          <p class="ctitle">收據／消費圖片</p>
+          <div class="tiles">
+            <span class="tile cam"><span class="circ"><i data-lucide="camera"></i></span><span class="t">拍照</span></span>
+            <span class="tile gal"><span class="circ"><i data-lucide="image"></i></span><span class="t">選擇圖片</span></span>
+          </div>
+        </div>
+
+        <div class="submit"><button>新增支出 · JPY 1,280</button></div>
+      </div>
+
+      <ul class="legend">
+        <li><span class="mk b">1</span><span class="txt"><b>幣別切換在付款／分攤兩區各一顆，共用同一狀態。</b>翻一邊另一邊也跟著翻，無法同時對照「付了多少 JPY／該分多少 TWD」。</span></li>
+        <li><span class="mk b">2</span><span class="txt"><b>三個「全選」範圍各異，取消會清空資料（P0）。</b>取消個人／共同全選會把已輸入的品項與固定金額歸零，沒有確認、沒有復原。</span></li>
+        <li><span class="mk b">3</span><span class="txt"><b>兩個一模一樣的「金額相符」，其實是兩種不同檢核。</b>一紅一綠時，不知道哪個在擋送出、該修哪個欄位。</span></li>
+        <li><span class="mk b">4</span><span class="txt"><b>「先扣個人項目」看不懂，一開還會默默重算整個分攤。</b>沒有說明，是全頁最大的理解斷崖。</span></li>
+      </ul>
+    </div>
+
+    <!-- ======================= AFTER ======================= -->
+    <div class="frame-wrap">
+      <div class="cap"><h2>建議</h2><span class="tag after">After · 主路徑 3 步</span></div>
+      <div class="frame">
+        <div class="topbar">
+          <span class="back"><i data-lucide="chevron-left"></i></span>
+          <h1>新增支出</h1>
+          <div class="top-actions"></div>
+        </div>
+
+        <div class="amt">
+          <div class="amt-head">
+            <span class="lbl">輸入金額</span>
+            <span class="amt-tools">
+              <span class="calc"><i data-lucide="calculator"></i>計算機</span>
+            </span>
+          </div>
+          <div class="amt-row">
+            <span class="cur">JPY<i data-lucide="chevron-down"></i></span>
+            <span class="amt-num">1280</span>
+          </div>
+          <div class="conv">
+            <span>≈ TWD 275</span>
+            <span class="rate-row">
+              <span class="rate-chip"><i></i>市場</span>
+              <span>1 JPY =</span><span>0.215</span><span>TWD</span>
+              <span class="chev"><i data-lucide="chevron-right"></i></span>
+            </span>
+          </div>
+        </div>
+
+        <div class="card first">
+          <p class="ctitle">類別</p>
+          <div class="cats">
+            <span class="cat food"><i data-lucide="utensils"></i>餐飲</span>
+            <span class="cat transport"><i data-lucide="car"></i>交通</span>
+            <span class="cat acc"><i data-lucide="home"></i>住宿</span>
+            <span class="cat ticket"><i data-lucide="ticket"></i>票券</span>
+            <span class="cat shop"><i data-lucide="shopping-bag"></i>購物</span>
+            <span class="cat ent"><i data-lucide="gamepad-2"></i>娛樂</span>
+            <span class="cat gift"><i data-lucide="gift"></i>禮品</span>
+            <span class="cat other"><i data-lucide="wallet"></i>其他</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="ctitle">付款成員</p>
+          <div class="pills">
+            <span class="pill on"><span class="av me">我</span>我</span>
+            <span class="pill"><span class="av m2">明</span>阿明</span>
+            <span class="pill"><span class="av m3">凱</span>阿凱</span>
+            <span class="pill"><span class="av m4">婷</span>小婷</span>
+          </div>
+          <div class="sumline">
+            <i data-lucide="chevron-right" style="color:var(--v2-ink-subtle)"></i>
+            <span>付款明細：我 $1,280</span>
+            <span class="chev" style="margin-left:auto;">要改各自金額再展開</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="ctitle">分攤成員
+            <span class="selectall" style="margin-left:auto;">全選 <span class="mk g">c</span></span>
+          </p>
+          <div class="personaltoggle">
+            <i data-lucide="plus"></i> 個人品項
+            <span class="sub">有人點自己的？先記，其餘大家分</span>
+            <span class="mk g" style="margin-left:8px;">d</span>
+          </div>
+          <p class="subhead">共同分攤</p>
+          <div class="pills">
+            <span class="pill on"><span class="av me">我</span>我</span>
+            <span class="pill on"><span class="av m2">明</span>阿明</span>
+            <span class="pill on"><span class="av m3">凱</span>阿凱</span>
+            <span class="pill on"><span class="av m4">婷</span>小婷</span>
+          </div>
+          <div class="statuscard">
+            <span class="ok"><i data-lucide="check-circle-2"></i>4 人均分 · 每人 $320</span>
+            <span class="mk g" style="margin-left:auto;">b</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="ctitle">描述（選填）</p>
+          <div class="field">一蘭拉麵晚餐</div>
+        </div>
+
+        <div class="disc">
+          <span class="e">📅</span> 日期 · 地點 · 收據圖片（選填）
+          <span class="chev"><i data-lucide="chevron-right"></i></span>
+        </div>
+
+        <div class="submit">
+          <div class="displaybar">
+            <span>顯示幣別</span>
+            <span class="seg"><span class="on">JPY</span><span class="off">TWD</span></span>
+            <span class="mk g">a</span>
+          </div>
+          <button>新增支出 · JPY 1,280</button>
+        </div>
+      </div>
+
+      <ul class="legend">
+        <li><span class="mk g">a</span><span class="txt"><b>顯示幣別收成一顆全域控制，放在底部固定列。</b>永遠在拇指區、不必滑回最上面；切換不再連動兩個看不見的區塊，換算說明也只留一則。</span></li>
+        <li><span class="mk g">b</span><span class="txt"><b>雙徽章合併成一行結果。</b>預設只顯示「✓ 4 人均分 · 每人 $320」；真的不符時才在同一行指名差額與出錯欄位，不再出現兩個同名紅字。</span></li>
+        <li><span class="mk g">c</span><span class="txt"><b>取消全選只切換選取、永不清資料（修 P0）。</b>要清則走確認或提供「復原」。</span></li>
+        <li><span class="mk g">d</span><span class="txt"><b>個人品項回到共同分攤「之前」。</b>符合「先記個人、再分剩下」的直覺；預設收合、不佔版面。指定金額改成共同分攤內的模式，不再有一個塞在頁尾的「進階分攤」。</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sect">逐項對照</div>
+  <div class="cmp">
+    <table>
+      <thead><tr><th>項目</th><th>現況 Before</th><th>建議 After</th><th>影響檔案 · 指令</th></tr></thead>
+      <tbody>
+        <tr><td><span class="sev p0">P0</span><br>誤刪資料</td>
+          <td class="bad-txt">取消全選 → 個人項目／自訂金額歸零，無確認、無復原。</td>
+          <td class="good-txt">取消只切換選取，永不清資料；要清則確認或可復原。</td>
+          <td><code>split-editor.tsx</code><br><code>lib/split-draft.ts</code> → <b>harden</b></td></tr>
+        <tr><td><span class="sev p1">P1</span><br>雙徽章</td>
+          <td class="bad-txt">付款區＋分攤區各一個「金額相符/不符」，另有「含負數金額」。</td>
+          <td class="good-txt">單一狀態行，指名哪一筆不符與差多少。</td>
+          <td><code>payer-picker.tsx</code><br><code>split-editor.tsx</code><br><code>split-summary.tsx</code> → <b>clarify</b></td></tr>
+        <tr><td><span class="sev p1">P1</span><br>術語開關</td>
+          <td class="bad-txt">「先扣個人項目」裸開關在最上方、無說明，一開重算分攤。</td>
+          <td class="good-txt">個人品項移到共同分攤之前；白話標籤＋一行說明，預設收合。</td>
+          <td><code>split-editor.tsx</code> → <b>distill</b></td></tr>
+        <tr><td><span class="sev p1">P1</span><br>欄位過載</td>
+          <td class="bad-txt">付款/分攤明細預設展開、每列 pin＋移除，成員列三次。</td>
+          <td class="good-txt">明細收合成一行摘要；個人品項預設收合在共同分攤前，指定金額為模式切換。</td>
+          <td><code>expense-form-v2-view.tsx</code><br><code>payer-picker.tsx</code><br><code>split-editor.tsx</code> → <b>layout</b></td></tr>
+        <tr><td><span class="sev p1">P1</span><br>幣別切換</td>
+          <td class="bad-txt">兩區各一顆、共用同一狀態。</td>
+          <td class="good-txt">全域單一顯示幣別控制（底部固定列）；換算說明只留一則。</td>
+          <td><code>expense-form-v2-view.tsx</code><br><code>currency-toggle.tsx</code> → <b>clarify</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="foot">
+    重繪自真實 V2 元件（<code>components/v2/expense-form/*</code>）；圖示為同一組 lucide、色彩與間距對齊元件原始碼。<br>
+    純設計預覽，未更動 production／demo 程式。「誰一起分」目前預設只分自己（保護性），要維持或改成預設全員尚未定案。<br>
+    Nielsen 21/40（Acceptable）；deterministic scan 0 findings。完整書面報告見 <code>.impeccable/critique/2026-10-11T10-00-19Z__v2-expense-form-expense-form-v2-view-tsx-bef4e14e.md</code>。
+  </p>
+</div>
+
+<script src="https://unpkg.com/lucide@0.548.0/dist/umd/lucide.min.js"></script>
+<script>
+  if (window.lucide) {
+    window.lucide.createIcons({ attrs: { 'stroke-width': 2 } });
+  }
+</script>
+</body>
+</html>

@@ -25,8 +25,8 @@ export function TripPreviewCard({
       : "尚未設定日期 · 尚未邀請旅伴"
 
   return (
-    <div className="flex items-start gap-3 rounded-2xl border border-v2-line bg-v2-surface p-3 shadow-[0_2px_8px_rgba(27,24,21,.05)]">
-      <CoverArt cover={cover} className="h-16 w-16 rounded-[12px]" />
+    <div className="flex items-start gap-3 rounded-2xl border border-v2-line bg-v2-surface p-3 shadow-v2-card">
+      <CoverArt cover={cover} className="h-16 w-16 rounded-v2-md" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <h3 className={`m-0 truncate font-v2-serif text-base font-medium ${name ? "text-v2-ink" : "text-v2-ink-subtle"}`}>{name || "峇里島放鬆之旅"}</h3>

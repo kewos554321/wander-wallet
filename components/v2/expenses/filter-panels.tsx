@@ -29,7 +29,7 @@ function CheckBox({ checked, round }: { checked: boolean; round?: boolean }) {
   return (
     <span
       className={`flex h-[15px] w-[15px] shrink-0 items-center justify-center ${
-        round ? "rounded-full" : "rounded-[4px]"
+        round ? "rounded-full" : "rounded-v2-xs"
       } ${checked ? "bg-v2-lake" : "border-[1.5px] border-v2-line bg-v2-surface"}`}
     >
       {checked && <Check className="h-2.5 w-2.5 text-v2-on-lake" strokeWidth={3} aria-hidden="true" />}
@@ -53,7 +53,7 @@ export function CategoryPanel({ selected, onToggle, onClear }: { selected: Set<s
             className="flex w-full items-center gap-2 px-2.5 py-[7px] text-xs"
           >
             <CheckBox checked={selected.has(key)} />
-            <span className={`h-[18px] w-[18px] shrink-0 rounded-[5px] ${CATEGORY_TONES[key]}`} aria-hidden="true" />
+            <span className={`h-[18px] w-[18px] shrink-0 rounded-v2-xs ${CATEGORY_TONES[key]}`} aria-hidden="true" />
             <span className="text-left">{CATEGORY_LABELS[key]}</span>
           </button>
         ))}
@@ -294,7 +294,7 @@ export function DatePanel({ range, onChange }: { range: DateRange | undefined; o
                 onClick={() => pick(date)}
                 className={`py-1 text-[10px] ${
                   selected
-                    ? "rounded-[5px] bg-v2-lake font-bold text-v2-on-lake"
+                    ? "rounded-v2-xs bg-v2-lake font-bold text-v2-on-lake"
                     : between
                       ? "bg-v2-sand text-v2-ink"
                       : outside
