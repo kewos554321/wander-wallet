@@ -1,138 +1,140 @@
 import type { ExpenseItemResult } from "@/lib/ai/expense-parser"
-import type { ImagePickerValue } from "@/components/ui/image-picker"
-import { derivePayerShares, type PayerShare } from "@/lib/expense-payers"
-import { deriveSplit, newSplitItem, type SplitDraftItem, type SplitState } from "@/lib/split-draft"
+import type { DraftMember, DraftState } from "@/lib/expense-draft"
+import { deriveExpenseDraft } from "@/lib/expense-draft"
+import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/lib/constants/expenses"
+import { derivePayerShares } from "@/lib/expense-payers"
+import { newSplitItem, type SplitDraftItem } from "@/lib/split-draft"
+import type { ReceiptResult } from "./parse"
 
-// A parsed expense being reviewed in the quick-expense confirm step.
-// `amount` stays a string so partially typed input ("12.") survives edits.
-// `participantIds` is the shared-split pool; the rest is the same editable split
-// state the expense form uses, so both flows share SplitEditor.
-// Payer state mirrors useExpenseDraft: `payerIds` (ordered, multi-select) plus
-// `pinnedPayerAmounts` for manually-set amounts (absent = auto/equal).
-export interface QuickItem extends Omit<ExpenseItemResult, "amount" | "selected" | "payers" | "personalItems"> {
-  amount: string
-  /** Manual exchange rate text when pinned; null means the automatic rate. */
-  exchangeRate: string | null
-  /** True when the user pinned a custom rate instead of the automatic one. */
-  ratePinned: boolean
-  payerIds: string[]
-  pinnedPayerAmounts: Record<string, string>
-  expenseDate: Date
-  location: string | null
-  latitude: number | null
-  longitude: number | null
-  image: ImagePickerValue
-  personalMode: boolean
-  personalItems: Record<string, SplitDraftItem[]>
-  personalMembers: string[]
-  customShares: Record<string, string>
+// A parsed expense being reviewed in the quick-expense confirm step. It is the
+// exact same draft state the add-expense form edits, plus the AI's temporary id
+// so the batch can track which items were saved.
+export type QuickItem = DraftState & { id: string }
+
+const EMPTY_IMAGE = { image: null, pendingFile: null, preview: null }
+
+function itemBase(id: string, currency: string, today: Date): QuickItem {
+  return {
+    id,
+    amount: "",
+    currency,
+    exchangeRate: "",
+    ratePinned: false,
+    rateKind: null,
+    rateDate: null,
+    description: "",
+    category: "",
+    payerIds: [],
+    pinnedPayerAmounts: {},
+    expenseDate: new Date(today),
+    location: { location: null, latitude: null, longitude: null },
+    image: { ...EMPTY_IMAGE },
+    notifyLine: true,
+    pool: [],
+    personalMode: false,
+    personalItems: {},
+    personalMembers: [],
+    customShares: {},
+  }
 }
 
-export const EMPTY_IMAGE: ImagePickerValue = { image: null, pendingFile: null, preview: null }
-
-export function fromParsed(results: ExpenseItemResult[], today: Date = new Date()): QuickItem[] {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  return results.map(({ selected: _selected, amount, payers, personalItems: parsedPersonalItems, ...rest }) => {
-    const parsedPayers = payers ?? []
-    const payerIds = parsedPayers.map((p) => p.memberId)
+export function parsedToQuickItems(results: ExpenseItemResult[], today: Date = new Date()): QuickItem[] {
+  return results.map((result) => {
+    const payerIds = result.payers.map((p) => p.memberId)
     // Pin amounts only when the AI returned an explicit split that differs from
     // a plain equal split, so a default single/equal payer stays auto.
-    const equal = derivePayerShares({ amount, payerIds, pinned: {}, currency: rest.currency }).shares
+    const equal = derivePayerShares({
+      amount: result.amount,
+      payerIds,
+      pinned: {},
+      currency: result.currency,
+    }).shares
     const isEqualPayerSplit =
       payerIds.length > 0 &&
-      parsedPayers.length === equal.length &&
-      parsedPayers.every((p, i) => Math.abs(p.amount - equal[i].amount) <= 0.01)
+      result.payers.length === equal.length &&
+      result.payers.every((p, i) => Math.abs(p.amount - equal[i].amount) <= 0.01)
     const pinnedPayerAmounts: Record<string, string> = {}
     if (!isEqualPayerSplit) {
-      for (const p of parsedPayers) pinnedPayerAmounts[p.memberId] = String(p.amount)
+      for (const p of result.payers) pinnedPayerAmounts[p.memberId] = String(p.amount)
     }
 
     // Seed "先扣個人項目" from whatever the AI extracted (if any).
     const personalItems: Record<string, SplitDraftItem[]> = {}
-    for (const item of parsedPersonalItems ?? []) {
+    for (const item of result.personalItems ?? []) {
       if (!personalItems[item.memberId]) personalItems[item.memberId] = []
       personalItems[item.memberId].push(newSplitItem(item.name, String(item.amount)))
     }
     const personalMembers = Object.keys(personalItems)
 
     return {
-      ...rest,
-      amount: String(amount),
-      exchangeRate: null,
-      ratePinned: false,
+      ...itemBase(result.id, result.currency, today),
+      amount: String(result.amount),
+      description: result.description,
+      category: result.category,
       payerIds,
       pinnedPayerAmounts,
-      expenseDate: new Date(today),
-      location: null,
-      latitude: null,
-      longitude: null,
-      image: { ...EMPTY_IMAGE },
+      pool: [...result.participantIds],
       personalMode: personalMembers.length > 0,
       personalItems,
       personalMembers,
-      customShares: {},
     }
   })
 }
 
-const amountOf = (item: QuickItem) => {
-  const n = Number(item.amount)
-  return item.amount.trim() !== "" && Number.isFinite(n) ? n : 0
-}
-
-const pinnedNumbersOf = (item: QuickItem): Record<string, number> => {
-  const pinned: Record<string, number> = {}
-  for (const [id, value] of Object.entries(item.pinnedPayerAmounts)) {
-    // An emptied pinned field stays in the map (input open) but counts as auto.
-    if (value.trim() !== "") pinned[id] = Number(value) || 0
-  }
-  return pinned
-}
-
-// Derived payer amounts for one quick item, reusing the shared payer math so the
-// card preview, validation and saved payload always agree.
-export function itemDerivedPayers(item: QuickItem): {
-  payers: PayerShare[]
-  payerTotal: number
-  payerMatches: boolean
-  ok: boolean
-} {
-  const amount = amountOf(item)
-  const result = derivePayerShares({ amount, payerIds: item.payerIds, pinned: pinnedNumbersOf(item), currency: item.currency })
-  const payerTotal = result.shares.reduce((sum, p) => sum + p.amount, 0)
+export function receiptToQuickItem(
+  result: ReceiptResult,
+  options: {
+    currency: string
+    payerId: string
+    memberIds: string[]
+    file: File
+    preview: string
+    today?: Date
+  },
+): QuickItem {
+  const today = options.today ?? new Date()
+  const parsedDate = result.date ? new Date(result.date) : null
+  const category = (EXPENSE_CATEGORIES as readonly string[]).includes(result.category)
+    ? (result.category as ExpenseCategory)
+    : "other"
   return {
-    payers: result.shares,
-    payerTotal,
-    payerMatches: result.ok && Math.abs(payerTotal - amount) <= 0.01,
-    ok: result.ok,
+    ...itemBase(`receipt-${Date.now()}`, options.currency, today),
+    amount: String(result.amount),
+    description: result.description,
+    category,
+    // Receipts keep a single payer (the current user) covering the full amount.
+    payerIds: [options.payerId],
+    expenseDate: parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate : new Date(today),
+    image: { image: null, pendingFile: options.file, preview: options.preview },
+    pool: [...options.memberIds],
   }
+}
+
+function derivedOf(item: QuickItem, members: DraftMember[]) {
+  return deriveExpenseDraft({
+    state: item,
+    members,
+    projectCurrency: item.currency,
+    participantOrder: members.map((m) => m.id),
+  })
 }
 
 export function validateItems(
   items: QuickItem[],
-  members: { id: string; displayName: string }[]
+  members: DraftMember[],
 ): { index: number; message: string } | null {
-  const order = members.map((m) => m.id)
   for (let i = 0; i < items.length; i++) {
     const item = items[i]
     const n = i + 1
-    const amount = amountOf(item)
+    const derived = derivedOf(item, members)
+    const amount = derived.splitInput.amount
     if (!(amount > 0)) return { index: i, message: `第 ${n} 筆請輸入有效金額` }
     if (item.payerIds.length === 0) return { index: i, message: `第 ${n} 筆請選擇付款成員` }
-    const payer = itemDerivedPayers(item)
-    if (!payer.ok) return { index: i, message: `第 ${n} 筆付款金額合計超過支出金額` }
-    if (!payer.payerMatches) return { index: i, message: `第 ${n} 筆付款金額與支出金額不符` }
-    const state: SplitState = {
-      pool: item.participantIds,
-      personalMode: item.personalMode,
-      personalItems: item.personalItems,
-      personalMembers: item.personalMembers,
-      customShares: item.customShares,
-    }
-    const derived = deriveSplit(amount, order, state)
+    if (derived.error === "付款金額合計超過支出金額") return { index: i, message: `第 ${n} 筆付款金額合計超過支出金額` }
+    if (derived.error === "付款金額與支出金額不符") return { index: i, message: `第 ${n} 筆付款金額與支出金額不符` }
     if (derived.splitInput.participantIds.length === 0) return { index: i, message: `第 ${n} 筆請選擇至少一位分攤成員` }
     const unnamed = derived.splitInput.participantIds.find((id) =>
-      (item.personalMode ? item.personalItems[id] ?? [] : []).some((it) => !it.name.trim())
+      (item.personalMode ? item.personalItems[id] ?? [] : []).some((it) => !it.name.trim()),
     )
     if (unnamed) {
       const name = members.find((m) => m.id === unnamed)?.displayName ?? ""
@@ -144,6 +146,11 @@ export function validateItems(
     if (!derived.matches) return { index: i, message: `第 ${n} 筆分攤金額與支出金額不符` }
   }
   return null
+}
+
+const amountOf = (item: QuickItem) => {
+  const n = Number(item.amount)
+  return item.amount.trim() !== "" && Number.isFinite(n) ? n : 0
 }
 
 export function itemTotals(items: QuickItem[]): { currency: string; total: number }[] {

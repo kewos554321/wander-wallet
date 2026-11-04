@@ -1,33 +1,56 @@
 import { describe, it, expect } from "vitest"
-import { fromParsed, validateItems, itemTotals, itemDerivedPayers, type QuickItem } from "@/lib/quick-expense/draft"
+import { deriveExpenseDraft } from "@/lib/expense-draft"
+import {
+  parsedToQuickItems,
+  validateItems,
+  itemTotals,
+  type QuickItem,
+} from "@/lib/quick-expense/draft"
 
-const base = { id: "x", amount: 100, description: "早餐", category: "food" as const, currency: "TWD", payers: [{ memberId: "a", amount: 100 }], participantIds: ["a", "b"], selected: true }
-const item = (o: Partial<QuickItem> = {}): QuickItem => ({ ...fromParsed([base])[0], ...o })
+const base = {
+  id: "x",
+  amount: 100,
+  description: "早餐",
+  category: "food" as const,
+  currency: "TWD",
+  payers: [{ memberId: "a", amount: 100 }],
+  participantIds: ["a", "b"],
+  selected: true,
+}
+const item = (o: Partial<QuickItem> = {}): QuickItem => ({
+  ...parsedToQuickItems([base], new Date("2026-09-28T10:00:00Z"))[0],
+  ...o,
+})
 
-describe("fromParsed", () => {
-  it("fills defaults and stringifies amount", () => {
+describe("parsedToQuickItems", () => {
+  it("maps an AI result into the shared draft shape", () => {
     const today = new Date("2026-09-28T10:00:00Z")
-    const [q] = fromParsed([base], today)
+    const [q] = parsedToQuickItems([base], today)
+    expect(q.id).toBe("x")
     expect(q.amount).toBe("100")
     expect(q.expenseDate).toEqual(today)
     expect(q.expenseDate).not.toBe(today)
     expect(q).toMatchObject({
+      currency: "TWD",
+      pool: ["a", "b"],
       payerIds: ["a"],
       pinnedPayerAmounts: {},
-      location: null,
-      latitude: null,
-      longitude: null,
+      location: { location: null, latitude: null, longitude: null },
       image: { image: null, pendingFile: null, preview: null },
       personalMode: false,
       personalItems: {},
       personalMembers: [],
       customShares: {},
+      ratePinned: false,
+      rateKind: null,
+      notifyLine: true,
     })
+    expect("participantIds" in q).toBe(false)
     expect("selected" in q).toBe(false)
   })
 
   it("keeps an explicit multi-payer split as pinned amounts", () => {
-    const [q] = fromParsed([
+    const [q] = parsedToQuickItems([
       { ...base, amount: 1280, payers: [{ memberId: "a", amount: 800 }, { memberId: "b", amount: 480 }] },
     ])
     expect(q.payerIds).toEqual(["a", "b"])
@@ -35,7 +58,7 @@ describe("fromParsed", () => {
   })
 
   it("leaves an equal multi-payer split unpinned", () => {
-    const [q] = fromParsed([
+    const [q] = parsedToQuickItems([
       { ...base, amount: 100, payers: [{ memberId: "a", amount: 50 }, { memberId: "b", amount: 50 }] },
     ])
     expect(q.payerIds).toEqual(["a", "b"])
@@ -43,7 +66,7 @@ describe("fromParsed", () => {
   })
 
   it("seeds personal items and enables personal mode", () => {
-    const [q] = fromParsed([
+    const [q] = parsedToQuickItems([
       {
         ...base,
         amount: 1200,
@@ -63,13 +86,29 @@ describe("fromParsed", () => {
   })
 })
 
-describe("itemDerivedPayers", () => {
+const members = [
+  { id: "a", displayName: "小雨" },
+  { id: "b", displayName: "志明" },
+]
+
+describe("deriveExpenseDraft on a quick item", () => {
   it("derives an equal split for a single payer", () => {
-    expect(itemDerivedPayers(item()).payers).toEqual([{ memberId: "a", amount: 100 }])
+    const derived = deriveExpenseDraft({
+      state: item(),
+      members,
+      projectCurrency: "TWD",
+      participantOrder: ["a", "b"],
+    })
+    expect(derived.payers).toEqual([{ memberId: "a", amount: 100 }])
   })
 
   it("derives pinned multi-payer amounts", () => {
-    const derived = itemDerivedPayers(item({ amount: "1280", payerIds: ["a", "b"], pinnedPayerAmounts: { a: "800", b: "480" } }))
+    const derived = deriveExpenseDraft({
+      state: item({ amount: "1280", payerIds: ["a", "b"], pinnedPayerAmounts: { a: "800", b: "480" } }),
+      members,
+      projectCurrency: "TWD",
+      participantOrder: ["a", "b"],
+    })
     expect(derived.payers).toEqual([
       { memberId: "a", amount: 800 },
       { memberId: "b", amount: 480 },
@@ -77,11 +116,6 @@ describe("itemDerivedPayers", () => {
     expect(derived.payerMatches).toBe(true)
   })
 })
-
-const members = [
-  { id: "a", displayName: "小雨" },
-  { id: "b", displayName: "志明" },
-]
 
 describe("validateItems", () => {
   it("returns null when valid", () => expect(validateItems([item()], members)).toBeNull())
@@ -92,7 +126,7 @@ describe("validateItems", () => {
   })
   it("checks payer then participants", () => {
     expect(validateItems([item({ payerIds: [] })], members)).toEqual({ index: 0, message: "第 1 筆請選擇付款成員" })
-    expect(validateItems([item({ participantIds: [] })], members)).toEqual({ index: 0, message: "第 1 筆請選擇至少一位分攤成員" })
+    expect(validateItems([item({ pool: [] })], members)).toEqual({ index: 0, message: "第 1 筆請選擇至少一位分攤成員" })
   })
   it("validates the payer sum against the amount", () => {
     expect(validateItems([item({ amount: "100", payerIds: ["a", "b"], pinnedPayerAmounts: { a: "40", b: "40" } })], members)).toEqual({
@@ -106,7 +140,7 @@ describe("validateItems", () => {
   })
   it("validates the editable split like the expense form", () => {
     // A custom share that doesn't add up to the amount is rejected.
-    expect(validateItems([item({ participantIds: ["a"], customShares: { a: "10" } })], members)).toEqual({
+    expect(validateItems([item({ pool: ["a"], customShares: { a: "10" } })], members)).toEqual({
       index: 0,
       message: "第 1 筆分攤金額與支出金額不符",
     })

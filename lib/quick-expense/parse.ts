@@ -1,6 +1,4 @@
 import type { ExpenseItemResult, ParseExpensesResult } from "@/lib/ai/expense-parser"
-import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/lib/constants/expenses"
-import type { QuickItem } from "./draft"
 
 export type AuthFetch = (url: string, options?: RequestInit) => Promise<Response>
 
@@ -39,35 +37,4 @@ function fileToDataUrl(file: File): Promise<string> {
 export async function parseReceipt(authFetch: AuthFetch, file: File): Promise<ReceiptResult> {
   const imageData = await fileToDataUrl(file)
   return postJson<ReceiptResult>(authFetch, "/api/receipt/parse", { imageData }, "收據辨識失敗")
-}
-
-export function receiptToItem(
-  r: ReceiptResult,
-  o: { currency: string; payerId: string; memberIds: string[]; file: File; preview: string; today?: Date }
-): QuickItem {
-  const today = o.today ?? new Date()
-  const parsedDate = r.date ? new Date(r.date) : null
-  const category = (EXPENSE_CATEGORIES as readonly string[]).includes(r.category) ? (r.category as ExpenseCategory) : "other"
-  return {
-    id: `receipt-${Date.now()}`,
-    amount: String(r.amount),
-    description: r.description,
-    category,
-    currency: o.currency,
-    exchangeRate: null,
-    ratePinned: false,
-    // Receipts keep a single payer (the current user) covering the full amount.
-    payerIds: [o.payerId],
-    pinnedPayerAmounts: {},
-    participantIds: [...o.memberIds],
-    expenseDate: parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate : new Date(today),
-    location: null,
-    latitude: null,
-    longitude: null,
-    image: { image: null, pendingFile: o.file, preview: o.preview },
-    personalMode: false,
-    personalItems: {},
-    personalMembers: [],
-    customShares: {},
-  }
 }

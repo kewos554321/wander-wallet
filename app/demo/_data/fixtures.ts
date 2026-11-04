@@ -11,7 +11,7 @@ import type { RecentRate } from "@/lib/recent-rates"
 import type { ProjectFormValues } from "@/lib/hooks/use-project-form"
 import type { DraftMember } from "@/components/v2/expense-form/use-expense-draft"
 import type { ExpenseItemResult } from "@/lib/ai/expense-parser"
-import { fromParsed, type QuickItem } from "@/lib/quick-expense/draft"
+import { parsedToQuickItems, type QuickItem } from "@/lib/quick-expense/draft"
 
 export const DEMO_PROJECT_ID = "tokyo"
 export const DEMO_CURRENCY = "TWD"
@@ -243,4 +243,4 @@ const DEMO_PARSED_ITEMS: ExpenseItemResult[] = [
   },
 ]
 
-export const DEMO_QUICK_ITEMS: QuickItem[] = fromParsed(DEMO_PARSED_ITEMS, new Date(2026, 9, 8))
+export const DEMO_QUICK_ITEMS: QuickItem[] = parsedToQuickItems(DEMO_PARSED_ITEMS, new Date(2026, 9, 8))

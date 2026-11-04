@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest"
-import { parseText, parseReceipt, receiptToItem } from "@/lib/quick-expense/parse"
+import { parseText, parseReceipt } from "@/lib/quick-expense/parse"
+import { receiptToQuickItem } from "@/lib/quick-expense/draft"
 
 const json = (status: number, body: unknown) => ({ ok: status < 400, status, json: async () => body }) as Response
 
@@ -32,22 +33,22 @@ describe("parseReceipt", () => {
   })
 })
 
-describe("receiptToItem", () => {
+describe("receiptToQuickItem", () => {
   const file = new File(["a"], "r.jpg")
   const o = { currency: "JPY", payerId: "a", memberIds: ["a", "b"], file, preview: "blob:1", today: new Date("2026-09-28T00:00:00Z") }
   it("maps the receipt with a single full-amount payer, all members, image and date", () => {
-    const q = receiptToItem({ amount: 1200, description: "拉麵", category: "food", date: "2026-09-20", confidence: 0.9 }, o)
-    expect(q).toMatchObject({ amount: "1200", description: "拉麵", category: "food", currency: "JPY", payerIds: ["a"], pinnedPayerAmounts: {}, participantIds: ["a", "b"] })
+    const q = receiptToQuickItem({ amount: 1200, description: "拉麵", category: "food", date: "2026-09-20", confidence: 0.9 }, o)
+    expect(q).toMatchObject({ amount: "1200", description: "拉麵", category: "food", currency: "JPY", payerIds: ["a"], pinnedPayerAmounts: {}, pool: ["a", "b"] })
     expect(q.image).toEqual({ image: null, pendingFile: file, preview: "blob:1" })
     expect(q.expenseDate).toEqual(new Date("2026-09-20"))
     expect(q.id).toMatch(/^receipt-/)
   })
   it("falls back to today and other", () => {
-    const q = receiptToItem({ amount: 1, description: "", category: "weird", date: null, confidence: 0 }, o)
+    const q = receiptToQuickItem({ amount: 1, description: "", category: "weird", date: null, confidence: 0 }, o)
     expect(q.expenseDate).toEqual(o.today)
     expect(q.category).toBe("other")
   })
   it("falls back to today for an invalid date", () => {
-    expect(receiptToItem({ amount: 1, description: "", category: "food", date: "nope", confidence: 0 }, o).expenseDate).toEqual(o.today)
+    expect(receiptToQuickItem({ amount: 1, description: "", category: "food", date: "nope", confidence: 0 }, o).expenseDate).toEqual(o.today)
   })
 })
