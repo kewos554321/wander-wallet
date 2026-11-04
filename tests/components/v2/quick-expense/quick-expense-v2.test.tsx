@@ -239,6 +239,20 @@ describe("QuickExpenseV2", () => {
     expect(screen.getByLabelText("金額")).toHaveValue("880")
   })
 
+  it("revokes a deleted receipt preview and does not show it back on input", async () => {
+    parseReceipt.mockResolvedValue({ amount: 880, description: "超商", category: "shopping", date: null, confidence: 1 })
+    setup()
+    fireEvent.click(screen.getByRole("button", { name: "拍照／圖片" }))
+    fireEvent.click(screen.getByRole("button", { name: "拍照" }))
+    fireEvent.click(screen.getByText("fake-shot"))
+    fireEvent.click(screen.getByRole("button", { name: "AI 解析" }))
+    await screen.findByText("1 / 1")
+    fireEvent.click(screen.getByRole("button", { name: "刪除此筆" }))
+    await screen.findByLabelText("消費內容")
+    expect(screen.queryByRole("button", { name: "移除圖片" })).toBeNull()
+    expect(globalThis.URL.revokeObjectURL).toHaveBeenCalledWith("blob:1")
+  })
+
   it("replaces the tiles with the image and restores them on remove", () => {
     setup()
     fireEvent.click(screen.getByRole("button", { name: "拍照／圖片" }))

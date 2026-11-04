@@ -88,6 +88,23 @@ describe("useQuickSave", () => {
     expect(JSON.parse(authFetch.mock.calls[0][1].body)).not.toHaveProperty("promoteRate")
   })
 
+  it("notifies once across a partial-failure retry", async () => {
+    authFetch
+      .mockResolvedValueOnce(ok())
+      .mockResolvedValueOnce({ ok: false, json: async () => ({ error: "壞了" }) })
+      .mockResolvedValueOnce(ok())
+    const r = setup()
+    let first
+    await act(async () => {
+      first = await r.current.save([mk("1"), mk("2")], { notifyLine: true })
+    })
+    expect(first).toMatchObject({ savedIds: ["1"], failed: { index: 1 } })
+    await act(async () => {
+      await r.current.save([mk("2")], { notifyLine: true })
+    })
+    expect(single).toHaveBeenCalledTimes(1)
+  })
+
   it("uploads pending images and still saves when upload fails", async () => {
     authFetch.mockResolvedValue(ok())
     upload.mockResolvedValueOnce({ url: "https://img/1" }).mockRejectedValueOnce(new Error("x"))

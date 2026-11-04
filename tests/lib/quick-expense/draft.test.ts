@@ -170,6 +170,11 @@ describe("validateItems", () => {
     expect(validateItems([item({ amount: "999999999" })], members)?.message).toContain("金額不可超過")
   })
 
+  it("surfaces the specific fixed-share-over-total message", () => {
+    const over = item({ pool: ["a", "b"], customShares: { a: "200" } })
+    expect(validateItems([over], members)?.message).toContain("超過支出總額")
+  })
+
   it("blocks a touched personal item with a blank amount", () => {
     const withItem = item({
       personalMode: true,

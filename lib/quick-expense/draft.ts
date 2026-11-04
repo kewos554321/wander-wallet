@@ -159,10 +159,13 @@ export function validateItems(
     if (derived.personalTotal > derived.splitInput.amount) {
       return { index: i, message: `第 ${n} 筆個人項目總額不可超過支出總額` }
     }
+    // Anything the shared form blocks with a specific who/why message (fixed
+    // share over total, negative share, touched-but-incomplete personal item).
+    // A plain mismatch keeps the legacy generic copy below.
+    const specificSplit =
+      issues.splitIssue && !issues.splitIssue.startsWith("分攤金額與支出金額差") ? issues.splitIssue : null
+    if (specificSplit) return { index: i, message: `第 ${n} 筆：${specificSplit}` }
     if (!derived.matches) return { index: i, message: `第 ${n} 筆分攤金額與支出金額不符` }
-    // Anything else the shared form blocks (fixed share over total, negative
-    // share, touched-but-incomplete personal item).
-    if (issues.splitIssue) return { index: i, message: `第 ${n} 筆${issues.splitIssue}` }
   }
   return null
 }

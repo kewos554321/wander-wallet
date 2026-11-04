@@ -140,9 +140,10 @@ describe("ConfirmStep", () => {
     expect(p.onReinput).toHaveBeenCalled()
   })
 
-  it("blocks submit when the description is empty", () => {
+  it("blocks submit and explains the empty description", () => {
     setup({ items: [{ ...items[0], description: "" }] })
     expect(screen.getByRole("button", { name: "新增 1 筆" })).toBeDisabled()
+    expect(screen.getByRole("alert")).toHaveTextContent("請填寫描述，讓大家知道這筆是什麼")
   })
 
   it("shows the shared amount error and disables submit", () => {

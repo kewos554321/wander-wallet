@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { deriveExpenseDraft } from "@/lib/expense-draft"
 import { buildExpensePayload } from "@/lib/expense-payload"
@@ -20,6 +20,9 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
   const authFetch = useAuthFetch()
   const { isDevMode, canSendMessages, user } = useLiff()
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null)
+  // A partial failure is retried with the same hook instance; notify only once
+  // for the whole batch so the group does not get a second message.
+  const notifiedRef = useRef(false)
   const canNotifyLine = canSendMessages && !isDevMode
   const displayName = useCallback((id: string) => members.find((m) => m.id === id)?.displayName || "未知", [members])
 
@@ -65,7 +68,8 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
       }
       setProgress(null)
 
-      if (saved.length > 0 && notifyLine && canNotifyLine && mergePreferences(user?.preferences).notifications.expenseCreated) {
+      if (saved.length > 0 && !notifiedRef.current && notifyLine && canNotifyLine && mergePreferences(user?.preferences).notifications.expenseCreated) {
+        notifiedRef.current = true
         const summary = (e: QuickItem) => {
           const derived = deriveExpenseDraft({
             state: e,

@@ -69,8 +69,12 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemChange
   const canConvert =
     projectCurrency != null && currentDraft?.derived.rate != null && current?.currency !== projectCurrency
   const displayCurrency = canConvert && showSettlement ? projectCurrency! : current?.currency
-  const footerError = currentDraft?.issues.blockingError ?? error
-  const submitDisabled = !currentDraft || currentDraft.issues.descMissing || currentDraft.issues.blockingError != null
+  const descMissing = currentDraft?.issues.descMissing ?? false
+  const footerError =
+    currentDraft?.issues.blockingError ??
+    (descMissing ? "請填寫描述，讓大家知道這筆是什麼" : null) ??
+    error
+  const submitDisabled = !currentDraft || descMissing || currentDraft.issues.blockingError != null
   const totals = itemTotals(items).map((t) => formatCurrency(t.total, t.currency)).join(" · ")
 
   const startSwipe = (e: React.TouchEvent) => {

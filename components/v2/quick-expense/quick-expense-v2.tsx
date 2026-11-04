@@ -176,13 +176,17 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
       if (mode === "image" && inputImage) {
         // The image tab is active: analyse the receipt only.
         const result = await parseReceipt(authFetch, inputImage.file)
+        // The parsed item now owns the preview URL; clear the input step's copy
+        // so returning to input cannot render a URL the card later revokes.
+        const image = inputImage
+        setInputImage(null)
         showItems([
           receiptToQuickItem(result, {
             currency,
             payerId: currentUserMemberId,
             memberIds: plainMembers.map((m) => m.id),
-            file: inputImage.file,
-            preview: inputImage.preview,
+            file: image.file,
+            preview: image.preview,
           }),
         ])
       } else {
@@ -206,13 +210,27 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
   }
 
   const handleRemoveItem = (index: number) => {
+    const removed = items[index]
+    if (removed?.image.preview) URL.revokeObjectURL(removed.image.preview)
     if (items.length <= 1) {
       setItems([])
       setError(null)
       setStep("input")
+      setMode("text")
       return
     }
     setItems((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const resetToInput = () => {
+    for (const item of items) {
+      if (item.image.preview) URL.revokeObjectURL(item.image.preview)
+    }
+    setItems([])
+    setError(null)
+    setStep("input")
+    clearInputImage()
+    setMode("text")
   }
 
   const handleSubmit = async (shouldNotifyLine: boolean) => {
@@ -260,7 +278,7 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
             onIndexChange={setIndex}
             onItemChange={handleItemChange}
             onRemoveItem={handleRemoveItem}
-            onReinput={() => { setItems([]); setError(null); setStep("input"); clearInputImage(); setMode("text") }}
+            onReinput={resetToInput}
             onSubmit={handleSubmit}
             onClose={close}
             canNotifyLine={canNotifyLine}
