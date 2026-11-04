@@ -283,6 +283,21 @@ describe("ExpensesV2 container", () => {
     expect(screen.getByText("尚無支出記錄")).toBeInTheDocument()
   })
 
+  it("always returns to the trip overview instead of browser history", () => {
+    const back = vi.spyOn(window.history, "back").mockImplementation(() => {})
+    Object.defineProperty(window.history, "length", { configurable: true, get: () => 2 })
+    try {
+      render(<ExpensesV2 projectId="p1" />)
+      const link = screen.getByRole("link", { name: "返回" })
+      expect(link).toHaveAttribute("href", "/projects/p1")
+      fireEvent.click(link)
+      expect(back).not.toHaveBeenCalled()
+    } finally {
+      back.mockRestore()
+      delete (window.history as unknown as { length?: unknown }).length
+    }
+  })
+
   it("renders the floating quick actions", () => {
     render(<ExpensesV2 projectId="p1" />)
     expect(screen.getByRole("link", { name: "手動新增支出" })).toHaveAttribute("href", "/projects/p1/expenses/new")

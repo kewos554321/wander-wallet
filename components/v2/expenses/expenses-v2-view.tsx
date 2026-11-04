@@ -24,7 +24,7 @@ export function ExpensesV2View(props: ExpensesV2ViewProps) {
 
   return (
     <>
-      <V2TopBar title="全部支出" backHref={`/projects/${props.projectId}`} />
+      <V2TopBar title="全部支出" backHref={`/projects/${props.projectId}`} fixedBack />
       <ExpenseSummaryCard currency={props.currency} dateRangeLabel={props.dateRangeLabel} summary={props.summary} />
       {props.filterBar}
       <div className="mx-4 mt-2.5 flex items-center justify-between">
