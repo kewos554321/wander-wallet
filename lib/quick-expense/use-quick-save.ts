@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { deriveExpenseDraft } from "@/lib/expense-draft"
+import { buildExpensePayload } from "@/lib/expense-payload"
 import { uploadImageToR2 } from "@/lib/image-utils"
 import { sendBatchExpenseNotificationToChat, sendExpenseNotificationToChat } from "@/lib/liff"
 import { mergePreferences } from "@/types/user-preferences"
@@ -48,24 +49,7 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
           const res = await authFetch(`/api/projects/${projectId}/expenses`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              payers: derived.payers,
-              amount: derived.splitInput.amount,
-              currency: item.currency,
-              exchangeRate:
-                item.ratePinned && item.exchangeRate?.trim() && Number(item.exchangeRate) > 0
-                  ? Number(item.exchangeRate)
-                  : undefined,
-              description: item.description.trim() || null,
-              category: item.category,
-              image,
-              location: item.location.location,
-              latitude: item.location.latitude,
-              longitude: item.location.longitude,
-              expenseDate: item.expenseDate.toISOString(),
-              participants: derived.weights.map((w) => ({ memberId: w.memberId, shareAmount: w.weight })),
-              splitDetail: derived.splitDetail,
-            }),
+            body: JSON.stringify({ ...buildExpensePayload({ state: item, derived }), image }),
           })
           if (!res.ok) {
             const data = await res.json().catch(() => ({}))

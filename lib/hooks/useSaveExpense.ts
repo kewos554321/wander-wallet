@@ -7,27 +7,11 @@ import { useCallback, useState } from "react"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { uploadImageToR2 } from "@/lib/image-utils"
 import { sendDeleteNotificationToChat, sendExpenseNotificationToChat, type ExpenseChange } from "@/lib/liff"
-import type { ParticipantShare, SplitDetail } from "@/lib/expense-split"
-import type { PayerShare } from "@/lib/expense-payers"
+import type { ExpensePayload } from "@/lib/expense-payload"
 import { mergePreferences } from "@/types/user-preferences"
 import { invalidateProjectCache } from "./useProjectData"
 
-export interface ExpensePayload {
-  payers: PayerShare[]
-  amount: number
-  currency: string
-  exchangeRate?: number | null
-  rateKind?: "market" | "custom" | null
-  rateDate?: string | null
-  description: string | null
-  category: string
-  location: string | null
-  latitude: number | null
-  longitude: number | null
-  expenseDate: string
-  participants: ParticipantShare[]
-  splitDetail: SplitDetail | null
-}
+export type { ExpensePayload } from "@/lib/expense-payload"
 
 interface SaveRequest {
   mode: "create" | "edit"

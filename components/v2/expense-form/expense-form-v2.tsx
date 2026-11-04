@@ -12,6 +12,7 @@ import { useCurrencyConversion } from "@/lib/hooks/useCurrencyConversion"
 import { resolvePreviewRate } from "@/lib/currency-conversion"
 import { useSaveExpense } from "@/lib/hooks/useSaveExpense"
 import { buildExpenseChanges, type ExpenseSnapshot } from "@/lib/expense-changes"
+import { buildExpensePayload } from "@/lib/expense-payload"
 import { primaryPayerId } from "@/lib/expense-payers"
 import { getCurrentLocation } from "@/lib/geolocation"
 import type { SplitDetail } from "@/lib/expense-split"
@@ -279,26 +280,7 @@ function LoadedForm({
     const result = await save({
       mode,
       expenseId,
-      payload: {
-        payers: derived.payers,
-        amount: derived.splitInput.amount,
-        currency: state.currency,
-        exchangeRate:
-          state.ratePinned && state.exchangeRate?.trim() && Number(state.exchangeRate) > 0
-            ? Number(state.exchangeRate)
-            : undefined,
-        rateKind: state.ratePinned ? state.rateKind ?? undefined : undefined,
-        rateDate:
-          state.ratePinned && state.rateKind === "market" ? state.rateDate ?? undefined : undefined,
-        description,
-        category,
-        location: state.location.location,
-        latitude: state.location.latitude,
-        longitude: state.location.longitude,
-        expenseDate: state.expenseDate.toISOString(),
-        participants: derived.weights.map((w) => ({ memberId: w.memberId, shareAmount: w.weight })),
-        splitDetail: derived.splitDetail,
-      },
+      payload: buildExpensePayload(draft),
       image: {
         url: state.image.image,
         pendingFile: state.image.pendingFile,
