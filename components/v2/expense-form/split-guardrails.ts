@@ -7,10 +7,8 @@
 // keep the client honest and explain the problem next to the field.
 
 import { formatAmount, formatCurrency, getCurrencyDecimals } from "@/lib/constants/currencies"
-import type { DraftMember, useExpenseDraft } from "@/components/v2/expense-form/use-expense-draft"
+import type { Draft, DraftMember } from "@/lib/expense-draft"
 import { isCompleteItem, isTouchedItem } from "./personal-item-state"
-
-type Draft = ReturnType<typeof useExpenseDraft>
 
 /**
  * `Expense.amount` is Decimal(10,2) → 8 integer digits. For currencies with
