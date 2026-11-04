@@ -91,6 +91,12 @@ describe("ExpenseFormPlatformView", () => {
     expect(screen.getAllByText("志明").length).toBeGreaterThan(0)
   })
 
+  it("keeps the ledger variant available for the demo comparison", () => {
+    renderForm({ variant: "ledger" })
+    expect(screen.getByText("共同分攤")).toBeInTheDocument()
+    expect(screen.queryByText("分攤金額")).not.toBeInTheDocument()
+  })
+
   it("requires a description before submit", () => {
     renderForm({}, { description: null })
     expect(screen.getByRole("button", { name: /新增支出/ })).toBeDisabled()

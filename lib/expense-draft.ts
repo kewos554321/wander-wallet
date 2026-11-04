@@ -299,11 +299,11 @@ export function createDraftActions(setState: SetDraftState, members: DraftMember
 // pool). computeShares hands any rounding remainder to the first auto
 // member, so keeping the stored order keeps that remainder on the same
 // person instead of shifting it when the project's member order differs.
-export function deriveParticipantOrder(init: DraftInit): string[] {
-  if (!init.expense) return init.members.map((m) => m.id)
-  const stored = init.expense.participants.map((p) => p.memberId)
+export function deriveParticipantOrder(expense: DraftExpense | undefined, members: DraftMember[]): string[] {
+  if (!expense) return members.map((m) => m.id)
+  const stored = expense.participants.map((p) => p.memberId)
   const storedSet = new Set(stored)
-  const extra = init.members.map((m) => m.id).filter((id) => !storedSet.has(id))
+  const extra = members.map((m) => m.id).filter((id) => !storedSet.has(id))
   return [...stored, ...extra]
 }
 

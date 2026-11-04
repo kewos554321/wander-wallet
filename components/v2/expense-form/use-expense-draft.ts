@@ -25,7 +25,10 @@ export type {
 export function useExpenseDraft(init: DraftInit, previewRateInfo?: (currency: string) => PreviewRateInfo): Draft {
   const [state, setState] = useState(() => initialState(init))
   const actions = useMemo(() => createDraftActions((updater) => setState(updater), init.members), [init.members])
-  const participantOrder = useMemo(() => deriveParticipantOrder(init), [init.expense, init.members])
+  const participantOrder = useMemo(
+    () => deriveParticipantOrder(init.expense, init.members),
+    [init.expense, init.members],
+  )
   const projectCurrency = init.projectCurrency ?? init.currency
   const derived = useMemo(
     () => deriveExpenseDraft({ state, members: init.members, projectCurrency, participantOrder, previewRateInfo }),
