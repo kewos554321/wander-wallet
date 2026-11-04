@@ -40,17 +40,17 @@ describe("FeatureGrid", () => {
     const ordered: [string, string, string][] = [
       // food, transport, accommodation, ticket
       ["成員", "bg-v2-coral-soft", "text-v2-coral-deep"],
-      ["結算", "bg-v2-lake-soft", "text-v2-lake-mid"],
-      ["統計", "bg-v2-plum-soft", "text-v2-plum"],
-      ["匯率", "bg-v2-olive-soft", "text-v2-olive"],
+      ["結算", "bg-v2-lake-soft", "text-v2-lake"],
+      ["統計", "bg-v2-plum-soft", "text-v2-plum-strong"],
+      ["匯率", "bg-v2-olive-soft", "text-v2-olive-strong"],
       // shopping, entertainment, gift, other
       ["歷史", "bg-v2-rose-soft", "text-v2-rose"],
-      ["里程", "bg-v2-sky-soft", "text-v2-sky"],
-      ["匯出", "bg-v2-gold-soft", "text-v2-gold"],
-      ["筆記", "bg-v2-sand", "text-v2-ink-muted"],
+      ["里程", "bg-v2-sky-soft", "text-v2-sky-strong"],
+      ["匯出", "bg-v2-gold-soft", "text-v2-gold-strong"],
+      ["筆記", "bg-v2-sand", "text-v2-ink"],
       // cycles back to food, transport
       ["地圖", "bg-v2-coral-soft", "text-v2-coral-deep"],
-      ["照片", "bg-v2-lake-soft", "text-v2-lake-mid"],
+      ["照片", "bg-v2-lake-soft", "text-v2-lake"],
     ]
 
     fireEvent.click(within(nav).getByRole("button", { name: "更多功能" }))

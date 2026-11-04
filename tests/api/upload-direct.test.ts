@@ -17,6 +17,24 @@ import { getAuthUser } from "@/lib/auth"
 import { uploadToR2, generateFileKey, getPublicUrl } from "@/lib/r2"
 import { POST } from "@/app/api/upload/direct/route"
 
+/**
+ * jsdom's FormData/File are a different realm from the one undici's multipart
+ * parser expects, so building a real NextRequest body fails before the route
+ * runs. The route only reads `formData().get()` and `file.type/arrayBuffer()`,
+ * so a tiny stand-in exercises the same logic without the realm mismatch.
+ */
+function requestWith(fields: Record<string, unknown>): NextRequest {
+  return {
+    formData: async () => ({
+      get: (key: string) => fields[key] ?? null,
+    }),
+  } as unknown as NextRequest
+}
+
+function fakeImage(type: string) {
+  return { type, arrayBuffer: async () => new ArrayBuffer(8) }
+}
+
 describe("Upload Direct API", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -26,16 +44,7 @@ describe("Upload Direct API", () => {
     it("should return 401 if not authenticated", async () => {
       vi.mocked(getAuthUser).mockResolvedValue(null)
 
-      const formData = new FormData()
-      formData.append("file", new Blob(["test"], { type: "image/jpeg" }), "test.jpg")
-      formData.append("projectId", "proj-123")
-
-      const req = new NextRequest("http://localhost:3000/api/upload/direct", {
-        method: "POST",
-        body: formData,
-      })
-
-      const response = await POST(req)
+      const response = await POST(requestWith({ file: fakeImage("image/jpeg"), projectId: "proj-123" }))
       const data = await response.json()
 
       expect(response.status).toBe(401)
@@ -45,15 +54,7 @@ describe("Upload Direct API", () => {
     it("should return 400 if no file provided", async () => {
       vi.mocked(getAuthUser).mockResolvedValue({ id: "user-1" } as never)
 
-      const formData = new FormData()
-      formData.append("projectId", "proj-123")
-
-      const req = new NextRequest("http://localhost:3000/api/upload/direct", {
-        method: "POST",
-        body: formData,
-      })
-
-      const response = await POST(req)
+      const response = await POST(requestWith({ projectId: "proj-123" }))
       const data = await response.json()
 
       expect(response.status).toBe(400)
@@ -63,16 +64,7 @@ describe("Upload Direct API", () => {
     it("should return 400 if no projectId provided", async () => {
       vi.mocked(getAuthUser).mockResolvedValue({ id: "user-1" } as never)
 
-      const formData = new FormData()
-      const file = new File(["test"], "test.jpg", { type: "image/jpeg" })
-      formData.append("file", file)
-
-      const req = new NextRequest("http://localhost:3000/api/upload/direct", {
-        method: "POST",
-        body: formData,
-      })
-
-      const response = await POST(req)
+      const response = await POST(requestWith({ file: fakeImage("image/jpeg") }))
       const data = await response.json()
 
       expect(response.status).toBe(400)
@@ -82,17 +74,7 @@ describe("Upload Direct API", () => {
     it("should return 400 if file is not an image", async () => {
       vi.mocked(getAuthUser).mockResolvedValue({ id: "user-1" } as never)
 
-      const formData = new FormData()
-      const file = new File(["test"], "test.txt", { type: "text/plain" })
-      formData.append("file", file)
-      formData.append("projectId", "proj-123")
-
-      const req = new NextRequest("http://localhost:3000/api/upload/direct", {
-        method: "POST",
-        body: formData,
-      })
-
-      const response = await POST(req)
+      const response = await POST(requestWith({ file: fakeImage("text/plain"), projectId: "proj-123" }))
       const data = await response.json()
 
       expect(response.status).toBe(400)
@@ -105,17 +87,7 @@ describe("Upload Direct API", () => {
       vi.mocked(uploadToR2).mockResolvedValue(undefined)
       vi.mocked(getPublicUrl).mockReturnValue("https://cdn.example.com/expense/proj-123/abc123.jpg")
 
-      const formData = new FormData()
-      const file = new File(["test image data"], "test.jpg", { type: "image/jpeg" })
-      formData.append("file", file)
-      formData.append("projectId", "proj-123")
-
-      const req = new NextRequest("http://localhost:3000/api/upload/direct", {
-        method: "POST",
-        body: formData,
-      })
-
-      const response = await POST(req)
+      const response = await POST(requestWith({ file: fakeImage("image/jpeg"), projectId: "proj-123" }))
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -134,17 +106,7 @@ describe("Upload Direct API", () => {
       vi.mocked(uploadToR2).mockResolvedValue(undefined)
       vi.mocked(getPublicUrl).mockReturnValue("https://cdn.example.com/expense/proj-123/abc123.png")
 
-      const formData = new FormData()
-      const file = new File(["test image data"], "test.png", { type: "image/png" })
-      formData.append("file", file)
-      formData.append("projectId", "proj-123")
-
-      const req = new NextRequest("http://localhost:3000/api/upload/direct", {
-        method: "POST",
-        body: formData,
-      })
-
-      const response = await POST(req)
+      const response = await POST(requestWith({ file: fakeImage("image/png"), projectId: "proj-123" }))
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -157,17 +119,7 @@ describe("Upload Direct API", () => {
       vi.mocked(uploadToR2).mockResolvedValue(undefined)
       vi.mocked(getPublicUrl).mockReturnValue("https://cdn.example.com/expense/proj-123/abc123.webp")
 
-      const formData = new FormData()
-      const file = new File(["test"], "test.webp", { type: "image/webp" })
-      formData.append("file", file)
-      formData.append("projectId", "proj-123")
-
-      const req = new NextRequest("http://localhost:3000/api/upload/direct", {
-        method: "POST",
-        body: formData,
-      })
-
-      const response = await POST(req)
+      const response = await POST(requestWith({ file: fakeImage("image/webp"), projectId: "proj-123" }))
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -180,17 +132,7 @@ describe("Upload Direct API", () => {
       vi.mocked(uploadToR2).mockResolvedValue(undefined)
       vi.mocked(getPublicUrl).mockReturnValue("https://cdn.example.com/expense/proj-123/abc123.gif")
 
-      const formData = new FormData()
-      const file = new File(["test"], "test.gif", { type: "image/gif" })
-      formData.append("file", file)
-      formData.append("projectId", "proj-123")
-
-      const req = new NextRequest("http://localhost:3000/api/upload/direct", {
-        method: "POST",
-        body: formData,
-      })
-
-      const response = await POST(req)
+      const response = await POST(requestWith({ file: fakeImage("image/gif"), projectId: "proj-123" }))
 
       expect(response.status).toBe(200)
     })
@@ -201,17 +143,7 @@ describe("Upload Direct API", () => {
       vi.mocked(uploadToR2).mockResolvedValue(undefined)
       vi.mocked(getPublicUrl).mockReturnValue("https://cdn.example.com/expense/proj-123/abc123.jpg")
 
-      const formData = new FormData()
-      const file = new File(["test"], "test.bmp", { type: "image/bmp" })
-      formData.append("file", file)
-      formData.append("projectId", "proj-123")
-
-      const req = new NextRequest("http://localhost:3000/api/upload/direct", {
-        method: "POST",
-        body: formData,
-      })
-
-      const response = await POST(req)
+      const response = await POST(requestWith({ file: fakeImage("image/bmp"), projectId: "proj-123" }))
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -224,18 +156,7 @@ describe("Upload Direct API", () => {
       vi.mocked(uploadToR2).mockResolvedValue(undefined)
       vi.mocked(getPublicUrl).mockReturnValue("https://cdn.example.com/cover/proj-123/abc123.jpg")
 
-      const formData = new FormData()
-      const file = new File(["test"], "test.jpg", { type: "image/jpeg" })
-      formData.append("file", file)
-      formData.append("projectId", "proj-123")
-      formData.append("type", "cover")
-
-      const req = new NextRequest("http://localhost:3000/api/upload/direct", {
-        method: "POST",
-        body: formData,
-      })
-
-      await POST(req)
+      await POST(requestWith({ file: fakeImage("image/jpeg"), projectId: "proj-123", type: "cover" }))
 
       expect(generateFileKey).toHaveBeenCalledWith("proj-123", "cover")
     })
@@ -247,17 +168,7 @@ describe("Upload Direct API", () => {
 
       const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
 
-      const formData = new FormData()
-      const file = new File(["test"], "test.jpg", { type: "image/jpeg" })
-      formData.append("file", file)
-      formData.append("projectId", "proj-123")
-
-      const req = new NextRequest("http://localhost:3000/api/upload/direct", {
-        method: "POST",
-        body: formData,
-      })
-
-      const response = await POST(req)
+      const response = await POST(requestWith({ file: fakeImage("image/jpeg"), projectId: "proj-123" }))
       const data = await response.json()
 
       expect(response.status).toBe(500)

@@ -53,13 +53,13 @@ describe("Avatar Picker Utilities", () => {
 
   describe("getAvatarColor", () => {
     it("should return hex color for valid id", () => {
-      expect(getAvatarColor("red")).toBe("#ef4444")
-      expect(getAvatarColor("blue")).toBe("#3b82f6")
+      expect(getAvatarColor("red")).toBe("#C4602F")
+      expect(getAvatarColor("blue")).toBe("#4A6FA5")
     })
 
     it("should return default color for invalid id", () => {
-      // Default is indigo #6366f1
-      expect(getAvatarColor("invalid")).toBe("#6366f1")
+      // Default is indigo #1B5847
+      expect(getAvatarColor("invalid")).toBe("#1B5847")
     })
   })
 
@@ -113,7 +113,7 @@ describe("AvatarDisplay Component", () => {
     const { container } = render(<AvatarDisplay avatarString="avatar:cat:blue" />)
     const avatarDiv = container.firstChild as HTMLElement
     expect(avatarDiv).toBeInTheDocument()
-    expect(avatarDiv.style.backgroundColor).toBe("rgb(59, 130, 246)") // #3b82f6
+    expect(avatarDiv.style.backgroundColor).toBe("rgb(74, 111, 165)") // #4A6FA5
   })
 
   it("should return null for invalid avatar string", () => {
@@ -246,7 +246,7 @@ describe("AvatarPicker Component", () => {
     const confirmButton = screen.getByText("確認")
     await fireEvent.click(confirmButton)
 
-    expect(onSelect).toHaveBeenCalledWith("cat", "blue")
+    expect(onSelect).toHaveBeenCalledWith("cat", "sky")
   })
 
   it("should render 16 icon buttons", () => {

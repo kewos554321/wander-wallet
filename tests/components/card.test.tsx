@@ -29,7 +29,7 @@ describe("Card Components", () => {
 
     it("should apply default styles", () => {
       render(<Card data-testid="card">Content</Card>)
-      expect(screen.getByTestId("card")).toHaveClass("rounded-xl", "border")
+      expect(screen.getByTestId("card")).toHaveClass("rounded-v2-lg", "border")
     })
   })
 

@@ -15,7 +15,7 @@ describe("Skeleton Component", () => {
 
   it("should have rounded-md class", () => {
     render(<Skeleton data-testid="skeleton" />)
-    expect(screen.getByTestId("skeleton")).toHaveClass("rounded-md")
+    expect(screen.getByTestId("skeleton")).toHaveClass("rounded-v2-sm")
   })
 
   it("should merge custom className", () => {
