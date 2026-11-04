@@ -1,4 +1,4 @@
-/** Relative time / staleness / rate helpers for the v2 currency screen (v1 parity). */
+/** Relative time / staleness / rate helpers for the v2 currency screen. */
 
 import { format, isSameDay } from "date-fns"
 import { roundRateForDisplay } from "@/lib/currency-conversion"

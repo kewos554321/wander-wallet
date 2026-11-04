@@ -6,7 +6,7 @@ import { useMediaRecorderSpeech } from "@/lib/media-recorder-speech"
 import { useSpeechRecognition } from "@/lib/speech"
 
 // Web Speech API first; iOS LIFF (no Web Speech) records audio and
-// transcribes it on the server. Same engine choice as the v1 dialog.
+// transcribes it on the server. Same engine choice as the original dialog.
 export function useSpeechInput({ onText }: { onText: (text: string) => void }) {
   const authFetch = useAuthFetch()
   const web = useSpeechRecognition()

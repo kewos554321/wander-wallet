@@ -46,7 +46,7 @@ export function useProjectOverview(projectId: string) {
     }
   }, [authFetch, projectId, router])
 
-  // Fetch only when the project id changes (matches the original v1 page),
+  // Fetch only when the project id changes (matches the original page),
   // so a session-token refresh does not trigger an extra reload.
   useEffect(() => {
     if (projectId) refetch()

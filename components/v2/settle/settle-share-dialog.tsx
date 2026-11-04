@@ -10,7 +10,7 @@ interface SettleShareDialogProps {
   shareText: string
 }
 
-// "分享結算結果" dialog, ported from the shared v1 dialog so it can be rendered
+// "分享結算結果" dialog, ported from the original shared dialog so it can be rendered
 // inline inside the UiV2Scope tree (v2 tokens resolve; no shadcn Portal).
 export function SettleShareDialog({ open, onOpenChange, shareText }: SettleShareDialogProps) {
   const [copied, setCopied] = useState(false)

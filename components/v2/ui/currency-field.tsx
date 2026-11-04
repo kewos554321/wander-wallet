@@ -27,7 +27,7 @@ export function moneySymbol(code: string): string {
   return code === "TWD" ? "$" : currencySymbol(code)
 }
 
-// v2-styled select trigger over the shared CurrencySelect (v1 component untouched).
+// v2-styled select trigger over the shared CurrencySelect.
 export function V2CurrencyField({
   value,
   onChange,

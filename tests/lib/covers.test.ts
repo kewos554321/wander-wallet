@@ -4,7 +4,6 @@ import {
   parseCover,
   getPresetCover,
   createCoverString,
-  toLegacyCover,
 } from "@/lib/covers"
 
 describe("Covers Utilities (lib/covers.ts)", () => {
@@ -136,13 +135,5 @@ describe("icon covers", () => {
       type: "custom",
       customUrl: "data:image/png;base64,AAA",
     })
-  })
-
-  it("toLegacyCover maps icon covers to the first preset for v1", () => {
-    expect(toLegacyCover(parseCover("icon:leaf;color:lake"))).toEqual({
-      type: "preset",
-      presetId: PRESET_COVERS[0].id,
-    })
-    expect(toLegacyCover({ type: "none" })).toEqual({ type: "none" })
   })
 })

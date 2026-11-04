@@ -131,7 +131,7 @@ export function buildIconCover(iconId: string, colorId: string): string {
 const ICON_COVER_PATTERN = /^icon:([a-z0-9-]+);color:([a-z0-9-]+)$/
 
 // Accepts every cover format the app writes: presets, v2 icon covers,
-// https image URLs, and v1's compressed base64 data URLs.
+// https image URLs, and the legacy compressed base64 data URLs.
 const DATA_IMAGE_PREFIX = /^data:image\/[a-z0-9.+-]+;base64,/i
 
 export function isValidCover(cover: unknown): boolean {
@@ -177,13 +177,6 @@ export function parseCover(cover: string | null | undefined): ParsedCover {
   }
 }
 
-// v1 screens do not know icon covers; show the first preset instead of a broken image.
-export function toLegacyCover(parsed: ParsedCover): ParsedCover {
-  if (parsed.type === "icon") {
-    return { type: "preset", presetId: PRESET_COVERS[0].id }
-  }
-  return parsed
-}
 
 // 取得預設封面資料
 export function getPresetCover(id: string): PresetCover | undefined {

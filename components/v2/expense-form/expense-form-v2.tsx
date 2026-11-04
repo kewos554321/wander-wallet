@@ -72,7 +72,7 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
           const data = await res.json()
           if (!cancelled) setExpense(data)
         } else {
-          // Match v1's fetchExpenseData error handling exactly
+          // Match the original fetchExpenseData error handling exactly
           // (components/expense/expense-form.tsx): surface the failure with an
           // alert and bounce back to the expenses list.
           const errorData = await res.json().catch(() => ({}))
@@ -224,7 +224,7 @@ function LoadedForm({
   const [showDelete, setShowDelete] = useState(false)
 
   useEffect(() => {
-    // Match v1 (components/expense/expense-form.tsx): auto-fill the current
+    // Match the original expense form: auto-fill the current
     // location on mount, create mode only, via the shared silent-failure helper.
     if (mode !== "create") return
     let cancelled = false
@@ -286,7 +286,7 @@ function LoadedForm({
       image: {
         url: state.image.image,
         pendingFile: state.image.pendingFile,
-        // v1 semantics (components/expense/expense-form.tsx `handleRemoveImage`):
+        // Original `handleRemoveImage` semantics:
         // an image gets queued for R2 deletion only when the final image URL
         // differs from the one the expense was loaded with (removed or replaced).
         pendingDeleteUrl: original?.image && original.image !== state.image.image ? original.image : null,

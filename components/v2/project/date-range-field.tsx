@@ -7,8 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { formatLocalDate, parseLocalDate, slashDate } from "./date-utils"
 
 // Shared date-range trigger + popover calendar used by the new-trip and
-// project-settings v2 screens (see v1 project-settings-v1.tsx for the same
-// range-selection semantics).
+// project-settings screens.
 export function DateRangeField({
   label,
   startDate,

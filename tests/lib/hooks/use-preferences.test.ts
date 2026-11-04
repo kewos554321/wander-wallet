@@ -3,7 +3,7 @@ import { renderHook, act } from "@testing-library/react"
 
 const authFetch = vi.fn()
 const updatePreferences = vi.fn()
-const liff = { user: { preferences: { defaultCurrency: "JPY", uiVersion: "v2" } as Record<string, unknown> }, updatePreferences }
+const liff = { user: { preferences: { defaultCurrency: "JPY", legacyPreference: "keep-me" } as Record<string, unknown> }, updatePreferences }
 vi.mock("@/components/auth/liff-provider", () => ({ useAuthFetch: () => authFetch, useLiff: () => liff }))
 import { usePreferences } from "@/lib/hooks/use-preferences"
 
@@ -15,7 +15,7 @@ describe("usePreferences", () => {
     expect(h.result.current.preferences.defaultCurrency).toBe("JPY")
     expect(h.result.current.preferences.notifications.expenseCreated).toBe(true)
   })
-  it("saves a patch and keeps uiVersion", async () => {
+  it("saves a patch and keeps unknown preferences", async () => {
     authFetch.mockResolvedValue({ ok: true, json: async () => ({}) })
     const h = renderHook(() => usePreferences())
     let ok
@@ -23,7 +23,7 @@ describe("usePreferences", () => {
     expect(ok).toBe(true)
     const body = JSON.parse(authFetch.mock.calls[0][1].body)
     expect(authFetch.mock.calls[0][0]).toBe("/api/users/profile")
-    expect(body.preferences).toMatchObject({ uiVersion: "v2", defaultCurrency: "JPY", notifications: { expenseCreated: true, expenseUpdated: true, expenseDeleted: false } })
+    expect(body.preferences).toMatchObject({ legacyPreference: "keep-me", defaultCurrency: "JPY", notifications: { expenseCreated: true, expenseUpdated: true, expenseDeleted: false } })
     expect(updatePreferences).toHaveBeenCalledWith(body.preferences)
   })
   it("reports failure without updating local state", async () => {

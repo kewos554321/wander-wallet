@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { COVER_ICONS, COVER_COLORS, COVER_PICKER_COLORS, DEFAULT_ICON_COVER, PRESET_COVERS, buildIconCover, isValidCover, parseCover, toLegacyCover } from "@/lib/covers"
+import { COVER_ICONS, COVER_COLORS, COVER_PICKER_COLORS, DEFAULT_ICON_COVER, buildIconCover, isValidCover, parseCover } from "@/lib/covers"
 
 describe("icon covers", () => {
   it("lists icons and colors", () => {
@@ -34,7 +34,6 @@ describe("icon covers", () => {
   it("keeps red covers parseable for existing data but hides red from the picker", () => {
     expect(parseCover("icon:compass;color:red")).toEqual({ type: "icon", iconId: "compass", colorId: "red" })
     expect(isValidCover("icon:compass;color:red")).toBe(true)
-    expect(toLegacyCover(parseCover("icon:compass;color:red"))).toEqual({ type: "preset", presetId: PRESET_COVERS[0].id })
     expect(COVER_PICKER_COLORS.map((c) => c.id)).toEqual(["lake", "coral", "plum", "gold", "rose", "ink"])
   })
   it("has dark colors for all cover colors", () => {

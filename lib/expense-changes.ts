@@ -1,6 +1,6 @@
 // Builds the field-level change list used for LINE update notifications.
-// Extracted from v1's `calculateChanges` in components/expense/expense-form.tsx
-// so both the v1 and v2 expense forms can share the same diff logic.
+// Extracted from the original `calculateChanges` so every expense form can
+// share the same diff logic.
 import { format } from "date-fns"
 import type { ExpenseChange } from "@/lib/liff"
 import { CATEGORIES } from "@/lib/constants/expenses"

@@ -36,14 +36,6 @@ vi.mock("@/lib/hooks", () => ({
   useOnboarding: () => ({ resetOnboarding: mockResetOnboarding }),
 }))
 
-const mockToggle = vi.fn()
-let betaEnabled = true
-let betaSaving = false
-let betaError: string | null = null
-vi.mock("@/lib/hooks/use-beta-toggle", () => ({
-  useBetaToggle: () => ({ enabled: betaEnabled, toggle: mockToggle, saving: betaSaving, error: betaError }),
-}))
-
 const mockSetTheme = vi.fn()
 let currentTheme: "light" | "dark" | "system" = "light"
 vi.mock("@/components/system/theme-provider", () => ({
@@ -64,10 +56,6 @@ describe("GeneralSettingsV2", () => {
       notifications: { expenseCreated: true, expenseUpdated: true, expenseDeleted: true },
     }
     currentError = null
-    mockToggle.mockReset()
-    betaEnabled = true
-    betaSaving = false
-    betaError = null
     mockSetTheme.mockReset()
     currentTheme = "light"
   })
@@ -93,21 +81,6 @@ describe("GeneralSettingsV2", () => {
     expect(initial).toBeInTheDocument()
     expect(initial.closest('[aria-hidden="true"]')).toHaveClass("bg-v2-lake")
     expect(initial.closest('[aria-hidden="true"]')).toHaveClass("text-v2-on-lake")
-  })
-
-  it("shows the legacy-UI switch and toggles it on click", () => {
-    render(<GeneralSettingsV2 />)
-    const sw = screen.getByRole("switch", { name: "使用舊版介面" })
-    expect(sw).toHaveAttribute("aria-checked", "true")
-    expect(screen.getByText("開啟後回到舊版介面")).toBeInTheDocument()
-    fireEvent.click(sw)
-    expect(mockToggle).toHaveBeenCalledWith(false)
-  })
-
-  it("shows the beta toggle error in an alert", () => {
-    betaError = "儲存失敗，請重試"
-    render(<GeneralSettingsV2 />)
-    expect(screen.getByRole("alert")).toHaveTextContent("儲存失敗，請重試")
   })
 
   it("switches appearance to dark and marks the active option", () => {

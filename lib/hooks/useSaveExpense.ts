@@ -1,7 +1,6 @@
 "use client"
 
-// Extracted from v1's `handleSubmit`/`handleDelete` in
-// components/expense/expense-form.tsx so both the v1 and v2 expense forms
+// Extracted from the original `handleSubmit`/`handleDelete` so every expense form
 // can share the same save/delete + LINE-notification flow.
 import { useCallback, useState } from "react"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"

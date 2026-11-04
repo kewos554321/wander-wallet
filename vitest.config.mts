@@ -24,36 +24,23 @@ export default defineConfig({
         "lib/speech.ts",
         "lib/hooks/index.ts",
         // Complex UI components with browser interactions
-        "components/voice/**",
-        "components/expense/expense-form.tsx",
-        "components/cover-picker.tsx",
         "components/avatar-picker.tsx",
-        "components/member-avatar.tsx",
-        "components/action-picker.tsx",
-        "components/location-picker.tsx",
         "components/ui/image-picker.tsx",
         "components/ui/image-cropper.tsx",
         "components/ui/badge.tsx",
         "components/ui/label.tsx",
         "components/ui/slider.tsx",
-        "components/ui/search-input.tsx",
-        "components/ui/filter-dropdown.tsx",
         "components/ui/dropdown-menu.tsx",
         "components/ui/select.tsx",
         "components/ui/calendar.tsx",
-        "components/ui/calculator.tsx",
         "components/ui/currency-select.tsx",
         // Auth components (LIFF SDK dependent)
         "components/auth/liff-provider.tsx",
         "components/auth/auth-gate.tsx",
         // Ads components
         "components/ads/ad-container.tsx",
-        // Dashboard charts (rely on recharts library)
-        "components/dashboard/**",
         // Debug components
         "components/debug/**",
-        // Export components
-        "components/export/**",
         // Map components (rely on external map libraries)
         "components/map/**",
         // System components with browser APIs

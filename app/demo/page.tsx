@@ -5,17 +5,6 @@ import Link from "next/link"
 
 const GROUPS: { title: string; note: string; items: { href: string; label: string; desc: string }[] }[] = [
   {
-    title: "設計對照",
-    note: "調整前後的差異與影響範圍",
-    items: [
-      {
-        href: "/demo/ui-consistency",
-        label: "一致性對照",
-        desc: "餘額、預算、分享、尺寸、動效：現況 vs 調整後",
-      },
-    ],
-  },
-  {
     title: "支出",
     note: "記錄與瀏覽這趟旅程的花費",
     items: [

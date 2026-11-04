@@ -1,4 +1,4 @@
-// Pure trip-overview calculations shared by v1 and v2 project screens.
+// Pure trip-overview calculations shared by the project screens.
 // Extracted from the `userBalance` useMemo and the total/perPerson/budget
 // computations in app/projects/[id]/page.tsx so both UIs use one implementation.
 

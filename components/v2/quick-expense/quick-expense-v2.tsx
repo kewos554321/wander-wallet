@@ -139,7 +139,7 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
     setError(null)
     setStep("confirm")
     // Silently prefill the device location on items that have none, matching the
-    // create-expense form and v1's voice dialog. A failed lookup is ignored.
+    // create-expense form and the original voice dialog. A failed lookup is ignored.
     getCurrentLocation().then((loc) => {
       if (!loc || !mountedRef.current) return
       setItems((prev) =>

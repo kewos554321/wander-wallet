@@ -89,7 +89,7 @@ function buildSettlements(balances: MemberBalanceData[]): SettlementExportData[]
   return settlements
 }
 
-/** Builds the `ExportData` payload from live project data (v1 export parity). */
+/** Builds the `ExportData` payload from live project data. */
 export function buildExportData(input: BuildExportInput): ExportData {
   const { projectName, projectCurrency, members, expenses, filters, ctx } = input
 

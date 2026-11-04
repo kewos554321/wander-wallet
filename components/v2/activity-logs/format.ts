@@ -44,7 +44,7 @@ const FIELD_LABELS: Record<string, string> = {
   participants: "分攤者",
 }
 
-/** Ports the v1 activity-log change formatter (amount+currency merged into one row). */
+/** Formats activity-log changes (amount+currency merged into one row). */
 export function formatChanges(
   changes: Record<string, { from: unknown; to: unknown }> | null,
   defaultCurrency: string

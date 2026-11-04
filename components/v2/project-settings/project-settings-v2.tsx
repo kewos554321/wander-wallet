@@ -37,7 +37,7 @@ const EMPTY_VALUES: ProjectFormValues = {
   joinMode: "both",
 }
 
-// Mirrors v1 fetchProject's mapping from the API record to form values.
+// Maps the API record to the form values used by this screen.
 function mapProjectToForm(data: ProjectRecord): ProjectFormValues {
   return {
     name: data.name,

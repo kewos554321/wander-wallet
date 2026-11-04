@@ -1,5 +1,5 @@
-// Extracted from v1's inline `getCurrentLocation` in components/expense/expense-form.tsx
-// so both the v1 and v2 expense forms can silently prefill the current location
+// Extracted from the original inline `getCurrentLocation` so every expense form
+// can silently prefill the current location
 // on mount in create mode without duplicating the geolocation + reverse-geocode logic.
 
 export interface CurrentLocation {

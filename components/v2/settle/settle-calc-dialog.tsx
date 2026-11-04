@@ -58,7 +58,7 @@ function splitLine(expense: SettleExpenseDetail, currency: string): string {
     .join("；")
 }
 
-// "計算過程" dialog, ported from the shared v1 dialog so it can be rendered
+// "計算過程" dialog, ported from the original shared dialog so it can be rendered
 // inline inside the UiV2Scope tree (v2 tokens resolve; no shadcn Portal).
 export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId, placeholderMemberIds, memberSeeds }: SettlementCalcDialogProps) {
   const cardRef = useRef<HTMLDivElement>(null)

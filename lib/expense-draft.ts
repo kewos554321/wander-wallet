@@ -169,7 +169,7 @@ export function initialState(init: DraftInit): DraftState {
     // computeShares/order a real one would use) would produce; if they
     // differ, seed customShares from every stored share so re-saving keeps
     // the original split instead of silently flattening it to equal. This
-    // mirrors v1's "all fixed" legacy fallback (components/expense/expense-form.tsx).
+    // mirrors the original "all fixed" legacy fallback.
     const participantIds = e.participants.map((p) => p.memberId)
     const equalShares = computeShares({ amount: e.amount, participantIds, personalItems: {}, customShares: {} })
     const isEqual = e.participants.every((p, i) => Math.abs(p.shareAmount - equalShares[i].shareAmount) <= 0.01)

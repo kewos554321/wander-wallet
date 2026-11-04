@@ -7,7 +7,7 @@ import { mergePreferences, type NotificationPreferences, type UserPreferences } 
 type PreferencesPatch = Partial<Omit<UserPreferences, "notifications">> & { notifications?: Partial<NotificationPreferences> }
 
 // Saves on top of the raw stored preferences so fields mergePreferences
-// drops (e.g. uiVersion) survive a save from the settings page.
+// does not know about still survive a save from the settings page.
 export function usePreferences() {
   const { user, updatePreferences } = useLiff()
   const authFetch = useAuthFetch()

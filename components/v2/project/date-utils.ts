@@ -1,6 +1,6 @@
 // Local-date helpers shared by v2 date-range pickers (new trip, project
 // settings). Dates are stored as yyyy-MM-dd strings; parsing/formatting stays
-// in local time to avoid UTC off-by-one drift, matching the v1 behavior.
+// in local time to avoid UTC off-by-one drift.
 
 export function formatLocalDate(date: Date): string {
   const year = date.getFullYear()
