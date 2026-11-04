@@ -24,6 +24,10 @@ describe("CoverArt", () => {
     rerender(<CoverArt cover="preset:1" />)
     expect(screen.getByTestId("cover-art")).toHaveAttribute("data-cover", "preset:1")
   })
+  it("renders the brand logo for the first classic cover", () => {
+    render(<CoverArt cover="preset:1" />)
+    expect(screen.getByRole("img")).toHaveAttribute("src", "/icons/logo.svg")
+  })
   it("renders an existing red cover for old data", () => {
     render(<CoverArt cover="icon:compass;color:red" />)
     const box = screen.getByTestId("cover-art")
@@ -52,14 +56,54 @@ describe("CoverPickerV2", () => {
     fireEvent.click(screen.getByRole("button", { name: "顏色 gold" }))
     expect(onChange).toHaveBeenLastCalledWith("icon:car;color:gold")
   })
-  it("shows the disabled more-icons placeholder, the new icons and hides red", () => {
+  it("expands and collapses the extra icons", () => {
     render(<CoverPickerV2 value={null} onChange={vi.fn()} />)
     const more = screen.getByRole("button", { name: "更多圖示" })
-    expect(more).toBeDisabled()
-    expect(more).toHaveAttribute("title", "即將推出")
+    expect(more).toHaveAttribute("aria-expanded", "false")
+    expect(screen.queryByRole("button", { name: "飛機" })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "相機" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "亮點" })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "顏色 red" })).not.toBeInTheDocument()
+
+    fireEvent.click(more)
+    expect(more).toHaveAttribute("aria-expanded", "true")
+    expect(screen.getByRole("button", { name: "飛機" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "地標" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "行李" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "森林" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "計程車" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "日落" })).toBeInTheDocument()
+
+    fireEvent.click(more)
+    expect(more).toHaveAttribute("aria-expanded", "false")
+    expect(screen.queryByRole("button", { name: "飛機" })).not.toBeInTheDocument()
+  })
+  it("keeps the classic covers collapsed until expanded", () => {
+    render(<CoverPickerV2 value={null} onChange={vi.fn()} />)
+    const toggle = screen.getByRole("button", { name: "展開經典封面" })
+    expect(toggle).toHaveAttribute("aria-expanded", "false")
+    expect(screen.queryByRole("button", { name: "經典封面 海灘度假" })).not.toBeInTheDocument()
+
+    fireEvent.click(toggle)
+    expect(toggle).toHaveAttribute("aria-expanded", "true")
+    expect(screen.getAllByRole("button", { name: /^經典封面/ })).toHaveLength(9)
+
+    fireEvent.click(screen.getByRole("button", { name: "收起經典封面" }))
+    expect(screen.queryByRole("button", { name: "經典封面 海灘度假" })).not.toBeInTheDocument()
+  })
+  it("lists the nine v1 classic covers and selects one", () => {
+    const onChange = vi.fn()
+    const { rerender } = render(<CoverPickerV2 value={null} onChange={onChange} />)
+    fireEvent.click(screen.getByRole("button", { name: "展開經典封面" }))
+    expect(screen.getAllByRole("button", { name: /^經典封面/ })).toHaveLength(9)
+    fireEvent.click(screen.getByRole("button", { name: "經典封面 海灘度假" }))
+    expect(onChange).toHaveBeenLastCalledWith("preset:2")
+    rerender(<CoverPickerV2 value="preset:2" onChange={onChange} />)
+    expect(screen.getByRole("button", { name: "經典封面 海灘度假" })).toHaveAttribute("aria-pressed", "true")
+  })
+  it("does not mark an icon color when a classic cover is selected", () => {
+    render(<CoverPickerV2 value="preset:2" onChange={vi.fn()} />)
+    expect(screen.getByRole("button", { name: "顏色 lake" })).toHaveAttribute("aria-pressed", "false")
   })
   it("offers no upload but can remove a custom image", () => {
     const onChange = vi.fn()
@@ -72,6 +116,11 @@ describe("CoverPickerV2", () => {
   it("marks the selected color tile", () => {
     render(<CoverPickerV2 value="icon:car;color:gold" onChange={vi.fn()} />)
     expect(screen.getByRole("button", { name: "顏色 gold" })).toHaveAttribute("aria-pressed", "true")
+  })
+  it("shows fourteen cover colors", () => {
+    render(<CoverPickerV2 value={null} onChange={vi.fn()} />)
+    expect(screen.getAllByRole("button", { name: /^顏色/ })).toHaveLength(14)
+    expect(screen.getByRole("button", { name: "顏色 mint" })).toBeInTheDocument()
   })
   it("does not submit form when clicking icon or color buttons", () => {
     const onChange = vi.fn()

@@ -11,7 +11,7 @@ import DemoIndexPage from "@/app/demo/page"
 const ROUTES = [
   "/demo/expenses", "/demo/add-expense", "/demo/quick-expense", "/demo/rate-sheet",
   "/demo/projects", "/demo/new-project", "/demo/overview",
-  "/demo/project-settings", "/demo/settle", "/demo/profile", "/demo/export", "/demo/login",
+  "/demo/project-settings", "/demo/cover-picker", "/demo/settle", "/demo/profile", "/demo/export", "/demo/login",
 ]
 
 describe("demo index", () => {

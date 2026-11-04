@@ -28,7 +28,11 @@ export function CoverArt({
     if (preset) {
       return (
         <div data-testid="cover-art" data-cover={`preset:${preset.id}`} className={`${box} text-2xl`} style={{ background: preset.gradient }}>
-          <span aria-hidden="true">{preset.emoji}</span>
+          {preset.emoji === "logo" ? (
+            <Image src="/icons/logo.svg" alt={preset.name} width={40} height={40} className="h-[60%] w-[60%] rounded" unoptimized />
+          ) : (
+            <span aria-hidden="true">{preset.emoji}</span>
+          )}
         </div>
       )
     }

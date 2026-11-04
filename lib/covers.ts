@@ -89,6 +89,9 @@ export type ParsedCover = {
   colorId?: string
 }
 
+// The nine original v1 themes, kept selectable alongside the v2 icon covers.
+export const CLASSIC_COVERS: PresetCover[] = PRESET_COVERS.slice(0, 9)
+
 export const COVER_ICONS = [
   { id: "compass", label: "指南針" },
   { id: "leaf", label: "葉子" },
@@ -103,6 +106,48 @@ export const COVER_ICONS = [
   { id: "mountain", label: "山岳" },
   { id: "heart", label: "愛心" },
   { id: "sparkle", label: "亮點" },
+  { id: "plane", label: "飛機" },
+  { id: "map-pin", label: "地圖" },
+  { id: "tent", label: "露營" },
+  { id: "ship", label: "郵輪" },
+  { id: "train", label: "火車" },
+  { id: "bike", label: "單車" },
+  { id: "coffee", label: "咖啡" },
+  { id: "shopping-bag", label: "購物" },
+  { id: "ticket", label: "票券" },
+  { id: "sun", label: "太陽" },
+  { id: "music", label: "音樂" },
+  { id: "backpack", label: "背包" },
+  { id: "palm-tree", label: "度假" },
+  { id: "landmark", label: "地標" },
+  { id: "luggage", label: "行李" },
+  { id: "map", label: "旅遊地圖" },
+  { id: "route", label: "路線" },
+  { id: "navigation", label: "導航" },
+  { id: "anchor", label: "錨" },
+  { id: "sailboat", label: "帆船" },
+  { id: "bus", label: "巴士" },
+  { id: "plane-takeoff", label: "起飛" },
+  { id: "plane-landing", label: "降落" },
+  { id: "hotel", label: "飯店" },
+  { id: "umbrella", label: "陽傘" },
+  { id: "snowflake", label: "雪景" },
+  { id: "waves", label: "海浪" },
+  { id: "trees", label: "森林" },
+  { id: "taxi", label: "計程車" },
+  { id: "cable-car", label: "纜車" },
+  { id: "fuel", label: "加油" },
+  { id: "parking", label: "停車" },
+  { id: "fish", label: "海鮮" },
+  { id: "wine", label: "紅酒" },
+  { id: "pizza", label: "披薩" },
+  { id: "ice-cream", label: "冰淇淋" },
+  { id: "key", label: "鑰匙" },
+  { id: "concierge-bell", label: "客房服務" },
+  { id: "sunrise", label: "日出" },
+  { id: "sunset", label: "日落" },
+  { id: "calendar", label: "行程" },
+  { id: "languages", label: "語言" },
 ] as const
 
 export const COVER_COLORS = [
@@ -113,10 +158,18 @@ export const COVER_COLORS = [
   { id: "gold", fg: "#9C7A28", bg: "#F6ECCF", darkFg: "#D4AE55", darkBg: "#332A16" },
   { id: "plum", fg: "#6B5B95", bg: "#E7E2F2", darkFg: "#A897D6", darkBg: "#2A2438" },
   { id: "ink", fg: "#2A241F", bg: "#E9E5DF", darkFg: "#D9D2C7", darkBg: "#2A2622" },
+  { id: "sky", fg: "#35507A", bg: "#E6EDF7", darkFg: "#8FB4D9", darkBg: "#1D2736" },
+  { id: "moss", fg: "#4C5A26", bg: "#EDF1DE", darkFg: "#9CB06A", darkBg: "#242A16" },
+  { id: "sand", fg: "#8B7355", bg: "#F3EBDE", darkFg: "#C9AE8C", darkBg: "#2E261C" },
+  { id: "slate", fg: "#4A5568", bg: "#E8EBF0", darkFg: "#A9B5C5", darkBg: "#232933" },
+  { id: "berry", fg: "#8E3556", bg: "#F6E2EA", darkFg: "#D98AA6", darkBg: "#331C26" },
+  { id: "ocean", fg: "#2D6A78", bg: "#E1F0F3", darkFg: "#7BC0CC", darkBg: "#142B30" },
+  { id: "cobalt", fg: "#2F4B8F", bg: "#E5EAF8", darkFg: "#8FA6E0", darkBg: "#1A2238" },
+  { id: "mint", fg: "#2F7A6B", bg: "#E0F2ED", darkFg: "#7FC4B4", darkBg: "#16302B" },
 ] as const
 
 // D5: red stays in COVER_COLORS for old saved covers but is hidden from the picker.
-const PICKER_COLOR_IDS = ["lake", "coral", "plum", "gold", "rose", "ink"] as const
+const PICKER_COLOR_IDS = ["lake", "coral", "plum", "gold", "rose", "ink", "sky", "moss", "sand", "slate", "berry", "ocean", "cobalt", "mint"] as const
 export const COVER_PICKER_COLORS = PICKER_COLOR_IDS.map((id) => COVER_COLORS.find((c) => c.id === id)!)
 
 export const DEFAULT_ICON_COVER = "icon:leaf;color:lake"

@@ -22,6 +22,7 @@ const GROUPS: { title: string; note: string; items: { href: string; label: strin
       { href: "/demo/new-project", label: "新旅程", desc: "封面、名稱、日期、幣別、預算" },
       { href: "/demo/overview", label: "旅程總覽", desc: "摘要、餘額、最近支出、快速操作" },
       { href: "/demo/project-settings", label: "旅程設定", desc: "改名、日期、幣別、刪除" },
+      { href: "/demo/cover-picker", label: "更換封面", desc: "更多圖示、顏色與 v1 經典封面" },
     ],
   },
   {
