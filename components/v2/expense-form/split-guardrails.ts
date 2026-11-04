@@ -82,6 +82,36 @@ export function normalizeAmountForCurrency(raw: string, currency: string): { val
   return { value, note: null }
 }
 
+/** The amount rules the footer shows before submit (shared by the form and AI result). */
+export function amountIssueFor(amount: string, currency: string): string | null {
+  const n = Number(amount)
+  if (amount.trim() === "") return "請輸入金額"
+  if (!Number.isFinite(n)) return "請輸入有效金額"
+  if (n <= 0) return "金額必須大於 0"
+  if (n > maxAmountFor(currency)) return `金額不可超過 ${formatCurrency(maxAmountFor(currency), currency)}`
+  return null
+}
+
+export interface ExpenseFormIssues {
+  amountIssue: string | null
+  splitIssue: string | null
+  /** Footer blocking error: amount first, then split, then the draft's own error. */
+  blockingError: string | null
+  descMissing: boolean
+}
+
+/** One source of truth for the form's submit-blocking rules. */
+export function expenseFormIssues(draft: Draft, members: DraftMember[]): ExpenseFormIssues {
+  const amountIssue = amountIssueFor(draft.state.amount, draft.state.currency)
+  const splitIssue = describeSplitIssue(draft, members)
+  return {
+    amountIssue,
+    splitIssue,
+    blockingError: amountIssue ?? splitIssue ?? draft.derived.error,
+    descMissing: draft.state.description.trim() === "",
+  }
+}
+
 /**
  * The generic `derived.error` says "分攤金額與支出金額不符". This adds the
  * missing who/how-much, and catches the case where a fixed share is larger

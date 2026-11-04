@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { DEMO_MEMBERS } from "@/app/demo/_data/fixtures"
-import { describeSplitIssue } from "@/components/v2/expense-form/split-guardrails"
+import { amountIssueFor, describeSplitIssue } from "@/components/v2/expense-form/split-guardrails"
 
 type Draft = Parameters<typeof describeSplitIssue>[0]
 
@@ -34,5 +34,11 @@ describe("split guardrails", () => {
 
   it("accepts a complete item", () => {
     expect(describeSplitIssue(draftWith([{ name: "咖啡", amount: "120" }]), DEMO_MEMBERS)).toBeNull()
+  })
+
+  it("reports an empty or non-positive amount", () => {
+    expect(amountIssueFor("", "TWD")).toBe("請輸入金額")
+    expect(amountIssueFor("0", "TWD")).toBe("金額必須大於 0")
+    expect(amountIssueFor("12", "TWD")).toBeNull()
   })
 })
