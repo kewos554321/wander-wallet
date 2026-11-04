@@ -200,38 +200,38 @@ describe("validators", () => {
     })
 
     it("should reject empty string", () => {
-      const result = validators.requiredString("", "專案名稱")
+      const result = validators.requiredString("", "旅程名稱")
 
       expect(result.valid).toBe(false)
-      expect(result.error).toBe("專案名稱必填")
+      expect(result.error).toBe("旅程名稱必填")
     })
 
     it("should reject whitespace-only string", () => {
-      const result = validators.requiredString("   ", "專案名稱")
+      const result = validators.requiredString("   ", "旅程名稱")
 
       expect(result.valid).toBe(false)
-      expect(result.error).toBe("專案名稱必填")
+      expect(result.error).toBe("旅程名稱必填")
     })
 
     it("should reject null", () => {
-      const result = validators.requiredString(null, "專案名稱")
+      const result = validators.requiredString(null, "旅程名稱")
 
       expect(result.valid).toBe(false)
-      expect(result.error).toBe("專案名稱必填")
+      expect(result.error).toBe("旅程名稱必填")
     })
 
     it("should reject undefined", () => {
-      const result = validators.requiredString(undefined, "專案名稱")
+      const result = validators.requiredString(undefined, "旅程名稱")
 
       expect(result.valid).toBe(false)
-      expect(result.error).toBe("專案名稱必填")
+      expect(result.error).toBe("旅程名稱必填")
     })
 
     it("should reject non-string types", () => {
-      const result = validators.requiredString(123, "專案名稱")
+      const result = validators.requiredString(123, "旅程名稱")
 
       expect(result.valid).toBe(false)
-      expect(result.error).toBe("專案名稱必須為字串")
+      expect(result.error).toBe("旅程名稱必須為字串")
     })
 
     it("should include field name in error message", () => {
@@ -303,21 +303,21 @@ describe("validators", () => {
       const result = validators.participants([], validMemberIds)
 
       expect(result.valid).toBe(false)
-      expect(result.error).toBe("至少需要一個參與者")
+      expect(result.error).toBe("至少需要一個旅伴")
     })
 
     it("should reject non-array input", () => {
       const result = validators.participants("not an array", validMemberIds)
 
       expect(result.valid).toBe(false)
-      expect(result.error).toBe("參與者必須為陣列")
+      expect(result.error).toBe("旅伴必須為陣列")
     })
 
     it("should reject null input", () => {
       const result = validators.participants(null, validMemberIds)
 
       expect(result.valid).toBe(false)
-      expect(result.error).toBe("參與者必須為陣列")
+      expect(result.error).toBe("旅伴必須為陣列")
     })
 
     it("should reject participant with invalid memberId", () => {
@@ -325,7 +325,7 @@ describe("validators", () => {
       const result = validators.participants(participants, validMemberIds)
 
       expect(result.valid).toBe(false)
-      expect(result.error).toBe("參與者成員 ID 無效")
+      expect(result.error).toBe("旅伴旅伴 ID 無效")
     })
 
     it("should reject participant not in validMemberIds", () => {
@@ -333,7 +333,7 @@ describe("validators", () => {
       const result = validators.participants(participants, validMemberIds)
 
       expect(result.valid).toBe(false)
-      expect(result.error).toContain("不是專案成員")
+      expect(result.error).toContain("不是旅程旅伴")
     })
 
     it("should validate share amounts sum equals expectedTotal", () => {
@@ -382,7 +382,7 @@ describe("validators", () => {
       const result = validators.participants(participants, validMemberIds)
 
       expect(result.valid).toBe(false)
-      expect(result.error).toBe("參與者資料格式無效")
+      expect(result.error).toBe("旅伴資料格式無效")
     })
 
     it("should work without expectedTotal", () => {
@@ -432,9 +432,9 @@ describe("validators", () => {
     })
 
     it("should include field name in error", () => {
-      const result = validators.uuid("invalid", "專案ID")
+      const result = validators.uuid("invalid", "旅程ID")
 
-      expect(result.error).toBe("專案ID格式無效")
+      expect(result.error).toBe("旅程ID格式無效")
     })
 
     it("should reject non-string types", () => {

@@ -4,7 +4,7 @@ import { getActionText, getActionTone, categoryLabel, formatChanges } from "@/co
 describe("getActionText", () => {
   it("names the action and entity", () => {
     expect(getActionText("create", "expense")).toBe("新增費用")
-    expect(getActionText("update", "member")).toBe("編輯成員")
+    expect(getActionText("update", "member")).toBe("編輯旅伴")
     expect(getActionText("delete", "project")).toBe("刪除項目")
   })
 })
@@ -50,7 +50,7 @@ describe("formatChanges", () => {
 
   it("labels a payer change (multi-payer joined names)", () => {
     expect(formatChanges({ payer: { from: "志明", to: "志明、小美" } }, "TWD")).toEqual([
-      { label: "付款成員", from: "志明", to: "志明、小美" },
+      { label: "付款旅伴", from: "志明", to: "志明、小美" },
     ])
   })
 

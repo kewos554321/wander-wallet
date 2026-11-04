@@ -13,7 +13,7 @@ export function MemberRanking({ members, currency, currentMemberId }: { members:
   }
 
   return (
-    <ul aria-label="成員排行" className="m-0 flex list-none flex-col gap-2.5 p-0">
+    <ul aria-label="旅伴排行" className="m-0 flex list-none flex-col gap-2.5 p-0">
       {ranked.map((m, i) => {
         const label = m.id === currentMemberId ? "我" : m.name
         const pct = Math.round((m.share / top) * 100)

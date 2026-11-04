@@ -34,7 +34,7 @@ interface Feature {
 const FEATURE_TONES = EXPENSE_CATEGORIES.map((category) => CATEGORY_PICKER_TONES[category].tone)
 
 const PRIMARY: Feature[] = [
-  { label: "成員", path: "members", icon: Users },
+  { label: "旅伴", path: "members", icon: Users },
   { label: "結算", path: "settle", icon: ArrowRightLeft },
   { label: "統計", path: "stats", icon: BarChart3 },
   { label: "匯率", path: "currency", icon: Coins },

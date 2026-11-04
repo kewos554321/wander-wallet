@@ -272,7 +272,7 @@ describe("ProjectSettingsV2", () => {
     mockRoutes()
     render(<ProjectSettingsV2 projectId="p1" />)
     await screen.findByLabelText("旅程名稱")
-    expect(screen.getAllByText("成員加入方式")).toHaveLength(1)
+    expect(screen.getAllByText("旅伴加入方式")).toHaveLength(1)
   })
 
   it("edits budget, join mode and settlement currency, then persists them", async () => {
@@ -281,7 +281,7 @@ describe("ProjectSettingsV2", () => {
     await screen.findByLabelText("旅程名稱")
 
     fireEvent.change(screen.getByLabelText("旅程預算"), { target: { value: "12345" } })
-    fireEvent.click(screen.getByRole("radio", { name: "僅建立新成員" }))
+    fireEvent.click(screen.getByRole("radio", { name: "僅建立新旅伴" }))
     fireEvent.change(screen.getByLabelText("結算幣別"), { target: { value: "JPY" } })
 
     fireEvent.click(screen.getByRole("button", { name: "儲存變更" }))
@@ -457,7 +457,7 @@ describe("ProjectSettingsV2", () => {
     render(<ProjectSettingsV2 projectId="p1" />)
     await screen.findByLabelText("旅程名稱")
     expect(
-      screen.getByText("透過分享連結加入的人，只能建立自己的身份，或取代你建立的佔位成員。")
+      screen.getByText("透過分享連結加入的人，只能建立自己的身份，或取代你建立的佔位旅伴。")
     ).toBeInTheDocument()
     expect(screen.getByLabelText("旅程名稱").className).toContain("focus-visible:")
   })

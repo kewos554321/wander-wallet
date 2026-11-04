@@ -158,6 +158,11 @@ export const DEMO_SUMMARY: ProjectSummary = {
   userBalance: 3370,
   hasMixedCurrencies: true,
   currentMemberId: "me",
+  memberBalances: DEMO_SETTLE.balances.map((b) => ({
+    memberId: b.memberId,
+    displayName: b.displayName,
+    balance: b.balance,
+  })),
 }
 
 function listMember(id: MemberId): ProjectListMember {

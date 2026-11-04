@@ -5,7 +5,7 @@ import { Prisma } from "@prisma/client"
 import { isValidCover } from "@/lib/covers"
 import { expensePayersInclude } from "@/lib/expense-payers-include"
 
-// 獲取單個專案詳情
+// 獲取單個旅程詳情
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -17,7 +17,7 @@ export async function GET(
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
-    // 先查詢專案基本資訊
+    // 先查詢旅程基本資訊
     const project = await prisma.project.findUnique({
       where: { id },
       include: {
@@ -72,19 +72,19 @@ export async function GET(
     })
 
     if (!project) {
-      return NextResponse.json({ error: "專案不存在" }, { status: 404 })
+      return NextResponse.json({ error: "旅程不存在" }, { status: 404 })
     }
 
-    // 檢查用戶是否為專案成員
+    // 檢查用戶是否為旅程旅伴
     const isMember = project.members.some(
       (member) => member.userId === authUser.id
     )
 
     if (isMember) {
-      // 是成員，返回完整資料
+      // 是旅伴，返回完整資料
       return NextResponse.json({ ...project, isMember: true })
     } else {
-      // 非成員，只返回基本資訊（用於加入流程）
+      // 非旅伴，只返回基本資訊（用於加入流程）
       const unclaimedMembers = project.members
         .filter((member) => !member.userId)
         .map((member) => ({
@@ -104,14 +104,14 @@ export async function GET(
     }
   } catch (error: unknown) {
     const prismaError = error as { message?: string; code?: string; meta?: unknown }
-    console.error("獲取專案錯誤:", {
+    console.error("獲取旅程錯誤:", {
       message: prismaError?.message,
       code: prismaError?.code,
       meta: prismaError?.meta,
     })
     return NextResponse.json(
       {
-        error: "獲取專案失敗",
+        error: "獲取旅程失敗",
         details: prismaError?.message,
         code: prismaError?.code,
       },
@@ -120,7 +120,7 @@ export async function GET(
   }
 }
 
-// 更新專案
+// 更新旅程
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -132,7 +132,7 @@ export async function PUT(
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
-    // 檢查用戶是否有權限（必須是專案成員）
+    // 檢查用戶是否有權限（必須是旅程旅伴）
     const membership = await prisma.projectMember.findFirst({
       where: {
         projectId: id,
@@ -141,7 +141,7 @@ export async function PUT(
     })
 
     if (!membership) {
-      return NextResponse.json({ error: "無權限訪問此專案" }, { status: 403 })
+      return NextResponse.json({ error: "無權限訪問此旅程" }, { status: 403 })
     }
 
     const body = await req.json()
@@ -166,7 +166,7 @@ export async function PUT(
 
     if (name !== undefined) {
       if (typeof name !== "string" || name.trim().length === 0) {
-        return NextResponse.json({ error: "專案名稱不能為空" }, { status: 400 })
+        return NextResponse.json({ error: "旅程名稱不能為空" }, { status: 400 })
       }
       updateData.name = name.trim()
     }
@@ -294,15 +294,15 @@ export async function PUT(
 
     return NextResponse.json(project)
   } catch (error) {
-    console.error("更新專案錯誤:", error)
+    console.error("更新旅程錯誤:", error)
     return NextResponse.json(
-      { error: "更新專案失敗" },
+      { error: "更新旅程失敗" },
       { status: 500 }
     )
   }
 }
 
-// 刪除專案（只有創建者可以刪除）
+// 刪除旅程（只有創建者可以刪除）
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -319,23 +319,23 @@ export async function DELETE(
     })
 
     if (!project) {
-      return NextResponse.json({ error: "專案不存在" }, { status: 404 })
+      return NextResponse.json({ error: "旅程不存在" }, { status: 404 })
     }
 
-    // 只有創建者可以刪除專案
+    // 只有創建者可以刪除旅程
     if (project.createdBy !== authUser.id) {
-      return NextResponse.json({ error: "只有創建者可以刪除專案" }, { status: 403 })
+      return NextResponse.json({ error: "只有創建者可以刪除旅程" }, { status: 403 })
     }
 
     await prisma.project.delete({
       where: { id: id },
     })
 
-    return NextResponse.json({ message: "專案已刪除" })
+    return NextResponse.json({ message: "旅程已刪除" })
   } catch (error) {
-    console.error("刪除專案錯誤:", error)
+    console.error("刪除旅程錯誤:", error)
     return NextResponse.json(
-      { error: "刪除專案失敗" },
+      { error: "刪除旅程失敗" },
       { status: 500 }
     )
   }

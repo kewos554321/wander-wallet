@@ -128,7 +128,7 @@ function normalizeValue(value: unknown): unknown {
 }
 
 /**
- * 獲取專案的操作歷史紀錄
+ * 獲取旅程的操作歷史紀錄
  */
 export async function getActivityLogs(
   projectId: string,

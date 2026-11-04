@@ -87,7 +87,7 @@ describe("POST /api/projects/join", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("專案 ID 必填")
+    expect(data.error).toBe("旅程 ID 必填")
   })
 
   it("should return 404 if project does not exist", async () => {
@@ -102,7 +102,7 @@ describe("POST /api/projects/join", () => {
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toBe("專案不存在")
+    expect(data.error).toBe("旅程不存在")
   })
 
   it("should return 400 if project joinMode is claim_only", async () => {
@@ -122,7 +122,7 @@ describe("POST /api/projects/join", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("此專案僅允許認領現有佔位成員，請選擇一位成員進行認領")
+    expect(data.error).toBe("此旅程僅允許認領現有佔位旅伴，請選擇一位旅伴進行認領")
   })
 
   it("should allow join when joinMode is create_only", async () => {
@@ -185,7 +185,7 @@ describe("POST /api/projects/join", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("您已經是此專案的成員")
+    expect(data.error).toBe("您已經是此旅程的旅伴")
   })
 
   it("should return 404 if user does not exist in database", async () => {
@@ -288,6 +288,6 @@ describe("POST /api/projects/join", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("加入專案失敗")
+    expect(data.error).toBe("加入旅程失敗")
   })
 })

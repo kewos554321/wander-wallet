@@ -3,6 +3,7 @@ import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
 import { roundMajorToMinor } from "@/lib/currency-conversion"
 import { toMoneyInput } from "@/lib/money-input"
 import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
+import { moneyPrefix } from "@/components/v2/ui/currency-field"
 import type { PayerShare } from "@/lib/expense-payers"
 import type { DraftMember } from "./use-expense-draft"
 import { CurrencyToggle } from "./currency-toggle"
@@ -60,15 +61,15 @@ export function PayerPicker({
   // payers) reads as a plain mismatch otherwise, so call it out first.
   let payerStatus = "金額不符"
   if (payers.some((p) => p.amount < 0)) payerStatus = "含負數金額"
-  else if (payerDiff > 0) payerStatus = `超出 $${formatAmount(payerDiff, currency)}`
-  else if (payerDiff < 0) payerStatus = `尚差 $${formatAmount(Math.abs(payerDiff), currency)}`
+  else if (payerDiff > 0) payerStatus = `超出 ${moneyPrefix()}${formatAmount(payerDiff, currency)}`
+  else if (payerDiff < 0) payerStatus = `尚差 ${moneyPrefix()}${formatAmount(Math.abs(payerDiff), currency)}`
   // A set `displayCurrency` means the section is a glance view: amounts show in
   // that currency and every field becomes read-only (edits stay in the expense
   // currency, reached by flipping back).
   const viewCurrency = displayCurrency ?? currency
   const settleView = displayCurrency != null && displayCurrency !== currency && rate != null
   const convert = (n: number) => (settleView ? roundMajorToMinor((n ?? 0) * rate!, viewCurrency) : n)
-  const money = (n: number) => `${settleView ? "≈" : ""}$${formatAmount(convert(n), viewCurrency)}`
+  const money = (n: number) => `${settleView ? "≈" : ""}${moneyPrefix()}${formatAmount(convert(n), viewCurrency)}`
   const showCurrencyToggle =
     onDisplayCurrencyChange != null && !!projectCurrency && rate != null && currency !== projectCurrency
   const showLegacyEstimate = displayCurrency == null && !!projectCurrency && rate != null && currency !== projectCurrency
@@ -79,10 +80,10 @@ export function PayerPicker({
     !!projectCurrency && currency !== projectCurrency && (!showCurrencyToggle || settleView)
 
   return (
-    <div role="group" aria-label="付款成員" className={SECTION_CARD}>
+    <div role="group" aria-label="付款旅伴" className={SECTION_CARD}>
       <div className="mb-2.5">
         <p className={`flex items-center gap-2 ${SECTION_TITLE}`}>
-          付款成員
+          付款旅伴
           {showCurrencyToggle && (
             <CurrencyToggle
               currency={currency}
@@ -144,7 +145,7 @@ export function PayerPicker({
 
       {!settleView && payerIds.length === 0 && (
         <p className="rounded-v2-md border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
-          請選擇付款成員
+          請選擇付款旅伴
         </p>
       )}
 
@@ -174,7 +175,7 @@ export function PayerPicker({
                   <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{nameOf(p.memberId)}</span>
                   {editable ? (
                     <label className="flex w-24 shrink-0 items-center rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-[13px] font-bold">
-                      <span aria-hidden="true">$</span>
+                      <span aria-hidden="true">{moneyPrefix()}</span>
                       <input
                         aria-label={`${nameOf(p.memberId)}的付款金額`}
                         value={value}

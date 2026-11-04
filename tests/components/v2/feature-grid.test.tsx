@@ -3,8 +3,8 @@ import { render, screen, fireEvent, within } from "@testing-library/react"
 import { FeatureGrid } from "@/components/v2/project/feature-grid"
 
 const PRIMARY: [string, string][] = [
+  ["旅伴", "members"],
   ["結算", "settle"],
-  ["成員", "members"],
   ["統計", "stats"],
   ["匯率", "currency"],
 ]
@@ -39,7 +39,7 @@ describe("FeatureGrid", () => {
 
     const ordered: [string, string, string][] = [
       // food, transport, accommodation, ticket
-      ["成員", "bg-v2-coral-soft", "text-v2-coral-deep"],
+      ["旅伴", "bg-v2-coral-soft", "text-v2-coral-deep"],
       ["結算", "bg-v2-lake-soft", "text-v2-lake"],
       ["統計", "bg-v2-plum-soft", "text-v2-plum-strong"],
       ["匯率", "bg-v2-olive-soft", "text-v2-olive-strong"],

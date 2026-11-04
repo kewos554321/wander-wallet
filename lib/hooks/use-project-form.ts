@@ -6,9 +6,9 @@ import { DEFAULT_ICON_COVER } from "@/lib/covers"
 export type JoinMode = "both" | "create_only" | "claim_only"
 
 export const JOIN_MODE_OPTIONS: { value: JoinMode; label: string; description: string }[] = [
-  { value: "create_only", label: "僅建立新成員", description: "新成員只能建立自己的身份" },
-  { value: "claim_only", label: "僅取代佔位成員", description: "新成員只能取代現有的佔位成員" },
-  { value: "both", label: "以上兩者皆可", description: "新成員可選擇建立新身份或取代佔位成員" },
+  { value: "create_only", label: "僅建立新旅伴", description: "新旅伴只能建立自己的身份" },
+  { value: "claim_only", label: "僅取代佔位旅伴", description: "新旅伴只能取代現有的佔位旅伴" },
+  { value: "both", label: "以上兩者皆可", description: "新旅伴可選擇建立新身份或取代佔位旅伴" },
 ]
 
 export interface ProjectFormValues {

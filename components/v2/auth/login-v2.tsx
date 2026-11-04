@@ -43,7 +43,7 @@ export function LoginV2({ isDevMode, onLogin }: LoginV2Props) {
           {isDevMode ? "開發模式登入" : "使用 LINE 登入"}
         </button>
 
-        <p className="mb-0 mt-[18px] text-[11px] text-v2-ink-subtle">登入即表示你同意旅程記錄與成員共享你的消費資料</p>
+        <p className="mb-0 mt-[18px] text-[11px] text-v2-ink-subtle">登入即表示你同意旅程記錄與旅伴共享你的消費資料</p>
       </div>
     </UiV2Scope>
   )

@@ -25,23 +25,23 @@ export function MembersV2View(props: MembersV2ViewProps) {
 
   return (
     <>
-      <V2TopBar title="成員" backHref={`/projects/${project.id}`} titleClassName="text-[17px] font-semibold" />
+      <V2TopBar title="旅伴" backHref={`/projects/${project.id}`} titleClassName="text-[17px] font-semibold" />
       <div className="mx-4 mb-4 mt-3.5 rounded-2xl border border-v2-line bg-v2-surface p-4">
         <div className="mb-1 flex items-center justify-between">
-          <p className="m-0 text-[13px] font-bold text-v2-lake">成員列表</p>
+          <p className="m-0 text-[13px] font-bold text-v2-lake">旅伴列表</p>
           <div className="flex items-center gap-2">
-            <button type="button" aria-label="邀請成員" title="邀請成員" onClick={props.onInvite} className={pillButton}>
+            <button type="button" aria-label="邀請旅伴" title="邀請旅伴" onClick={props.onInvite} className={pillButton}>
               <Share2 className="h-[15px] w-[15px]" strokeWidth={1.8} aria-hidden="true" />
               分享
             </button>
-            <button type="button" aria-label="手動新增成員" title="手動新增" onClick={props.onAdd} className={pillButton}>
+            <button type="button" aria-label="手動新增旅伴" title="手動新增" onClick={props.onAdd} className={pillButton}>
               <UserPlus className="h-[15px] w-[15px]" strokeWidth={1.8} aria-hidden="true" />
-              增加成員
+              增加旅伴
             </button>
           </div>
         </div>
         <div className="mb-3">
-          <span className="text-xs text-v2-ink-muted">成員組成 · {project.members.length} 位旅伴</span>
+          <span className="text-xs text-v2-ink-muted">旅伴組成 · {project.members.length} 位旅伴</span>
         </div>
 
         {project.members.map((member, i) => {
@@ -69,7 +69,7 @@ export function MembersV2View(props: MembersV2ViewProps) {
                   <span className="text-[13px] font-bold">{member.displayName}</span>
                   {isCreator && <span className={`${badge} bg-v2-lake-soft py-0.5 text-v2-lake`}>建立者</span>}
                   {isMe && <span className={`${badge} border border-v2-lake-border bg-v2-surface py-px text-v2-lake`}>你</span>}
-                  {isPlaceholder && <span className={`${badge} bg-v2-sand py-0.5 text-v2-ink-muted`}>佔位成員</span>}
+                  {isPlaceholder && <span className={`${badge} bg-v2-sand py-0.5 text-v2-ink-muted`}>佔位旅伴</span>}
                 </span>
                 <span className={`mt-0.5 block text-xs ${isPlaceholder ? "text-v2-ink-subtle" : "text-v2-ink-muted"}`}>
                   {isPlaceholder ? "尚未加入" : member.user?.email}
@@ -93,7 +93,7 @@ export function MembersV2View(props: MembersV2ViewProps) {
       <div className="mx-4 mb-4 rounded-2xl border border-v2-line bg-v2-surface">
         <Link
           href={`/projects/${project.id}/settings`}
-          aria-label={`成員加入方式，目前為${joinModeOption.label}，前往專案設定修改`}
+          aria-label={`旅伴加入方式，目前為${joinModeOption.label}，前往旅程設定修改`}
           className="flex items-center gap-3 px-4 py-3.5"
         >
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-v2-lake-soft text-v2-lake" aria-hidden="true">
@@ -101,7 +101,7 @@ export function MembersV2View(props: MembersV2ViewProps) {
           </span>
           <span className="min-w-0 flex-1">
             <span className="flex items-center justify-between gap-2">
-              <span className="text-[13px] font-semibold">成員加入方式</span>
+              <span className="text-[13px] font-semibold">旅伴加入方式</span>
               <span className="shrink-0 rounded-full bg-v2-lake-soft px-2 py-0.5 text-[11px] font-bold text-v2-lake">
                 {joinModeOption.label}
               </span>

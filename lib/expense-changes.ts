@@ -62,7 +62,7 @@ export function buildExpenseChanges(
     })
   }
   if (payerKey(original.payers) !== payerKey(next.payers)) {
-    changes.push({ field: "payer", label: "付款成員", oldValue: original.payerLabel, newValue: next.payerLabel })
+    changes.push({ field: "payer", label: "付款旅伴", oldValue: original.payerLabel, newValue: next.payerLabel })
   }
   const oldDate = format(original.expenseDate, "yyyy/MM/dd")
   const newDate = format(next.expenseDate, "yyyy/MM/dd")

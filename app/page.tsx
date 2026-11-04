@@ -84,12 +84,12 @@ const faqs = [
         answer: "不需要！Wander Wallet 是 LIFF（LINE Front-end Framework）應用程式，直接在 LINE 中開啟即可使用，無需額外安裝。"
       },
       {
-        question: "如何建立新的旅行專案？",
-        answer: "點擊首頁的「建立專案」按鈕，輸入旅行名稱、選擇主要幣別，即可開始。你可以之後再邀請成員加入。"
+        question: "如何建立新的旅行旅程？",
+        answer: "點擊首頁的「建立旅程」按鈕，輸入旅行名稱、選擇主要幣別，即可開始。你可以之後再邀請旅伴加入。"
       },
       {
-        question: "可以同時管理多個旅行專案嗎？",
-        answer: "可以！你可以建立多個專案，每個專案都是獨立的，方便你管理不同的旅行或活動。"
+        question: "可以同時管理多個旅行旅程嗎？",
+        answer: "可以！你可以建立多個旅程，每個旅程都是獨立的，方便你管理不同的旅行或活動。"
       }
     ]
   },
@@ -98,19 +98,19 @@ const faqs = [
     items: [
       {
         question: "如何新增一筆支出？",
-        answer: "進入專案後點擊「新增支出」，輸入金額、描述、選擇付款人和分攤成員。你也可以使用語音輸入或拍照發票來快速記錄。"
+        answer: "進入旅程後點擊「新增支出」，輸入金額、描述、選擇付款人和分攤旅伴。你也可以使用語音輸入或拍照發票來快速記錄。"
       },
       {
         question: "可以支援多種幣別嗎？",
-        answer: "可以！每個專案可以設定主要幣別，記帳時也可以選擇其他幣別，系統會自動依匯率轉換計算。"
+        answer: "可以！每個旅程可以設定主要幣別，記帳時也可以選擇其他幣別，系統會自動依匯率轉換計算。"
       },
       {
         question: "如何查看誰該付錢給誰？",
-        answer: "進入專案的「結算」頁面，系統會自動計算最佳化的付款方式，讓轉帳次數降到最少。"
+        answer: "進入旅程的「結算」頁面，系統會自動計算最佳化的付款方式，讓轉帳次數降到最少。"
       },
       {
-        question: "支出可以只讓部分成員分攤嗎？",
-        answer: "可以！新增支出時可以自由選擇要分攤的成員，也可以設定每人不同的分攤金額。"
+        question: "支出可以只讓部分旅伴分攤嗎？",
+        answer: "可以！新增支出時可以自由選擇要分攤的旅伴，也可以設定每人不同的分攤金額。"
       },
       {
         question: "可以修改或刪除已記錄的支出嗎？",
@@ -136,11 +136,11 @@ const faqs = [
     ]
   },
   {
-    category: "成員與通知",
+    category: "旅伴與通知",
     items: [
       {
-        question: "如何邀請朋友加入專案？",
-        answer: "在專案設定中點擊「分享」，複製專屬連結分享到 LINE 群組。朋友點擊連結後即可加入專案。"
+        question: "如何邀請朋友加入旅程？",
+        answer: "在旅程設定中點擊「分享」，複製專屬連結分享到 LINE 群組。朋友點擊連結後即可加入旅程。"
       },
       {
         question: "新支出會通知群組嗎？",
@@ -152,7 +152,7 @@ const faqs = [
       },
       {
         question: "朋友還沒有 LINE 帳號怎麼辦？",
-        answer: "你可以先用朋友的名字新增為「佔位成員」，之後朋友加入時可以認領該成員，所有支出紀錄會自動綁定。"
+        answer: "你可以先用朋友的名字新增為「佔位旅伴」，之後朋友加入時可以認領該旅伴，所有支出紀錄會自動綁定。"
       }
     ]
   },
@@ -161,11 +161,11 @@ const faqs = [
     items: [
       {
         question: "可以看到消費統計嗎？",
-        answer: "可以！進入專案的「統計」頁面，可以查看各分類支出佔比、每日消費趨勢、成員消費排行等圖表分析。"
+        answer: "可以！進入旅程的「統計」頁面，可以查看各分類支出佔比、每日消費趨勢、旅伴消費排行等圖表分析。"
       },
       {
         question: "如何匯出帳目紀錄？",
-        answer: "在專案的「匯出」頁面，可以選擇匯出 CSV 或 PDF 格式，方便存檔或分享給成員。"
+        answer: "在旅程的「匯出」頁面，可以選擇匯出 CSV 或 PDF 格式，方便存檔或分享給旅伴。"
       },
       {
         question: "可以記錄消費地點嗎？",
@@ -178,7 +178,7 @@ const faqs = [
     items: [
       {
         question: "我的資料安全嗎？",
-        answer: "我們重視你的隱私。所有資料都經過加密傳輸與儲存，只有專案成員能看到該專案的支出紀錄。"
+        answer: "我們重視你的隱私。所有資料都經過加密傳輸與儲存，只有旅程旅伴能看到該旅程的支出紀錄。"
       },
       {
         question: "如何登出帳號？",
@@ -337,7 +337,7 @@ export default function HomePage() {
             <FeatureCard
               icon={<MessageCircle className="w-6 h-6" />}
               title="LINE 通知"
-              description="新增支出時自動通知群組成員"
+              description="新增支出時自動通知群組旅伴"
             />
             <FeatureCard
               icon={<Camera className="w-6 h-6" />}
@@ -357,7 +357,7 @@ export default function HomePage() {
             <FeatureCard
               icon={<Share2 className="w-6 h-6" />}
               title="一鍵分享"
-              description="產生專案邀請連結，快速邀請好友加入"
+              description="產生旅程邀請連結，快速邀請好友加入"
             />
             <FeatureCard
               icon={<FileDown className="w-6 h-6" />}
@@ -393,18 +393,18 @@ export default function HomePage() {
           <div className="space-y-4">
             <TutorialStep
               step={1}
-              title="建立旅行專案"
+              title="建立旅行旅程"
               description="輸入旅行名稱、選擇幣別，即可開始"
             />
             <TutorialStep
               step={2}
-              title="邀請成員加入"
-              description="分享專案連結到 LINE 群組，點擊即可加入"
+              title="邀請旅伴加入"
+              description="分享旅程連結到 LINE 群組，點擊即可加入"
             />
             <TutorialStep
               step={3}
               title="記錄每筆支出"
-              description="輸入金額、選擇分攤成員，系統自動計算"
+              description="輸入金額、選擇分攤旅伴，系統自動計算"
             />
           </div>
         </div>

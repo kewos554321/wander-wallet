@@ -58,7 +58,7 @@ describe.skipIf(SKIP_INTEGRATION)("parseExpenses Integration (multi-expense)", (
     // 每筆費用都應該有小華作為唯一付款人（全額）
     result.expenses.forEach(expense => {
       expect(expense.payers).toEqual([{ memberId: "member-2", amount: expense.amount }])
-      expect(expense.participantIds).toHaveLength(3) // 全部成員
+      expect(expense.participantIds).toHaveLength(3) // 全部旅伴
     })
   }, 30000)
 

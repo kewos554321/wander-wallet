@@ -40,7 +40,7 @@ export function useProjectMembers(projectId: string) {
         router.push("/projects")
       }
     } catch {
-      console.error("獲取專案錯誤")
+      console.error("獲取旅程錯誤")
     } finally {
       setLoading(false)
     }
@@ -114,7 +114,7 @@ export function useProjectMembers(projectId: string) {
       try {
         const results = await Promise.all(memberIds.map(deleteRequest))
         const failCount = results.filter((res) => !res.ok).length
-        if (failCount > 0) alert(`${failCount} 位成員移除失敗`)
+        if (failCount > 0) alert(`${failCount} 位旅伴移除失敗`)
         await refetch()
       } catch {
         alert("批次移除失敗")

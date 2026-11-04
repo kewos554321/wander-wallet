@@ -95,7 +95,7 @@ describe("GeneralSettingsV2", () => {
 
   it("explains the preference currency under the card title", () => {
     render(<GeneralSettingsV2 />)
-    const copy = screen.getByText("建立新專案時預設使用的幣別；專案內以結算幣別為準")
+    const copy = screen.getByText("建立新旅程時預設使用的幣別；旅程內以結算幣別為準")
     const control = screen.getByLabelText("預設幣別")
     expect(copy.compareDocumentPosition(control) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(screen.queryByText("新增支出時優先使用此幣別")).not.toBeInTheDocument()

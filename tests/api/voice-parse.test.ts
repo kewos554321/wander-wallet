@@ -117,7 +117,7 @@ describe("POST /api/voice/parse", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("專案沒有成員")
+    expect(data.error).toBe("旅程沒有旅伴")
   })
 
   it("should return 400 if members is undefined", async () => {
@@ -134,7 +134,7 @@ describe("POST /api/voice/parse", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("專案沒有成員")
+    expect(data.error).toBe("旅程沒有旅伴")
   })
 
   it("should parse transcript successfully", async () => {

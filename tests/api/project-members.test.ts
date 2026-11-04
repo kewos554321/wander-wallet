@@ -96,7 +96,7 @@ describe("GET /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("無權限訪問此專案")
+    expect(data.error).toBe("無權限訪問此旅程")
   })
 
   it("should return members list", async () => {
@@ -123,7 +123,7 @@ describe("GET /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("獲取成員列表失敗")
+    expect(data.error).toBe("獲取旅伴列表失敗")
   })
 })
 
@@ -137,7 +137,7 @@ describe("POST /api/projects/[id]/members", () => {
 
     const req = new NextRequest("http://localhost:3000/api/projects/project-123/members", {
       method: "POST",
-      body: JSON.stringify({ name: "新成員" }),
+      body: JSON.stringify({ name: "新旅伴" }),
     })
     const response = await POST(req, { params: createParams("project-123") })
     const data = await response.json()
@@ -152,13 +152,13 @@ describe("POST /api/projects/[id]/members", () => {
 
     const req = new NextRequest("http://localhost:3000/api/projects/project-123/members", {
       method: "POST",
-      body: JSON.stringify({ name: "新成員" }),
+      body: JSON.stringify({ name: "新旅伴" }),
     })
     const response = await POST(req, { params: createParams("project-123") })
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("無權限訪問此專案")
+    expect(data.error).toBe("無權限訪問此旅程")
   })
 
   it("should return 400 if name is missing", async () => {
@@ -198,25 +198,25 @@ describe("POST /api/projects/[id]/members", () => {
       id: "member-new",
       projectId: "project-123",
       userId: null,
-      displayName: "新成員",
+      displayName: "新旅伴",
       role: "member",
       user: null,
     } as never)
 
     const req = new NextRequest("http://localhost:3000/api/projects/project-123/members", {
       method: "POST",
-      body: JSON.stringify({ name: "新成員" }),
+      body: JSON.stringify({ name: "新旅伴" }),
     })
     const response = await POST(req, { params: createParams("project-123") })
     const data = await response.json()
 
     expect(response.status).toBe(201)
-    expect(data.displayName).toBe("新成員")
+    expect(data.displayName).toBe("新旅伴")
     expect(data.role).toBe("member")
     expect(prisma.projectMember.create).toHaveBeenCalledWith({
       data: {
         projectId: "project-123",
-        displayName: "新成員",
+        displayName: "新旅伴",
         role: "member",
       },
       include: {
@@ -237,20 +237,20 @@ describe("POST /api/projects/[id]/members", () => {
     vi.mocked(prisma.projectMember.findFirst).mockResolvedValue(mockMembership as never)
     vi.mocked(prisma.projectMember.create).mockResolvedValue({
       id: "member-new",
-      displayName: "新成員",
+      displayName: "新旅伴",
       role: "member",
     } as never)
 
     const req = new NextRequest("http://localhost:3000/api/projects/project-123/members", {
       method: "POST",
-      body: JSON.stringify({ name: "  新成員  " }),
+      body: JSON.stringify({ name: "  新旅伴  " }),
     })
     await POST(req, { params: createParams("project-123") })
 
     expect(prisma.projectMember.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          displayName: "新成員",
+          displayName: "新旅伴",
         }),
       })
     )
@@ -263,13 +263,13 @@ describe("POST /api/projects/[id]/members", () => {
 
     const req = new NextRequest("http://localhost:3000/api/projects/project-123/members", {
       method: "POST",
-      body: JSON.stringify({ name: "新成員" }),
+      body: JSON.stringify({ name: "新旅伴" }),
     })
     const response = await POST(req, { params: createParams("project-123") })
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("新增成員失敗")
+    expect(data.error).toBe("新增旅伴失敗")
   })
 })
 
@@ -303,7 +303,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("成員ID必填")
+    expect(data.error).toBe("旅伴ID必填")
   })
 
   it("should return 404 if project not found", async () => {
@@ -318,7 +318,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toBe("專案不存在")
+    expect(data.error).toBe("旅程不存在")
   })
 
   it("should return 403 if not the project creator", async () => {
@@ -336,7 +336,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("只有創建者可以移除成員")
+    expect(data.error).toBe("只有創建者可以移除旅伴")
   })
 
   it("should return 404 if member not found", async () => {
@@ -355,7 +355,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toBe("成員不存在")
+    expect(data.error).toBe("旅伴不存在")
   })
 
   it("should return 404 if member belongs to different project", async () => {
@@ -377,7 +377,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toBe("成員不存在")
+    expect(data.error).toBe("旅伴不存在")
   })
 
   it("should return 400 if trying to remove self", async () => {
@@ -502,7 +502,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.message).toBe("成員已移除")
+    expect(data.message).toBe("旅伴已移除")
     expect(prisma.projectMember.delete).toHaveBeenCalledWith({
       where: { id: "member-2" },
     })
@@ -520,6 +520,6 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("移除成員失敗")
+    expect(data.error).toBe("移除旅伴失敗")
   })
 })

@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     if (!members || members.length === 0) {
       return NextResponse.json(
-        { error: "專案沒有成員" },
+        { error: "旅程沒有旅伴" },
         { status: 400 }
       )
     }

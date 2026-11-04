@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
-// 加入專案
+// 加入旅程
 export async function POST(req: NextRequest) {
   try {
     const authUser = await getAuthUser(req)
@@ -14,27 +14,27 @@ export async function POST(req: NextRequest) {
     const { projectId } = body
 
     if (!projectId) {
-      return NextResponse.json({ error: "專案 ID 必填" }, { status: 400 })
+      return NextResponse.json({ error: "旅程 ID 必填" }, { status: 400 })
     }
 
-    // 檢查專案是否存在
+    // 檢查旅程是否存在
     const project = await prisma.project.findUnique({
       where: { id: projectId },
     })
 
     if (!project) {
-      return NextResponse.json({ error: "專案不存在" }, { status: 404 })
+      return NextResponse.json({ error: "旅程不存在" }, { status: 404 })
     }
 
-    // 檢查加入模式是否允許建立新成員
+    // 檢查加入模式是否允許建立新旅伴
     if (project.joinMode === "claim_only") {
       return NextResponse.json(
-        { error: "此專案僅允許認領現有佔位成員，請選擇一位成員進行認領" },
+        { error: "此旅程僅允許認領現有佔位旅伴，請選擇一位旅伴進行認領" },
         { status: 400 }
       )
     }
 
-    // 檢查用戶是否已經是成員
+    // 檢查用戶是否已經是旅伴
     const existingMembership = await prisma.projectMember.findFirst({
       where: {
         projectId,
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (existingMembership) {
-      return NextResponse.json({ error: "您已經是此專案的成員" }, { status: 400 })
+      return NextResponse.json({ error: "您已經是此旅程的旅伴" }, { status: 400 })
     }
 
     // 獲取用戶資料以取得顯示名稱
@@ -61,9 +61,9 @@ export async function POST(req: NextRequest) {
     }
 
     // 使用用戶名稱或 email 作為顯示名稱
-    const displayName = user.name || user.email?.split("@")[0] || "成員"
+    const displayName = user.name || user.email?.split("@")[0] || "旅伴"
 
-    // 建立成員記錄
+    // 建立旅伴記錄
     const member = await prisma.projectMember.create({
       data: {
         projectId,
@@ -85,9 +85,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(member, { status: 201 })
   } catch (error) {
-    console.error("加入專案錯誤:", error)
+    console.error("加入旅程錯誤:", error)
     return NextResponse.json(
-      { error: "加入專案失敗" },
+      { error: "加入旅程失敗" },
       { status: 500 }
     )
   }

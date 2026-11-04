@@ -6,6 +6,7 @@ import { fromMinorUnits, roundMajorToMinor } from "@/lib/currency-conversion"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { toMoneyInput } from "@/lib/money-input"
 import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
+import { moneyPrefix } from "@/components/v2/ui/currency-field"
 import type { DraftMember } from "./use-expense-draft"
 import { memberPillClass } from "./payer-picker"
 import { CurrencyToggle } from "./currency-toggle"
@@ -49,7 +50,7 @@ export function SplitEditor({
   // Currency code only on totals; per-member amounts show the number alone.
   const num = (n: number) => formatAmount(view(n), viewCurrency)
   // A settlement figure is an approximation, so it is marked with ≈.
-  const money = (n: number) => `${settleView ? "≈" : ""}$${num(n)}`
+  const money = (n: number) => `${settleView ? "≈" : ""}${moneyPrefix()}${num(n)}`
   const name = (id: string) => members.find((m) => m.id === id)?.displayName ?? ""
   // Shared-pool portion only: personal items are shown in their own section.
   const personalOf = (id: string) => derived.splitInput.personalItems[id]?.reduce((s, i) => s + i.amount, 0) ?? 0
@@ -70,11 +71,11 @@ export function SplitEditor({
     !!projectCurrency && currency !== projectCurrency && (!showCurrencyToggle || settleView)
 
   return (
-    <section aria-label="分攤成員" className={SECTION_CARD}>
+    <section aria-label="分攤旅伴" className={SECTION_CARD}>
       <div className="mb-2.5 flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className={`m-0 flex items-center gap-2 ${SECTION_TITLE}`}>
-            分攤成員
+            分攤旅伴
             {showCurrencyToggle && (
               <CurrencyToggle
                 currency={currency}
@@ -154,7 +155,7 @@ export function SplitEditor({
           )}
           {!settleView && state.personalMembers.length === 0 ? (
             <p className="rounded-v2-md border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
-              請選擇成員
+              請選擇旅伴
             </p>
           ) : state.personalMembers.length > 0 ? (
             <div className="overflow-hidden rounded-v2-md border border-v2-line bg-v2-paper">
@@ -217,7 +218,7 @@ export function SplitEditor({
                               className={`${itemInput} flex-[2]`}
                             />
                             <label className={`${itemInput} flex flex-1 items-center gap-1`}>
-                              <span aria-hidden="true">$</span>
+                              <span aria-hidden="true">{moneyPrefix()}</span>
                               <input
                                 aria-label={`${name(id)}的品項金額 ${idx + 1}`}
                                 placeholder="金額"
@@ -266,7 +267,7 @@ export function SplitEditor({
                 collisionPadding={12}
                 className="w-auto max-w-[15rem] text-xs leading-relaxed"
               >
-                除不盡的零頭會依公平原則輪替，由不同成員承擔，長期平均。
+                除不盡的零頭會依公平原則輪替，由不同旅伴承擔，長期平均。
               </PopoverContent>
             </Popover>
           )}
@@ -308,7 +309,7 @@ export function SplitEditor({
       )}
       {!settleView && state.pool.length === 0 && (
         <p className="mt-2.5 rounded-v2-md border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
-          請選擇分攤成員
+          請選擇分攤旅伴
         </p>
       )}
       {state.pool.length > 0 && (
@@ -335,7 +336,7 @@ export function SplitEditor({
                   {isCustom && !settleView ? (
                     // An emptied input keeps the pinned state; the draft treats "" as auto.
                     <label className="flex w-24 items-center rounded-lg border border-v2-lake-border bg-v2-surface px-2.5 py-1.5 text-[13px] font-bold">
-                      <span aria-hidden="true">$</span>
+                      <span aria-hidden="true">{moneyPrefix()}</span>
                       <input
                         aria-label={`${name(id)}的分攤金額`}
                         inputMode="decimal"

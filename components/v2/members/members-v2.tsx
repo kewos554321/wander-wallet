@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, type ReactNode } from "react"
-import { AddMemberDialog } from "@/components/members/add-member-dialog"
+import { AddMemberSheet } from "@/components/v2/members/add-member-sheet"
 import { InviteSheetV2 } from "@/components/v2/project/invite-sheet-v2"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { useProjectMembers } from "@/lib/hooks/useProjectMembers"
@@ -13,7 +13,7 @@ export function MembersV2({ projectId }: { projectId: string }) {
   const [showAdd, setShowAdd] = useState(false)
 
   async function removeOne(memberId: string) {
-    if (!confirm("確定要移除這位成員嗎？")) return
+    if (!confirm("確定要移除這位旅伴嗎？")) return
     await m.removeMember(memberId)
   }
 
@@ -21,7 +21,7 @@ export function MembersV2({ projectId }: { projectId: string }) {
   if (m.loading) {
     content = (
       <>
-        <V2TopBar title="成員" backHref={`/projects/${projectId}`} titleClassName="text-[17px] font-semibold" />
+        <V2TopBar title="旅伴" backHref={`/projects/${projectId}`} titleClassName="text-[17px] font-semibold" />
         <div data-testid="v2-members-skeleton" className="space-y-3 p-4">
           <div className="h-64 animate-pulse rounded-2xl bg-v2-sand" />
         </div>
@@ -30,8 +30,8 @@ export function MembersV2({ projectId }: { projectId: string }) {
   } else if (!m.project) {
     content = (
       <>
-        <V2TopBar title="成員" backHref={`/projects/${projectId}`} titleClassName="text-[17px] font-semibold" />
-        <p className="py-8 text-center text-v2-ink-muted">專案不存在</p>
+        <V2TopBar title="旅伴" backHref={`/projects/${projectId}`} titleClassName="text-[17px] font-semibold" />
+        <p className="py-8 text-center text-v2-ink-muted">旅程不存在</p>
       </>
     )
   } else {
@@ -47,7 +47,7 @@ export function MembersV2({ projectId }: { projectId: string }) {
           onRemove={removeOne}
         />
         <InviteSheetV2 open={showInvite} onOpenChange={setShowInvite} projectId={m.project.id} projectName={m.project.name} />
-        <AddMemberDialog open={showAdd} onOpenChange={setShowAdd} onAdd={m.addMember} />
+        <AddMemberSheet open={showAdd} onOpenChange={setShowAdd} onAdd={m.addMember} />
       </>
     )
   }

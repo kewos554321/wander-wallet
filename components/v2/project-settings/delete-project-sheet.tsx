@@ -24,7 +24,7 @@ export function DeleteProjectSheet({
   return (
     <Sheet open={open} onClose={onCancel} label="確認刪除旅程">
       <h2 className="m-0 mb-2 font-v2-serif text-base font-semibold">確認刪除旅程</h2>
-      <p className="mb-3 text-xs text-v2-ink-muted">刪除旅程後，所有成員、支出紀錄都會永久移除，此操作無法復原。請輸入「刪除」以確認。</p>
+      <p className="mb-3 text-xs text-v2-ink-muted">刪除旅程後，所有旅伴、支出紀錄都會永久移除，此操作無法復原。請輸入「刪除」以確認。</p>
       <input
         aria-label="輸入刪除確認"
         value={text}

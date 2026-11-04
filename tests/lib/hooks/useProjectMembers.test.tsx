@@ -108,6 +108,6 @@ describe("useProjectMembers", () => {
     await act(async () => {
       await result.current.batchRemove(["m2", "m3"])
     })
-    expect(window.alert).toHaveBeenCalledWith("1 位成員移除失敗")
+    expect(window.alert).toHaveBeenCalledWith("1 位旅伴移除失敗")
   })
 })

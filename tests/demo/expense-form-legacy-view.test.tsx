@@ -113,14 +113,14 @@ describe("ExpenseFormLegacyView", () => {
     rerender()
     // Editing in the expense currency: no note.
     expect(screen.queryByTestId("conversion-note")).not.toBeInTheDocument()
-    const payer = screen.getByRole("group", { name: "付款成員" })
+    const payer = screen.getByRole("group", { name: "付款旅伴" })
     fireEvent.click(within(payer).getByRole("button", { name: "顯示 TWD" }))
     rerender()
     expect(
-      within(screen.getByRole("group", { name: "付款成員" })).getByTestId("conversion-note"),
+      within(screen.getByRole("group", { name: "付款旅伴" })).getByTestId("conversion-note"),
     ).toHaveTextContent("僅為換算預覽；實際結算會先換匯，金額可能略有差異。")
     expect(
-      within(screen.getByRole("region", { name: "分攤成員" })).getByTestId("conversion-note"),
+      within(screen.getByRole("region", { name: "分攤旅伴" })).getByTestId("conversion-note"),
     ).toHaveTextContent("僅為換算預覽；實際結算會先換匯，金額可能略有差異。")
   })
 
@@ -134,16 +134,16 @@ describe("ExpenseFormLegacyView", () => {
       hook.result.current.actions.setCurrency("JPY")
     })
     rerender()
-    expect(within(screen.getByRole("group", { name: "付款成員" })).getByText("金額相符")).toBeInTheDocument()
-    expect(within(screen.getByRole("region", { name: "分攤成員" })).getByText("金額相符")).toBeInTheDocument()
-    const payer = screen.getByRole("group", { name: "付款成員" })
+    expect(within(screen.getByRole("group", { name: "付款旅伴" })).getByText("金額相符")).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "分攤旅伴" })).getByText("金額相符")).toBeInTheDocument()
+    const payer = screen.getByRole("group", { name: "付款旅伴" })
     fireEvent.click(within(payer).getByRole("button", { name: "顯示 TWD" }))
     rerender()
     expect(
-      within(screen.getByRole("group", { name: "付款成員" })).queryByText("金額相符"),
+      within(screen.getByRole("group", { name: "付款旅伴" })).queryByText("金額相符"),
     ).not.toBeInTheDocument()
     expect(
-      within(screen.getByRole("region", { name: "分攤成員" })).queryByText("金額相符"),
+      within(screen.getByRole("region", { name: "分攤旅伴" })).queryByText("金額相符"),
     ).not.toBeInTheDocument()
   })
 
@@ -223,8 +223,8 @@ describe("ExpenseFormLegacyView", () => {
     expect(screen.queryByTestId("personal-project-estimate")).not.toBeInTheDocument()
     expect(screen.queryByTestId("pool-project-estimate")).not.toBeInTheDocument()
     expect(screen.queryByTestId("payer-project-estimate")).not.toBeInTheDocument()
-    const payer = screen.getByRole("group", { name: "付款成員" })
-    const split = screen.getByRole("region", { name: "分攤成員" })
+    const payer = screen.getByRole("group", { name: "付款旅伴" })
+    const split = screen.getByRole("region", { name: "分攤旅伴" })
     expect(within(payer).getByRole("group", { name: "顯示幣別" })).toBeInTheDocument()
     expect(within(split).getByRole("group", { name: "顯示幣別" })).toBeInTheDocument()
   })
@@ -239,8 +239,8 @@ describe("ExpenseFormLegacyView", () => {
       hook.result.current.actions.setCurrency("JPY")
     })
     rerender()
-    const payer = screen.getByRole("group", { name: "付款成員" })
-    const split = screen.getByRole("region", { name: "分攤成員" })
+    const payer = screen.getByRole("group", { name: "付款旅伴" })
+    const split = screen.getByRole("region", { name: "分攤旅伴" })
     // Original currency by default: JPY has no decimals.
     expect(within(payer).getByLabelText("小雨的付款金額")).toHaveTextContent("$1,000")
     expect(within(split).getByLabelText("小雨的分攤金額")).toHaveTextContent("$500")
@@ -267,7 +267,7 @@ describe("ExpenseFormLegacyView", () => {
       hook.result.current.actions.setCurrency("JPY")
     })
     rerender()
-    const payer = screen.getByRole("group", { name: "付款成員" })
+    const payer = screen.getByRole("group", { name: "付款旅伴" })
     fireEvent.click(within(payer).getByRole("button", { name: /小雨的付款金額均分/ }))
     rerender()
     expect(within(payer).getByLabelText("小雨的付款金額").tagName).toBe("INPUT")
@@ -288,7 +288,7 @@ describe("ExpenseFormLegacyView", () => {
       hook.result.current.actions.setCurrency("JPY")
     })
     rerender()
-    const split = screen.getByRole("region", { name: "分攤成員" })
+    const split = screen.getByRole("region", { name: "分攤旅伴" })
     expect(within(split).getByText("零頭")).toBeInTheDocument()
     fireEvent.click(within(split).getByRole("button", { name: "顯示 USD" }))
     rerender()
@@ -312,7 +312,7 @@ describe("ExpenseFormLegacyView", () => {
       hook.result.current.actions.updateItem("a", itemId, "amount", "100")
     })
     rerender()
-    const split = screen.getByRole("region", { name: "分攤成員" })
+    const split = screen.getByRole("region", { name: "分攤旅伴" })
     // Editing view: the item fields are inputs.
     expect(within(split).getByLabelText("小雨的品項名稱 1").tagName).toBe("INPUT")
     expect(within(split).getByLabelText("小雨的品項金額 1").tagName).toBe("INPUT")
@@ -338,8 +338,8 @@ describe("ExpenseFormLegacyView", () => {
       hook.result.current.actions.setCurrency("JPY")
     })
     rerender()
-    const payer = screen.getByRole("group", { name: "付款成員" })
-    const split = screen.getByRole("region", { name: "分攤成員" })
+    const payer = screen.getByRole("group", { name: "付款旅伴" })
+    const split = screen.getByRole("region", { name: "分攤旅伴" })
     // Edit view: member selection and the personal-items switch are present.
     expect(within(payer).getByRole("checkbox", { name: "小雨" })).toBeInTheDocument()
     expect(within(split).getByRole("button", { name: "小雨" })).toBeInTheDocument()
@@ -370,7 +370,7 @@ describe("ExpenseFormLegacyView", () => {
       hook.result.current.actions.togglePersonalMember("a")
     })
     rerender()
-    const split = screen.getByRole("region", { name: "分攤成員" })
+    const split = screen.getByRole("region", { name: "分攤旅伴" })
     fireEvent.click(within(split).getByRole("button", { name: "顯示 USD" }))
     rerender()
     const breakdown = within(split).getByRole("region", { name: "分攤明細" })
@@ -413,7 +413,7 @@ describe("ExpenseFormLegacyView", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("1280"))
     rerender()
-    const payer = screen.getByRole("group", { name: "付款成員" })
+    const payer = screen.getByRole("group", { name: "付款旅伴" })
     expect(within(payer).getByText("付款明細")).toBeInTheDocument()
     expect(within(payer).getByRole("button", { name: "全選" })).toBeInTheDocument()
     expect(within(payer).getAllByText("小雨")).toHaveLength(2)
@@ -431,7 +431,7 @@ describe("ExpenseFormLegacyView", () => {
       { memberId: "a", amount: 50 },
       { memberId: "b", amount: 50 },
     ])
-    const payer = screen.getByRole("group", { name: "付款成員" })
+    const payer = screen.getByRole("group", { name: "付款旅伴" })
     expect(within(payer).getByText("金額相符")).toBeInTheDocument()
   })
 
@@ -496,7 +496,7 @@ describe("ExpenseFormLegacyView", () => {
       { memberId: "a", amount: 50 },
       { memberId: "b", amount: 50 },
     ])
-    const payer = screen.getByRole("group", { name: "付款成員" })
+    const payer = screen.getByRole("group", { name: "付款旅伴" })
     expect(within(payer).getByRole("button", { name: "取消全選" })).toBeInTheDocument()
   })
 
@@ -513,20 +513,20 @@ describe("ExpenseFormLegacyView", () => {
     expect(hook.result.current.derived.error).toBe("付款金額合計超過支出金額")
     expect(screen.getByRole("alert")).toHaveTextContent("付款金額合計超過支出金額")
     // The auto payer goes negative; the badge names that rather than a plain mismatch.
-    expect(within(screen.getByRole("group", { name: "付款成員" })).getByText("含負數金額")).toBeInTheDocument()
+    expect(within(screen.getByRole("group", { name: "付款旅伴" })).getByText("含負數金額")).toBeInTheDocument()
     const submit = screen.getByRole("button", { name: /新增支出/ })
     expect(submit).toBeDisabled()
     fireEvent.click(submit)
     expect(onSubmit).not.toHaveBeenCalled()
   })
 
-  it("keeps the 付款成員 title inside its section card", () => {
+  it("keeps the 付款旅伴 title inside its section card", () => {
     renderForm()
-    const payer = screen.getByRole("group", { name: "付款成員" })
+    const payer = screen.getByRole("group", { name: "付款旅伴" })
     // A native fieldset renders its legend on the card border (outside the padded
     // content box); the payer section must use the same card container as siblings.
     expect(payer.tagName).not.toBe("FIELDSET")
-    const title = screen.getByText("付款成員")
+    const title = screen.getByText("付款旅伴")
     expect(title.tagName).toBe("P")
     expect(payer).toHaveClass("mx-4", "mb-4", "rounded-2xl", "border", "border-v2-line", "bg-v2-surface", "p-4")
     expect(payer).toContainElement(title)
@@ -536,7 +536,7 @@ describe("ExpenseFormLegacyView", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("1280"))
     rerender()
-    const payer = screen.getByRole("group", { name: "付款成員" })
+    const payer = screen.getByRole("group", { name: "付款旅伴" })
     expect(within(payer).getAllByText("小雨")).toHaveLength(2)
     // The equal amount is read-only until the pin opens it for editing.
     expect(within(payer).getByLabelText("小雨的付款金額").tagName).toBe("SPAN")
@@ -549,7 +549,7 @@ describe("ExpenseFormLegacyView", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
-    const split = screen.getByRole("region", { name: "分攤成員" })
+    const split = screen.getByRole("region", { name: "分攤旅伴" })
     // Switch off: the breakdown table is hidden.
     expect(within(split).queryByRole("region", { name: "分攤明細" })).not.toBeInTheDocument()
     // Turning the switch on switches to the table immediately, before picking a member.
@@ -579,15 +579,15 @@ describe("ExpenseFormLegacyView", () => {
     // No amount yet: the breakdown table is hidden and so is the match badge,
     // in both the payer and the split sections.
     expect(screen.queryByRole("region", { name: "分攤明細" })).not.toBeInTheDocument()
-    expect(within(screen.getByRole("region", { name: "分攤成員" })).queryByText("金額相符")).not.toBeInTheDocument()
-    expect(within(screen.getByRole("group", { name: "付款成員" })).queryByText("金額相符")).not.toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "分攤旅伴" })).queryByText("金額相符")).not.toBeInTheDocument()
+    expect(within(screen.getByRole("group", { name: "付款旅伴" })).queryByText("金額相符")).not.toBeInTheDocument()
   })
 
   it("shows how far short the split is when nobody is in the pool", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
-    const split = screen.getByRole("region", { name: "分攤成員" })
+    const split = screen.getByRole("region", { name: "分攤旅伴" })
     fireEvent.click(within(split).getByRole("button", { name: "取消全選" }))
     rerender()
     // Nothing is allocated against the 100 target.
@@ -598,7 +598,7 @@ describe("ExpenseFormLegacyView", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
-    const split = screen.getByRole("region", { name: "分攤成員" })
+    const split = screen.getByRole("region", { name: "分攤旅伴" })
     expect(within(split).queryByText(/共同分攤 \$.*= \$/)).not.toBeInTheDocument()
     expect(within(split).queryByText(/個人項目 \$/)).not.toBeInTheDocument()
   })
@@ -607,7 +607,7 @@ describe("ExpenseFormLegacyView", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
-    const split = screen.getByRole("region", { name: "分攤成員" })
+    const split = screen.getByRole("region", { name: "分攤旅伴" })
     // Nothing has been deducted yet: plain shared amount, no "剩餘" wording.
     expect(within(split).getByText("（$100）")).toBeInTheDocument()
     expect(within(split).queryByText(/剩餘/)).not.toBeInTheDocument()
@@ -617,7 +617,7 @@ describe("ExpenseFormLegacyView", () => {
     expect(within(split).getByText(/剩餘/)).toHaveTextContent("$100")
   })
 
-  it("groups the pool pills and the breakdown under the 分攤成員 region", () => {
+  it("groups the pool pills and the breakdown under the 分攤旅伴 region", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
@@ -625,7 +625,7 @@ describe("ExpenseFormLegacyView", () => {
     rerender()
     fireEvent.click(screen.getByRole("button", { name: "志明的個人項目" }))
     rerender()
-    const split = screen.getByRole("region", { name: "分攤成員" })
+    const split = screen.getByRole("region", { name: "分攤旅伴" })
     expect(within(split).getByRole("button", { name: "小雨" })).toHaveAttribute("aria-pressed", "true")
     expect(within(split).getByRole("region", { name: "分攤明細" })).toBeInTheDocument()
     expect(within(split).getByText(/剩餘/)).toBeInTheDocument()
@@ -635,18 +635,18 @@ describe("ExpenseFormLegacyView", () => {
     const { rerender } = renderForm()
     const toggle = screen.getByRole("switch", { name: "先扣個人項目" })
     expect(toggle).toHaveAttribute("aria-checked", "false")
-    expect(screen.queryByText("請選擇成員")).not.toBeInTheDocument()
+    expect(screen.queryByText("請選擇旅伴")).not.toBeInTheDocument()
     fireEvent.click(toggle)
     rerender()
     expect(screen.getByRole("switch", { name: "先扣個人項目" })).toHaveAttribute("aria-checked", "true")
-    expect(screen.getByText("請選擇成員")).toBeInTheDocument()
+    expect(screen.getByText("請選擇旅伴")).toBeInTheDocument()
   })
 
   it("toggles a member's participation in the shared pool", () => {
     const { hook, rerender } = renderForm()
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
-    const split = screen.getByRole("region", { name: "分攤成員" })
+    const split = screen.getByRole("region", { name: "分攤旅伴" })
     expect(within(split).getByRole("button", { name: "小雨" })).toHaveAttribute("aria-pressed", "true")
 
     fireEvent.click(within(split).getByRole("button", { name: "小雨" }))
@@ -716,7 +716,7 @@ describe("ExpenseFormLegacyView", () => {
     rerender()
     fireEvent.click(screen.getByRole("button", { name: "志明的個人項目" }))
     rerender()
-    const split = screen.getByRole("region", { name: "分攤成員" })
+    const split = screen.getByRole("region", { name: "分攤旅伴" })
     // The table replaces the text summary.
     expect(within(split).getByRole("region", { name: "分攤明細" })).toBeInTheDocument()
     expect(within(split).queryByText(/＋ 共同分攤 \$.*= \$/)).not.toBeInTheDocument()
@@ -808,7 +808,7 @@ describe("ExpenseFormLegacyView", () => {
     const { hook, rerender } = renderForm({ projectCurrency: "TWD" })
     act(() => hook.result.current.actions.setAmount("101"))
     rerender()
-    const split = screen.getByRole("region", { name: "分攤成員" })
+    const split = screen.getByRole("region", { name: "分攤旅伴" })
     expect(within(split).getByText(/零頭 \$1/)).toBeInTheDocument()
     expect(within(split).getByText("零頭")).toBeInTheDocument()
   })
@@ -830,10 +830,10 @@ describe("ExpenseFormLegacyView", () => {
 
   it("shows a dashed hint when nobody is in the shared pool", () => {
     const { hook, rerender } = renderForm()
-    expect(screen.queryByText("請選擇分攤成員")).not.toBeInTheDocument()
+    expect(screen.queryByText("請選擇分攤旅伴")).not.toBeInTheDocument()
     act(() => hook.result.current.actions.setPoolAll(false))
     rerender()
-    expect(screen.getByText("請選擇分攤成員")).toBeInTheDocument()
+    expect(screen.getByText("請選擇分攤旅伴")).toBeInTheDocument()
   })
 
   it("pins the current auto share when the pin button is pressed", () => {
@@ -919,7 +919,7 @@ describe("ExpenseFormLegacyView", () => {
     const table = screen.getByRole("region", { name: "分攤明細" })
     expect(within(table).getByText("（TWD）")).toBeInTheDocument()
     expect(within(table).getAllByRole("columnheader").map((c) => c.textContent)).toEqual([
-      "成員",
+      "旅伴",
       "個人項目",
       "共同分攤",
       "小計",
@@ -1078,7 +1078,7 @@ describe("ExpenseFormLegacyView", () => {
         { id: "b", displayName: "志明", image: null },
       ],
     })
-    const payer = screen.getByRole("group", { name: "付款成員" })
+    const payer = screen.getByRole("group", { name: "付款旅伴" })
     expect(payer.querySelector('img[src="https://cdn.example/xiaoyu.jpg"]')).toBeInTheDocument()
     expect(within(payer).getAllByText("志").length).toBeGreaterThan(0)
   })
@@ -1092,7 +1092,7 @@ describe("ExpenseFormLegacyView", () => {
     })
     act(() => hook.result.current.actions.setAmount("100"))
     rerender()
-    const split = screen.getByRole("region", { name: "分攤成員" })
+    const split = screen.getByRole("region", { name: "分攤旅伴" })
     expect(split.querySelector('img[src="https://cdn.example/xiaoyu.jpg"]')).toBeInTheDocument()
     expect(within(split).getAllByText("志").length).toBeGreaterThan(0)
   })

@@ -145,10 +145,10 @@ export function validateItems(
       return { index: i, message: `第 ${n} 筆${message}` }
     }
     if (issues.descMissing) return { index: i, message: `第 ${n} 筆請填寫描述，讓大家知道這筆是什麼` }
-    if (item.payerIds.length === 0) return { index: i, message: `第 ${n} 筆請選擇付款成員` }
+    if (item.payerIds.length === 0) return { index: i, message: `第 ${n} 筆請選擇付款旅伴` }
     if (derived.error === "付款金額合計超過支出金額") return { index: i, message: `第 ${n} 筆付款金額合計超過支出金額` }
     if (derived.error === "付款金額與支出金額不符") return { index: i, message: `第 ${n} 筆付款金額與支出金額不符` }
-    if (derived.splitInput.participantIds.length === 0) return { index: i, message: `第 ${n} 筆請選擇至少一位分攤成員` }
+    if (derived.splitInput.participantIds.length === 0) return { index: i, message: `第 ${n} 筆請選擇至少一位分攤旅伴` }
     const unnamed = derived.splitInput.participantIds.find((id) =>
       (item.personalMode ? item.personalItems[id] ?? [] : []).some((it) => !it.name.trim()),
     )

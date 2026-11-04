@@ -6,6 +6,7 @@
 
 import { useState } from "react"
 import { Plus, X } from "lucide-react"
+import { moneyPrefix } from "@/components/v2/ui/currency-field"
 import type { SplitDraftItem } from "@/lib/split-draft"
 import { amountLimitNote, sanitizeAmountInput } from "../split-guardrails"
 import { isIncompleteItem } from "../personal-item-state"
@@ -81,7 +82,7 @@ export function PersonalItemsEditor({
                       className={`${itemInput} flex-[2] ${nameMissing && incomplete ? itemInputError : ""}`}
                     />
                     <label className={`${itemInput} flex flex-1 items-center gap-1 ${amountMissing && incomplete ? itemInputError : ""}`}>
-                      <span className="text-v2-ink-muted" aria-hidden="true">$</span>
+                      <span className="text-v2-ink-muted" aria-hidden="true">{moneyPrefix()}</span>
                       <input
                         aria-label={`品項金額 ${idx + 1}`}
                         placeholder="金額"

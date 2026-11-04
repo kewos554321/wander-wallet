@@ -6,7 +6,7 @@
 // One member list holds everything: who splits, how much each owes, and a sum of
 // each person's own items. Reading order = the real maths (個人項目 deducted
 // first, remainder split):
-//   誰付這筆 [多人付款] → 共同分攤(剩餘) [全選][個人項目] → 每位成員一列
+//   誰付這筆 [多人付款] → 共同分攤(剩餘) [全選][個人項目] → 每位旅伴一列
 //   → 結果
 //
 //   · 多人付款 switch: off = one payer; on = multi payer with amount rows.
@@ -20,6 +20,7 @@ import { CheckCircle2, ChevronRight, Pin } from "lucide-react"
 import { memberPillClass } from "@/components/v2/expense-form/payer-picker"
 import { SECTION_CARD, SECTION_TITLE } from "@/components/v2/expense-form/section-card"
 import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
+import { moneyPrefix } from "@/components/v2/ui/currency-field"
 import { formatAmount } from "@/lib/constants/currencies"
 import { fromMinorUnits, roundMajorToMinor } from "@/lib/currency-conversion"
 import type { DraftMember, useExpenseDraft } from "@/components/v2/expense-form/use-expense-draft"
@@ -87,7 +88,7 @@ export function SplitPanel({
   // 7-digit amount at 320px without shrinking the type or wrapping.
   const money = (n: number) => {
     const v = view(n)
-    return `${settleView ? "≈" : ""}${v < 0 ? "−" : ""}$${formatAmount(Math.abs(v), viewCurrency)}`
+    return `${settleView ? "≈" : ""}${v < 0 ? "−" : ""}${moneyPrefix()}${formatAmount(Math.abs(v), viewCurrency)}`
   }
   const cellAmount = (n: number) => {
     const v = view(n)
@@ -188,7 +189,7 @@ export function SplitPanel({
             <div className="border-b border-v2-line-soft bg-v2-surface px-3 py-2 text-[11px] text-v2-ink-subtle">
               <div className={`grid ${platformGrid} items-center gap-2`}>
                 <span className="flex h-6 items-center justify-center" aria-hidden="true" />
-                <span className="text-left">成員</span>
+                <span className="text-left">旅伴</span>
                 <span className="text-right">付款金額</span>
               </div>
             </div>
@@ -218,7 +219,7 @@ export function SplitPanel({
                     ) : (
                       <button
                         type="button"
-                        aria-label={`調整${nameOf(p.memberId)}的付款金額（目前 $${formatAmount(p.amount, state.currency)}${showPayerMethod ? (payerPinned ? "，已固定" : `，${payerLabel}`) : ""}）`}
+                        aria-label={`調整${nameOf(p.memberId)}的付款金額（目前 ${moneyPrefix()}${formatAmount(p.amount, state.currency)}${showPayerMethod ? (payerPinned ? "，已固定" : `，${payerLabel}`) : ""}）`}
                         onClick={() => setPayerAmountSheetId(p.memberId)}
                         className={`${platformDetail} ${showPayerMethod ? "flex-col items-end gap-0.5" : ""} text-v2-ink`}
                       >
@@ -241,7 +242,7 @@ export function SplitPanel({
             <div className="border-b border-v2-line-soft bg-v2-surface px-1.5 py-2 text-[11px] text-v2-ink-subtle">
               <div className={`grid ${payerGridCols} items-center gap-1`}>
                 <span className="flex h-6 items-center justify-center" aria-hidden="true" />
-                <span className="text-left">成員</span>
+                <span className="text-left">旅伴</span>
                 <span className="text-right">付款金額</span>
               </div>
             </div>
@@ -262,7 +263,7 @@ export function SplitPanel({
                     ) : (
                       <button
                         type="button"
-                        aria-label={`調整${nameOf(p.memberId)}的付款金額（目前 $${formatAmount(p.amount, state.currency)}${pinned ? "，已固定" : "，自動平分"}）`}
+                        aria-label={`調整${nameOf(p.memberId)}的付款金額（目前 ${moneyPrefix()}${formatAmount(p.amount, state.currency)}${pinned ? "，已固定" : "，自動平分"}）`}
                         onClick={() => setPayerAmountSheetId(p.memberId)}
                         className={`${amountButton} justify-center text-v2-ink ${pinned ? "decoration-solid" : "decoration-dotted"}`}
                       >
@@ -338,7 +339,7 @@ export function SplitPanel({
           <div className="border-b border-v2-line-soft bg-v2-surface px-3 py-2 text-[11px] text-v2-ink-subtle">
             <div className={`grid ${platformGrid} items-center gap-2`}>
               <span className="flex h-6 items-center justify-center" aria-hidden="true" />
-              <span className="text-left">成員</span>
+              <span className="text-left">旅伴</span>
               <span className="text-right">分攤金額</span>
             </div>
           </div>
@@ -403,7 +404,7 @@ export function SplitPanel({
           <div className="border-b border-v2-line-soft bg-v2-surface px-1.5 py-2 text-[11px] text-v2-ink-subtle">
             <div className={`grid ${gridCols} items-center gap-1`}>
               <span className={`flex h-6 items-center justify-center ${cellOutline}`} aria-hidden="true" />
-              <span className={`text-left ${cellOutline}`}>成員</span>
+              <span className={`text-left ${cellOutline}`}>旅伴</span>
               {state.personalMode && <span className={`${personalCell} ${cellOutline}`}>個人項目</span>}
               <span className={`text-right ${cellOutline}`}>共同分攤</span>
               {state.personalMode && <span className={`text-right ${cellOutline}`}>小計</span>}

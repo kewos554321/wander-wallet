@@ -61,7 +61,7 @@ const mockProjectAsNonMember = {
   members: [
     {
       id: "member-2",
-      userId: null, // 未認領的成員
+      userId: null, // 未認領的旅伴
       displayName: "Placeholder Member",
       role: "member",
       user: null,
@@ -103,7 +103,7 @@ describe("GET /api/projects/[id]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toBe("專案不存在")
+    expect(data.error).toBe("旅程不存在")
   })
 
   it("should return full project data when user is a member", async () => {
@@ -134,7 +134,7 @@ describe("GET /api/projects/[id]", () => {
     expect(data.name).toBe("Other Project")
     expect(data.description).toBe("Other Description")
     expect(data.memberCount).toBe(2)
-    // 應該包含未認領成員清單
+    // 應該包含未認領旅伴清單
     expect(data.unclaimedMembers).toBeDefined()
     expect(data.unclaimedMembers).toHaveLength(1)
     expect(data.unclaimedMembers[0].displayName).toBe("Placeholder Member")
@@ -218,7 +218,7 @@ describe("PUT /api/projects/[id]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("無權限訪問此專案")
+    expect(data.error).toBe("無權限訪問此旅程")
   })
 
   it("should return 400 if name is empty", async () => {
@@ -233,7 +233,7 @@ describe("PUT /api/projects/[id]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("專案名稱不能為空")
+    expect(data.error).toBe("旅程名稱不能為空")
   })
 
   it("should return 400 if end date is before start date", async () => {
@@ -400,7 +400,7 @@ describe("DELETE /api/projects/[id]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toBe("專案不存在")
+    expect(data.error).toBe("旅程不存在")
   })
 
   it("should return 403 if user is not the creator", async () => {
@@ -417,7 +417,7 @@ describe("DELETE /api/projects/[id]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("只有創建者可以刪除專案")
+    expect(data.error).toBe("只有創建者可以刪除旅程")
   })
 
   it("should delete project successfully when user is creator", async () => {
@@ -435,7 +435,7 @@ describe("DELETE /api/projects/[id]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.message).toBe("專案已刪除")
+    expect(data.message).toBe("旅程已刪除")
     expect(prisma.project.delete).toHaveBeenCalledWith({
       where: { id: "project-123" },
     })
@@ -456,7 +456,7 @@ describe("DELETE /api/projects/[id]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("刪除專案失敗")
+    expect(data.error).toBe("刪除旅程失敗")
   })
 })
 
@@ -608,7 +608,7 @@ describe("PUT /api/projects/[id] - additional tests", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("更新專案失敗")
+    expect(data.error).toBe("更新旅程失敗")
   })
 
   it("should handle GET database error", async () => {
@@ -620,6 +620,6 @@ describe("PUT /api/projects/[id] - additional tests", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("獲取專案失敗")
+    expect(data.error).toBe("獲取旅程失敗")
   })
 })

@@ -75,7 +75,7 @@ describe("RateSheet", () => {
     expect(screen.getByRole("tab", { name: "市場" })).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "自訂" })).toBeInTheDocument()
     expect(screen.queryByRole("tab", { name: "歷史" })).not.toBeInTheDocument()
-    expect(screen.queryByText("專案固定匯率")).not.toBeInTheDocument()
+    expect(screen.queryByText("旅程固定匯率")).not.toBeInTheDocument()
   })
 
   it("market tab defaults to today and applies the live rate", () => {
@@ -179,8 +179,8 @@ describe("RateSheet", () => {
     expect(screen.getByText("最近用過")).toBeInTheDocument()
     expect(screen.queryByText("自己輸入匯率")).not.toBeInTheDocument()
     expect(screen.queryByText(/這一筆會算成/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/這個專案/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/不會改動專案匯率/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/這個旅程/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/不會改動旅程匯率/)).not.toBeInTheDocument()
   })
 
   it("keeps the rate card above the date field in 市場", () => {

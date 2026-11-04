@@ -8,7 +8,7 @@ export interface ValidationResult<T> {
 }
 
 /**
- * 參與者輸入介面
+ * 旅伴輸入介面
  */
 export interface ParticipantInput {
   memberId: string
@@ -16,7 +16,7 @@ export interface ParticipantInput {
 }
 
 /**
- * 驗證後的參與者資料
+ * 驗證後的旅伴資料
  */
 export interface ValidatedParticipant {
   memberId: string
@@ -156,9 +156,9 @@ export const validators = {
   },
 
   /**
-   * 驗證參與者列表
-   * @param participants - 參與者陣列
-   * @param validMemberIds - 有效成員 ID 集合
+   * 驗證旅伴列表
+   * @param participants - 旅伴陣列
+   * @param validMemberIds - 有效旅伴 ID 集合
    * @param expectedTotal - 預期總金額 (選填，用於驗證分擔金額總和)
    */
   participants(
@@ -167,11 +167,11 @@ export const validators = {
     expectedTotal?: number
   ): ValidationResult<ValidatedParticipant[]> {
     if (!Array.isArray(participants)) {
-      return { valid: false, error: "參與者必須為陣列" }
+      return { valid: false, error: "旅伴必須為陣列" }
     }
 
     if (participants.length === 0) {
-      return { valid: false, error: "至少需要一個參與者" }
+      return { valid: false, error: "至少需要一個旅伴" }
     }
 
     const validated: ValidatedParticipant[] = []
@@ -179,17 +179,17 @@ export const validators = {
 
     for (const p of participants) {
       if (!p || typeof p !== "object") {
-        return { valid: false, error: "參與者資料格式無效" }
+        return { valid: false, error: "旅伴資料格式無效" }
       }
 
       const { memberId, shareAmount } = p as ParticipantInput
 
       if (!memberId || typeof memberId !== "string") {
-        return { valid: false, error: "參與者成員 ID 無效" }
+        return { valid: false, error: "旅伴旅伴 ID 無效" }
       }
 
       if (!validMemberIds.has(memberId)) {
-        return { valid: false, error: `成員 ${memberId} 不是專案成員` }
+        return { valid: false, error: `旅伴 ${memberId} 不是旅程旅伴` }
       }
 
       const shareNum = Number(shareAmount)

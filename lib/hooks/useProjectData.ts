@@ -53,7 +53,7 @@ export interface Project {
 interface UseProjectDataOptions {
   /** 是否自動載入 */
   autoFetch?: boolean
-  /** 是否包含成員資料 */
+  /** 是否包含旅伴資料 */
   includeMembers?: boolean
 }
 
@@ -62,23 +62,23 @@ interface UseProjectDataReturn {
   members: ProjectMember[]
   loading: boolean
   error: string | null
-  /** 專案幣別（預設 TWD） */
+  /** 旅程幣別（預設 TWD） */
   projectCurrency: string
   /** 自訂匯率（固定匯率；未設定的幣別走即時） */
   customRates: Record<string, number> | null
   /** 匯率計算精度（預設 2） */
   precision: number
-  /** 重新載入專案資料 */
+  /** 重新載入旅程資料 */
   refetch: () => Promise<void>
-  /** 重新載入成員資料 */
+  /** 重新載入旅伴資料 */
   refetchMembers: () => Promise<void>
   /** 清除快取並重新載入 */
   invalidate: () => Promise<void>
 }
 
 /**
- * 專案資料 Hook
- * 提供專案資料和成員資料的統一存取，包含簡易快取
+ * 旅程資料 Hook
+ * 提供旅程資料和旅伴資料的統一存取，包含簡易快取
  */
 export function useProjectData(
   projectId: string,
@@ -99,7 +99,7 @@ export function useProjectData(
     return Date.now() - cached.timestamp < CACHE_DURATION
   }, [])
 
-  // 載入專案資料
+  // 載入旅程資料
   const fetchProject = useCallback(async (useCache = true) => {
     // 檢查快取
     if (useCache && isCacheValid(projectCache, projectId)) {
@@ -111,7 +111,7 @@ export function useProjectData(
     try {
       const res = await authFetch(`/api/projects/${projectId}`)
       if (!res.ok) {
-        throw new Error("無法載入專案")
+        throw new Error("無法載入旅程")
       }
       const data = await res.json()
       setProject(data)
@@ -124,7 +124,7 @@ export function useProjectData(
     }
   }, [authFetch, projectId, isCacheValid])
 
-  // 載入成員資料
+  // 載入旅伴資料
   const fetchMembers = useCallback(async (useCache = true) => {
     // 檢查快取
     if (useCache && isCacheValid(membersCache, projectId)) {
@@ -136,14 +136,14 @@ export function useProjectData(
     try {
       const res = await authFetch(`/api/projects/${projectId}/members`)
       if (!res.ok) {
-        throw new Error("無法載入成員")
+        throw new Error("無法載入旅伴")
       }
       const data = await res.json()
       setMembers(data)
       membersCache.set(projectId, { data, timestamp: Date.now() })
       return data
     } catch (err) {
-      console.error("載入成員失敗:", err)
+      console.error("載入旅伴失敗:", err)
       return []
     }
   }, [authFetch, projectId, isCacheValid])
@@ -194,7 +194,7 @@ export function useProjectData(
 }
 
 /**
- * 清除所有專案快取
+ * 清除所有旅程快取
  */
 export function clearProjectCache() {
   projectCache.clear()
@@ -202,7 +202,7 @@ export function clearProjectCache() {
 }
 
 /**
- * 清除特定專案的快取
+ * 清除特定旅程的快取
  */
 export function invalidateProjectCache(projectId: string) {
   projectCache.delete(projectId)

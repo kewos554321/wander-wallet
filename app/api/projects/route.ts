@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { isValidCover } from "@/lib/covers"
 
-// 創建新專案
+// 創建新旅程
 export async function POST(req: NextRequest) {
   try {
     const authUser = await getAuthUser(req)
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const { name, description, cover, startDate, endDate, budget, currency, joinMode } = body
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
-      return NextResponse.json({ error: "專案名稱必填" }, { status: 400 })
+      return NextResponse.json({ error: "旅程名稱必填" }, { status: 400 })
     }
 
     if (cover !== undefined && !isValidCover(cover)) {
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "結束日期需晚於出發日期" }, { status: 400 })
     }
 
-    // 創建專案並將創建者加入成員
+    // 創建旅程並將創建者加入旅伴
     const project = await prisma.project.create({
       data: {
         name: name.trim(),
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(project, { status: 201 })
   } catch (error: unknown) {
-    console.error("創建專案錯誤:", error)
+    console.error("創建旅程錯誤:", error)
     const prismaError = error as { message?: string; code?: string; meta?: unknown }
     console.error("錯誤詳情:", {
       message: prismaError?.message,
@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json(
       { 
-        error: "創建專案失敗",
+        error: "創建旅程失敗",
         details: prismaError?.message || "未知錯誤",
         code: prismaError?.code,
       },
@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// 獲取用戶的所有專案
+// 獲取用戶的所有旅程
 export async function GET(req: NextRequest) {
   try {
     const authUser = await getAuthUser(req)
@@ -215,7 +215,7 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    // 計算每個專案的總金額並加到回應中（避免前端重複計算）
+    // 計算每個旅程的總金額並加到回應中（避免前端重複計算）
     const projectsWithTotal = projects.map((project) => ({
       ...project,
       totalAmount: project.expenses.reduce(
@@ -227,16 +227,16 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(projectsWithTotal)
   } catch (error: unknown) {
-    console.error("獲取專案錯誤 - 完整錯誤:", error)
+    console.error("獲取旅程錯誤 - 完整錯誤:", error)
     const prismaError = error as { message?: string; code?: string; meta?: unknown }
-    console.error("獲取專案錯誤 - 詳細:", {
+    console.error("獲取旅程錯誤 - 詳細:", {
       message: prismaError?.message,
       code: prismaError?.code,
       meta: prismaError?.meta,
     })
     return NextResponse.json(
       {
-        error: "獲取專案失敗",
+        error: "獲取旅程失敗",
         details: prismaError?.message || String(error),
         code: prismaError?.code,
       },

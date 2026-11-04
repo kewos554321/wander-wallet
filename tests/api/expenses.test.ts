@@ -208,7 +208,7 @@ describe("GET /api/projects/[id]/expenses", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("無權限訪問此專案")
+    expect(data.error).toBe("無權限訪問此旅程")
   })
 
   it("should return expenses when user is a project member", async () => {
@@ -312,7 +312,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("無權限訪問此專案")
+    expect(data.error).toBe("無權限訪問此旅程")
   })
 
   it("should return 400 if required fields are missing", async () => {
@@ -332,7 +332,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("金額和參與者必填")
+    expect(data.error).toBe("金額和旅伴必填")
   })
 
   it("should return 400 if amount is negative", async () => {
@@ -380,7 +380,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("至少需要一個參與者")
+    expect(data.error).toBe("至少需要一個旅伴")
   })
 
   it("should return 400 if participant is not a project member", async () => {
@@ -407,7 +407,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("成員 invalid-member 不是專案成員")
+    expect(data.error).toBe("旅伴 invalid-member 不是旅程旅伴")
   })
 
   it("should return 400 if payer is not a project member", async () => {
@@ -434,7 +434,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("付款人必須是專案成員")
+    expect(data.error).toBe("付款人必須是旅程旅伴")
   })
 
   it("should return 400 if payers array is empty", async () => {
@@ -1065,7 +1065,7 @@ describe("GET /api/projects/[id]/expenses/[expenseId]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("無權限訪問此專案")
+    expect(data.error).toBe("無權限訪問此旅程")
   })
 
   it("should return 404 if expense not found", async () => {
@@ -1170,7 +1170,7 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("無權限訪問此專案")
+    expect(data.error).toBe("無權限訪問此旅程")
   })
 
   it("should return 404 if expense not found", async () => {
@@ -1652,7 +1652,7 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("至少需要一個參與者")
+    expect(data.error).toBe("至少需要一個旅伴")
   })
 
   it("should return 400 if participant is not a project member", async () => {
@@ -1680,7 +1680,7 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("成員 invalid-member 不是專案成員")
+    expect(data.error).toBe("旅伴 invalid-member 不是旅程旅伴")
   })
 
   it("should return 400 if share total does not equal amount", async () => {
@@ -2063,7 +2063,7 @@ describe("DELETE /api/projects/[id]/expenses/[expenseId]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("無權限訪問此專案")
+    expect(data.error).toBe("無權限訪問此旅程")
   })
 
   it("should return 404 if expense not found", async () => {
@@ -2216,7 +2216,7 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("無權限訪問此專案")
+    expect(data.error).toBe("無權限訪問此旅程")
   })
 
   it("should return 400 if expenseIds is missing", async () => {

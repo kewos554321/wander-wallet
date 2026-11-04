@@ -82,7 +82,7 @@ export function InviteSheetV2({ open, onOpenChange, projectId, projectName }: In
       return
     }
     try {
-      await navigator.share({ title: `加入「${projectName}」`, text: "點擊連結加入旅行專案", url: shareUrl })
+      await navigator.share({ title: `加入「${projectName}」`, text: "點擊連結加入旅行旅程", url: shareUrl })
     } catch {
       // Sheet dismissed; nothing to recover.
     }

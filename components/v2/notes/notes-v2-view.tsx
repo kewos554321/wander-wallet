@@ -40,7 +40,7 @@ export function NotesV2View({
         <>
           <div className="mx-4 mt-3.5 flex items-center gap-2 rounded-v2-md border border-v2-lake-border bg-v2-lake-soft px-3.5 py-2.5">
             <Lightbulb className="h-[15px] w-[15px] shrink-0 text-v2-lake" />
-            <span className="text-[12px] text-v2-lake">所有成員共享的筆記，可記錄行程、重要資訊等</span>
+            <span className="text-[12px] text-v2-lake">所有旅伴共享的筆記，可記錄行程、重要資訊等</span>
           </div>
           <div className="mx-4 mt-3 flex min-h-[320px] flex-1 rounded-2xl border border-v2-line bg-v2-surface p-4">
             <textarea

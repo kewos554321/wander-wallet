@@ -55,6 +55,12 @@ export interface OverviewProject {
   expenses: OverviewExpense[]
 }
 
+export interface MemberBalance {
+  memberId: string
+  displayName: string
+  balance: number
+}
+
 export interface ProjectSummary {
   totalAmount: number
   perPerson: number
@@ -64,6 +70,8 @@ export interface ProjectSummary {
   userBalance: number
   hasMixedCurrencies: boolean
   currentMemberId: string | null
+  /** Net paid − owed for every member, in the project currency. */
+  memberBalances: MemberBalance[]
 }
 
 type Convert = (amount: number, currency: string) => number
@@ -83,24 +91,30 @@ export function computeProjectSummary(
 
   const membership = currentUserId ? project.members.find((m) => m.user?.id === currentUserId) : undefined
 
-  // Balance = what the user paid - what the user owes, in project currency.
-  let userBalance = 0
-  if (membership) {
-    let paid = 0
-    let owed = 0
-    for (const expense of project.expenses) {
-      const amount = Number(expense.amount)
-      const converted = convert(amount, expense.currency)
-      for (const payer of expense.payers) {
-        if (payer.memberId === membership.id) paid += convert(Number(payer.amount), expense.currency)
-      }
-      const participant = expense.participants.find((p) => p.memberId === membership.id)
-      if (participant && amount !== 0) {
-        owed += converted * (Number(participant.shareAmount) / amount)
-      }
-    }
-    userBalance = paid - owed
+  // Balance = what each person paid - what they owe, in project currency.
+  // Every member is computed in one pass so the overview can name who owes whom.
+  const netByMember = new Map<string, number>()
+  const addNet = (memberId: string, amount: number) => {
+    if (!Number.isFinite(amount)) return
+    netByMember.set(memberId, (netByMember.get(memberId) ?? 0) + amount)
   }
+  for (const expense of project.expenses) {
+    const amount = Number(expense.amount)
+    const converted = convert(amount, expense.currency)
+    for (const payer of expense.payers) {
+      addNet(payer.memberId, convert(Number(payer.amount), expense.currency))
+    }
+    if (amount === 0) continue
+    for (const participant of expense.participants) {
+      addNet(participant.memberId, -converted * (Number(participant.shareAmount) / amount))
+    }
+  }
+
+  const memberBalances: MemberBalance[] = project.members.map((member) => {
+    const net = netByMember.get(member.id) ?? 0
+    return { memberId: member.id, displayName: member.displayName, balance: Number.isFinite(net) ? net : 0 }
+  })
+  const userBalance = membership ? memberBalances.find((m) => m.memberId === membership.id)?.balance ?? 0 : 0
 
   return {
     totalAmount,
@@ -108,9 +122,10 @@ export function computeProjectSummary(
     budget,
     budgetProgress,
     budgetRemaining,
-    userBalance: Number.isFinite(userBalance) ? userBalance : 0,
+    userBalance,
     hasMixedCurrencies: new Set(project.expenses.map((e) => e.currency)).size > 1,
     currentMemberId: membership?.id ?? null,
+    memberBalances,
   }
 }
 

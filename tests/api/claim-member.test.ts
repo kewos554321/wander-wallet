@@ -89,7 +89,7 @@ describe("POST /api/projects/[id]/members/claim", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("成員ID必填")
+    expect(data.error).toBe("旅伴ID必填")
   })
 
   it("should return 404 if project does not exist", async () => {
@@ -104,7 +104,7 @@ describe("POST /api/projects/[id]/members/claim", () => {
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toBe("專案不存在")
+    expect(data.error).toBe("旅程不存在")
   })
 
   it("should return 400 if project joinMode is create_only", async () => {
@@ -124,7 +124,7 @@ describe("POST /api/projects/[id]/members/claim", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("此專案僅允許建立新成員，不支援認領佔位成員")
+    expect(data.error).toBe("此旅程僅允許建立新旅伴，不支援認領佔位旅伴")
   })
 
   it("should allow claim when joinMode is claim_only", async () => {
@@ -196,7 +196,7 @@ describe("POST /api/projects/[id]/members/claim", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("您已經是此專案的成員，無法認領其他身份")
+    expect(data.error).toBe("您已經是此旅程的旅伴，無法認領其他身份")
   })
 
   it("should return 404 if member to claim does not exist", async () => {
@@ -213,7 +213,7 @@ describe("POST /api/projects/[id]/members/claim", () => {
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toBe("成員不存在")
+    expect(data.error).toBe("旅伴不存在")
   })
 
   it("should return 400 if member belongs to different project", async () => {
@@ -235,7 +235,7 @@ describe("POST /api/projects/[id]/members/claim", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("成員不屬於此專案")
+    expect(data.error).toBe("旅伴不屬於此旅程")
   })
 
   it("should return 400 if member is already claimed", async () => {
@@ -252,7 +252,7 @@ describe("POST /api/projects/[id]/members/claim", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("此成員已被認領")
+    expect(data.error).toBe("此旅伴已被認領")
   })
 
   it("should successfully claim member and update displayName", async () => {

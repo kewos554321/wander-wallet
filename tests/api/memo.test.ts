@@ -69,7 +69,7 @@ describe("GET /api/projects/[id]/memo", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("無權限訪問此專案")
+    expect(data.error).toBe("無權限訪問此旅程")
   })
 
   it("should return 404 if project not found", async () => {
@@ -84,7 +84,7 @@ describe("GET /api/projects/[id]/memo", () => {
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toBe("專案不存在")
+    expect(data.error).toBe("旅程不存在")
   })
 
   it("should return memo content", async () => {
@@ -175,7 +175,7 @@ describe("PUT /api/projects/[id]/memo", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("無權限訪問此專案")
+    expect(data.error).toBe("無權限訪問此旅程")
   })
 
   it("should update memo successfully", async () => {

@@ -72,9 +72,9 @@ export function ExpenseFilterBar(props: ExpenseFilterBarProps) {
           <CategoryPanel selected={filters.selectedCategories} onToggle={props.onToggleCategory} onClear={props.onClearCategories} />
         </FilterPopover>
 
-        <FilterPopover label="付款成員" icon={<User className={icon} />} count={filters.selectedPayers.size} open={openId === "payer"} onToggle={() => toggle("payer")} widthClass="w-[184px]" boundsRef={gridRef}>
+        <FilterPopover label="付款旅伴" icon={<User className={icon} />} count={filters.selectedPayers.size} open={openId === "payer"} onToggle={() => toggle("payer")} widthClass="w-[184px]" boundsRef={gridRef}>
           <MemberPanel
-            title="選擇付款成員"
+            title="選擇付款旅伴"
             members={members(props.payers)}
             selected={filters.selectedPayers}
             onToggle={(id) => {
@@ -87,8 +87,8 @@ export function ExpenseFilterBar(props: ExpenseFilterBarProps) {
           />
         </FilterPopover>
 
-        <FilterPopover label="參與者" icon={<Users className={icon} />} count={filters.selectedParticipants.size} open={openId === "participant"} onToggle={() => toggle("participant")} align="right" widthClass="w-[190px]" boundsRef={gridRef}>
-          <MemberPanel title="選擇參與者（可複選）" members={members(props.participants)} selected={filters.selectedParticipants} onToggle={props.onToggleParticipant} onClear={props.onClearParticipants} />
+        <FilterPopover label="旅伴" icon={<Users className={icon} />} count={filters.selectedParticipants.size} open={openId === "participant"} onToggle={() => toggle("participant")} align="right" widthClass="w-[190px]" boundsRef={gridRef}>
+          <MemberPanel title="選擇旅伴（可複選）" members={members(props.participants)} selected={filters.selectedParticipants} onToggle={props.onToggleParticipant} onClear={props.onClearParticipants} />
         </FilterPopover>
 
         {props.currencies.length > 1 && (

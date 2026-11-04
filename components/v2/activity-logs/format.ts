@@ -3,7 +3,7 @@ import { getCategoryLabel } from "@/lib/constants/expenses"
 export type ActionTone = "create" | "update" | "delete"
 
 export function getActionText(action: string, entityType: string): string {
-  const entityName = entityType === "expense" ? "費用" : entityType === "member" ? "成員" : "項目"
+  const entityName = entityType === "expense" ? "費用" : entityType === "member" ? "旅伴" : "項目"
   switch (action) {
     case "create":
       return `新增${entityName}`
@@ -36,9 +36,9 @@ const FIELD_LABELS: Record<string, string> = {
   amount: "金額",
   description: "描述",
   category: "類別",
-  payer: "付款成員",
-  payers: "付款成員",
-  paidByMemberId: "付款成員",
+  payer: "付款旅伴",
+  payers: "付款旅伴",
+  paidByMemberId: "付款旅伴",
   expenseDate: "日期",
   location: "地點",
   participants: "分攤者",

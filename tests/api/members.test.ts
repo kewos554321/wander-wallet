@@ -100,7 +100,7 @@ describe("GET /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("無權限訪問此專案")
+    expect(data.error).toBe("無權限訪問此旅程")
   })
 
   it("should return members list when user is a project member", async () => {
@@ -134,7 +134,7 @@ describe("GET /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("獲取成員列表失敗")
+    expect(data.error).toBe("獲取旅伴列表失敗")
   })
 })
 
@@ -175,7 +175,7 @@ describe("POST /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("無權限訪問此專案")
+    expect(data.error).toBe("無權限訪問此旅程")
   })
 
   it("should return 400 if name is missing", async () => {
@@ -258,7 +258,7 @@ describe("POST /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("新增成員失敗")
+    expect(data.error).toBe("新增旅伴失敗")
   })
 })
 
@@ -298,7 +298,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("成員ID必填")
+    expect(data.error).toBe("旅伴ID必填")
   })
 
   it("should return 404 if project does not exist", async () => {
@@ -316,7 +316,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toBe("專案不存在")
+    expect(data.error).toBe("旅程不存在")
   })
 
   it("should return 403 if user is not the project creator", async () => {
@@ -337,7 +337,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("只有創建者可以移除成員")
+    expect(data.error).toBe("只有創建者可以移除旅伴")
   })
 
   it("should return 404 if member does not exist", async () => {
@@ -356,7 +356,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toBe("成員不存在")
+    expect(data.error).toBe("旅伴不存在")
   })
 
   it("should return 404 if member belongs to different project", async () => {
@@ -378,7 +378,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toBe("成員不存在")
+    expect(data.error).toBe("旅伴不存在")
   })
 
   it("should return 400 if trying to remove self", async () => {
@@ -424,7 +424,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("無法移除此成員，尚有 2 筆付款記錄")
+    expect(data.error).toBe("無法移除此旅伴，尚有 2 筆付款記錄")
     // Only non-deleted payer rows count toward the guard.
     expect(prisma.expensePayer.count).toHaveBeenCalledWith({
       where: { memberId: "member-456", expense: { deletedAt: null } },
@@ -449,7 +449,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("無法移除此成員，尚有 3 筆分擔記錄")
+    expect(data.error).toBe("無法移除此旅伴，尚有 3 筆分擔記錄")
     // Verify that expense: { deletedAt: null } is used in the query
     expect(prisma.expenseParticipant.count).toHaveBeenCalledWith({
       where: { memberId: "member-456", expense: { deletedAt: null } },
@@ -474,7 +474,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("無法移除此成員，尚有 2 筆付款記錄 和 3 筆分擔記錄")
+    expect(data.error).toBe("無法移除此旅伴，尚有 2 筆付款記錄 和 3 筆分擔記錄")
   })
 
   it("should allow removal if member only has soft-deleted expenses", async () => {
@@ -497,7 +497,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.message).toBe("成員已移除")
+    expect(data.message).toBe("旅伴已移除")
     expect(prisma.projectMember.delete).toHaveBeenCalledWith({
       where: { id: "member-456" },
     })
@@ -522,7 +522,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.message).toBe("成員已移除")
+    expect(data.message).toBe("旅伴已移除")
   })
 
   it("should return 500 on database error", async () => {
@@ -540,6 +540,6 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("移除成員失敗")
+    expect(data.error).toBe("移除旅伴失敗")
   })
 })

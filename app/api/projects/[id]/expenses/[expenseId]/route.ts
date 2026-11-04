@@ -29,7 +29,7 @@ export async function GET(
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
-    // 檢查用戶是否為專案成員
+    // 檢查用戶是否為旅程旅伴
     const membership = await prisma.projectMember.findFirst({
       where: {
         projectId: id,
@@ -38,7 +38,7 @@ export async function GET(
     })
 
     if (!membership) {
-      return NextResponse.json({ error: "無權限訪問此專案" }, { status: 403 })
+      return NextResponse.json({ error: "無權限訪問此旅程" }, { status: 403 })
     }
 
     const expense = await prisma.expense.findFirst({
@@ -96,7 +96,7 @@ export async function PUT(
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
-    // 檢查用戶是否為專案成員
+    // 檢查用戶是否為旅程旅伴
     const membership = await prisma.projectMember.findFirst({
       where: {
         projectId: id,
@@ -105,14 +105,14 @@ export async function PUT(
     })
 
     if (!membership) {
-      return NextResponse.json({ error: "無權限訪問此專案" }, { status: 403 })
+      return NextResponse.json({ error: "無權限訪問此旅程" }, { status: 403 })
     }
 
     const body = await req.json()
     const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail, rateKind, rateDate } = body
     const hasSplitDetailField = Object.prototype.hasOwnProperty.call(body, "splitDetail")
 
-    // 獲取現有費用（包含付款人和參與者資訊）
+    // 獲取現有費用（包含付款人和旅伴資訊）
     const existingExpense = await prisma.expense.findFirst({
       where: {
         id: expenseId,
@@ -162,7 +162,7 @@ export async function PUT(
 
     const effectiveAmount = amount !== undefined ? Number(amount) : Number(existingExpense.amount)
 
-    // 驗證所有成員（用於付款人與參與者）
+    // 驗證所有旅伴（用於付款人與旅伴）
     const projectMembers = await prisma.projectMember.findMany({
       where: {
         projectId: id,
@@ -174,10 +174,10 @@ export async function PUT(
     })
     const memberIds = new Set(projectMembers.map((m) => m.id))
 
-    // 如果更新了參與者，需要重新驗證
+    // 如果更新了旅伴，需要重新驗證
     if (participants && Array.isArray(participants)) {
       if (participants.length === 0) {
-        return NextResponse.json({ error: "至少需要一個參與者" }, { status: 400 })
+        return NextResponse.json({ error: "至少需要一個旅伴" }, { status: 400 })
       }
 
       const participantMemberIds = participants.map((p: Participant) => p.memberId)
@@ -185,7 +185,7 @@ export async function PUT(
       for (const memberId of participantMemberIds) {
         if (!memberIds.has(memberId)) {
           return NextResponse.json(
-            { error: `成員 ${memberId} 不是專案成員` },
+            { error: `旅伴 ${memberId} 不是旅程旅伴` },
             { status: 400 }
           )
         }
@@ -370,7 +370,7 @@ export async function PUT(
       updateData.rateDate = rateMeta.date
     }
 
-    // 成員名稱映射（付款人顯示用）
+    // 旅伴名稱映射（付款人顯示用）
     const memberNameMap: Record<string, string> = Object.fromEntries(
       existingExpense.payers.map((p) => [p.memberId, p.member.displayName])
     )
@@ -407,18 +407,18 @@ export async function PUT(
       else changesWithNames = { payers: payerChange }
     }
 
-    // 計算參與者變更（具體顯示加入/移除的成員名稱）
+    // 計算旅伴變更（具體顯示加入/移除的旅伴名稱）
     if (participants && Array.isArray(participants)) {
       const oldParticipantIds = new Set(existingExpense.participants.map(p => p.member.id))
       const newParticipantIds = new Set(participants.map((p: Participant) => p.memberId))
 
-      // 找出加入和移除的成員
+      // 找出加入和移除的旅伴
       const addedIds = [...newParticipantIds].filter(id => !oldParticipantIds.has(id))
       const removedIds = [...oldParticipantIds].filter(id => !newParticipantIds.has(id))
 
       // 只有在有變更時才記錄
       if (addedIds.length > 0 || removedIds.length > 0) {
-        // 獲取所有相關成員的名稱
+        // 獲取所有相關旅伴的名稱
         const allMemberIds = [...addedIds, ...removedIds]
         const membersForParticipants = await prisma.projectMember.findMany({
           where: { id: { in: allMemberIds } },
@@ -426,7 +426,7 @@ export async function PUT(
         })
         const participantNameMap = Object.fromEntries(membersForParticipants.map(m => [m.id, m.displayName]))
 
-        // 舊成員名稱（從現有資料取得）
+        // 舊旅伴名稱（從現有資料取得）
         const oldMemberNameMap = Object.fromEntries(
           existingExpense.participants.map(p => [p.member.id, p.member.displayName])
         )
@@ -459,14 +459,14 @@ export async function PUT(
 
     await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       if (participants && Array.isArray(participants)) {
-        // 刪除舊的參與者
+        // 刪除舊的旅伴
         await tx.expenseParticipant.deleteMany({
           where: {
             expenseId: expenseId,
           },
         })
 
-        // 創建新的參與者（含結算幣別金額）。`shareAmount` keeps the submitted
+        // 創建新的旅伴（含結算幣別金額）。`shareAmount` keeps the submitted
         // allocation weight; only the settlement amount is derived.
         await tx.expenseParticipant.createMany({
           data: participants.map((p: Participant) => ({
@@ -478,7 +478,7 @@ export async function PUT(
           })),
         })
       } else {
-        // 參與者未提供：重算結算幣別金額
+        // 旅伴未提供：重算結算幣別金額
         for (const p of existingExpense.participants) {
           await tx.expenseParticipant.update({
             where: { id: p.id },
@@ -587,7 +587,7 @@ export async function DELETE(
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
-    // 檢查用戶是否為專案成員
+    // 檢查用戶是否為旅程旅伴
     const membership = await prisma.projectMember.findFirst({
       where: {
         projectId: id,
@@ -596,7 +596,7 @@ export async function DELETE(
     })
 
     if (!membership) {
-      return NextResponse.json({ error: "無權限訪問此專案" }, { status: 403 })
+      return NextResponse.json({ error: "無權限訪問此旅程" }, { status: 403 })
     }
 
     // 獲取費用詳情

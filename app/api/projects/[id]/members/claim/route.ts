@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
-// 認領佔位成員
+// 認領佔位旅伴
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -18,27 +18,27 @@ export async function POST(
     const { memberId } = body
 
     if (!memberId) {
-      return NextResponse.json({ error: "成員ID必填" }, { status: 400 })
+      return NextResponse.json({ error: "旅伴ID必填" }, { status: 400 })
     }
 
-    // 檢查專案是否存在以及加入模式
+    // 檢查旅程是否存在以及加入模式
     const project = await prisma.project.findUnique({
       where: { id },
     })
 
     if (!project) {
-      return NextResponse.json({ error: "專案不存在" }, { status: 404 })
+      return NextResponse.json({ error: "旅程不存在" }, { status: 404 })
     }
 
-    // 檢查加入模式是否允許認領成員
+    // 檢查加入模式是否允許認領旅伴
     if (project.joinMode === "create_only") {
       return NextResponse.json(
-        { error: "此專案僅允許建立新成員，不支援認領佔位成員" },
+        { error: "此旅程僅允許建立新旅伴，不支援認領佔位旅伴" },
         { status: 400 }
       )
     }
 
-    // 檢查用戶是否已經是專案成員（有綁定帳號的）
+    // 檢查用戶是否已經是旅程旅伴（有綁定帳號的）
     const existingMembership = await prisma.projectMember.findFirst({
       where: {
         projectId: id,
@@ -47,24 +47,24 @@ export async function POST(
     })
 
     if (existingMembership) {
-      return NextResponse.json({ error: "您已經是此專案的成員，無法認領其他身份" }, { status: 400 })
+      return NextResponse.json({ error: "您已經是此旅程的旅伴，無法認領其他身份" }, { status: 400 })
     }
 
-    // 取得要認領的成員
+    // 取得要認領的旅伴
     const memberToClaim = await prisma.projectMember.findUnique({
       where: { id: memberId },
     })
 
     if (!memberToClaim) {
-      return NextResponse.json({ error: "成員不存在" }, { status: 404 })
+      return NextResponse.json({ error: "旅伴不存在" }, { status: 404 })
     }
 
     if (memberToClaim.projectId !== id) {
-      return NextResponse.json({ error: "成員不屬於此專案" }, { status: 400 })
+      return NextResponse.json({ error: "旅伴不屬於此旅程" }, { status: 400 })
     }
 
     if (memberToClaim.userId) {
-      return NextResponse.json({ error: "此成員已被認領" }, { status: 400 })
+      return NextResponse.json({ error: "此旅伴已被認領" }, { status: 400 })
     }
 
     // 獲取用戶資料
@@ -76,7 +76,7 @@ export async function POST(
       return NextResponse.json({ error: "用戶不存在" }, { status: 401 })
     }
 
-    // 認領成員：更新 userId 和 claimedAt
+    // 認領旅伴：更新 userId 和 claimedAt
     const claimedMember = await prisma.projectMember.update({
       where: { id: memberId },
       data: {
@@ -98,9 +98,9 @@ export async function POST(
 
     return NextResponse.json(claimedMember)
   } catch (error) {
-    console.error("認領成員錯誤:", error)
+    console.error("認領旅伴錯誤:", error)
     return NextResponse.json(
-      { error: "認領成員失敗" },
+      { error: "認領旅伴失敗" },
       { status: 500 }
     )
   }

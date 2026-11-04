@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!projectId) {
-      return NextResponse.json({ error: "專案 ID 必填" }, { status: 400 })
+      return NextResponse.json({ error: "旅程 ID 必填" }, { status: 400 })
     }
 
     const contentType = file.type

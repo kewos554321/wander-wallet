@@ -475,11 +475,11 @@ describe("ExpensesV2 container", () => {
     fireEvent.click(screen.getByRole("button", { name: "清除" }))
     expect(f.setCategories).toHaveBeenCalledWith(new Set())
 
-    fireEvent.click(screen.getByRole("button", { name: /付款成員/ }))
+    fireEvent.click(screen.getByRole("button", { name: /付款旅伴/ }))
     fireEvent.click(screen.getByRole("button", { name: "清除" }))
     expect(f.setPayers).toHaveBeenCalledWith(new Set())
 
-    fireEvent.click(screen.getByRole("button", { name: /參與者/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^旅伴/ }))
     fireEvent.click(screen.getByRole("button", { name: "清除" }))
     expect(f.setParticipants).toHaveBeenCalledWith(new Set())
 

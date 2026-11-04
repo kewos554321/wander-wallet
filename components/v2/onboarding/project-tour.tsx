@@ -28,7 +28,7 @@ export const PROJECT_TOUR_STEPS: DriveStep[] = [
     element: "[data-tour='feature-grid']",
     popover: {
       title: "主要功能",
-      description: "成員、結算、統計、匯率都在這裡；點「更多」還有歷史、里程、匯出、筆記、地圖與照片。",
+      description: "旅伴、結算、統計、匯率都在這裡；結算也可以從上方餘額卡直接進入，點「更多」還有歷史、里程、匯出、筆記、地圖與照片。",
       side: "top",
       align: "center",
     },
@@ -37,7 +37,7 @@ export const PROJECT_TOUR_STEPS: DriveStep[] = [
     element: "[data-tour='share']",
     popover: {
       title: "分享",
-      description: "一鍵把旅程連結分享到 LINE，邀請朋友加入或認領佔位成員。",
+      description: "一鍵把旅程連結分享到 LINE，邀請朋友加入或認領佔位旅伴。",
       side: "bottom",
       align: "end",
     },

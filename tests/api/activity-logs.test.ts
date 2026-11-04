@@ -88,7 +88,7 @@ describe("GET /api/projects/[id]/activity-logs", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("無權限訪問此專案")
+    expect(data.error).toBe("無權限訪問此旅程")
   })
 
   it("should return activity logs", async () => {

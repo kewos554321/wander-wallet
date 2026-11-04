@@ -49,12 +49,12 @@ export function useProjects() {
         const res = await authFetch("/api/projects")
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}))
-          console.error("獲取專案失敗:", res.status, errorData)
+          console.error("獲取旅程失敗:", res.status, errorData)
           return
         }
         setProjects(await res.json())
       } catch (error) {
-        console.error("獲取專案錯誤:", error)
+        console.error("獲取旅程錯誤:", error)
       } finally {
         setLoading(false)
       }

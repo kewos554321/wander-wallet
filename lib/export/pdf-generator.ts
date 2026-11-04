@@ -57,7 +57,7 @@ function formatDate(dateStr: string): string {
   })
 }
 
-// 格式化金額 - 使用專案幣別
+// 格式化金額 - 使用旅程幣別
 function formatAmountWithCurrency(amount: number, currency: string): string {
   return formatCurrency(amount, currency)
 }
@@ -183,7 +183,7 @@ function addStatisticsSection(
   const summaryData = [
     ["支出筆數", String(statistics.totalExpenses)],
     ["總金額", formatAmountWithCurrency(statistics.totalAmount, currency)],
-    ["成員人數", String(statistics.memberCount)],
+    ["旅伴人數", String(statistics.memberCount)],
     ["人均金額", formatAmountWithCurrency(statistics.perPerson, currency)],
   ]
 
@@ -245,10 +245,10 @@ function addStatisticsSection(
     currentY = (doc as any).lastAutoTable.finalY + 10
   }
 
-  // 成員餘額
+  // 旅伴餘額
   if (statistics.memberBreakdown.length > 0) {
     doc.setFontSize(12)
-    doc.text("成員餘額", 14, currentY)
+    doc.text("旅伴餘額", 14, currentY)
 
     const memberData = statistics.memberBreakdown.map((member) => [
       member.name,
@@ -259,7 +259,7 @@ function addStatisticsSection(
 
     autoTable(doc, {
       startY: currentY + 5,
-      head: [["成員", "已付金額", "應分擔", "餘額"]],
+      head: [["旅伴", "已付金額", "應分擔", "餘額"]],
       body: memberData,
       styles: {
         fontSize: 9,

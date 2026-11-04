@@ -17,7 +17,7 @@ export async function DELETE(
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
-    // 檢查用戶是否為專案成員
+    // 檢查用戶是否為旅程旅伴
     const membership = await prisma.projectMember.findFirst({
       where: {
         projectId: id,
@@ -26,7 +26,7 @@ export async function DELETE(
     })
 
     if (!membership) {
-      return NextResponse.json({ error: "無權限訪問此專案" }, { status: 403 })
+      return NextResponse.json({ error: "無權限訪問此旅程" }, { status: 403 })
     }
 
     const body = await req.json()
@@ -36,7 +36,7 @@ export async function DELETE(
       return NextResponse.json({ error: "請提供要刪除的費用 ID" }, { status: 400 })
     }
 
-    // 驗證所有費用都屬於該專案（只取未刪除的）並獲取詳細資訊
+    // 驗證所有費用都屬於該旅程（只取未刪除的）並獲取詳細資訊
     const expenses = await prisma.expense.findMany({
       where: {
         id: { in: expenseIds },

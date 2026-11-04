@@ -13,7 +13,7 @@ export interface AuthContext {
 }
 
 /**
- * 專案成員 context
+ * 旅程旅伴 context
  */
 export interface ProjectContext extends AuthContext {
   projectId: string
@@ -21,7 +21,7 @@ export interface ProjectContext extends AuthContext {
 }
 
 /**
- * 專案創建者 context
+ * 旅程創建者 context
  */
 export interface CreatorContext extends ProjectContext {
   project: Project
@@ -35,14 +35,14 @@ export type AuthHandler<T = unknown> = (
 ) => Promise<NextResponse<ApiSuccessResponse<T> | ApiErrorResponse>>
 
 /**
- * 專案成員處理器類型
+ * 旅程旅伴處理器類型
  */
 export type ProjectMemberHandler<T = unknown> = (
   ctx: ProjectContext
 ) => Promise<NextResponse<ApiSuccessResponse<T> | ApiErrorResponse>>
 
 /**
- * 專案創建者處理器類型
+ * 旅程創建者處理器類型
  */
 export type ProjectCreatorHandler<T = unknown> = (
   ctx: CreatorContext
@@ -68,15 +68,15 @@ export function withAuth<T>(
 }
 
 /**
- * 成員權限檢查結果
+ * 旅伴權限檢查結果
  */
 export type MemberCheckResult =
   | { success: true; member: ProjectMember }
   | { success: false; error: NextResponse<ApiErrorResponse> }
 
 /**
- * 檢查使用者是否為專案成員
- * @param projectId - 專案 ID
+ * 檢查使用者是否為旅程旅伴
+ * @param projectId - 旅程 ID
  * @param userId - 使用者 ID
  */
 export async function requireProjectMember(
@@ -93,7 +93,7 @@ export async function requireProjectMember(
   if (!membership) {
     return {
       success: false,
-      error: ApiResponse.forbidden("無權限訪問此專案"),
+      error: ApiResponse.forbidden("無權限訪問此旅程"),
     }
   }
 
@@ -108,15 +108,15 @@ export type CreatorCheckResult =
   | { success: false; error: NextResponse<ApiErrorResponse> }
 
 /**
- * 檢查使用者是否為專案創建者
- * @param projectId - 專案 ID
+ * 檢查使用者是否為旅程創建者
+ * @param projectId - 旅程 ID
  * @param userId - 使用者 ID
  */
 export async function requireProjectCreator(
   projectId: string,
   userId: string
 ): Promise<CreatorCheckResult> {
-  // 先查詢專案
+  // 先查詢旅程
   const project = await prisma.project.findUnique({
     where: { id: projectId },
   })
@@ -124,7 +124,7 @@ export async function requireProjectCreator(
   if (!project) {
     return {
       success: false,
-      error: ApiResponse.notFound("專案"),
+      error: ApiResponse.notFound("旅程"),
     }
   }
 
@@ -136,7 +136,7 @@ export async function requireProjectCreator(
     }
   }
 
-  // 取得成員資格
+  // 取得旅伴資格
   const membership = await prisma.projectMember.findFirst({
     where: {
       projectId,
@@ -147,7 +147,7 @@ export async function requireProjectCreator(
   if (!membership) {
     return {
       success: false,
-      error: ApiResponse.forbidden("無權限訪問此專案"),
+      error: ApiResponse.forbidden("無權限訪問此旅程"),
     }
   }
 
@@ -155,7 +155,7 @@ export async function requireProjectCreator(
 }
 
 /**
- * 用認證 + 成員檢查包裝路由處理器
+ * 用認證 + 旅伴檢查包裝路由處理器
  * @param handler - 處理器函數
  * @returns 包裝後的路由處理器
  */
@@ -176,10 +176,10 @@ export function withProjectMember<T>(
       return ApiResponse.unauthorized()
     }
 
-    // 取得專案 ID
+    // 取得旅程 ID
     const { id: projectId } = await context.params
 
-    // 成員權限檢查
+    // 旅伴權限檢查
     const memberCheck = await requireProjectMember(projectId, user.id)
 
     if (!memberCheck.success) {
@@ -217,7 +217,7 @@ export function withProjectCreator<T>(
       return ApiResponse.unauthorized()
     }
 
-    // 取得專案 ID
+    // 取得旅程 ID
     const { id: projectId } = await context.params
 
     // 創建者權限檢查

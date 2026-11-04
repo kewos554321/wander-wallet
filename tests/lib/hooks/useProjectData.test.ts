@@ -124,7 +124,7 @@ describe("useProjectData", () => {
 
       await waitFor(() => expect(result.current.loading).toBe(false))
 
-      expect(result.current.error).toBe("無法載入專案")
+      expect(result.current.error).toBe("無法載入旅程")
       expect(result.current.project).toBeNull()
     })
 

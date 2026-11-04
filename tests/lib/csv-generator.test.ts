@@ -68,7 +68,7 @@ describe("generateCSV", () => {
 
   it("should include project name", () => {
     const csv = generateCSV(mockExportData, defaultOptions)
-    expect(csv).toContain("專案名稱:")
+    expect(csv).toContain("旅程名稱:")
     expect(csv).toContain("日本旅行")
   })
 
@@ -117,7 +117,7 @@ describe("generateCSV", () => {
     expect(csv).toContain("【統計摘要】")
     expect(csv).toContain("支出筆數")
     expect(csv).toContain("總金額")
-    expect(csv).toContain("成員人數")
+    expect(csv).toContain("旅伴人數")
     expect(csv).toContain("人均金額")
   })
 
@@ -130,7 +130,7 @@ describe("generateCSV", () => {
 
   it("should include member breakdown", () => {
     const csv = generateCSV(mockExportData, defaultOptions)
-    expect(csv).toContain("【成員餘額】")
+    expect(csv).toContain("【旅伴餘額】")
     expect(csv).toContain("已付金額")
     expect(csv).toContain("應分擔")
     expect(csv).toContain("餘額")

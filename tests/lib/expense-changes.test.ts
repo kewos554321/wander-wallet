@@ -40,7 +40,7 @@ describe("buildExpenseChanges", () => {
       { field: "amount", label: "金額", oldValue: "TWD 100", newValue: "TWD 200" },
       { field: "description", label: "描述", oldValue: "午餐", newValue: "無" },
       { field: "category", label: "類別", oldValue: "餐飲", newValue: "交通" },
-      { field: "payer", label: "付款成員", oldValue: "小美", newValue: "志明" },
+      { field: "payer", label: "付款旅伴", oldValue: "小美", newValue: "志明" },
       { field: "date", label: "日期", oldValue: "2026/11/16", newValue: "2026/11/17" },
       { field: "location", label: "地點", oldValue: "無", newValue: "上野" },
       { field: "image", label: "圖片", oldValue: "無", newValue: "有圖片" },
@@ -91,7 +91,7 @@ describe("buildExpenseChanges", () => {
       payerLabel: "小美、志明",
     }
     expect(buildExpenseChanges(original, amountChanged, { imageReplaced: false })).toEqual([
-      { field: "payer", label: "付款成員", oldValue: "小美、志明", newValue: "小美、志明" },
+      { field: "payer", label: "付款旅伴", oldValue: "小美、志明", newValue: "小美、志明" },
     ])
 
     const memberChanged: ExpenseSnapshot = {
@@ -100,7 +100,7 @@ describe("buildExpenseChanges", () => {
       payerLabel: "小美",
     }
     expect(buildExpenseChanges(original, memberChanged, { imageReplaced: false })).toEqual([
-      { field: "payer", label: "付款成員", oldValue: "小美、志明", newValue: "小美" },
+      { field: "payer", label: "付款旅伴", oldValue: "小美、志明", newValue: "小美" },
     ])
   })
 })

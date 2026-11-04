@@ -14,7 +14,7 @@ interface UseCurrencyConversionOptions {
 }
 
 interface UseCurrencyConversionReturn {
-  /** 將金額從指定幣別轉換為專案幣別 */
+  /** 將金額從指定幣別轉換為旅程幣別 */
   convert: (amount: number, fromCurrency: string) => number
   /** 取得兩個幣別之間的匯率 */
   getRate: (from: string, to: string) => number
@@ -83,7 +83,7 @@ export function useCurrencyConversion(
     (from: string, to: string): number => {
       if (from === to) return 1
 
-      // 優先使用自訂匯率（從 from 到專案幣別）
+      // 優先使用自訂匯率（從 from 到旅程幣別）
       if (customRates && customRates[from] && to === projectCurrency) {
         return customRates[from]
       }
@@ -98,7 +98,7 @@ export function useCurrencyConversion(
     [customRates, exchangeRates, projectCurrency]
   )
 
-  // 轉換金額到專案幣別
+  // 轉換金額到旅程幣別
   const convert = useCallback(
     (amount: number, fromCurrency: string): number => {
       if (fromCurrency === projectCurrency) return amount

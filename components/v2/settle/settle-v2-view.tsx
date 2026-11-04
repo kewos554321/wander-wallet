@@ -71,7 +71,7 @@ export function SettleV2View(props: SettleV2ViewProps) {
               href={`/projects/${props.projectId}/settings`}
               className="mt-1 inline-block rounded font-semibold text-v2-link transition-colors duration-150 hover:text-v2-lake focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
             >
-              前往專案設定調整匯率
+              前往旅程設定調整匯率
             </Link>
           </div>
         </div>

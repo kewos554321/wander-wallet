@@ -124,7 +124,7 @@ describe("SettlementCalcDialog (A26)", () => {
 
   it("renders the member balance table headers", () => {
     renderDialog(equalSplitData())
-    expect(screen.getByRole("columnheader", { name: "成員" })).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: "旅伴" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "已付" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "應付" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "餘額" })).toBeInTheDocument()

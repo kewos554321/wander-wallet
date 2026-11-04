@@ -10,8 +10,8 @@ describe("V2TopBar", () => {
   })
 
   it("renders supplied actions next to the title", () => {
-    render(<V2TopBar title="成員" backHref="/projects/p1" actions={<button>儲存</button>} />)
-    expect(screen.getByRole("heading", { level: 1, name: "成員" })).toBeInTheDocument()
+    render(<V2TopBar title="旅伴" backHref="/projects/p1" actions={<button>儲存</button>} />)
+    expect(screen.getByRole("heading", { level: 1, name: "旅伴" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "儲存" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
   })

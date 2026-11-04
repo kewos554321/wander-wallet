@@ -202,7 +202,7 @@ describe("GET /api/projects/[id]/settle", () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.error).toBe("無權限訪問此專案")
+    expect(data.error).toBe("無權限訪問此旅程")
   })
 
   it("should return settlement data when user is a project member", async () => {

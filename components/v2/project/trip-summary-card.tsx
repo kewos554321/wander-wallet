@@ -20,6 +20,8 @@ function formatRateDate(timestamp: number | null | undefined) {
   return new Intl.DateTimeFormat("zh-TW", { month: "numeric", day: "numeric" }).format(new Date(timestamp))
 }
 
+
+
 export function TripSummaryCard({
   summary,
   currency,
@@ -90,17 +92,13 @@ export function TripSummaryCard({
           </p>
         )}
 
-        {needsRates && amountsReady && (
+        {needsRates && amountsReady && usingFallback && (
           <p
             data-testid="v2-rate-caption"
-            className={`mt-1 flex items-center gap-1 text-[11px] leading-4 tracking-[.3px] ${
-              usingFallback ? "font-semibold text-v2-coral-tint" : "opacity-70"
-            }`}
+            className="mt-1 flex items-center gap-1 text-[11px] font-semibold leading-4 tracking-[.3px] text-v2-coral-tint"
           >
-            {usingFallback && <AlertTriangle className="h-3 w-3 shrink-0" strokeWidth={2.2} aria-hidden="true" />}
-            {usingFallback
-              ? `使用備援匯率${rateDate ? ` · ${rateDate} 更新` : ""}`
-              : `含外幣 · 依${rateDate ? ` ${rateDate} ` : "即時"}匯率換算`}
+            <AlertTriangle className="h-3 w-3 shrink-0" strokeWidth={2.2} aria-hidden="true" />
+            {`使用備援匯率${rateDate ? ` · ${rateDate} 更新` : ""}`}
           </p>
         )}
 

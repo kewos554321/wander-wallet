@@ -133,7 +133,7 @@ describe("validatePayers", () => {
 
   it("rejects non-members", () => {
     const result = validatePayers([{ memberId: "z", amount: 100 }], 100, members)
-    expect(result).toEqual({ ok: false, error: "付款人必須是專案成員" })
+    expect(result).toEqual({ ok: false, error: "付款人必須是旅程旅伴" })
   })
 
   it("rejects negative amounts", () => {

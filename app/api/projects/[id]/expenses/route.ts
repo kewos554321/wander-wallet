@@ -16,7 +16,7 @@ interface Participant {
   shareAmount: number | string
 }
 
-// 獲取專案的所有費用
+// 獲取旅程的所有費用
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -28,7 +28,7 @@ export async function GET(
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
-    // 檢查用戶是否為專案成員
+    // 檢查用戶是否為旅程旅伴
     const membership = await prisma.projectMember.findFirst({
       where: {
         projectId: id,
@@ -37,7 +37,7 @@ export async function GET(
     })
 
     if (!membership) {
-      return NextResponse.json({ error: "無權限訪問此專案" }, { status: 403 })
+      return NextResponse.json({ error: "無權限訪問此旅程" }, { status: 403 })
     }
 
     const expenses = await prisma.expense.findMany({
@@ -94,7 +94,7 @@ export async function POST(
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
-    // 檢查用戶是否為專案成員
+    // 檢查用戶是否為旅程旅伴
     const membership = await prisma.projectMember.findFirst({
       where: {
         projectId: id,
@@ -103,20 +103,20 @@ export async function POST(
     })
 
     if (!membership) {
-      return NextResponse.json({ error: "無權限訪問此專案" }, { status: 403 })
+      return NextResponse.json({ error: "無權限訪問此旅程" }, { status: 403 })
     }
 
     const body = await req.json()
     const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail, rateKind, rateDate } = body
 
-    // 獲取專案幣別設定
+    // 獲取旅程幣別設定
     const project = await prisma.project.findUnique({
       where: { id },
       select: { currency: true },
     })
 
     if (!project) {
-      return NextResponse.json({ error: "專案不存在" }, { status: 404 })
+      return NextResponse.json({ error: "旅程不存在" }, { status: 404 })
     }
 
     const expenseCurrency = currency || project.currency || DEFAULT_CURRENCY
@@ -124,7 +124,7 @@ export async function POST(
     // 驗證必填欄位
     if (amount === undefined || amount === null || !participants || !Array.isArray(participants)) {
       return NextResponse.json(
-        { error: "金額和參與者必填" },
+        { error: "金額和旅伴必填" },
         { status: 400 }
       )
     }
@@ -140,12 +140,12 @@ export async function POST(
       return NextResponse.json({ error: "匯率必須大於 0" }, { status: 400 })
     }
 
-    // 驗證參與者
+    // 驗證旅伴
     if (participants.length === 0) {
-      return NextResponse.json({ error: "至少需要一個參與者" }, { status: 400 })
+      return NextResponse.json({ error: "至少需要一個旅伴" }, { status: 400 })
     }
 
-    // 驗證所有參與者都是專案成員
+    // 驗證所有旅伴都是旅程旅伴
     const projectMembers = await prisma.projectMember.findMany({
       where: {
         projectId: id,
@@ -162,7 +162,7 @@ export async function POST(
     for (const memberId of participantMemberIds) {
       if (!memberIdSet.has(memberId)) {
         return NextResponse.json(
-          { error: `成員 ${memberId} 不是專案成員` },
+          { error: `旅伴 ${memberId} 不是旅程旅伴` },
           { status: 400 }
         )
       }

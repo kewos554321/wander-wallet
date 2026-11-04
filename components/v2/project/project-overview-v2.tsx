@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { QuickExpenseV2 } from "@/components/v2/quick-expense/quick-expense-v2"
 import { ProjectTour } from "@/components/v2/onboarding/project-tour"
-import { JoinProjectDialog } from "@/components/project/join-project-dialog"
+import { JoinTripSheet } from "@/components/v2/project/join-trip-sheet"
 import { InviteSheetV2 } from "@/components/v2/project/invite-sheet-v2"
 import { useLiff } from "@/components/auth/liff-provider"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
@@ -51,7 +51,7 @@ export function ProjectOverviewV2({ projectId }: { projectId: string }) {
     )
   } else if (joinInfo) {
     content = (
-      <JoinProjectDialog
+      <JoinTripSheet
         info={joinInfo}
         joining={joining}
         onJoin={joinProject}
@@ -60,7 +60,7 @@ export function ProjectOverviewV2({ projectId }: { projectId: string }) {
       />
     )
   } else if (!project || !summary) {
-    content = <p className="py-8 text-center text-v2-ink-muted">專案不存在</p>
+    content = <p className="py-8 text-center text-v2-ink-muted">旅程不存在</p>
   } else {
     content = (
       <>

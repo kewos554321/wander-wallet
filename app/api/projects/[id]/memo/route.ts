@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
-// 獲取專案備忘錄
+// 獲取旅程備忘錄
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
-    // 檢查用戶是否為專案成員
+    // 檢查用戶是否為旅程旅伴
     const membership = await prisma.projectMember.findFirst({
       where: {
         projectId: id,
@@ -23,7 +23,7 @@ export async function GET(
     })
 
     if (!membership) {
-      return NextResponse.json({ error: "無權限訪問此專案" }, { status: 403 })
+      return NextResponse.json({ error: "無權限訪問此旅程" }, { status: 403 })
     }
 
     const project = await prisma.project.findUnique({
@@ -32,7 +32,7 @@ export async function GET(
     })
 
     if (!project) {
-      return NextResponse.json({ error: "專案不存在" }, { status: 404 })
+      return NextResponse.json({ error: "旅程不存在" }, { status: 404 })
     }
 
     return NextResponse.json({ memo: project.memo || "" })
@@ -45,7 +45,7 @@ export async function GET(
   }
 }
 
-// 更新專案備忘錄
+// 更新旅程備忘錄
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -57,7 +57,7 @@ export async function PUT(
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
-    // 檢查用戶是否為專案成員
+    // 檢查用戶是否為旅程旅伴
     const membership = await prisma.projectMember.findFirst({
       where: {
         projectId: id,
@@ -66,7 +66,7 @@ export async function PUT(
     })
 
     if (!membership) {
-      return NextResponse.json({ error: "無權限訪問此專案" }, { status: 403 })
+      return NextResponse.json({ error: "無權限訪問此旅程" }, { status: 403 })
     }
 
     const body = await req.json()

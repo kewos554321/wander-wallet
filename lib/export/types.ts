@@ -45,7 +45,7 @@ export interface SettlementExportData {
   amount: number
 }
 
-// 成員餘額資料
+// 旅伴餘額資料
 export interface MemberBalanceData {
   name: string
   paid: number // 已付金額
@@ -67,7 +67,7 @@ export interface StatisticsExportData {
   totalExpenses: number // 支出筆數
   totalAmount: number // 總金額
   perPerson: number // 人均
-  memberCount: number // 成員數
+  memberCount: number // 旅伴數
   categoryBreakdown: CategoryBreakdownData[]
   memberBreakdown: MemberBalanceData[]
 }

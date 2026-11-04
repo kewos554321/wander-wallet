@@ -17,8 +17,8 @@ export default function ProjectSettingsDemoPage() {
         saving={false}
         submitError={null}
         onCancel={() => {}}
-        onSave={() => alert("（demo）儲存專案")}
-        onRequestDelete={() => alert("（demo）刪除專案")}
+        onSave={() => alert("（demo）儲存旅程")}
+        onRequestDelete={() => alert("（demo）刪除旅程")}
       />
     </div>
   )

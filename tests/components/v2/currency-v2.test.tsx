@@ -79,7 +79,7 @@ describe("CurrencyV2View", () => {
 
   it("does not show a project custom-rate card (Review Focus 1)", () => {
     renderView()
-    expect(screen.queryByText("專案自訂匯率")).not.toBeInTheDocument()
+    expect(screen.queryByText("旅程自訂匯率")).not.toBeInTheDocument()
   })
 
   it("toggles the live-rate and historical sections", () => {

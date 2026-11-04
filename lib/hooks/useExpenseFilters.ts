@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback } from "react"
 import type { DateRange } from "react-day-picker"
 
-/** 參與者介面 */
+/** 旅伴介面 */
 export interface ExpenseParticipant {
   id: string
   member: {
@@ -64,9 +64,9 @@ interface UseExpenseFiltersReturn<T extends Expense> {
   togglePayer: (payerId: string) => void
   /** 設定付款者篩選 */
   setPayers: (payers: Set<string>) => void
-  /** 切換參與者篩選 */
+  /** 切換旅伴篩選 */
   toggleParticipant: (memberId: string) => void
-  /** 設定參與者篩選 */
+  /** 設定旅伴篩選 */
   setParticipants: (participants: Set<string>) => void
   /** 切換幣別篩選 */
   toggleCurrency: (currency: string) => void
@@ -82,7 +82,7 @@ interface UseExpenseFiltersReturn<T extends Expense> {
   clearFilters: () => void
   /** 唯一的付款者列表 */
   uniquePayers: Array<{ id: string; displayName: string }>
-  /** 唯一的參與者列表 */
+  /** 唯一的旅伴列表 */
   uniqueParticipants: Array<{ id: string; displayName: string }>
   /** 唯一的幣別列表 */
   uniqueCurrencies: string[]
@@ -148,7 +148,7 @@ export function useExpenseFilters<T extends Expense>(
     return Array.from(payerMap.values())
   }, [expenses])
 
-  // 唯一參與者列表（從所有消費的 participants 中提取）
+  // 唯一旅伴列表（從所有消費的 participants 中提取）
   const uniqueParticipants = useMemo(() => {
     const participantMap = new Map<string, { id: string; displayName: string }>()
     expenses.forEach((expense) => {
@@ -191,7 +191,7 @@ export function useExpenseFilters<T extends Expense>(
       const matchesPayer =
         selectedPayers.size === 0 || expense.payers.some((p) => selectedPayers.has(p.member.id))
 
-      // 參與者篩選（消費的任一參與者符合即可）
+      // 旅伴篩選（消費的任一旅伴符合即可）
       const matchesParticipant =
         selectedParticipants.size === 0 ||
         expense.participants.some((p) => selectedParticipants.has(p.member.id))
@@ -285,7 +285,7 @@ export function useExpenseFilters<T extends Expense>(
     })
   }, [])
 
-  // 切換參與者
+  // 切換旅伴
   const toggleParticipant = useCallback((memberId: string) => {
     setSelectedParticipants((prev) => {
       const next = new Set(prev)

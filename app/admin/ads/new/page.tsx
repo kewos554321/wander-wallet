@@ -28,7 +28,7 @@ const adTypes: { value: AdType; label: string }[] = [
 
 const adPlacements: { value: AdPlacementType; label: string }[] = [
   { value: "home", label: "首頁" },
-  { value: "project-list", label: "專案列表" },
+  { value: "project-list", label: "旅程列表" },
   { value: "expense-list", label: "支出列表" },
   { value: "settle", label: "結算頁面" },
 ]

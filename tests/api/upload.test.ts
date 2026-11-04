@@ -67,7 +67,7 @@ describe("POST /api/upload", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("專案 ID 必填")
+    expect(data.error).toBe("旅程 ID 必填")
   })
 
   it("should return 400 if contentType is not image", async () => {

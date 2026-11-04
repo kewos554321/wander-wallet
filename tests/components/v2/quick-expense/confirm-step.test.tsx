@@ -129,8 +129,8 @@ describe("ConfirmStep", () => {
   })
 
   it("submits with the LINE toggle prop value, reports toggle changes, reinputs, and shows errors", () => {
-    const p = setup({ error: "第 1 筆請選擇付款成員", notifyLine: false })
-    expect(screen.getByRole("alert")).toHaveTextContent("第 1 筆請選擇付款成員")
+    const p = setup({ error: "第 1 筆請選擇付款旅伴", notifyLine: false })
+    expect(screen.getByRole("alert")).toHaveTextContent("第 1 筆請選擇付款旅伴")
     expect(screen.getByRole("checkbox", { name: /通知 LINE 群組/ })).not.toBeChecked()
     fireEvent.click(screen.getByRole("checkbox", { name: /通知 LINE 群組/ }))
     expect(p.onNotifyLineChange).toHaveBeenCalledWith(true)

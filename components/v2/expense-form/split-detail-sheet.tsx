@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from "react"
 import { X } from "lucide-react"
 import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
+import { moneyPrefix } from "@/components/v2/ui/currency-field"
 import { formatAmount } from "@/lib/constants/currencies"
 import type { DraftMember, useExpenseDraft } from "@/components/v2/expense-form/use-expense-draft"
 import { countIncompleteItems, isTouchedItem } from "./personal-item-state"
@@ -94,7 +95,7 @@ export function SplitDetailSheet({
 
   const member = members.find((m) => m.id === memberId)
   const name = member?.displayName ?? ""
-  const money = (n: number) => `${n < 0 ? "−" : ""}$${formatAmount(Math.abs(n), state.currency)}`
+  const money = (n: number) => `${n < 0 ? "−" : ""}${moneyPrefix()}${formatAmount(Math.abs(n), state.currency)}`
 
   const items = state.personalItems[memberId] ?? []
   const personal = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)

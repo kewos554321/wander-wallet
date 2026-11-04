@@ -109,7 +109,14 @@ export function ProjectOverviewV2View({
         ratesTimestamp={ratesTimestamp}
         onRetryRates={onRetryRates}
       />
-      <BalanceCard balance={summary.userBalance} currency={currency} projectId={project.id} />
+      <BalanceCard
+        balance={summary.userBalance}
+        currency={currency}
+        projectId={project.id}
+        memberBalances={summary.memberBalances}
+        currentMemberId={summary.currentMemberId}
+        loading={ratesLoading && summary.hasMixedCurrencies}
+      />
       <FeatureGrid projectId={project.id} />
       <RecentExpenses
         projectId={project.id}

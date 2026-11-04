@@ -122,7 +122,7 @@ export function describeSplitIssue(draft: Draft, members: DraftMember[]): string
   const amount = derived.splitInput.amount
   if (!Number.isFinite(amount) || amount <= 0) return null
 
-  const nameOf = (id: string) => members.find((m) => m.id === id)?.displayName ?? "成員"
+  const nameOf = (id: string) => members.find((m) => m.id === id)?.displayName ?? "旅伴"
   const money = (n: number) => `$${formatAmount(Math.abs(n), state.currency)}`
 
   // Personal items are edited in the detail sheet; an empty name or a zero /

@@ -115,6 +115,10 @@ const summary: ProjectSummary = {
   userBalance: 4820,
   hasMixedCurrencies: false,
   currentMemberId: "me",
+  memberBalances: [
+    { memberId: "me", displayName: "Emma", balance: 4820 },
+    { memberId: "chi", displayName: "志明", balance: -4820 },
+  ],
 }
 
 describe("ProjectOverviewV2View", () => {
@@ -126,8 +130,56 @@ describe("ProjectOverviewV2View", () => {
     expect(screen.getByText("平均每人 TWD 24,300")).toBeInTheDocument()
     expect(screen.getByText("64%")).toBeInTheDocument()
     expect(screen.getByText("TWD 48,600 ／ TWD 76,000（剩餘 TWD 27,400）")).toBeInTheDocument()
-    expect(screen.getByText("+TWD 4,820")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: /查看結算明細/ })).toHaveAttribute("href", "/projects/p1/settle")
+    expect(screen.getByText("TWD 4,820")).toBeInTheDocument()
+    expect(screen.getByText("志明欠你這趟旅程先付的錢。")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /去結算/ })).toHaveAttribute("href", "/projects/p1/settle")
+  })
+
+  it("keeps the balance settle action compact instead of a full-width bar", () => {
+    render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
+    expect(screen.getByRole("link", { name: /去結算/ }).className).not.toContain("w-full")
+  })
+
+  it("shows who the current user owes when the balance is negative", () => {
+    render(
+      <ProjectOverviewV2View
+        project={project}
+        summary={{
+          ...summary,
+          userBalance: -1200,
+          memberBalances: [
+            { memberId: "me", displayName: "Emma", balance: -1200 },
+            { memberId: "chi", displayName: "志明", balance: 1200 },
+          ],
+        }}
+        onShare={vi.fn()}
+        onVoice={vi.fn()}
+      />
+    )
+    expect(screen.getByText("TWD 1,200")).toBeInTheDocument()
+    expect(screen.getByText("你欠志明這趟旅程的代墊款。")).toBeInTheDocument()
+  })
+
+  it("gives a zero balance an ending instead of an empty amount", () => {
+    render(
+      <ProjectOverviewV2View
+        project={project}
+        summary={{
+          ...summary,
+          userBalance: 0,
+          memberBalances: [
+            { memberId: "me", displayName: "Emma", balance: 0 },
+            { memberId: "chi", displayName: "志明", balance: 0 },
+          ],
+        }}
+        onShare={vi.fn()}
+        onVoice={vi.fn()}
+      />
+    )
+    expect(screen.queryByText("TWD 0")).not.toBeInTheDocument()
+    expect(screen.getByText("這趟旅程已結清")).toBeInTheDocument()
+    expect(screen.getByText("沒有人需要再付錢。")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "查看結算紀錄" })).toHaveAttribute("href", "/projects/p1/settle")
   })
 
   it("tags every tour anchor on the overview", () => {
@@ -191,6 +243,21 @@ describe("ProjectOverviewV2View", () => {
     expect(screen.getByText(/正在換算外幣/)).toBeInTheDocument()
   })
 
+  it("hides the balance while exchange rates are loading", () => {
+    render(
+      <ProjectOverviewV2View
+        project={project}
+        summary={{ ...summary, hasMixedCurrencies: true }}
+        onShare={vi.fn()}
+        onVoice={vi.fn()}
+        ratesLoading
+        ratesReady={false}
+      />
+    )
+    expect(screen.queryByText("TWD 4,820")).not.toBeInTheDocument()
+    expect(screen.getByTestId("v2-balance-loading")).toBeInTheDocument()
+  })
+
   it("labels fallback rates with their update date", () => {
     render(
       <ProjectOverviewV2View
@@ -215,29 +282,34 @@ describe("ProjectOverviewV2View", () => {
       />
     )
     expect(screen.queryByText(/％|%/)).not.toBeInTheDocument()
-    expect(screen.getByText("−TWD 1,200")).toBeInTheDocument()
+    expect(screen.getByText("TWD 1,200")).toBeInTheDocument()
   })
 
-  it("toggles the balance explanation", () => {
+  it("puts the balance explanation directly under the title", () => {
     render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
-    const info = "＝你付的錢－你應付的錢，正數代表有旅伴欠你款項"
+    const info = "你付的錢 − 你應付的錢。正數代表旅伴還欠你，負數代表你還欠旅伴。"
     expect(screen.queryByText(info)).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "說明餘額計算方式" }))
-    expect(screen.getByText(info)).toBeInTheDocument()
+    const explanation = screen.getByText(info)
+    const amount = screen.getByText("TWD 4,820")
+    expect(explanation).toBeInTheDocument()
+    expect(explanation.compareDocumentPosition(amount) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
-  it("links all ten features", () => {
+  it("keeps both the settle tile and the balance action", () => {
     render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
     const grid = screen.getByRole("navigation", { name: "功能" })
     const primary: [string, string][] = [
+      ["旅伴", "members"],
       ["結算", "settle"],
-      ["成員", "members"],
       ["統計", "stats"],
       ["匯率", "currency"],
     ]
     for (const [label, path] of primary) {
       expect(within(grid).getByRole("link", { name: label })).toHaveAttribute("href", `/projects/p1/${path}`)
     }
+    expect(within(grid).getByRole("link", { name: "結算" })).toHaveAttribute("href", "/projects/p1/settle")
+    expect(screen.getByRole("link", { name: /去結算/ })).toHaveAttribute("href", "/projects/p1/settle")
 
     fireEvent.click(within(grid).getByRole("button", { name: "更多功能" }))
     const secondary: [string, string][] = [
@@ -433,7 +505,7 @@ describe("ProjectOverviewV2View", () => {
     const { rerender } = render(
       <ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />
     )
-    expect(screen.getByText("+TWD 4,820").className).toContain("text-v2-ink")
+    expect(screen.getByText("TWD 4,820").className).toContain("text-v2-ink")
     expect(screen.getByText("我的餘額").className).toContain("text-v2-lake")
     expect(screen.getByText("我的餘額").className).toContain("text-[13px]")
 
@@ -445,7 +517,7 @@ describe("ProjectOverviewV2View", () => {
         onVoice={vi.fn()}
       />
     )
-    expect(screen.getByText("−TWD 1,200").className).toContain("text-v2-danger")
+    expect(screen.getByText("TWD 1,200").className).toContain("text-v2-danger")
   })
 
   it("wires share, voice and add actions without a camera FAB", () => {
@@ -468,7 +540,7 @@ describe("ProjectOverviewV2View", () => {
     expect(screen.getByRole("link", { name: "修改" })).toHaveAttribute("href", "/projects/p1/settings")
     expect(screen.getByRole("link", { name: "回旅程列表" })).toHaveAttribute("href", "/projects")
     expect(screen.getByRole("button", { name: "分享" })).toBeInTheDocument()
-    expect(screen.queryByRole("link", { name: "專案設定" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: "旅程設定" })).not.toBeInTheDocument()
   })
 
   it("uses the brand mark as the back control to the trip list", () => {
@@ -581,7 +653,7 @@ describe("ProjectOverviewV2 container", () => {
       summary: null,
     })
     render(<ProjectOverviewV2 projectId="p1" />)
-    expect(screen.getByText("專案不存在")).toBeInTheDocument()
+    expect(screen.getByText("旅程不存在")).toBeInTheDocument()
   })
 
   it("shows a skeleton while loading", () => {

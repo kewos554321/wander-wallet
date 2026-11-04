@@ -34,7 +34,7 @@ export interface ProjectSettingsV2ViewProps {
 
 /**
  * Presentational edit-trip form. Shares its card order and field styles with the
- * create view (`NewProjectV2View`): 基本資訊 / 日期與預算 / 結算幣別 / 成員加入方式,
+ * create view (`NewProjectV2View`): 基本資訊 / 日期與預算 / 結算幣別 / 旅伴加入方式,
  * plus a danger zone that only the creator sees.
  */
 export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
@@ -126,15 +126,15 @@ export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
       </div>
 
       <div className={CARD}>
-        <p className={CARD_TITLE}>成員加入方式</p>
-        <p className={HELP_TEXT}>透過分享連結加入的人，只能建立自己的身份，或取代你建立的佔位成員。</p>
+        <p className={CARD_TITLE}>旅伴加入方式</p>
+        <p className={HELP_TEXT}>透過分享連結加入的人，只能建立自己的身份，或取代你建立的佔位旅伴。</p>
         <JoinModePicker variant="settings" value={values.joinMode} onChange={(v) => set("joinMode", v)} disabled={props.saving} />
       </div>
 
       {props.isCreator && (
         <div className="rounded-v2-lg border border-v2-danger-border bg-v2-danger-tint p-4">
           <p className="m-0 mb-1 text-[13px] font-bold text-v2-danger-strong">危險區域</p>
-          <p className="m-0 mb-3 text-xs text-v2-danger-strong">刪除旅程後，所有成員、支出紀錄都會永久移除，此操作無法復原。</p>
+          <p className="m-0 mb-3 text-xs text-v2-danger-strong">刪除旅程後，所有旅伴、支出紀錄都會永久移除，此操作無法復原。</p>
           <button
             type="button"
             onClick={props.onRequestDelete}

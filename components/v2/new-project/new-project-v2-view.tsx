@@ -129,8 +129,8 @@ export function NewProjectV2View({ values, set, submitting, error, onCreate }: N
         </div>
 
         <div className={CARD}>
-          <p className={CARD_TITLE}>成員加入方式</p>
-          <p className={HELP_TEXT}>透過分享連結加入的人，只能建立自己的身份，或取代你建立的佔位成員。</p>
+          <p className={CARD_TITLE}>旅伴加入方式</p>
+          <p className={HELP_TEXT}>透過分享連結加入的人，只能建立自己的身份，或取代你建立的佔位旅伴。</p>
           <JoinModePicker variant="settings" value={values.joinMode} onChange={(v) => set("joinMode", v)} disabled={submitting} />
         </div>
       </div>

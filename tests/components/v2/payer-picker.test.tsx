@@ -60,7 +60,7 @@ describe("PayerPicker", () => {
   it("hints to pick payers and renders no rows when nobody is selected", () => {
     setup({ payerIds: [], payers: [] })
     expect(screen.queryByLabelText(/的付款金額/)).not.toBeInTheDocument()
-    expect(screen.getByText("請選擇付款成員")).toBeInTheDocument()
+    expect(screen.getByText("請選擇付款旅伴")).toBeInTheDocument()
   })
 
   it("renders an editable input with the pinned amount once a payer is pinned", () => {
@@ -153,7 +153,7 @@ describe("PayerPicker", () => {
       ],
       matches: true,
     })
-    const group = screen.getByRole("group", { name: "付款成員" })
+    const group = screen.getByRole("group", { name: "付款旅伴" })
     expect(within(group).getByText("金額相符")).toBeInTheDocument()
   })
 
@@ -166,7 +166,7 @@ describe("PayerPicker", () => {
       ],
       matches: false,
     })
-    const group = screen.getByRole("group", { name: "付款成員" })
+    const group = screen.getByRole("group", { name: "付款旅伴" })
     // 60 of the 100 target → short by 40.
     expect(within(group).getByText("尚差 $40")).toBeInTheDocument()
   })
@@ -180,7 +180,7 @@ describe("PayerPicker", () => {
       ],
       matches: false,
     })
-    const group = screen.getByRole("group", { name: "付款成員" })
+    const group = screen.getByRole("group", { name: "付款旅伴" })
     // 120 of the 100 target → over by 20.
     expect(within(group).getByText("超出 $20")).toBeInTheDocument()
   })
@@ -194,7 +194,7 @@ describe("PayerPicker", () => {
       ],
       matches: false,
     })
-    const group = screen.getByRole("group", { name: "付款成員" })
+    const group = screen.getByRole("group", { name: "付款旅伴" })
     expect(within(group).getByText("含負數金額")).toBeInTheDocument()
   })
 
@@ -241,7 +241,7 @@ describe("PayerPicker", () => {
       displayCurrency: "USD",
       onDisplayCurrencyChange: vi.fn(),
     })
-    const group = screen.getByRole("group", { name: "付款成員" })
+    const group = screen.getByRole("group", { name: "付款旅伴" })
     expect(within(group).queryByText("金額相符")).not.toBeInTheDocument()
   })
 
@@ -257,7 +257,7 @@ describe("PayerPicker", () => {
         { id: "b", displayName: "志明", image: null },
       ],
     })
-    const group = screen.getByRole("group", { name: "付款成員" })
+    const group = screen.getByRole("group", { name: "付款旅伴" })
     expect(group.querySelector('img[src="https://cdn.example/xiaoyu.jpg"]')).toBeInTheDocument()
     expect(within(group).getAllByText("志").length).toBeGreaterThan(0)
   })

@@ -27,6 +27,13 @@ export function moneySymbol(code: string): string {
   return code === "TWD" ? "$" : currencySymbol(code)
 }
 
+// Prefix for narrow money fields (split tables, per-person inputs). The section
+// title names the real currency, so every currency uses the compact "$" here to
+// keep numbers from wrapping at 320px.
+export function moneyPrefix(): string {
+  return "$"
+}
+
 // v2-styled select trigger over the shared CurrencySelect.
 export function V2CurrencyField({
   value,

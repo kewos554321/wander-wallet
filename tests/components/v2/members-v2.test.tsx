@@ -11,7 +11,7 @@ vi.mock("@/components/auth/liff-provider", () => ({
   useLiff: () => ({ user: { id: "u1" } }),
   useAuthFetch: () => vi.fn(),
 }))
-vi.mock("@/components/members/add-member-dialog", () => ({ AddMemberDialog: () => null }))
+vi.mock("@/components/v2/members/add-member-sheet", () => ({ AddMemberSheet: () => null }))
 vi.mock("@/components/v2/project/invite-sheet-v2", () => ({ InviteSheetV2: () => null }))
 vi.mock("@/components/ui/confirm-delete-dialog", async () => {
   const React = await import("react")
@@ -57,15 +57,15 @@ function renderView(overrides: Partial<Parameters<typeof MembersV2View>[0]> = {}
 describe("MembersV2View", () => {
   it("shows the heading, count, badges and emails", () => {
     renderView()
-    expect(screen.getByText("成員列表")).toBeInTheDocument()
-    expect(screen.getByText("成員組成 · 3 位旅伴")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: /成員加入方式/ })).toHaveAttribute("href", "/projects/p1/settings")
+    expect(screen.getByText("旅伴列表")).toBeInTheDocument()
+    expect(screen.getByText("旅伴組成 · 3 位旅伴")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /旅伴加入方式/ })).toHaveAttribute("href", "/projects/p1/settings")
     const me = screen.getByTestId("member-m1")
     expect(within(me).getByText("建立者")).toBeInTheDocument()
     expect(within(me).getByText("你")).toBeInTheDocument()
     expect(within(me).getByText("emma@example.com")).toBeInTheDocument()
     const kai = screen.getByTestId("member-m3")
-    expect(within(kai).getByText("佔位成員")).toBeInTheDocument()
+    expect(within(kai).getByText("佔位旅伴")).toBeInTheDocument()
     expect(within(kai).getByText("尚未加入")).toBeInTheDocument()
   })
 
@@ -80,28 +80,28 @@ describe("MembersV2View", () => {
 
   it("moves the join-method link into its own row outside the members card", () => {
     renderView()
-    const link = screen.getByRole("link", { name: /成員加入方式/ })
-    const card = screen.getByText("成員列表").closest("div.rounded-2xl")!
+    const link = screen.getByRole("link", { name: /旅伴加入方式/ })
+    const card = screen.getByText("旅伴列表").closest("div.rounded-2xl")!
     expect(card.contains(link)).toBe(false)
   })
 
   it("shows the current join method and its description", () => {
     renderView()
-    const link = screen.getByRole("link", { name: /成員加入方式/ })
+    const link = screen.getByRole("link", { name: /旅伴加入方式/ })
     expect(within(link).getByText("以上兩者皆可")).toBeInTheDocument()
-    expect(within(link).getByText("新成員可選擇建立新身份或取代佔位成員")).toBeInTheDocument()
+    expect(within(link).getByText("新旅伴可選擇建立新身份或取代佔位旅伴")).toBeInTheDocument()
   })
 
   it("reflects a different join mode", () => {
     renderView({ project: { ...project, joinMode: "claim_only" } })
-    const link = screen.getByRole("link", { name: /成員加入方式/ })
-    expect(within(link).getByText("僅取代佔位成員")).toBeInTheDocument()
+    const link = screen.getByRole("link", { name: /旅伴加入方式/ })
+    expect(within(link).getByText("僅取代佔位旅伴")).toBeInTheDocument()
   })
 
   it("renders the labelled share and add buttons", () => {
     renderView()
-    expect(screen.getByRole("button", { name: "邀請成員" })).toHaveTextContent("分享")
-    expect(screen.getByRole("button", { name: "手動新增成員" })).toHaveTextContent("增加成員")
+    expect(screen.getByRole("button", { name: "邀請旅伴" })).toHaveTextContent("分享")
+    expect(screen.getByRole("button", { name: "手動新增旅伴" })).toHaveTextContent("增加旅伴")
   })
 
   it("lets the owner remove others but not themselves", () => {
@@ -118,8 +118,8 @@ describe("MembersV2View", () => {
 
   it("wires invite and add", () => {
     const props = renderView()
-    fireEvent.click(screen.getByRole("button", { name: "邀請成員" }))
-    fireEvent.click(screen.getByRole("button", { name: "手動新增成員" }))
+    fireEvent.click(screen.getByRole("button", { name: "邀請旅伴" }))
+    fireEvent.click(screen.getByRole("button", { name: "手動新增旅伴" }))
     expect(props.onInvite).toHaveBeenCalled()
     expect(props.onAdd).toHaveBeenCalled()
   })
@@ -165,9 +165,9 @@ describe("MembersV2 container", () => {
       batchRemove: vi.fn(),
     })
     render(<MembersV2 projectId="p1" />)
-    expect(screen.getByText("成員")).toBeInTheDocument()
+    expect(screen.getByText("旅伴")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
-    expect(screen.getByText("專案不存在")).toBeInTheDocument()
+    expect(screen.getByText("旅程不存在")).toBeInTheDocument()
   })
 
   it("shows a back link while loading", () => {
@@ -200,7 +200,7 @@ describe("MembersV2 container", () => {
       batchRemove: vi.fn(),
     })
     render(<MembersV2 projectId="p1" />)
-    expect(screen.getByText("成員組成 · 3 位旅伴")).toBeInTheDocument()
+    expect(screen.getByText("旅伴組成 · 3 位旅伴")).toBeInTheDocument()
   })
 
   it("opens the invite and add dialogs", () => {
@@ -216,8 +216,8 @@ describe("MembersV2 container", () => {
       batchRemove: vi.fn(),
     })
     render(<MembersV2 projectId="p1" />)
-    fireEvent.click(screen.getByRole("button", { name: "邀請成員" }))
-    fireEvent.click(screen.getByRole("button", { name: "手動新增成員" }))
+    fireEvent.click(screen.getByRole("button", { name: "邀請旅伴" }))
+    fireEvent.click(screen.getByRole("button", { name: "手動新增旅伴" }))
     expect(screen.getByTestId("member-m1")).toBeInTheDocument()
   })
 

@@ -117,10 +117,10 @@ describe("handlePrismaError", () => {
 
     it("should include resource name in message", async () => {
       const error = createPrismaError("P2002")
-      const response = handlePrismaError(error, { resource: "專案" })
+      const response = handlePrismaError(error, { resource: "旅程" })
       const json = await response.json()
 
-      expect(json.error.message).toBe("專案已存在")
+      expect(json.error.message).toBe("旅程已存在")
     })
 
     it("should include error code in response", async () => {
@@ -216,10 +216,10 @@ describe("handlePrismaError", () => {
 
     it("should include resource name in message", async () => {
       const error = createPrismaError("P2025")
-      const response = handlePrismaError(error, { resource: "專案" })
+      const response = handlePrismaError(error, { resource: "旅程" })
       const json = await response.json()
 
-      expect(json.error.message).toBe("專案不存在")
+      expect(json.error.message).toBe("旅程不存在")
     })
   })
 

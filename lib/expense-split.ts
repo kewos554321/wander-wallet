@@ -24,7 +24,7 @@ export interface ParticipantShare {
 export type V1SplitMode = "none" | "personal" | "custom" | "unsupported"
 
 export const SPLIT_DETAIL_FORMAT_ERROR = "分攤明細格式不正確"
-export const SPLIT_DETAIL_MEMBER_ERROR = "分攤明細包含非分攤成員"
+export const SPLIT_DETAIL_MEMBER_ERROR = "分攤明細包含非分攤旅伴"
 export const SPLIT_DETAIL_AMOUNT_ERROR = "分攤明細金額不正確"
 export const SPLIT_DETAIL_NAME_ERROR = "個人項目名稱需為 1–30 字"
 export const SPLIT_DETAIL_COUNT_ERROR = "每人最多 20 個個人項目"

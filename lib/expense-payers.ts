@@ -105,7 +105,7 @@ export function validatePayers(
     const { memberId, amount: rawAmount } = item as Record<string, unknown>
     if (typeof memberId !== "string" || memberId.length === 0) return fail("付款人格式不正確")
     if (seen.has(memberId)) return fail("付款人不可重複")
-    if (!memberIds.has(memberId)) return fail("付款人必須是專案成員")
+    if (!memberIds.has(memberId)) return fail("付款人必須是旅程旅伴")
     const payerAmount = Number(rawAmount)
     if (!Number.isFinite(payerAmount) || payerAmount < 0) return fail("付款金額不正確")
     seen.add(memberId)
@@ -119,7 +119,7 @@ export function validatePayers(
 }
 
 export const PAYER_ERROR = {
-  none: "請選擇付款成員",
+  none: "請選擇付款旅伴",
   over: "付款金額合計超過支出金額",
   mismatch: "付款金額與支出金額不符",
 } as const

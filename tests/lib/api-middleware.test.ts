@@ -251,7 +251,7 @@ describe("withProjectMember", () => {
 
     expect(handler).not.toHaveBeenCalled()
     expect(response.status).toBe(403)
-    expect(json.error.message).toBe("無權限訪問此專案")
+    expect(json.error.message).toBe("無權限訪問此旅程")
   })
 
   it("should correctly extract projectId from params", async () => {

@@ -47,7 +47,7 @@ export function useProjectOverview(projectId: string) {
       setJoinInfo(null)
       setProject(data)
     } catch {
-      console.error("獲取專案錯誤")
+      console.error("獲取旅程錯誤")
     } finally {
       setLoading(false)
     }

@@ -27,7 +27,7 @@ interface ExpenseDetail {
   description: string
   amount: number
   currency: string
-  convertedAmount: number // 轉換後的專案幣別金額
+  convertedAmount: number // 轉換後的旅程幣別金額
   payers: ExpensePayerDetail[]
   participants: {
     memberId: string
@@ -122,7 +122,7 @@ function calculateOptimalSettlements(balances: Balance[], precision: number = 2)
   return settlements
 }
 
-// 獲取專案的結算方案
+// 獲取旅程的結算方案
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -134,7 +134,7 @@ export async function GET(
       return NextResponse.json({ error: "未授權" }, { status: 401 })
     }
 
-    // 檢查用戶是否為專案成員
+    // 檢查用戶是否為旅程旅伴
     const membership = await prisma.projectMember.findFirst({
       where: {
         projectId: id,
@@ -143,10 +143,10 @@ export async function GET(
     })
 
     if (!membership) {
-      return NextResponse.json({ error: "無權限訪問此專案" }, { status: 403 })
+      return NextResponse.json({ error: "無權限訪問此旅程" }, { status: 403 })
     }
 
-    // 獲取專案幣別、自訂匯率和精度設定
+    // 獲取旅程幣別、自訂匯率和精度設定
     const project = await prisma.project.findUnique({
       where: { id },
       select: { currency: true },
@@ -195,7 +195,7 @@ export async function GET(
       },
     })
 
-    // 獲取所有成員
+    // 獲取所有旅伴
     const members = await prisma.projectMember.findMany({
       where: {
         projectId: id,
@@ -209,11 +209,11 @@ export async function GET(
       },
     })
 
-    // 計算每個成員的餘額（使用 memberId，支援佔位成員）
+    // 計算每個旅伴的餘額（使用 memberId，支援佔位旅伴）
     // balance = 已付款總額 - 應該分擔總額
     const balanceMap = new Map<string, Balance>()
 
-    // 初始化所有成員的餘額為0（包括佔位成員）
+    // 初始化所有旅伴的餘額為0（包括佔位旅伴）
     members.forEach((member) => {
       balanceMap.set(member.id, {
         memberId: member.id,
@@ -243,7 +243,7 @@ export async function GET(
       exchangeRatesUsed[currency] = conversion.exchangeRate
     }
 
-    // 計算每個成員的淨支出（使用專案幣別計算的金額）
+    // 計算每個旅伴的淨支出（使用旅程幣別計算的金額）
     let totalPaid = 0
     let totalShared = 0
     const expenseDetails: ExpenseDetail[] = []
@@ -296,7 +296,7 @@ export async function GET(
 
       const split = (expense.splitDetail as RawSplitDetail | null) ?? null
 
-      // 扣除每個參與者應該分擔的金額
+      // 扣除每個旅伴應該分擔的金額
       expense.participants.forEach((participant) => {
         const shareAmount = participant.shareAmountProject != null
           ? fromMinorUnits(Number(participant.shareAmountProject), projectCurrency)

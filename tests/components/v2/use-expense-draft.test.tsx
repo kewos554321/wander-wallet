@@ -95,7 +95,7 @@ describe("useExpenseDraft", () => {
 
   it.each([
     ["invalid amount", (d: ReturnType<typeof useExpenseDraft>) => d.actions.setAmount("abc"), "請輸入有效金額"],
-    ["no payer", (d: ReturnType<typeof useExpenseDraft>) => d.actions.togglePayer("a"), "請選擇付款成員"],
+    ["no payer", (d: ReturnType<typeof useExpenseDraft>) => d.actions.togglePayer("a"), "請選擇付款旅伴"],
     ["no participants", (d: ReturnType<typeof useExpenseDraft>) => d.actions.setPoolAll(false), "請選擇至少一位分擔者"],
   ])("reports %s", (_label, act_, message) => {
     const { result } = setup()

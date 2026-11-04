@@ -2,7 +2,7 @@
 
 import { useMemo, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
-import { JoinProjectDialog } from "@/components/project/join-project-dialog"
+import { JoinTripSheet } from "@/components/v2/project/join-trip-sheet"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { useProjectOverview } from "@/lib/hooks/useProjectOverview"
@@ -43,13 +43,13 @@ export function StatsV2({ projectId }: { projectId: string }) {
     )
   } else if (joinInfo) {
     content = (
-      <JoinProjectDialog info={joinInfo} joining={joining} onJoin={joinProject} onClaim={claimMember} onCancel={() => router.push("/projects")} />
+      <JoinTripSheet info={joinInfo} joining={joining} onJoin={joinProject} onClaim={claimMember} onCancel={() => router.push("/projects")} />
     )
   } else if (!project || !stats) {
     content = (
       <>
         <V2TopBar title="統計" backHref={`/projects/${projectId}`} titleClassName="text-[17px] font-semibold" />
-        <p className="py-8 text-center text-v2-ink-muted">專案不存在</p>
+        <p className="py-8 text-center text-v2-ink-muted">旅程不存在</p>
       </>
     )
   } else {

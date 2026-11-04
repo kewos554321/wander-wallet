@@ -71,7 +71,7 @@ describe("NewProjectV2", () => {
 
   it("renders the section cards and the currency label", () => {
     render(<NewProjectV2 />)
-    for (const title of ["卡片預覽", "基本資訊", "日期與預算", "結算幣別", "成員加入方式"]) {
+    for (const title of ["卡片預覽", "基本資訊", "日期與預算", "結算幣別", "旅伴加入方式"]) {
       expect(screen.getByText(title)).toBeInTheDocument()
     }
     expect(screen.getByText("JPY 日圓")).toBeInTheDocument()
@@ -94,7 +94,7 @@ describe("NewProjectV2", () => {
     render(<NewProjectV2 />)
     fireEvent.change(screen.getByLabelText("旅程名稱"), { target: { value: "京都" } })
     fireEvent.change(screen.getByLabelText("旅程預算"), { target: { value: "10000" } })
-    fireEvent.click(screen.getByLabelText("僅建立新成員"))
+    fireEvent.click(screen.getByLabelText("僅建立新旅伴"))
     // Cover is a tile that opens the shared picker sheet.
     fireEvent.click(screen.getByRole("button", { name: "更換封面" }))
     fireEvent.click(screen.getByRole("button", { name: "汽車" }))
@@ -121,11 +121,11 @@ describe("NewProjectV2", () => {
   })
 
   it("shows the server error in the alert", async () => {
-    mockAuthFetch.mockResolvedValueOnce({ ok: false, json: async () => ({ error: "專案名稱必填" }) })
+    mockAuthFetch.mockResolvedValueOnce({ ok: false, json: async () => ({ error: "旅程名稱必填" }) })
     render(<NewProjectV2 />)
     fireEvent.change(screen.getByLabelText("旅程名稱"), { target: { value: "京都" } })
     fireEvent.click(screen.getByRole("button", { name: "建立旅程" }))
-    expect(await screen.findByRole("alert")).toHaveTextContent("專案名稱必填")
+    expect(await screen.findByRole("alert")).toHaveTextContent("旅程名稱必填")
     expect(mockPush).not.toHaveBeenCalled()
   })
 
@@ -201,7 +201,7 @@ describe("NewProjectV2", () => {
   it("shows the join-mode explainer and a visible focus ring on text fields", () => {
     render(<NewProjectV2 />)
     expect(
-      screen.getByText("透過分享連結加入的人，只能建立自己的身份，或取代你建立的佔位成員。")
+      screen.getByText("透過分享連結加入的人，只能建立自己的身份，或取代你建立的佔位旅伴。")
     ).toBeInTheDocument()
     expect(screen.getByLabelText("旅程名稱").className).toContain("focus-visible:")
   })

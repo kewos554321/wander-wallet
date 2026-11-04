@@ -121,7 +121,7 @@ export function ExportV2View({
               checked={content.statisticsSummary}
               onCheckedChange={(v) => onContentChange({ ...content, statisticsSummary: v })}
               label="統計摘要"
-              description="總額、人均、分類統計、成員餘額"
+              description="總額、人均、分類統計、旅伴餘額"
             />
           </div>
 
@@ -168,9 +168,9 @@ export function ExportV2View({
         ) : null}
 
         <div data-testid="export-summary" className="mt-3.5 rounded-v2-md border border-v2-lake-border bg-v2-lake-soft p-3.5 text-[11px] text-v2-lake">
-          <p className="m-0 mb-1">專案：{projectName}</p>
+          <p className="m-0 mb-1">旅程：{projectName}</p>
           <p className="m-0 mb-1">支出筆數：{filteredCount} 筆（共 {expenseCount} 筆）</p>
-          <p className="m-0">成員人數：{memberCount} 人</p>
+          <p className="m-0">旅伴人數：{memberCount} 人</p>
         </div>
       </div>
 

@@ -7,7 +7,7 @@ vi.mock("next/font/google", () => ({
   Noto_Sans_TC: () => ({ variable: "font-var-sans" }),
 }))
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }))
-vi.mock("@/components/project/join-project-dialog", () => ({ JoinProjectDialog: () => null }))
+vi.mock("@/components/v2/project/join-trip-sheet", () => ({ JoinTripSheet: () => null }))
 
 const mockProjectOverview = vi.fn()
 vi.mock("@/lib/hooks/useProjectOverview", () => ({ useProjectOverview: () => mockProjectOverview() }))
@@ -44,7 +44,7 @@ describe("StatsV2View", () => {
 
   it("ranks members by share with the real initial and 我 in the meter label", () => {
     render(<StatsV2View projectId="p1" currency="TWD" stats={stats} currentMemberId="me" />)
-    const rows = within(screen.getByRole("list", { name: "成員排行" })).getAllByRole("listitem")
+    const rows = within(screen.getByRole("list", { name: "旅伴排行" })).getAllByRole("listitem")
     expect(rows[0]).toHaveTextContent("E")
     expect(rows[0]).toHaveTextContent("TWD 18,200")
     expect(within(rows[0]).getByText("E", { exact: true })).toHaveClass("bg-v2-lake")
@@ -75,8 +75,8 @@ describe("StatsV2View", () => {
     render(<StatsV2View projectId="p1" currency="TWD" stats={stats} currentMemberId="me" />)
     const categoryCard = screen.getByRole("region", { name: "類別佔比" })
     expect(within(categoryCard).getByRole("list", { name: "類別佔比" })).toBeInTheDocument()
-    const memberCard = screen.getByRole("region", { name: "成員排行" })
-    expect(within(memberCard).getByRole("list", { name: "成員排行" })).toBeInTheDocument()
+    const memberCard = screen.getByRole("region", { name: "旅伴排行" })
+    expect(within(memberCard).getByRole("list", { name: "旅伴排行" })).toBeInTheDocument()
     const trendCard = screen.getByRole("region", { name: "每日趨勢" })
     expect(within(trendCard).getByRole("figure", { name: "每日趨勢" })).toBeInTheDocument()
     expect(within(trendCard).getByText("每日趨勢")).toBeInTheDocument()
@@ -123,7 +123,7 @@ describe("StatsV2 container", () => {
     })
     render(<StatsV2 projectId="p1" />)
     expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
-    expect(screen.getByText("專案不存在")).toBeInTheDocument()
+    expect(screen.getByText("旅程不存在")).toBeInTheDocument()
     expect(screen.getByRole("heading", { level: 1, name: "統計" })).toBeInTheDocument()
   })
 
@@ -178,7 +178,7 @@ describe("StatsV2 container", () => {
       convert: (n: number) => n,
     })
     render(<StatsV2 projectId="p1" />)
-    const list = screen.getByRole("list", { name: "成員排行" })
+    const list = screen.getByRole("list", { name: "旅伴排行" })
     expect(within(list).getByTestId("placeholder-avatar")).toHaveTextContent("志")
   })
 })

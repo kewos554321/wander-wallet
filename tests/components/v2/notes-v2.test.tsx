@@ -36,7 +36,7 @@ describe("NotesV2View", () => {
     renderView()
     expect(screen.getByRole("heading", { name: "筆記" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
-    expect(screen.getByText("所有成員共享的筆記，可記錄行程、重要資訊等")).toBeInTheDocument()
+    expect(screen.getByText("所有旅伴共享的筆記，可記錄行程、重要資訊等")).toBeInTheDocument()
     expect(screen.getByPlaceholderText(/在這裡輸入筆記內容/)).toBeInTheDocument()
   })
 

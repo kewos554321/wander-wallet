@@ -150,7 +150,7 @@ export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId
           <table className="w-full overflow-hidden rounded-v2-sm bg-v2-paper text-[12px]">
             <thead className="bg-v2-lake-soft">
               <tr>
-                <th className="p-[7px] text-left text-[11px] font-medium text-v2-lake">成員</th>
+                <th className="p-[7px] text-left text-[11px] font-medium text-v2-lake">旅伴</th>
                 <th className="p-[7px] text-left text-[11px] font-medium text-v2-lake">已付</th>
                 <th className="p-[7px] text-left text-[11px] font-medium text-v2-lake">應付</th>
                 <th className="p-[7px] text-left text-[11px] font-medium text-v2-lake">餘額</th>

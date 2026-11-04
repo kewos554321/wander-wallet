@@ -175,10 +175,10 @@ describe("ApiResponse", () => {
     })
 
     it("should include resource name in message", async () => {
-      const response = ApiResponse.notFound("專案")
+      const response = ApiResponse.notFound("旅程")
       const json = await response.json()
 
-      expect(json.error.message).toBe("專案不存在")
+      expect(json.error.message).toBe("旅程不存在")
     })
   })
 

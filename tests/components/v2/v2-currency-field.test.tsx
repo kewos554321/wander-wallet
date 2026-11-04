@@ -10,7 +10,7 @@ vi.mock("@/components/ui/currency-select", () => ({
   ),
 }))
 
-import { V2CurrencyField, currencyLabel, currencySymbol, moneySymbol } from "@/components/v2/ui/currency-field"
+import { V2CurrencyField, currencyLabel, currencySymbol, moneyPrefix, moneySymbol } from "@/components/v2/ui/currency-field"
 
 describe("currencyLabel", () => {
   it("uses the short name when short is true", () => {
@@ -32,6 +32,14 @@ describe("currencySymbol", () => {
     expect(currencySymbol("JPY")).toBe("JPY")
     expect(currencySymbol("USD")).toBe("USD")
     expect(currencySymbol("EUR")).toBe("EUR")
+  })
+})
+
+describe("moneyPrefix", () => {
+  it("always uses the compact dollar sign in narrow money fields", () => {
+    expect(moneyPrefix()).toBe("$")
+    expect(moneyPrefix()).toBe("$")
+    expect(moneyPrefix()).toBe("$")
   })
 })
 

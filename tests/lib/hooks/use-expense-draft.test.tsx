@@ -145,7 +145,7 @@ describe("useExpenseDraft payers", () => {
     const { result } = setup()
     act(() => result.current.actions.setAmount("100"))
     act(() => result.current.actions.togglePayer("a"))
-    expect(result.current.derived.error).toBe("請選擇付款成員")
+    expect(result.current.derived.error).toBe("請選擇付款旅伴")
   })
 
   it("restores payers from an existing expense and keeps the stored order", () => {

@@ -27,7 +27,7 @@ export interface DraftMember {
   userId?: string | null
   /** True for the signed-in user; their avatar fallback uses the lake brand colour. */
   isCurrentUser?: boolean
-  /** True for a member with no linked account (成員頁面的「佔位成員」). */
+  /** True for a member with no linked account (旅伴頁面的「佔位旅伴」). */
   isPlaceholder?: boolean
   /** Per-project remainder ledger; decides which member absorbs a rounding unit. */
   remainderDiscrepancy?: number
@@ -371,7 +371,7 @@ export function deriveExpenseDraft({
     (state.personalMode ? state.personalItems[id] ?? [] : []).some((i) => !i.name.trim())
   )
   if (state.amount.trim() === "" || !Number.isFinite(amountNum) || amountNum < 0) error = "請輸入有效金額"
-  else if (state.payerIds.length === 0) error = "請選擇付款成員"
+  else if (state.payerIds.length === 0) error = "請選擇付款旅伴"
   else if (!payerResult.ok) error = "付款金額合計超過支出金額"
   else if (!payerMatches) error = "付款金額與支出金額不符"
   else if (base.splitInput.participantIds.length === 0) error = "請選擇至少一位分擔者"

@@ -68,7 +68,7 @@ describe("parsedToQuickItems", () => {
   it("keeps a missing payers list editable instead of throwing", () => {
     const [q] = parsedToQuickItems([{ ...base, payers: undefined as unknown as typeof base.payers }])
     expect(q.payerIds).toEqual([])
-    expect(validateItems([q], members)).toEqual({ index: 0, message: "第 1 筆請選擇付款成員" })
+    expect(validateItems([q], members)).toEqual({ index: 0, message: "第 1 筆請選擇付款旅伴" })
   })
 
   it("seeds personal items and enables personal mode", () => {
@@ -131,8 +131,8 @@ describe("validateItems", () => {
     }
   })
   it("checks payer then participants", () => {
-    expect(validateItems([item({ payerIds: [] })], members)).toEqual({ index: 0, message: "第 1 筆請選擇付款成員" })
-    expect(validateItems([item({ pool: [] })], members)).toEqual({ index: 0, message: "第 1 筆請選擇至少一位分攤成員" })
+    expect(validateItems([item({ payerIds: [] })], members)).toEqual({ index: 0, message: "第 1 筆請選擇付款旅伴" })
+    expect(validateItems([item({ pool: [] })], members)).toEqual({ index: 0, message: "第 1 筆請選擇至少一位分攤旅伴" })
   })
   it("validates the payer sum against the amount", () => {
     expect(validateItems([item({ amount: "100", payerIds: ["a", "b"], pinnedPayerAmounts: { a: "40", b: "40" } })], members)).toEqual({

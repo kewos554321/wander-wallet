@@ -108,7 +108,7 @@ function generateStatisticsSection(statistics: StatisticsExportData, currency: s
   lines.push("項目,數值")
   lines.push(`支出筆數,${statistics.totalExpenses}`)
   lines.push(`總金額,${formatCurrency(statistics.totalAmount, currency)}`)
-  lines.push(`成員人數,${statistics.memberCount}`)
+  lines.push(`旅伴人數,${statistics.memberCount}`)
   lines.push(`人均金額,${formatCurrency(statistics.perPerson, currency)}`)
 
   // 分類統計
@@ -132,12 +132,12 @@ function generateStatisticsSection(statistics: StatisticsExportData, currency: s
     })
   }
 
-  // 成員餘額
+  // 旅伴餘額
   if (statistics.memberBreakdown.length > 0) {
     lines.push("")
-    lines.push("【成員餘額】")
+    lines.push("【旅伴餘額】")
     lines.push("")
-    lines.push(["成員", "已付金額", "應分擔", "餘額"].map(escapeCSV).join(","))
+    lines.push(["旅伴", "已付金額", "應分擔", "餘額"].map(escapeCSV).join(","))
 
     statistics.memberBreakdown.forEach((member) => {
       lines.push(
@@ -161,7 +161,7 @@ export function generateCSV(data: ExportData, options: ExportOptions): string {
   const sections: string[] = []
 
   // 標題區
-  sections.push(`專案名稱:,${escapeCSV(data.projectName)}`)
+  sections.push(`旅程名稱:,${escapeCSV(data.projectName)}`)
   sections.push(`匯出日期:,${formatDate(data.exportDate)}`)
   sections.push("")
 

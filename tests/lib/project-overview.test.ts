@@ -104,6 +104,20 @@ describe("computeProjectSummary", () => {
     expect(s.userBalance).toBe(50)
   })
 
+  it("returns every member's net balance", () => {
+    const p = project({
+      expenses: [
+        expense("a", "me", 300, { me: 150, chi: 150 }),
+        expense("b", "chi", 100, { me: 50, chi: 50 }),
+      ],
+    })
+    const s = computeProjectSummary(p, identity, "u1")
+    expect(s.memberBalances).toEqual([
+      { memberId: "me", displayName: "me", balance: 100 },
+      { memberId: "chi", displayName: "chi", balance: -100 },
+    ])
+  })
+
   it("gives 0 balance to a non-member viewer", () => {
     const p = project({ expenses: [expense("a", "me", 300, { me: 150, chi: 150 })] })
     expect(computeProjectSummary(p, identity, "stranger").userBalance).toBe(0)

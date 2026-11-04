@@ -33,7 +33,7 @@ export function StatsV2View({ projectId, currency, stats, currentMemberId }: Sta
       </section>
       <section aria-labelledby={MEMBER_HEADING_ID} className="px-4 pt-[22px]">
         <div className="rounded-2xl border border-v2-line bg-v2-surface p-4">
-          <p id={MEMBER_HEADING_ID} className={heading}>成員排行</p>
+          <p id={MEMBER_HEADING_ID} className={heading}>旅伴排行</p>
           <MemberRanking members={stats.members} currency={currency} currentMemberId={currentMemberId} />
         </div>
       </section>

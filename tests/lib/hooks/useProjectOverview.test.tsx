@@ -171,7 +171,7 @@ describe("useProjectOverview", () => {
           unclaimedMembers: [],
         })
       )
-      .mockResolvedValueOnce(errJson(400, { error: "此專案不允許加入" }))
+      .mockResolvedValueOnce(errJson(400, { error: "此旅程不允許加入" }))
 
     const { result } = renderHook(() => useProjectOverview("p1"))
 
@@ -181,7 +181,7 @@ describe("useProjectOverview", () => {
       await result.current.joinProject()
     })
 
-    expect(alertSpy).toHaveBeenCalledWith("此專案不允許加入")
+    expect(alertSpy).toHaveBeenCalledWith("此旅程不允許加入")
     expect(result.current.joining).toBe(false)
   })
 

@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from "react"
 import { RotateCcw, X } from "lucide-react"
 import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
+import { moneyPrefix } from "@/components/v2/ui/currency-field"
 import { formatAmount } from "@/lib/constants/currencies"
 import { derivePayerShares } from "@/lib/expense-payers"
 import type { DraftMember, useExpenseDraft } from "@/components/v2/expense-form/use-expense-draft"
@@ -57,7 +58,7 @@ export function AmountSheet({
 
   const member = members.find((m) => m.id === memberId)
   const name = member?.displayName ?? ""
-  const money = (n: number) => `${n < 0 ? "−" : ""}$${formatAmount(Math.abs(n), state.currency)}`
+  const money = (n: number) => `${n < 0 ? "−" : ""}${moneyPrefix()}${formatAmount(Math.abs(n), state.currency)}`
 
   const isPayer = mode === "payer"
   const share = derived.shares.find((s) => s.memberId === memberId)?.shareAmount ?? 0
@@ -118,7 +119,7 @@ export function AmountSheet({
 
         <div className="px-4 py-5">
           <label className="flex items-center gap-2 rounded-xl border-[1.5px] border-v2-lake bg-v2-surface px-3.5 py-3">
-            <span className="text-[18px] font-bold text-v2-ink-muted">$</span>
+            <span className="text-[18px] font-bold text-v2-ink-muted">{moneyPrefix()}</span>
             <input
               ref={inputRef}
               autoFocus

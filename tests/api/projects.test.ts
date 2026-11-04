@@ -122,7 +122,7 @@ describe("POST /api/projects", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("專案名稱必填")
+    expect(data.error).toBe("旅程名稱必填")
   })
 
   it("should return 400 if project name is empty string", async () => {
@@ -137,7 +137,7 @@ describe("POST /api/projects", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("專案名稱必填")
+    expect(data.error).toBe("旅程名稱必填")
   })
 
   it("should return 400 if end date is before start date", async () => {
@@ -324,7 +324,7 @@ describe("POST /api/projects", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("創建專案失敗")
+    expect(data.error).toBe("創建旅程失敗")
   })
 
   it("should create project with currency", async () => {
@@ -384,7 +384,7 @@ describe("POST /api/projects", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("獲取專案失敗")
+    expect(data.error).toBe("獲取旅程失敗")
   })
 
   it("should return 400 with invalid cover format", async () => {

@@ -4,6 +4,7 @@ import { CheckCircle2 } from "lucide-react"
 import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
 import { roundMajorToMinor } from "@/lib/currency-conversion"
 import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
+import { moneyPrefix } from "@/components/v2/ui/currency-field"
 import type { SplitDraft } from "@/lib/split-draft"
 import type { DraftMember } from "./use-expense-draft"
 
@@ -116,9 +117,9 @@ export function SplitSummary({
   const viewCurrency = displayCurrency ?? currency
   const settleView = displayCurrency != null && displayCurrency !== currency && rate != null
   const view = (n: number) => (settleView ? roundMajorToMinor(n * rate!, viewCurrency) : n)
-  const money = (n: number) => `$${formatAmount(view(n), viewCurrency)}`
+  const money = (n: number) => `${moneyPrefix()}${formatAmount(view(n), viewCurrency)}`
   // ≈ flags any cell that actually holds an amount; a structural 0 stays plain.
-  const approx = (n: number) => `${settleView ? "≈" : ""}$${formatAmount(view(n), viewCurrency)}`
+  const approx = (n: number) => `${settleView ? "≈" : ""}${moneyPrefix()}${formatAmount(view(n), viewCurrency)}`
   const amount = (n: number) => (n !== 0 ? approx(n) : money(n))
   const rows = buildSummaryRows(members, draft)
   const visibleRows = rows.filter((r) => r.total !== 0)
@@ -134,7 +135,7 @@ export function SplitSummary({
       </p>
       <div role="table">
         <div role="row" className={`${cols} pb-1.5 text-[11px] text-v2-ink-subtle`}>
-          <span role="columnheader" className="text-left">成員</span>
+          <span role="columnheader" className="text-left">旅伴</span>
           <span role="columnheader" className="text-right">個人項目</span>
           <span role="columnheader" className="text-right">共同分攤</span>
           <span role="columnheader" className="text-right">小計</span>

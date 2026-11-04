@@ -1,6 +1,6 @@
 import { JOIN_MODE_OPTIONS, type JoinMode } from "@/lib/hooks/use-project-form"
 
-// Shared "成員加入方式" radio-card group. "create" is A9b (owns its card
+// Shared "旅伴加入方式" radio-card group. "create" is A9b (owns its card
 // title/legend); "settings" is A13 (the card renders the title itself).
 export function JoinModePicker({
   value,
@@ -18,8 +18,8 @@ export function JoinModePicker({
     <fieldset>
       {!settings && (
         <>
-          <legend className="mb-0.5 text-[13px] font-bold text-v2-lake">成員加入方式</legend>
-          <p className="mb-2.5 text-xs text-v2-ink-subtle">設定新成員透過分享連結加入時的方式</p>
+          <legend className="mb-0.5 text-[13px] font-bold text-v2-lake">旅伴加入方式</legend>
+          <p className="mb-2.5 text-xs text-v2-ink-subtle">設定新旅伴透過分享連結加入時的方式</p>
         </>
       )}
       <div className="flex flex-col gap-2">
