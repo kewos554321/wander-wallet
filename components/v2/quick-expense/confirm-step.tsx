@@ -1,10 +1,11 @@
 "use client"
 
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import { Check, ChevronLeft, ChevronRight, RotateCcw, Send, Trash2, X } from "lucide-react"
 import { formatCurrency } from "@/lib/constants/currencies"
 import type { PreviewRateInfo } from "@/lib/currency-conversion"
-import type { DraftState } from "@/lib/expense-draft"
+import { createDraftActions, deriveExpenseDraft, type DraftState } from "@/lib/expense-draft"
+import { expenseFormIssues } from "@/components/v2/expense-form/split-guardrails"
 import type { RecentRate } from "@/lib/recent-rates"
 import { itemTotals, type QuickItem } from "@/lib/quick-expense/draft"
 import { QuickItemCard } from "./quick-item-card"
@@ -49,6 +50,27 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemChange
     (updater: (state: DraftState) => DraftState) => onItemChange(index, updater),
     [index, onItemChange],
   )
+  const [showSettlement, setShowSettlement] = useState(false)
+  const currentDraft = useMemo(() => {
+    if (!current) return null
+    const derived = deriveExpenseDraft({
+      state: current,
+      members,
+      projectCurrency: projectCurrency ?? current.currency,
+      participantOrder: members.map((m) => m.id),
+      previewRateInfo,
+    })
+    const issues = expenseFormIssues(
+      { state: current, actions: createDraftActions(() => {}, members), derived },
+      members,
+    )
+    return { derived, issues }
+  }, [current, members, projectCurrency, previewRateInfo])
+  const canConvert =
+    projectCurrency != null && currentDraft?.derived.rate != null && current?.currency !== projectCurrency
+  const displayCurrency = canConvert && showSettlement ? projectCurrency! : current?.currency
+  const footerError = currentDraft?.issues.blockingError ?? error
+  const submitDisabled = !currentDraft || currentDraft.issues.descMissing || currentDraft.issues.blockingError != null
   const totals = itemTotals(items).map((t) => formatCurrency(t.total, t.currency)).join(" · ")
 
   const startSwipe = (e: React.TouchEvent) => {
@@ -161,6 +183,7 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemChange
           members={members}
           onChange={changeItem}
           projectCurrency={projectCurrency}
+          displayCurrency={displayCurrency}
           previewRateInfo={previewRateInfo}
           rateContext={rateContext}
           recentRates={recentRates}
@@ -189,10 +212,25 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemChange
               </span>
             </label>
           )}
-          {error && (
+          {footerError && (
             <p role="alert" className="mb-2 text-xs font-bold text-v2-danger">
-              {error}
+              {footerError}
             </p>
+          )}
+          {canConvert && (
+            <div className="mb-2.5 flex items-center justify-between text-[12px] font-bold text-v2-ink-muted">
+              <span>顯示幣別</span>
+              <span role="group" aria-label="顯示幣別" className="inline-flex h-6 items-center rounded-full bg-v2-lake-tint p-0.5 text-[11px] font-bold">
+                {[current.currency, projectCurrency!].map((code) => {
+                  const active = code === displayCurrency
+                  return (
+                    <button key={code} type="button" aria-pressed={active} onClick={() => setShowSettlement(code === projectCurrency)} className={`flex h-full items-center rounded-full px-2.5 leading-none ${active ? "bg-v2-lake text-v2-on-lake" : "text-v2-lake"}`}>
+                      {code}
+                    </button>
+                  )
+                })}
+              </span>
+            </div>
           )}
           <div className="mb-2.5 flex items-center justify-between rounded-v2-md bg-v2-lake-soft px-4 py-3">
             <span className="text-xs font-semibold text-v2-lake">{`共 ${items.length} 筆`}</span>
@@ -203,7 +241,7 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemChange
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
               重新輸入
             </button>
-            <button type="button" onClick={() => onSubmit(canNotifyLine && notifyLine)} className="flex flex-1 items-center justify-center gap-1.5 rounded-v2-md bg-v2-lake py-[13px] text-[13px] font-bold text-v2-on-lake">
+            <button type="button" disabled={submitDisabled} onClick={() => onSubmit(canNotifyLine && notifyLine)} className="flex flex-1 items-center justify-center gap-1.5 rounded-v2-md bg-v2-lake py-[13px] text-[13px] font-bold text-v2-on-lake disabled:opacity-40">
               <Send className="h-3.5 w-3.5" aria-hidden="true" />
               {`新增 ${items.length} 筆`}
             </button>

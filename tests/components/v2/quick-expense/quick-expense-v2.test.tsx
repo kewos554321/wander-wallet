@@ -283,7 +283,8 @@ describe("QuickExpenseV2", () => {
     await screen.findByText("1 / 2")
     fireEvent.click(screen.getByRole("button", { name: "新增 2 筆" }))
     expect(await screen.findByText("2 / 2")).toBeInTheDocument()
-    expect(screen.getByRole("alert")).toHaveTextContent("第 2 筆請輸入有效金額")
+    // The footer now shows the same item-level guardrail as the add-expense form.
+    expect(screen.getByRole("alert")).toHaveTextContent("金額必須大於 0")
     expect(save).not.toHaveBeenCalled()
   })
 

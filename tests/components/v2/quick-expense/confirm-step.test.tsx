@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest"
 import { render, screen, fireEvent, within } from "@testing-library/react"
 
+vi.mock("@/components/auth/liff-provider", () => ({ useAuthFetch: () => vi.fn() }))
 vi.mock("@/components/v2/expense-form/location-picker-v2", () => ({ LocationPickerV2: () => <div data-testid="location-picker" /> }))
 vi.mock("@/components/ui/currency-select", () => ({ CurrencySelect: ({ value }: { value: string }) => <div data-testid="currency">{value}</div> }))
 
@@ -137,6 +138,29 @@ describe("ConfirmStep", () => {
     expect(p.onSubmit).toHaveBeenCalledWith(false)
     fireEvent.click(screen.getByRole("button", { name: "重新輸入" }))
     expect(p.onReinput).toHaveBeenCalled()
+  })
+
+  it("blocks submit when the description is empty", () => {
+    setup({ items: [{ ...items[0], description: "" }] })
+    expect(screen.getByRole("button", { name: "新增 1 筆" })).toBeDisabled()
+  })
+
+  it("shows the shared amount error and disables submit", () => {
+    setup({ items: [{ ...items[0], amount: "0" }] })
+    expect(screen.getByRole("alert")).toHaveTextContent("金額必須大於 0")
+    expect(screen.getByRole("button", { name: "新增 1 筆" })).toBeDisabled()
+  })
+
+  it("shows the display-currency toggle for a foreign item", () => {
+    setup({
+      items: [{ ...items[0], currency: "JPY" }],
+      projectCurrency: "TWD",
+      previewRateInfo: () => ({ rate: 0.21, source: "live" as const }),
+    })
+    const group = screen.getByRole("group", { name: "顯示幣別" })
+    expect(within(group).getByRole("button", { name: "JPY" })).toHaveAttribute("aria-pressed", "true")
+    fireEvent.click(within(group).getByRole("button", { name: "TWD" }))
+    expect(within(group).getByRole("button", { name: "TWD" })).toHaveAttribute("aria-pressed", "true")
   })
 
   it("hides the LINE toggle when notifications are unavailable and lists each currency", () => {
