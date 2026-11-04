@@ -6,7 +6,6 @@ import { QuickExpenseV2 } from "@/components/v2/quick-expense/quick-expense-v2"
 import { ProjectTour } from "@/components/v2/onboarding/project-tour"
 import { JoinProjectDialog } from "@/components/project/join-project-dialog"
 import { InviteSheetV2 } from "@/components/v2/project/invite-sheet-v2"
-import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { useLiff } from "@/components/auth/liff-provider"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { useOnboarding } from "@/lib/hooks/useOnboarding"
@@ -17,8 +16,21 @@ import { ProjectOverviewV2View } from "./project-overview-v2-view"
 export function ProjectOverviewV2({ projectId }: { projectId: string }) {
   const router = useRouter()
   const { user } = useLiff()
-  const { project, loading, joinInfo, joining, joinProject, claimMember, refetch, summary } =
-    useProjectOverview(projectId)
+  const {
+    project,
+    loading,
+    joinInfo,
+    joining,
+    joinProject,
+    claimMember,
+    refetch,
+    summary,
+    ratesLoading,
+    ratesReady,
+    usingFallback,
+    ratesTimestamp,
+    refetchRates,
+  } = useProjectOverview(projectId)
   const {
     isOnboardingCompleted,
     isLoading: onboardingLoading,
@@ -60,6 +72,11 @@ export function ProjectOverviewV2({ projectId }: { projectId: string }) {
           currentUserName={user?.name ?? null}
           currentUserImage={user?.image ?? null}
           currentUserId={user?.id ?? null}
+          ratesLoading={ratesLoading}
+          ratesReady={ratesReady}
+          usingFallback={usingFallback}
+          ratesTimestamp={ratesTimestamp}
+          onRetryRates={refetchRates}
         />
         <InviteSheetV2 open={showInvite} onOpenChange={setShowInvite} projectId={project.id} projectName={project.name} />
         <QuickExpenseV2
@@ -91,8 +108,6 @@ export function ProjectOverviewV2({ projectId }: { projectId: string }) {
   }
 
   return (
-    <UiV2Scope>
       <div className="mx-auto max-w-md">{content}</div>
-    </UiV2Scope>
   )
 }

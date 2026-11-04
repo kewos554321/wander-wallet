@@ -20,6 +20,11 @@ interface ProjectOverviewV2ViewProps {
   currentUserName?: string | null
   currentUserImage?: string | null
   currentUserId?: string | null
+  ratesLoading?: boolean
+  ratesReady?: boolean
+  usingFallback?: boolean
+  ratesTimestamp?: number | null
+  onRetryRates?: () => void
 }
 
 const pill =
@@ -33,6 +38,11 @@ export function ProjectOverviewV2View({
   currentUserName,
   currentUserImage,
   currentUserId,
+  ratesLoading = false,
+  ratesReady = true,
+  usingFallback = false,
+  ratesTimestamp = null,
+  onRetryRates,
 }: ProjectOverviewV2ViewProps) {
   const currency = project.currency || DEFAULT_CURRENCY
 
@@ -89,7 +99,16 @@ export function ProjectOverviewV2View({
         </p>
       )}
 
-      <TripSummaryCard summary={summary} currency={currency} cover={project.cover ?? null} />
+      <TripSummaryCard
+        summary={summary}
+        currency={currency}
+        cover={project.cover ?? null}
+        ratesLoading={ratesLoading}
+        ratesReady={ratesReady}
+        usingFallback={usingFallback}
+        ratesTimestamp={ratesTimestamp}
+        onRetryRates={onRetryRates}
+      />
       <BalanceCard balance={summary.userBalance} currency={currency} projectId={project.id} />
       <FeatureGrid projectId={project.id} />
       <RecentExpenses

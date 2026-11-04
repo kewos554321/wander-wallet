@@ -16,7 +16,14 @@ export function useProjectOverview(projectId: string) {
   const [joinInfo, setJoinInfo] = useState<JoinInfo | null>(null)
   const [joining, setJoining] = useState(false)
 
-  const { convert } = useCurrencyConversion({
+  const {
+    convert,
+    loading: ratesLoading,
+    exchangeRates,
+    usingFallback,
+    ratesTimestamp,
+    refetch: refetchRates,
+  } = useCurrencyConversion({
     projectCurrency: project?.currency || DEFAULT_CURRENCY,
   })
 
@@ -92,5 +99,22 @@ export function useProjectOverview(projectId: string) {
     [project, convert, user?.id]
   )
 
-  return { project, loading, joinInfo, joining, joinProject, claimMember, refetch, summary, convert }
+  return {
+    project,
+    loading,
+    joinInfo,
+    joining,
+    joinProject,
+    claimMember,
+    refetch,
+    summary,
+    convert,
+    // Rates can arrive after the project does; the overview must not present a
+    // converted total until they are ready or it silently assumes 1:1.
+    ratesLoading,
+    ratesReady: exchangeRates !== null,
+    usingFallback,
+    ratesTimestamp,
+    refetchRates,
+  }
 }

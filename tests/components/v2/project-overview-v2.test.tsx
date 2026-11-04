@@ -175,6 +175,36 @@ describe("ProjectOverviewV2View", () => {
     expect(screen.getByText("TWD 80,000 ／ TWD 76,000（超出 TWD 4,000）")).toBeInTheDocument()
   })
 
+  it("hides converted totals while exchange rates are loading", () => {
+    render(
+      <ProjectOverviewV2View
+        project={project}
+        summary={{ ...summary, hasMixedCurrencies: true }}
+        onShare={vi.fn()}
+        onVoice={vi.fn()}
+        ratesLoading
+        ratesReady={false}
+      />
+    )
+    expect(screen.queryByText("TWD 48,600")).not.toBeInTheDocument()
+    expect(screen.getByRole("status", { name: "正在換算外幣總額" })).toBeInTheDocument()
+    expect(screen.getByText(/正在換算外幣/)).toBeInTheDocument()
+  })
+
+  it("labels fallback rates with their update date", () => {
+    render(
+      <ProjectOverviewV2View
+        project={project}
+        summary={{ ...summary, hasMixedCurrencies: true }}
+        onShare={vi.fn()}
+        onVoice={vi.fn()}
+        usingFallback
+        ratesTimestamp={new Date("2026-11-04T09:00:00+08:00").getTime()}
+      />
+    )
+    expect(screen.getByTestId("v2-rate-caption")).toHaveTextContent("使用備援匯率 · 11/4 更新")
+  })
+
   it("hides the budget bar without a budget and formats negative balances", () => {
     render(
       <ProjectOverviewV2View
