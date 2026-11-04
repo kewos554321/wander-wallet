@@ -14,11 +14,18 @@ export function CoverTileButton({ cover, onChange, disabled }: { cover: string |
         <CoverArt cover={cover} variant="solid" className="h-12 w-12 rounded-v2-md" iconClassName="h-[22px] w-[22px]" />
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} label="更換封面">
-        <h2 className="m-0 mb-3 font-v2-serif text-base font-semibold">更換封面</h2>
-        <CoverPickerV2 value={cover} onChange={onChange} disabled={disabled} />
-        <button type="button" onClick={() => setOpen(false)} className="mt-4 w-full rounded-v2-md bg-v2-lake py-3.5 text-sm font-bold text-v2-on-lake">
-          完成
-        </button>
+        <div className="flex max-h-[85dvh] flex-col">
+          <h2 className="m-0 mb-3 shrink-0 font-v2-serif text-base font-semibold">更換封面</h2>
+          <div
+            data-testid="cover-picker-scroll"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1"
+          >
+            <CoverPickerV2 value={cover} onChange={onChange} disabled={disabled} />
+          </div>
+          <button type="button" onClick={() => setOpen(false)} className="mt-4 w-full shrink-0 rounded-v2-md bg-v2-lake py-3.5 text-sm font-bold text-v2-on-lake">
+            完成
+          </button>
+        </div>
       </Sheet>
     </>
   )
