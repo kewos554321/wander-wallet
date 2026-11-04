@@ -11,7 +11,6 @@ import {
   Settings,
   Menu,
   X,
-  ChevronRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -96,6 +95,7 @@ export default function AdminLayout({
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={isActive ? "page" : undefined}
                 onClick={() => setSidebarOpen(false)}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
@@ -107,7 +107,7 @@ export default function AdminLayout({
                 <item.icon className="h-5 w-5" />
                 {item.label}
                 {isActive && (
-                  <ChevronRight className="h-4 w-4 ml-auto" />
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-600 dark:bg-brand-400" aria-hidden="true" />
                 )}
               </Link>
             )
