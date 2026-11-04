@@ -35,7 +35,7 @@ export function V2TopBar({ title, backHref, actions, titleClassName, fixedBack =
         }}
         className={
           backClassName ??
-          "flex h-[34px] w-[34px] items-center justify-center rounded-full border border-v2-line bg-v2-surface text-v2-ink transition-transform duration-150 ease-out active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
+          "relative flex h-[34px] w-[34px] items-center justify-center rounded-full border border-v2-line bg-v2-surface text-v2-ink after:absolute after:-inset-[5px] after:content-[''] transition-transform duration-150 ease-out active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
         }
       >
         {backIcon ?? <ChevronLeft className="h-[18px] w-[18px]" strokeWidth={2} />}

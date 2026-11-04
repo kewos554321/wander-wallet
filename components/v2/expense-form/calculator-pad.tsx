@@ -195,7 +195,7 @@ export function CalculatorPad({ initialValue, onApply, onClose }: CalculatorPadP
       <div data-testid="calc-display" className="rounded-v2-md bg-v2-surface p-3.5">
         <p
           data-testid="calc-expression"
-          className="min-h-[16px] overflow-hidden whitespace-nowrap text-right font-mono text-xs text-v2-ink-subtle"
+          className="min-h-[16px] overflow-hidden whitespace-nowrap text-right font-mono text-xs text-v2-ink-muted"
         >
           {expression || "0"}
         </p>

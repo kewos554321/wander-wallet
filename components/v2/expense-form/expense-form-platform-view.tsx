@@ -11,7 +11,7 @@
 // ExpenseFormFields so the AI result page can reuse it.
 
 import { useEffect, useRef, useState } from "react"
-import { Trash2 } from "lucide-react"
+import { Trash2, AlertCircle } from "lucide-react"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { ExpenseFormFields } from "@/components/v2/expense-form/expense-form-fields"
 import { expenseFormIssues } from "@/components/v2/expense-form/split-guardrails"
@@ -63,13 +63,37 @@ export function ExpenseFormPlatformView(props: ExpenseFormPlatformViewProps) {
 
   // The split panel gets the specific "who is over" message, not just
   // "分攤金額與支出金額不符".
-  const { blockingError, descMissing, amountIssue } = expenseFormIssues(draft, members)
+  const { blockingError, descMissing, amountIssue, splitIssue } = expenseFormIssues(draft, members)
   // submitError is display-only: a failed save must leave the button enabled
   // so the user can retry without losing the draft.
-  // Split/payer issues already render inline in SplitPanel, next to the rows
-  // that need fixing. Repeating them in the fixed footer both duplicated the
-  // warning and let the taller bar cover the last section.
-  const footerError = amountIssue ?? props.submitError
+  // The footer shows the first blocker (amount → split → draft error →
+  // description) and lets the user jump to it. Split errors still render
+  // inline too, but the footer is where the disabled action lives.
+  const footerError = blockingError ?? (descMissing ? "請填寫描述" : null) ?? props.submitError
+  const footerTarget: "amount" | "split" | "payer" | "description" | null = amountIssue
+    ? "amount"
+    : splitIssue
+      ? "split"
+      : blockingError
+        ? "payer"
+        : descMissing
+          ? "description"
+          : null
+  const focusFooterTarget = () => {
+    if (!footerTarget) return
+    const id =
+      footerTarget === "amount"
+        ? "v2-amount"
+        : footerTarget === "split"
+          ? "expense-split-result"
+          : footerTarget === "description"
+            ? "after-desc"
+            : "expense-payer-section"
+    const el = document.getElementById(id)
+    if (!el) return
+    el.scrollIntoView({ behavior: "smooth", block: "center" })
+    if (el instanceof HTMLElement) el.focus({ preventScroll: true })
+  }
   const amountLabel = formatCurrency(derived.splitInput.amount, state.currency)
   const submitLabel = props.mode === "create" ? `新增支出 · ${amountLabel}` : `儲存變更 · ${amountLabel}`
 
@@ -111,7 +135,23 @@ export function ExpenseFormPlatformView(props: ExpenseFormPlatformViewProps) {
 
       <div ref={footerRef} className="fixed inset-x-0 bottom-0 z-40 border-t border-v2-line bg-v2-surface px-4 py-3.5">
         <div className="mx-auto max-w-md">
-          {footerError && <p role="alert" className="mb-2 text-center text-xs font-semibold text-v2-danger">{footerError}</p>}
+          {footerError && (
+            <div className="mb-2 flex items-start gap-2 rounded-v2-sm bg-v2-danger-wash px-2.5 py-2">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-v2-danger" aria-hidden="true" />
+              <p role="alert" className="m-0 min-w-0 flex-1 text-[12px] font-semibold leading-4 text-v2-danger">
+                {footerError}
+              </p>
+              {footerTarget && (
+                <button
+                  type="button"
+                  onClick={focusFooterTarget}
+                  className="min-h-[44px] shrink-0 self-center px-1 text-[12px] font-bold text-v2-danger underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-danger"
+                >
+                  查看
+                </button>
+              )}
+            </div>
+          )}
           {canConvert && (
             <div className="mb-2.5 flex items-center justify-between text-[12px] font-bold text-v2-ink-muted">
               <span>顯示幣別</span>

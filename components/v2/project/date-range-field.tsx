@@ -39,10 +39,10 @@ export function DateRangeField({
           <button
             type="button"
             disabled={disabled}
-            className={`flex w-full items-center gap-2 rounded-v2-md border border-v2-line bg-v2-paper px-3.5 py-3 text-left text-[13px] ${triggerClassName ?? ""}`}
+            className={`flex min-h-11 w-full items-center gap-2 rounded-v2-md border border-v2-line bg-v2-paper px-3.5 py-3 text-left text-[13px] ${triggerClassName ?? ""}`}
           >
             <CalendarIcon className="h-[15px] w-[15px] shrink-0 text-v2-ink-muted" aria-hidden="true" />
-            <span className={startDate ? "text-v2-ink" : "text-v2-ink-subtle"}>{display}</span>
+            <span className={startDate ? "text-v2-ink" : "text-v2-ink-muted"}>{display}</span>
           </button>
         </PopoverTrigger>
         <PopoverContent align="start" sideOffset={8} collisionPadding={16} className="w-[calc(100vw-32px)] max-w-[360px] p-2">
@@ -51,7 +51,7 @@ export function DateRangeField({
               mode="range"
               defaultMonth={range?.from}
               selected={range}
-              className="p-2 [--cell-size:--spacing(10)] text-sm"
+              className="p-2 [--cell-size:--spacing(11)] text-sm"
               onSelect={(next) => {
                 if (next?.from && next?.to) onChange(formatLocalDate(next.from), formatLocalDate(next.to))
                 else if (next?.from) onChange(formatLocalDate(next.from), null)

@@ -133,7 +133,7 @@ export function ExportV2View({
               </button>
             ) : null}
           </div>
-          <p className="mb-3 text-[11px] text-v2-ink-subtle">預設匯出所有資料，可選擇日期範圍或分類</p>
+          <p className="mb-3 text-[11px] text-v2-ink-muted">預設匯出所有資料，可選擇日期範圍或分類</p>
           <div className="mb-3">
             <DateRangeField
               label="日期範圍"

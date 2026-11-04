@@ -89,9 +89,9 @@ export function MapV2View({ projectId, projectCurrency, expenses, loading }: Map
         <div data-testid="v2-map-skeleton" className="mx-4 mt-3.5 h-[400px] animate-pulse rounded-v2-lg bg-v2-sand" />
       ) : withLocation.length === 0 ? (
         <div className="mx-4 mt-10 flex flex-col items-center gap-3 text-center">
-          <MapPin className="h-8 w-8 text-v2-ink-subtle" />
+          <MapPin className="h-8 w-8 text-v2-ink-muted" />
           <p className="text-[13px] text-v2-ink-muted">尚無位置資訊</p>
-          <p className="text-[12px] text-v2-ink-subtle">
+          <p className="text-[12px] text-v2-ink-muted">
             記帳時開啟定位或手動選擇位置，
             <br />
             就能在地圖上顯示消費地點
@@ -188,7 +188,7 @@ export function MapV2View({ projectId, projectCurrency, expenses, loading }: Map
           ) : null}
 
           {expenses.length > withLocation.length ? (
-            <p className="px-4 py-4 text-center text-[12px] text-v2-ink-subtle">還有 {expenses.length - withLocation.length} 筆消費沒有位置資訊</p>
+            <p className="px-4 py-4 text-center text-[12px] text-v2-ink-muted">還有 {expenses.length - withLocation.length} 筆消費沒有位置資訊</p>
           ) : null}
         </>
       )}

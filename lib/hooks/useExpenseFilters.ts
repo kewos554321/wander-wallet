@@ -45,6 +45,11 @@ export interface ExpenseFilters {
 interface UseExpenseFiltersOptions {
   /** 初始篩選條件 */
   initialFilters?: Partial<ExpenseFilters>
+  /**
+   * Converts an expense amount to the project currency before the amount range
+   * is applied. Without it the range compares raw JPY/USD numbers to TWD values.
+   */
+  convertAmount?: (amount: number, currency: string) => number
 }
 
 interface UseExpenseFiltersReturn<T extends Expense> {
@@ -109,7 +114,7 @@ export function useExpenseFilters<T extends Expense>(
   expenses: T[],
   options: UseExpenseFiltersOptions = {}
 ): UseExpenseFiltersReturn<T> {
-  const { initialFilters } = options
+  const { initialFilters, convertAmount } = options
 
   // 篩選狀態
   const [searchQuery, setSearchQuery] = useState(initialFilters?.searchQuery || "")
@@ -169,10 +174,13 @@ export function useExpenseFilters<T extends Expense>(
     return Array.from(new Set(expenses.map((e) => e.currency)))
   }, [expenses])
 
-  // 最大金額
+  // 最大金額（以旅程幣別計，range slider 才不會被 JPY 原幣值撐大）
   const maxAmount = useMemo(() => {
-    return Math.max(...expenses.map((e) => Number(e.amount)), 0)
-  }, [expenses])
+    return Math.max(
+      ...expenses.map((e) => (convertAmount ? convertAmount(Number(e.amount), e.currency) : Number(e.amount))),
+      0
+    )
+  }, [expenses, convertAmount])
 
   // 篩選消費
   const filteredExpenses = useMemo(() => {
@@ -200,11 +208,18 @@ export function useExpenseFilters<T extends Expense>(
       const matchesCurrency =
         selectedCurrencies.size === 0 || selectedCurrencies.has(expense.currency)
 
-      // 金額範圍篩選
-      const expenseAmount = Number(expense.amount)
+      // 金額範圍篩選（先換算成旅程幣別，避免 JPY 1,280 被當成 TWD 1,280）
+      const expenseAmount = convertAmount
+        ? convertAmount(Number(expense.amount), expense.currency)
+        : Number(expense.amount)
       const [minVal, maxVal] = amountRange
-      const matchesMinAmount = minVal === 0 || expenseAmount >= minVal
-      const matchesMaxAmount = maxVal === 0 || expenseAmount <= maxVal
+      // Stored ranges can predate the conversion change; cap them to the
+      // current project-currency maximum so they cannot hide every expense.
+      const cappedMin = maxAmount > 0 ? Math.min(minVal, maxAmount) : minVal
+      const cappedMax =
+        maxAmount > 0 ? Math.min(maxVal === 0 ? maxAmount : maxVal, maxAmount) : maxVal
+      const matchesMinAmount = cappedMin === 0 || expenseAmount >= cappedMin
+      const matchesMaxAmount = cappedMax === 0 || expenseAmount <= cappedMax
 
       // 建立日期篩選
       let matchesCreatedDate = true
@@ -242,7 +257,7 @@ export function useExpenseFilters<T extends Expense>(
         matchesExpenseDate
       )
     })
-  }, [expenses, searchQuery, selectedCategories, selectedPayers, selectedParticipants, selectedCurrencies, amountRange, createdDateRange, expenseDateRange])
+  }, [expenses, searchQuery, selectedCategories, selectedPayers, selectedParticipants, selectedCurrencies, amountRange, createdDateRange, expenseDateRange, convertAmount, maxAmount])
 
   // 是否有啟用篩選
   const hasActiveFilters = useMemo(() => {

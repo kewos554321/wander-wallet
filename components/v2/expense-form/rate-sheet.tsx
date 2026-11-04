@@ -159,7 +159,7 @@ export function RateSheet({
               type="button"
               aria-label="關閉匯率"
               onClick={onClose}
-              className="-mr-1 flex h-7 w-7 items-center justify-center rounded-full text-v2-ink-subtle"
+              className="-mr-1 flex h-7 w-7 items-center justify-center rounded-full text-v2-ink-muted"
             >
               <X className="h-[18px] w-[18px]" />
             </button>
@@ -192,7 +192,7 @@ export function RateSheet({
                     <p data-testid="market-rate" className="m-0 font-v2-serif text-[17px] font-bold tabular-nums text-v2-ink">
                       1 {fromCurrency} = {marketRate != null ? roundRateForDisplay(marketRate) : "—"} {toCurrency}
                     </p>
-                    <p className="m-0 mt-0.5 text-[11px] text-v2-ink-subtle">
+                    <p className="m-0 mt-0.5 text-[11px] text-v2-ink-muted">
                       {historyLoading
                         ? "讀取中…"
                         : isToday

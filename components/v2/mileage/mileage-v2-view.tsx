@@ -89,7 +89,7 @@ export function MileageV2View({
                   className={cn(INPUT, "flex-1 font-normal")}
                 />
                 {index > 0 ? (
-                  <button type="button" aria-label="移除" onClick={() => onRemoveWaypoint(index)} className="flex h-6 w-6 items-center justify-center text-v2-ink-subtle">
+                  <button type="button" aria-label="移除" onClick={() => onRemoveWaypoint(index)} className="flex h-6 w-6 items-center justify-center text-v2-ink-muted">
                     <X className="h-3.5 w-3.5" />
                   </button>
                 ) : null}
@@ -159,7 +159,7 @@ export function MileageV2View({
                   {fp.product.replace("無鉛汽油", " 無鉛")} {fp.price}
                 </button>
               ))}
-              <button type="button" aria-label="重新整理油價" onClick={onRefreshPrice} disabled={loadingPrice} className="flex h-6 w-6 items-center justify-center text-v2-ink-subtle">
+              <button type="button" aria-label="重新整理油價" onClick={onRefreshPrice} disabled={loadingPrice} className="flex h-6 w-6 items-center justify-center text-v2-ink-muted">
                 <RefreshCw className={cn("h-3 w-3", loadingPrice && "animate-spin")} />
               </button>
             </div>

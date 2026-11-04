@@ -85,7 +85,7 @@ export function SettlementList({
           >
             <div className="flex min-w-0 items-center gap-1.5">
               {person(s.from.memberId, s.from.displayName, s.from.userImage)}
-              <ArrowRight className="h-[13px] w-[13px] shrink-0 text-v2-ink-subtle" strokeWidth={2.2} aria-label="付給" />
+              <ArrowRight className="h-[13px] w-[13px] shrink-0 text-v2-ink-muted" strokeWidth={2.2} aria-label="付給" />
               {person(s.to.memberId, s.to.displayName, s.to.userImage)}
             </div>
             <p className="m-0 shrink-0 font-v2-serif text-base font-bold leading-6 tracking-[.15px] tabular-nums">

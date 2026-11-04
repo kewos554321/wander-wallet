@@ -589,8 +589,8 @@
   -webkit-appearance: none;
   appearance: none;
   pointer-events: auto;
-  height: 14px;
-  width: 14px;
+  height: 24px;
+  width: 24px;
   border-radius: 9999px;
   background: var(--v2-knob);
   border: 2px solid var(--v2-lake);
@@ -604,8 +604,8 @@
 
 [data-ui="v2"] .v2-range::-moz-range-thumb {
   pointer-events: auto;
-  height: 14px;
-  width: 14px;
+  height: 24px;
+  width: 24px;
   border-radius: 9999px;
   background: var(--v2-knob);
   border: 2px solid var(--v2-lake);

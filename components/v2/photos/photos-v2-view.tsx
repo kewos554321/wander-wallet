@@ -80,9 +80,9 @@ export function PhotosV2View({ projectId, currency, expenses, loading }: PhotosV
         <div data-testid="v2-photos-skeleton" className="mx-4 mt-3.5 h-64 animate-pulse rounded-2xl bg-v2-sand" />
       ) : withPhotos.length === 0 ? (
         <div className="mx-4 mt-10 flex flex-col items-center gap-3 text-center">
-          <ImageIcon className="h-8 w-8 text-v2-ink-subtle" />
+          <ImageIcon className="h-8 w-8 text-v2-ink-muted" />
           <p className="text-[13px] text-v2-ink-muted">還沒有照片</p>
-          <p className="text-[12px] text-v2-ink-subtle">
+          <p className="text-[12px] text-v2-ink-muted">
             記帳時上傳收據照片，
             <br />
             就能在這裡瀏覽所有照片

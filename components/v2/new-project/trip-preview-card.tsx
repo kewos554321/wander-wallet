@@ -29,15 +29,15 @@ export function TripPreviewCard({
       <CoverArt cover={cover} className="h-16 w-16 rounded-v2-md" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <h3 className={`m-0 truncate font-v2-serif text-base font-medium ${name ? "text-v2-ink" : "text-v2-ink-subtle"}`}>{name || "峇里島放鬆之旅"}</h3>
+          <h3 className={`m-0 truncate font-v2-serif text-base font-medium ${name ? "text-v2-ink" : "text-v2-ink-muted"}`}>{name || "峇里島放鬆之旅"}</h3>
           <span className="shrink-0 rounded-full bg-v2-line px-2.5 py-[3px] text-xs font-bold leading-4 tracking-[.5px] text-v2-ink-muted">
             {dayCount !== null ? `${dayCount} 天` : "— 天"}
           </span>
         </div>
-        <p className="mb-2 mt-0.5 truncate text-xs tracking-[.4px] text-v2-ink-subtle">{dateLine}</p>
+        <p className="mb-2 mt-0.5 truncate text-xs tracking-[.4px] text-v2-ink-muted">{dateLine}</p>
         <div className="flex items-center justify-between">
           <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-v2-surface bg-v2-lake-tint text-[8px] font-bold text-v2-lake">我</span>
-          <p className="m-0 font-v2-serif text-base font-bold text-v2-ink-subtle">尚未記帳</p>
+          <p className="m-0 font-v2-serif text-base font-bold text-v2-ink-muted">尚未記帳</p>
         </div>
       </div>
     </div>

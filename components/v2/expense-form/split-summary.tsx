@@ -134,7 +134,7 @@ export function SplitSummary({
         分攤明細<span className="text-v2-lake">（{viewCurrency}）</span>
       </p>
       <div role="table">
-        <div role="row" className={`${cols} pb-1.5 text-[11px] text-v2-ink-subtle`}>
+        <div role="row" className={`${cols} pb-1.5 text-[11px] text-v2-ink-muted`}>
           <span role="columnheader" className="text-left">旅伴</span>
           <span role="columnheader" className="text-right">個人項目</span>
           <span role="columnheader" className="text-right">共同分攤</span>
@@ -155,8 +155,8 @@ export function SplitSummary({
                 />
                 <span className="truncate">{r.name}</span>
               </span>
-              <span role="cell" className={`${cell} ${r.personal ? "" : "text-v2-ink-subtle"}`}>{amount(r.personal)}</span>
-              <span role="cell" className={`${cell} ${r.pool ? "" : "text-v2-ink-subtle"}`}>{amount(r.pool)}</span>
+              <span role="cell" className={`${cell} ${r.personal ? "" : "text-v2-ink-muted"}`}>{amount(r.personal)}</span>
+              <span role="cell" className={`${cell} ${r.pool ? "" : "text-v2-ink-muted"}`}>{amount(r.pool)}</span>
               <span role="cell" className={`${cell} font-bold`}>
                 <span className="block">{amount(r.total)}</span>
                 {displayCurrency == null && projectCurrency && rate != null && currency !== projectCurrency && (

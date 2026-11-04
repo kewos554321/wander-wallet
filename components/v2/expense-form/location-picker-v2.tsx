@@ -175,7 +175,7 @@ export function LocationPickerV2({ value, onChange, className, variant = "defaul
       </button>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-v2-ink-subtle" aria-hidden="true" />
+        <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-v2-ink-muted" aria-hidden="true" />
         <input
           type="text"
           placeholder="搜尋地點..."
@@ -184,7 +184,7 @@ export function LocationPickerV2({ value, onChange, className, variant = "defaul
           className="w-full rounded-v2-sm border border-v2-line bg-v2-surface py-2.5 pl-[34px] pr-3 text-[13px] outline-none"
         />
         {isSearching && (
-          <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-v2-ink-subtle" aria-hidden="true" />
+          <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-v2-ink-muted" aria-hidden="true" />
         )}
       </div>
 
@@ -238,7 +238,7 @@ export function LocationPickerV2({ value, onChange, className, variant = "defaul
           <span className="flex-1 text-[13px] font-medium text-v2-ink">消費地點</span>
           <span className="max-w-[11rem] truncate text-[13px] text-v2-ink-muted">{value?.location ?? "新增地點"}</span>
           <ChevronDown
-            className={`h-4 w-4 shrink-0 text-v2-ink-subtle transition-transform ${isOpen ? "rotate-180" : ""}`}
+            className={`h-4 w-4 shrink-0 text-v2-ink-muted transition-transform ${isOpen ? "rotate-180" : ""}`}
             aria-hidden="true"
           />
         </button>
@@ -258,7 +258,7 @@ export function LocationPickerV2({ value, onChange, className, variant = "defaul
               type="button"
               aria-label="清除位置"
               onClick={clearLocation}
-              className="flex h-5 w-5 shrink-0 items-center justify-center text-v2-ink-subtle"
+              className="flex h-5 w-5 shrink-0 items-center justify-center text-v2-ink-muted"
             >
               <X className="h-3.5 w-3.5" aria-hidden="true" />
             </button>

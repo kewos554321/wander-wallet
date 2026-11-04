@@ -43,7 +43,7 @@ export function SheetSectionRow({
         <span className="flex shrink-0 items-center gap-1 text-[13px] font-bold tabular-nums">
           {value}
           <ChevronDown
-            className={`h-4 w-4 text-v2-ink-subtle transition-transform ${expanded ? "rotate-180" : ""}`}
+            className={`h-4 w-4 text-v2-ink-muted transition-transform ${expanded ? "rotate-180" : ""}`}
             aria-hidden="true"
           />
         </span>

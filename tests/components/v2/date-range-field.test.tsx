@@ -43,7 +43,7 @@ describe("DateRangeField", () => {
     render(<DateRangeField label="日期" startDate={null} endDate={null} onChange={vi.fn()} />)
     const display = screen.getByText("選擇日期")
     expect(display).toBeInTheDocument()
-    expect(display.className).toContain("text-v2-ink-subtle")
+    expect(display.className).toContain("text-v2-ink-muted")
   })
 
   it("shows an in-progress range when only the start date is set", () => {

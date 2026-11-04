@@ -66,7 +66,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
         <>
           <div className={`${SECTION_CARD} mt-4`}>
             <p className="mb-1 text-[13px] font-bold text-v2-lake">說出或輸入消費內容</p>
-            <p className="mb-3 text-xs text-v2-ink-subtle">支援一次多筆；點麥克風可語音輸入</p>
+            <p className="mb-3 text-xs text-v2-ink-muted">支援一次多筆；點麥克風可語音輸入</p>
             <div className="relative">
               <textarea
                 aria-label="消費內容"
@@ -104,7 +104,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
                   aria-label="AI 解析"
                   disabled={!canParse || busy}
                   onClick={onParse}
-                  className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-v2-lake text-v2-on-lake shadow-v2-lake-md disabled:bg-v2-line disabled:text-v2-ink-subtle disabled:shadow-none"
+                  className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-v2-lake text-v2-on-lake shadow-v2-lake-md disabled:bg-v2-line disabled:text-v2-ink-muted disabled:shadow-none"
                 >
                   <SendHorizontal className="h-[17px] w-[17px]" aria-hidden="true" />
                 </button>
@@ -123,7 +123,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
       ) : (
         <div className={`${SECTION_CARD} mt-4`}>
           <p className="mb-1 text-[13px] font-bold text-v2-lake">收據/消費圖片</p>
-          <p className="mb-3 text-xs text-v2-ink-subtle">{image ? "只會辨識這張圖片，忽略文字" : "AI 自動辨識金額與品項"}</p>
+          <p className="mb-3 text-xs text-v2-ink-muted">{image ? "只會辨識這張圖片，忽略文字" : "AI 自動辨識金額與品項"}</p>
           {image ? (
             <div className="relative overflow-hidden rounded-v2-md border border-v2-line bg-v2-paper">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -167,7 +167,7 @@ export function QuickInputStep({ text, onTextChange, onParse, onCamera, onGaller
               aria-label="AI 解析"
               disabled={!canParse || busy}
               onClick={onParse}
-              className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-v2-lake text-v2-on-lake shadow-v2-lake-md disabled:bg-v2-line disabled:text-v2-ink-subtle disabled:shadow-none"
+              className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-v2-lake text-v2-on-lake shadow-v2-lake-md disabled:bg-v2-line disabled:text-v2-ink-muted disabled:shadow-none"
             >
               <SendHorizontal className="h-[17px] w-[17px]" aria-hidden="true" />
             </button>

@@ -68,7 +68,7 @@ export function SettleShareDialog({ open, onOpenChange, shareText }: SettleShare
           type="button"
           aria-label="關閉"
           onClick={() => onOpenChange(false)}
-          className="absolute right-[14px] top-[14px] flex h-6 w-6 items-center justify-center rounded-full text-v2-ink-subtle hover:text-v2-ink"
+          className="absolute right-[14px] top-[14px] flex h-6 w-6 items-center justify-center rounded-full text-v2-ink-muted hover:text-v2-ink"
         >
           <X className="h-4 w-4" aria-hidden="true" />
         </button>

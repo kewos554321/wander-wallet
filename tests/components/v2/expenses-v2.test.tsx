@@ -365,7 +365,9 @@ describe("ExpensesV2 container", () => {
       fireEvent.click(within(dialog).getByRole("checkbox", { name: /通知 LINE 群組/ }))
     }
     await act(async () => {
-      fireEvent.click(within(dialog).getByRole("button", { name: options.cancel ? "取消" : "刪除" }))
+      fireEvent.click(
+        within(dialog).getByRole("button", { name: options.cancel ? "取消" : "刪除這筆支出" }),
+      )
     })
     return { hook, dialog }
   }
@@ -384,6 +386,28 @@ describe("ExpensesV2 container", () => {
     const { hook } = await openDeleteDialog({ canNotifyLine: true, cancel: true })
     expect(hook.deleteExpense).not.toHaveBeenCalled()
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+  })
+
+  it("names the expense before deleting", () => {
+    const single = expense({ id: "e1" })
+    mocks.projectExpenses.mockReturnValue({
+      expenses: [single],
+      loading: false,
+      deleting: false,
+      canNotifyLine: false,
+      refetch: vi.fn(),
+      deleteExpense: vi.fn(),
+      batchDeleteExpenses: vi.fn(),
+    })
+    mocks.expenseFilters.mockReturnValue({ ...mocks.expenseFilters(), filteredExpenses: [single] })
+    render(<ExpensesV2 projectId="p1" />)
+
+    fireEvent.click(screen.getAllByRole("button", { name: "刪除" })[0])
+    const dialog = screen.getByRole("dialog")
+    expect(within(dialog).getByText("一蘭拉麵晚餐")).toBeInTheDocument()
+    expect(within(dialog).getByText("TWD 1,280")).toBeInTheDocument()
+    expect(within(dialog).getByText(/志明/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/共 2 人分攤/)).toBeInTheDocument()
   })
 
   it("shows the skeleton while the project itself is still loading", () => {

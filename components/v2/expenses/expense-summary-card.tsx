@@ -29,7 +29,7 @@ export function ExpenseSummaryCard({ currency, dateRangeLabel, summary }: Expens
           </span>
           <span className="min-w-0">
             <span className="block text-sm font-bold">{summary.count} 筆</span>
-            <span className="block text-xs text-v2-ink-subtle">支出紀錄</span>
+            <span className="block text-xs text-v2-ink-muted">支出紀錄</span>
           </span>
         </div>
         <div className="h-[30px] w-px shrink-0 bg-v2-lake-border" />
@@ -39,7 +39,7 @@ export function ExpenseSummaryCard({ currency, dateRangeLabel, summary }: Expens
           </span>
           <span className="min-w-0">
             <span className="block text-sm font-bold">{formatCurrency(Math.round(summary.average), currency)}</span>
-            <span className="block text-xs text-v2-ink-subtle">平均每筆</span>
+            <span className="block text-xs text-v2-ink-muted">平均每筆</span>
           </span>
         </div>
       </div>

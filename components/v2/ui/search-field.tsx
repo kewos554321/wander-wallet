@@ -13,13 +13,13 @@ export interface SearchFieldProps {
 export function SearchField({ value, onChange, placeholder, ariaLabel }: SearchFieldProps) {
   return (
     <div className="flex items-center gap-2 rounded-v2-md border border-v2-line bg-v2-surface px-3 py-2.5">
-      <Search className="h-3.5 w-3.5 shrink-0 text-v2-ink-subtle" />
+      <Search className="h-3.5 w-3.5 shrink-0 text-v2-ink-muted" />
       <input
         aria-label={ariaLabel}
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-transparent text-[13px] text-v2-ink outline-none placeholder:text-v2-ink-subtle"
+        className="w-full bg-transparent text-[13px] text-v2-ink outline-none placeholder:text-v2-ink-muted"
       />
     </div>
   )

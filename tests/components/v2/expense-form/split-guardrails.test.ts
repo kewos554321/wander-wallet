@@ -42,6 +42,17 @@ describe("split guardrails", () => {
     expect(amountIssueFor("12", "TWD")).toBeNull()
   })
 
+  it("formats a fixed-amount error in the expense currency", () => {
+    const draft = {
+      state: { personalMode: false, personalItems: {}, customShares: { me: "200" } },
+      derived: { splitInput: { amount: 100 }, shares: [{ memberId: "me", shareAmount: -100 }], error: null },
+    } as unknown as Draft
+    const issue = describeSplitIssue(draft, DEMO_MEMBERS)
+    expect(issue).toContain("TWD 200")
+    expect(issue).toContain("TWD 100")
+    expect(issue).not.toContain("$200")
+  })
+
   it("prioritises the amount issue and treats whitespace as a missing description", () => {
     const draft = {
       state: {

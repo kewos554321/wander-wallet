@@ -31,7 +31,7 @@ export function CheckboxRow({ checked, onCheckedChange, label, description, disa
       <label htmlFor={id} className="min-w-0 cursor-pointer">
         <span className="block text-[13px] font-semibold text-v2-ink">{label}</span>
         {description ? (
-          <span className="mt-px block text-[11px] text-v2-ink-subtle">{description}</span>
+          <span className="mt-px block text-[11px] text-v2-ink-muted">{description}</span>
         ) : null}
       </label>
     </div>

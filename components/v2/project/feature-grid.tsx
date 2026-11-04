@@ -98,7 +98,7 @@ export function FeatureGrid({ projectId }: { projectId: string }) {
 
         {expanded && (
           <div className="mt-3.5 animate-v2-enter border-t border-dashed border-v2-line pt-3.5 motion-reduce:animate-none">
-            <p className="mb-3 px-1 text-[11px] font-bold tracking-[.5px] text-v2-ink-subtle">更多功能</p>
+            <p className="mb-3 px-1 text-[11px] font-bold tracking-[.5px] text-v2-ink-muted">更多功能</p>
             <div className="grid grid-cols-5 gap-x-1 gap-y-3">
               {SECONDARY.map(({ label, path, icon: Icon }, index) => (
                 <Link

@@ -119,6 +119,18 @@ describe("ExpenseFormPlatformView", () => {
     expect(screen.getAllByRole("alert").map((el) => el.textContent?.trim())).toEqual(["請輸入金額"])
   })
 
+  it("shows the split blocker in the footer and links to it", () => {
+    const { hook, rerender } = renderForm()
+    act(() => hook.result.current.actions.setCustomShare("a", "200"))
+    rerender()
+
+    expect(screen.getByRole("button", { name: /新增支出/ })).toBeDisabled()
+    const alerts = screen.getAllByRole("alert").map((el) => el.textContent?.trim())
+    expect(alerts.some((text) => text?.includes("固定金額"))).toBe(true)
+    expect(alerts.some((text) => text?.includes("TWD 200"))).toBe(true)
+    expect(screen.getByRole("button", { name: "查看" })).toBeInTheDocument()
+  })
+
   it("caps an over-limit amount instead of accepting it", () => {
     const { rerender } = renderForm()
     fireEvent.change(screen.getByLabelText("金額"), { target: { value: "999999999" } })

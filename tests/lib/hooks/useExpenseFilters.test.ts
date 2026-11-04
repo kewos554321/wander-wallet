@@ -353,6 +353,29 @@ describe("useExpenseFilters", () => {
     })
   })
 
+  describe("cross-currency amount range", () => {
+    const convertAmount = (amount: number, currency: string) =>
+      currency === "JPY" ? Math.round(amount * 0.215 * 100) / 100 : amount
+    const mixed: Expense[] = [
+      { ...mockExpenses[0], id: "jpy-4800", amount: 4800, currency: "JPY" },
+      { ...mockExpenses[0], id: "jpy-950", amount: 950, currency: "JPY" },
+      { ...mockExpenses[0], id: "twd-1850", amount: 1850, currency: "TWD" },
+    ]
+
+    it("filters and sizes the range in the project currency", () => {
+      const { result } = renderHook(() =>
+        useExpenseFilters(mixed, { convertAmount })
+      )
+
+      act(() => {
+        result.current.setAmountRange([1000, 2000])
+      })
+
+      expect(result.current.filteredExpenses.map((e) => e.id)).toEqual(["jpy-4800", "twd-1850"])
+      expect(result.current.maxAmount).toBe(1850)
+    })
+  })
+
   describe("combined filters", () => {
     it("should apply multiple filters together", () => {
       const { result } = renderHook(() => useExpenseFilters(mockExpenses))

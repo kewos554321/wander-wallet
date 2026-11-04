@@ -98,7 +98,7 @@ export function PersonalItemsEditor({
                       type="button"
                       aria-label="刪除項目"
                       onClick={() => onRemove(item.id)}
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-v2-ink-subtle hover:bg-v2-lake-tint hover:text-v2-danger"
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-v2-ink-muted hover:bg-v2-lake-tint hover:text-v2-danger"
                     >
                       <X className="h-4 w-4" />
                     </button>

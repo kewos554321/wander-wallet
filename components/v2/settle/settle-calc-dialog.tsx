@@ -94,7 +94,7 @@ export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId
           type="button"
           aria-label="關閉"
           onClick={() => onOpenChange(false)}
-          className="absolute right-[14px] top-[14px] flex h-6 w-6 items-center justify-center rounded-full text-v2-ink-subtle hover:text-v2-ink"
+          className="absolute right-[14px] top-[14px] flex h-6 w-6 items-center justify-center rounded-full text-v2-ink-muted hover:text-v2-ink"
         >
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -137,7 +137,7 @@ export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId
               </div>
             ))
           ) : (
-            <p className="m-0 text-[11px] text-v2-ink-subtle">尚無支出記錄</p>
+            <p className="m-0 text-[11px] text-v2-ink-muted">尚無支出記錄</p>
           )}
         </div>
 
@@ -173,7 +173,7 @@ export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId
               ))}
             </tbody>
           </table>
-          <p className="m-0 mt-2 text-[10px] text-v2-ink-subtle">餘額 = 已付金額 − 應付金額（正數表示應收回，負數表示需付出）</p>
+          <p className="m-0 mt-2 text-[10px] text-v2-ink-muted">餘額 = 已付金額 − 應付金額（正數表示應收回，負數表示需付出）</p>
         </div>
 
         {/* Step 3: 結算方案 */}
@@ -193,7 +193,7 @@ export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId
                       idx > 0 ? "mt-1.5 border-t border-v2-lake-border pt-1.5" : ""
                     }`}
                   >
-                    <span className="text-v2-ink-subtle">{idx + 1}.</span>
+                    <span className="text-v2-ink-muted">{idx + 1}.</span>
                     <span className="font-medium text-v2-danger">{s.from.displayName}</span>
                     <ArrowRight className="h-[13px] w-[13px] shrink-0 text-v2-ink-muted" strokeWidth={2} aria-hidden="true" />
                     <span className="font-medium text-v2-lake">{s.to.displayName}</span>
@@ -201,7 +201,7 @@ export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId
                   </div>
                 ))}
               </div>
-              <p className="mb-0 mt-1.5 text-[10px] text-v2-ink-subtle">
+              <p className="mb-0 mt-1.5 text-[10px] text-v2-ink-muted">
                 以上為最少轉帳次數的結算方案，共需 {settlements.length} 筆轉帳
               </p>
             </>

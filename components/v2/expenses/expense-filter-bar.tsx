@@ -57,14 +57,14 @@ export function ExpenseFilterBar(props: ExpenseFilterBarProps) {
   return (
     <>
       <label className="mx-4 mt-4 flex items-center gap-2 rounded-xl border border-v2-line bg-v2-surface px-3.5 py-2.5">
-        <Search className="h-3.5 w-3.5 text-v2-ink-subtle" aria-hidden="true" />
+        <Search className="h-3.5 w-3.5 text-v2-ink-muted" aria-hidden="true" />
         <input
           type="search"
           value={filters.searchQuery}
           onChange={(e) => props.onSearch(e.target.value)}
           placeholder="搜尋支出描述…"
           aria-label="搜尋支出描述"
-          className="w-full bg-transparent text-xs outline-none placeholder:text-v2-ink-subtle"
+          className="w-full bg-transparent text-xs outline-none placeholder:text-v2-ink-muted"
         />
       </label>
       <div ref={gridRef} className="mx-4 mt-2.5 grid grid-cols-3 gap-2">

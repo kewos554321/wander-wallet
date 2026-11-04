@@ -19,7 +19,7 @@ export function JoinModePicker({
       {!settings && (
         <>
           <legend className="mb-0.5 text-[13px] font-bold text-v2-lake">旅伴加入方式</legend>
-          <p className="mb-2.5 text-xs text-v2-ink-subtle">設定新旅伴透過分享連結加入時的方式</p>
+          <p className="mb-2.5 text-xs text-v2-ink-muted">設定新旅伴透過分享連結加入時的方式</p>
         </>
       )}
       <div className="flex flex-col gap-2">

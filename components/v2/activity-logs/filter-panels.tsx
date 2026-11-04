@@ -17,7 +17,7 @@ function PanelHeader({ title, onClear, showClear }: { title: string; onClear: ()
   return (
     <>
       <div className="flex items-center justify-between px-2.5 pb-1.5 pt-2">
-        <p className="m-0 text-[10px] font-bold text-v2-ink-subtle">{title}</p>
+        <p className="m-0 text-[10px] font-bold text-v2-ink-muted">{title}</p>
         {showClear && (
           <button type="button" onClick={onClear} className="flex items-center gap-[3px] rounded-md px-1 py-0.5 text-[10px] font-bold text-v2-danger">
             <CircleX className="h-[11px] w-[11px]" strokeWidth={2.4} aria-hidden="true" />
@@ -54,7 +54,7 @@ function OptionRows({
   emptyText: string
 }) {
   if (options.length === 0) {
-    return <p className="px-2.5 py-3 text-[11px] text-v2-ink-subtle">{emptyText}</p>
+    return <p className="px-2.5 py-3 text-[11px] text-v2-ink-muted">{emptyText}</p>
   }
   return (
     <div className="v2-scroll max-h-60 overflow-y-auto">

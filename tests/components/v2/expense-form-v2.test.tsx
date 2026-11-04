@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react"
 
 vi.mock("next/font/google", () => ({
   Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
@@ -168,7 +168,10 @@ describe("ExpenseFormV2", () => {
     })
     render(<ExpenseFormV2 projectId="p1" expenseId="e1" mode="edit" />)
     fireEvent.click(await screen.findByRole("button", { name: "刪除此筆" }))
-    fireEvent.click(await screen.findByRole("button", { name: "刪除" }))
+    const dialog = await screen.findByRole("dialog")
+    expect(within(dialog).getByText("晚餐")).toBeInTheDocument()
+    expect(within(dialog).getByText("TWD 100")).toBeInTheDocument()
+    fireEvent.click(within(dialog).getByRole("button", { name: "刪除這筆支出" }))
     await waitFor(() => expect(mockRemove).toHaveBeenCalledWith(expect.objectContaining({ expenseId: "e1" })))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/projects/p1/expenses"))
   })

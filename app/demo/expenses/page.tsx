@@ -8,14 +8,21 @@ import {
   DEMO_CURRENT_MEMBER_ID,
   DEMO_EXPENSE_SUMMARY,
   DEMO_EXPENSES,
+  DEMO_LIVE_RATE,
   DEMO_PROJECT_ID,
 } from "@/app/demo/_data/fixtures"
 
 // The real list view + the real filter bar, fed by the shared fixtures. The
-// summary is the shared fixture total so it matches the overview screen
-// (the demo does not run cross-currency conversion — see the plan's Review Focus 5).
+// summary is the shared fixture total so it matches the overview screen; the
+// amount filter converts every expense to TWD before comparing, like production.
+const convertAmount = (amount: number, currency: string) => {
+  if (currency === "JPY") return amount * DEMO_LIVE_RATE
+  if (currency === "USD") return amount * 31.5
+  return amount
+}
+
 export default function DemoExpensesPage() {
-  const f = useExpenseFilters(DEMO_EXPENSES)
+  const f = useExpenseFilters(DEMO_EXPENSES, { convertAmount })
 
   return (
     <div className="mx-auto max-w-md">

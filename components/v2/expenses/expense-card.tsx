@@ -61,8 +61,8 @@ export function ExpenseCard({
           </span>
         </div>
         <div className="mt-[5px] flex items-center gap-[5px] overflow-hidden whitespace-nowrap">
-          <CalendarDays className="h-[11px] w-[11px] shrink-0 text-v2-ink-subtle" aria-hidden="true" />
-          <span className="shrink-0 text-[11px] text-v2-ink-subtle">付款日期</span>
+          <CalendarDays className="h-[11px] w-[11px] shrink-0 text-v2-ink-muted" aria-hidden="true" />
+          <span className="shrink-0 text-[11px] text-v2-ink-muted">付款日期</span>
           <span className="shrink-0 text-[11px] font-semibold text-v2-ink">{monthDay(expense.expenseDate)}</span>
         </div>
         <div className="mt-[5px] flex items-center gap-1.5 overflow-hidden whitespace-nowrap">
@@ -98,7 +98,7 @@ export function ExpenseCard({
               </span>
             )}
           </span>
-          <span className="shrink-0 text-[11px] text-v2-ink-subtle">共{members.length}人分攤</span>
+          <span className="shrink-0 text-[11px] text-v2-ink-muted">共{members.length}人分攤</span>
         </div>
       </div>
     </div>
@@ -109,11 +109,11 @@ export function ExpenseCard({
       <span className="flex min-w-0 items-center gap-[5px]">
         {expense.location ? (
           <>
-            <MapPin className="h-3 w-3 shrink-0 text-v2-ink-subtle" aria-hidden="true" />
+            <MapPin className="h-3 w-3 shrink-0 text-v2-ink-muted" aria-hidden="true" />
             <span className="truncate text-[11px] text-v2-ink-muted">{expense.location}</span>
           </>
         ) : (
-          <span className="truncate text-[11px] text-v2-ink-subtle">未填寫地點</span>
+          <span className="truncate text-[11px] text-v2-ink-muted">未填寫地點</span>
         )}
       </span>
       {expense.image ? (

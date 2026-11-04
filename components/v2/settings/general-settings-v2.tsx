@@ -106,7 +106,7 @@ export function GeneralSettingsV2() {
               <Wallet className="h-[15px] w-[15px] text-v2-lake" aria-hidden="true" />
               <p className={cardTitleClass}>記帳偏好</p>
             </div>
-            <p className="m-0 text-xs text-v2-ink-subtle">建立新旅程時預設使用的幣別；旅程內以結算幣別為準</p>
+            <p className="m-0 text-xs text-v2-ink-muted">建立新旅程時預設使用的幣別；旅程內以結算幣別為準</p>
             <div>
               <label className="mb-2 block text-xs font-semibold text-v2-ink-muted">預設幣別</label>
               <V2CurrencyField
@@ -121,7 +121,7 @@ export function GeneralSettingsV2() {
               <Bell className="h-[15px] w-[15px] text-v2-lake" aria-hidden="true" />
               <p className={cardTitleClass}>LINE 通知</p>
             </div>
-            <p className="m-0 text-xs text-v2-ink-subtle">控制支出操作時是否發送 LINE 群組通知</p>
+            <p className="m-0 text-xs text-v2-ink-muted">控制支出操作時是否發送 LINE 群組通知</p>
             {NOTIFICATION_ITEMS.map((item) => {
               const checked = preferences.notifications[item.key]
               return (
@@ -162,12 +162,12 @@ export function GeneralSettingsV2() {
                 <HelpCircle className="h-[15px] w-[15px] text-v2-lake" aria-hidden="true" />
                 <span className="text-[13px] font-bold">重看導覽</span>
               </span>
-              <span className="mt-1 block text-xs text-v2-ink-subtle">進入任一旅程時會重新顯示導覽</span>
+              <span className="mt-1 block text-xs text-v2-ink-muted">進入任一旅程時會重新顯示導覽</span>
             </span>
             {resettingTour ? (
               <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-v2-ink-muted" aria-hidden="true" />
             ) : (
-              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-v2-ink-subtle" aria-hidden="true" />
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-v2-ink-muted" aria-hidden="true" />
             )}
           </button>
 
@@ -180,7 +180,7 @@ export function GeneralSettingsV2() {
               <BookOpen className="h-[15px] w-[15px] text-v2-lake" aria-hidden="true" />
               <span className="text-[13px] font-bold">功能介紹</span>
             </span>
-            <ExternalLink className="h-[13px] w-[13px] shrink-0 text-v2-ink-subtle" aria-hidden="true" />
+            <ExternalLink className="h-[13px] w-[13px] shrink-0 text-v2-ink-muted" aria-hidden="true" />
           </button>
 
           <button
@@ -192,7 +192,7 @@ export function GeneralSettingsV2() {
               <MessageCircle className="h-[15px] w-[15px] text-v2-lake" aria-hidden="true" />
               <span className="text-[13px] font-bold">意見回饋</span>
             </span>
-            <ExternalLink className="h-[13px] w-[13px] shrink-0 text-v2-ink-subtle" aria-hidden="true" />
+            <ExternalLink className="h-[13px] w-[13px] shrink-0 text-v2-ink-muted" aria-hidden="true" />
           </button>
         </div>
       </div>

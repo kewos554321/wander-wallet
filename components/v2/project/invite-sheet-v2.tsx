@@ -148,7 +148,7 @@ export function InviteSheetV2({ open, onOpenChange, projectId, projectName }: In
       <p
         aria-live="polite"
         className={`m-0 mt-2 text-center text-[11.5px] leading-4 ${
-          copyFailed ? "text-v2-danger" : "text-v2-ink-subtle"
+          copyFailed ? "text-v2-danger" : "text-v2-ink-muted"
         }`}
       >
         {copyFailed ? (

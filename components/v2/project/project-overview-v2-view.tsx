@@ -28,7 +28,7 @@ interface ProjectOverviewV2ViewProps {
 }
 
 const pill =
-  "flex h-8 items-center gap-1.5 rounded-v2-sm border border-v2-lake-edge bg-v2-lake-soft px-2.5 text-[12px] font-semibold text-v2-lake transition-[transform,background-color] duration-150 ease-out hover:bg-v2-lake-tint active:scale-[.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
+  "relative flex h-8 items-center gap-1.5 rounded-v2-sm border border-v2-lake-edge bg-v2-lake-soft px-2.5 text-[12px] font-semibold text-v2-lake after:absolute after:-inset-1.5 after:content-[''] transition-[transform,background-color] duration-150 ease-out hover:bg-v2-lake-tint active:scale-[.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
 
 export function ProjectOverviewV2View({
   project,
@@ -53,13 +53,13 @@ export function ProjectOverviewV2View({
         backHref="/projects"
         fixedBack
         backAriaLabel="回旅程列表"
-        backClassName="flex h-[34px] w-[34px] items-center justify-center rounded-full transition-transform duration-150 ease-out active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
+        backClassName="relative flex h-[34px] w-[34px] items-center justify-center rounded-full after:absolute after:-inset-[5px] after:content-[''] transition-transform duration-150 ease-out active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
         backIcon={<V2BrandMark />}
         actions={
           <Link
             href="/settings"
             aria-label="通用設定"
-            className="flex h-9 w-9 items-center justify-center rounded-full transition-transform duration-150 ease-out active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
+            className="relative flex h-9 w-9 items-center justify-center rounded-full after:absolute after:-inset-1 after:content-[''] transition-transform duration-150 ease-out active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
           >
             <V2Avatar
               image={currentUserImage ?? null}

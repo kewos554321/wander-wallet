@@ -176,7 +176,11 @@ export function SplitPanel({
   return (
     <>
       {/* 誰付這筆 — 獨立卡片（跟舊版一樣） */}
-      <div className={SECTION_CARD}>
+      <div
+        id="expense-payer-section"
+        tabIndex={-1}
+        className={`${SECTION_CARD} focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-danger`}
+      >
       <div className="mb-3 flex items-center gap-2">
         <p className={`m-0 ${SECTION_TITLE}`}>誰付這筆</p>
       </div>
@@ -186,7 +190,7 @@ export function SplitPanel({
       {derived.payers.length > 0 && (
         platform ? (
           <div className={`${rowsBox} mt-4`}>
-            <div className="border-b border-v2-line-soft bg-v2-surface px-3 py-2 text-[11px] text-v2-ink-subtle">
+            <div className="border-b border-v2-line-soft bg-v2-surface px-3 py-2 text-[11px] text-v2-ink-muted">
               <div className={`grid ${platformGrid} items-center gap-2`}>
                 <span className="flex h-6 items-center justify-center" aria-hidden="true" />
                 <span className="text-left">旅伴</span>
@@ -210,7 +214,7 @@ export function SplitPanel({
                       <span className={`${platformDetail} ${showPayerMethod ? "flex-col items-end gap-0.5" : ""}`}>
                         <span className="inline-flex items-center gap-1">
                           {cellAmount(p.amount)}
-                          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-v2-ink-subtle" aria-hidden="true" />
+                          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-v2-ink-muted" aria-hidden="true" />
                         </span>
                         {showPayerMethod && (
                           <span className={`text-[11px] ${payerPinned ? "font-semibold text-v2-lake" : "font-normal text-v2-ink-muted"}`}>{payerLabel}</span>
@@ -225,7 +229,7 @@ export function SplitPanel({
                       >
                         <span className="inline-flex items-center gap-1">
                           {cellAmount(p.amount)}
-                          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-v2-ink-subtle" aria-hidden="true" />
+                          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-v2-ink-muted" aria-hidden="true" />
                         </span>
                         {showPayerMethod && (
                           <span className={`text-[11px] ${payerPinned ? "font-semibold text-v2-lake" : "font-normal text-v2-ink-muted"}`}>{payerLabel}</span>
@@ -239,7 +243,7 @@ export function SplitPanel({
           </div>
         ) : (
           <div className={`${rowsBox} mt-4`}>
-            <div className="border-b border-v2-line-soft bg-v2-surface px-1.5 py-2 text-[11px] text-v2-ink-subtle">
+            <div className="border-b border-v2-line-soft bg-v2-surface px-1.5 py-2 text-[11px] text-v2-ink-muted">
               <div className={`grid ${payerGridCols} items-center gap-1`}>
                 <span className="flex h-6 items-center justify-center" aria-hidden="true" />
                 <span className="text-left">旅伴</span>
@@ -336,7 +340,7 @@ export function SplitPanel({
 
       {pool.length > 0 && (platform ? (
         <div className={`${rowsBox} mt-4`}>
-          <div className="border-b border-v2-line-soft bg-v2-surface px-3 py-2 text-[11px] text-v2-ink-subtle">
+          <div className="border-b border-v2-line-soft bg-v2-surface px-3 py-2 text-[11px] text-v2-ink-muted">
             <div className={`grid ${platformGrid} items-center gap-2`}>
               <span className="flex h-6 items-center justify-center" aria-hidden="true" />
               <span className="text-left">旅伴</span>
@@ -372,7 +376,7 @@ export function SplitPanel({
                     <span className={`${platformDetail} flex-col items-end gap-0.5 ${negative ? "text-v2-danger" : "text-v2-ink"}`}>
                       <span className="inline-flex items-center gap-1">
                         {cellAmount(total)}
-                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-v2-ink-subtle" aria-hidden="true" />
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-v2-ink-muted" aria-hidden="true" />
                       </span>
                       <span className={`inline-flex items-center gap-1 text-[11px] ${sharePinned ? "font-semibold text-v2-lake" : "font-normal text-v2-ink-muted"}`}>
                         {shareLabel}{showCommonAmount ? ` ${money(commonAmount)}` : ""}
@@ -387,7 +391,7 @@ export function SplitPanel({
                     >
                       <span className="inline-flex items-center gap-1">
                         {cellAmount(total)}
-                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-v2-ink-subtle" aria-hidden="true" />
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-v2-ink-muted" aria-hidden="true" />
                       </span>
                       <span className={`inline-flex items-center gap-1 text-[11px] ${sharePinned ? "font-semibold text-v2-lake" : "font-normal text-v2-ink-muted"}`}>
                         {shareLabel}{showCommonAmount ? ` ${money(commonAmount)}` : ""}
@@ -401,7 +405,7 @@ export function SplitPanel({
         </div>
       ) : (
         <div className={`${rowsBox} mt-4`}>
-          <div className="border-b border-v2-line-soft bg-v2-surface px-1.5 py-2 text-[11px] text-v2-ink-subtle">
+          <div className="border-b border-v2-line-soft bg-v2-surface px-1.5 py-2 text-[11px] text-v2-ink-muted">
             <div className={`grid ${gridCols} items-center gap-1`}>
               <span className={`flex h-6 items-center justify-center ${cellOutline}`} aria-hidden="true" />
               <span className={`text-left ${cellOutline}`}>旅伴</span>
@@ -466,7 +470,12 @@ export function SplitPanel({
 
       {/* 即時結果；金額還不合法時由金額卡／footer 說明，不在這裡重複 */}
       {!amountInvalid && (
-        <div className={`mt-3 flex items-center justify-end gap-1 text-right text-xs font-bold ${result.ok ? "text-v2-link" : "text-v2-danger"}`} role={result.ok ? undefined : "alert"}>
+        <div
+          id="expense-split-result"
+          tabIndex={-1}
+          className={`mt-3 flex items-center justify-end gap-1 rounded text-right text-xs font-bold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-v2-danger ${result.ok ? "text-v2-link" : "text-v2-danger"}`}
+          role={result.ok ? undefined : "alert"}
+        >
           {result.ok && <CheckCircle2 className="h-3 w-3 shrink-0" aria-hidden="true" />}
           {result.text}
         </div>

@@ -6,7 +6,7 @@
 // The API still needs to enforce the same limits server-side; these checks
 // keep the client honest and explain the problem next to the field.
 
-import { formatAmount, formatCurrency, getCurrencyDecimals } from "@/lib/constants/currencies"
+import { formatCurrency, getCurrencyDecimals } from "@/lib/constants/currencies"
 import type { Draft, DraftMember } from "@/lib/expense-draft"
 import { isCompleteItem, isTouchedItem } from "./personal-item-state"
 
@@ -123,7 +123,7 @@ export function describeSplitIssue(draft: Draft, members: DraftMember[]): string
   if (!Number.isFinite(amount) || amount <= 0) return null
 
   const nameOf = (id: string) => members.find((m) => m.id === id)?.displayName ?? "旅伴"
-  const money = (n: number) => `$${formatAmount(Math.abs(n), state.currency)}`
+  const money = (n: number) => formatCurrency(Math.abs(n), state.currency)
 
   // Personal items are edited in the detail sheet; an empty name or a zero /
   // empty amount is caught there first, and this keeps the parent form blocked

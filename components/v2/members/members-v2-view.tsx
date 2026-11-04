@@ -71,7 +71,7 @@ export function MembersV2View(props: MembersV2ViewProps) {
                   {isMe && <span className={`${badge} border border-v2-lake-border bg-v2-surface py-px text-v2-lake`}>你</span>}
                   {isPlaceholder && <span className={`${badge} bg-v2-sand py-0.5 text-v2-ink-muted`}>佔位旅伴</span>}
                 </span>
-                <span className={`mt-0.5 block text-xs ${isPlaceholder ? "text-v2-ink-subtle" : "text-v2-ink-muted"}`}>
+                <span className={`mt-0.5 block text-xs ${isPlaceholder ? "text-v2-ink-muted" : "text-v2-ink-muted"}`}>
                   {isPlaceholder ? "尚未加入" : member.user?.email}
                 </span>
               </span>
@@ -108,7 +108,7 @@ export function MembersV2View(props: MembersV2ViewProps) {
             </span>
             <span className="mt-0.5 block text-xs text-v2-ink-muted">{joinModeOption.description}</span>
           </span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-v2-ink-subtle" aria-hidden="true" />
+          <ChevronRight className="h-4 w-4 shrink-0 text-v2-ink-muted" aria-hidden="true" />
         </Link>
       </div>
     </>

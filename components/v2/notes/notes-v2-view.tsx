@@ -47,7 +47,7 @@ export function NotesV2View({
               value={memo}
               onChange={(e) => onMemo(e.target.value)}
               placeholder={PLACEHOLDER}
-              className="h-full w-full resize-none bg-transparent text-[15px] leading-[1.7] text-v2-ink outline-none placeholder:text-v2-ink-subtle"
+              className="h-full w-full resize-none bg-transparent text-[15px] leading-[1.7] text-v2-ink outline-none placeholder:text-v2-ink-muted"
             />
           </div>
           <div className="fixed inset-x-0 bottom-0 z-40 border-t border-v2-line bg-v2-surface px-4 py-3.5">

@@ -214,7 +214,7 @@ export function ExpenseFormFields({
             <span className="mt-0.5 block truncate text-[11px] font-normal text-v2-ink-muted">{optSummary}</span>
           </span>
           <ChevronDown
-            className={`mt-0.5 h-4 w-4 shrink-0 text-v2-ink-subtle transition-transform ${optionalOpen ? "rotate-180" : ""}`}
+            className={`mt-0.5 h-4 w-4 shrink-0 text-v2-ink-muted transition-transform ${optionalOpen ? "rotate-180" : ""}`}
             aria-hidden="true"
           />
         </button>
@@ -234,7 +234,7 @@ export function ExpenseFormFields({
                       {format(state.expenseDate, "yyyy/MM/dd（EEEEE）", { locale: zhTW })}
                     </span>
                     <ChevronDown
-                      className="h-4 w-4 shrink-0 text-v2-ink-subtle transition-transform group-data-[state=open]:rotate-180"
+                      className="h-4 w-4 shrink-0 text-v2-ink-muted transition-transform group-data-[state=open]:rotate-180"
                       aria-hidden="true"
                     />
                   </button>

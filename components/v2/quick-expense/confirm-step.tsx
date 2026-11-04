@@ -175,7 +175,7 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemChange
         </button>
       </div>
 
-      <p className="mx-4 mt-1 text-center text-[11px] text-v2-ink-subtle">{`← 左右滑動切換這一批的 ${items.length} 筆支出 →`}</p>
+      <p className="mx-4 mt-1 text-center text-[11px] text-v2-ink-muted">{`← 左右滑動切換這一批的 ${items.length} 筆支出 →`}</p>
 
       <div
         className="mt-2"

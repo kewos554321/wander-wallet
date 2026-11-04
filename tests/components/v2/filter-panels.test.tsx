@@ -212,10 +212,10 @@ describe("ExpenseFilterBar panels", () => {
   it("shows amount labels and updates the maximum", () => {
     const props = renderBar()
     fireEvent.click(screen.getByRole("button", { name: /金額/ }))
-    // Header shows the currency code; the labels use the generic "$".
+    // The range is in the project currency, so the labels show the same code.
     expect(screen.getByText("設定金額區間 (TWD)")).toBeInTheDocument()
-    expect(screen.getByText("$0")).toBeInTheDocument()
-    expect(screen.getByText("$6,400")).toBeInTheDocument()
+    expect(screen.getByText("TWD 0")).toBeInTheDocument()
+    expect(screen.getByText("TWD 6,400")).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText("最高金額"), { target: { value: "3000" } })
     expect(props.onAmountRange).toHaveBeenCalledWith([0, 3000])
   })

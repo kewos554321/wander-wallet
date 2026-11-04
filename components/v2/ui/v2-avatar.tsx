@@ -53,7 +53,7 @@ export function V2Avatar({
 
   const initial = name?.trim().charAt(0).toUpperCase() || "?"
   const tone = placeholder
-    ? "bg-v2-sand text-v2-ink-subtle"
+    ? "bg-v2-sand text-v2-ink-muted"
     : variant === "brand"
       ? "bg-v2-lake text-v2-on-lake"
       : variant === "on-lake"

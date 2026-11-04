@@ -117,7 +117,7 @@ export function CurrencyV2View(props: CurrencyV2ViewProps) {
       <div className="mx-4 mt-3.5 rounded-2xl border border-v2-line bg-v2-surface">
         <button type="button" onClick={onToggleRates} className="flex w-full items-center gap-2 p-4 text-left">
           <span className="flex-1 text-[13px] font-bold text-v2-lake">即時匯率</span>
-          <ChevronDown className={cn("h-3 w-3 text-v2-ink-subtle transition-transform", showRates && "rotate-180")} />
+          <ChevronDown className={cn("h-3 w-3 text-v2-ink-muted transition-transform", showRates && "rotate-180")} />
         </button>
         {showRates ? (
           <div className="px-4 pb-4">
@@ -141,7 +141,7 @@ export function CurrencyV2View(props: CurrencyV2ViewProps) {
       <div className="mx-4 mt-3.5 rounded-2xl border border-v2-line bg-v2-surface">
         <button type="button" onClick={onToggleHistorical} className="flex w-full items-center gap-2 p-4 text-left">
           <span className="flex-1 text-[13px] font-bold text-v2-lake">歷史匯率查詢</span>
-          <ChevronDown className={cn("h-3 w-3 text-v2-ink-subtle transition-transform", showHistorical && "rotate-180")} />
+          <ChevronDown className={cn("h-3 w-3 text-v2-ink-muted transition-transform", showHistorical && "rotate-180")} />
         </button>
         {showHistorical ? (
           <div className="px-4 pb-4">

@@ -41,7 +41,7 @@ export function ExpensesV2View(props: ExpensesV2ViewProps) {
         ) : (
           groups.map((group) => (
             <section key={group.key}>
-              <p className="mb-1.5 text-[11px] font-bold text-v2-ink-subtle">{group.label}</p>
+              <p className="mb-1.5 text-[11px] font-bold text-v2-ink-muted">{group.label}</p>
               {group.expenses.map((expense) => (
                 <ExpenseCard
                   key={expense.id}

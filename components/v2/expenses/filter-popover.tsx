@@ -159,7 +159,7 @@ export function FilterPopover({
         onClick={onToggle}
         className={`flex w-full items-center gap-[5px] rounded-v2-sm px-2.5 py-[9px] text-xs ${stateClass}`}
       >
-        <span className={active ? "text-v2-lake" : open ? "text-v2-ink" : "text-v2-ink-subtle"}>{icon}</span>
+        <span className={active ? "text-v2-lake" : open ? "text-v2-ink" : "text-v2-ink-muted"}>{icon}</span>
         <span className="flex-1 truncate text-left">{label}</span>
         {active ? (
           <span className="flex h-[15px] min-w-[15px] shrink-0 items-center justify-center rounded-full bg-v2-lake px-[3px] text-[9px] text-v2-on-lake">
@@ -168,7 +168,7 @@ export function FilterPopover({
         ) : (
           <ChevronDown
             data-testid="filter-chevron"
-            className={`h-3 w-3 shrink-0 transition-transform ${open ? "rotate-180 text-v2-ink" : "text-v2-ink-subtle"}`}
+            className={`h-3 w-3 shrink-0 transition-transform ${open ? "rotate-180 text-v2-ink" : "text-v2-ink-muted"}`}
             aria-hidden="true"
           />
         )}

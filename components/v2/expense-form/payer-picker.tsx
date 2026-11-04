@@ -144,7 +144,7 @@ export function PayerPicker({
       )}
 
       {!settleView && payerIds.length === 0 && (
-        <p className="rounded-v2-md border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-subtle">
+        <p className="rounded-v2-md border border-dashed border-v2-line bg-v2-paper py-3.5 text-center text-xs text-v2-ink-muted">
           請選擇付款旅伴
         </p>
       )}

@@ -4,7 +4,7 @@ import { useState } from "react"
 import type { DateRange } from "react-day-picker"
 import { Check, ChevronLeft, ChevronRight, CircleX } from "lucide-react"
 import { CATEGORY_LABELS, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
-import { formatAmount } from "@/lib/constants/currencies"
+import { formatCurrency } from "@/lib/constants/currencies"
 import { CATEGORY_TONES } from "@/components/v2/category-style"
 import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
 
@@ -12,7 +12,7 @@ function PanelHeader({ title, onClear, showClear }: { title: string; onClear: ()
   return (
     <>
       <div className="flex items-center justify-between px-2.5 pb-1.5 pt-2">
-        <p className="m-0 text-[10px] font-bold text-v2-ink-subtle">{title}</p>
+        <p className="m-0 text-[10px] font-bold text-v2-ink-muted">{title}</p>
         {showClear && (
           <button type="button" onClick={onClear} className="flex items-center gap-[3px] rounded-md px-1 py-0.5 text-[10px] font-bold text-v2-danger">
             <CircleX className="h-[11px] w-[11px]" strokeWidth={2.4} aria-hidden="true" />
@@ -163,15 +163,17 @@ export function AmountPanel({
   const upper = max || 10000
   const step = Math.max(1, Math.floor(upper / 100))
   const [lo, hi] = range
-  const hiValue = hi === 0 ? upper : hi
-  const loPct = upper > 0 ? (lo / upper) * 100 : 0
+  const loValue = Math.min(lo, upper)
+  const hiValue = hi === 0 ? upper : Math.min(hi, upper)
+  const loPct = upper > 0 ? (loValue / upper) * 100 : 0
   const hiPct = upper > 0 ? (hiValue / upper) * 100 : 100
-  // The panel header shows the currency code, so labels use the generic "$".
-  const label = (n: number) => `$${formatAmount(n, currency)}`
+  // The range is already in the project currency; show the code so it cannot
+  // be mistaken for the expense's original currency.
+  const label = (n: number) => formatCurrency(n, currency)
   return (
     <div className="px-3 pt-2.5 pb-3.5">
       <div className="mb-1.5 flex items-center justify-between">
-        <p className="m-0 text-[10px] font-bold text-v2-ink-subtle">設定金額區間 ({currency})</p>
+        <p className="m-0 text-[10px] font-bold text-v2-ink-muted">設定金額區間 ({currency})</p>
         {(lo > 0 || hi > 0) && (
           <button
             type="button"
@@ -185,10 +187,10 @@ export function AmountPanel({
       </div>
       <div className="-mx-3 h-px bg-v2-line-soft" />
       <div className="mb-2 mt-2 flex items-center justify-between text-xs font-bold text-v2-ink">
-        <span>{label(lo)}</span>
+        <span>{label(loValue)}</span>
         <span>{label(hiValue)}</span>
       </div>
-      <div className="relative flex h-3.5 items-center">
+      <div className="relative flex h-6 items-center">
         <span className="absolute inset-x-0 h-1 rounded-full bg-v2-line-soft" />
         <span className="absolute h-1 rounded-full bg-v2-lake" style={{ left: `${loPct}%`, right: `${100 - hiPct}%` }} />
         <input
@@ -196,10 +198,10 @@ export function AmountPanel({
           min={0}
           max={upper}
           step={step}
-          value={lo}
+          value={loValue}
           aria-label="最低金額"
           onChange={(e) => onChange([Math.min(Number(e.target.value), hiValue), hi])}
-          className="v2-range absolute inset-x-0 h-3.5 w-full"
+          className="v2-range absolute inset-x-0 h-6 w-full"
         />
         <input
           type="range"
@@ -210,9 +212,9 @@ export function AmountPanel({
           aria-label="最高金額"
           onChange={(e) => {
             const v = Number(e.target.value)
-            onChange([lo, v >= upper ? 0 : Math.max(lo, v)])
+            onChange([loValue, v >= upper ? 0 : Math.max(loValue, v)])
           }}
-          className="v2-range absolute inset-x-0 h-3.5 w-full"
+          className="v2-range absolute inset-x-0 h-6 w-full"
         />
       </div>
     </div>
@@ -279,7 +281,7 @@ export function DatePanel({ range, onChange }: { range: DateRange | undefined; o
         </div>
         <div className="grid grid-cols-7 text-center">
           {WEEKDAYS.map((w) => (
-            <span key={w} className="text-[9px] text-v2-ink-subtle">
+            <span key={w} className="text-[9px] text-v2-ink-muted">
               {w}
             </span>
           ))}

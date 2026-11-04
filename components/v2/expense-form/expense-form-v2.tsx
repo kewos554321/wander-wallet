@@ -3,9 +3,8 @@
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
-import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
-import { NotifyLineCheckbox } from "@/components/expense/notify-line-checkbox"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
+import { DeleteExpenseSheet } from "@/components/v2/expenses/delete-expense-sheet"
 import { useProjectData } from "@/lib/hooks"
 import { useCurrencyConversion } from "@/lib/hooks/useCurrencyConversion"
 import { resolvePreviewRate } from "@/lib/currency-conversion"
@@ -214,6 +213,7 @@ function LoadedForm({
     }
   }, [selectedCurrency, projectCurrency, exchangeRates, refetchRates])
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [showDelete, setShowDelete] = useState(false)
 
   useEffect(() => {
@@ -295,6 +295,7 @@ function LoadedForm({
 
   async function handleDelete() {
     if (!expenseId || !original) return
+    setDeleteError(null)
     const result = await remove({
       expenseId,
       notification: {
@@ -308,8 +309,7 @@ function LoadedForm({
       },
     })
     if (!result.ok) {
-      setShowDelete(false)
-      setSubmitError(result.error)
+      setDeleteError(result.error)
       return
     }
     router.push(`/projects/${projectId}/expenses`)
@@ -326,21 +326,42 @@ function LoadedForm({
         submitting={saving || uploadingImage}
         submitError={submitError}
         onSubmit={handleSubmit}
-        onRequestDelete={mode === "edit" ? () => setShowDelete(true) : undefined}
+        onRequestDelete={
+          mode === "edit"
+            ? () => {
+                setDeleteError(null)
+                setShowDelete(true)
+              }
+            : undefined
+        }
         projectCurrency={projectCurrency}
         previewRateInfo={previewRateInfo}
         rateContext={rateContext}
         recentRates={recentRates}
       />
-      <ConfirmDeleteDialog
+      <DeleteExpenseSheet
         open={showDelete}
-        onOpenChange={setShowDelete}
-        description="確定要刪除這筆支出嗎？此操作無法復原。"
+        onClose={() => setShowDelete(false)}
         onConfirm={handleDelete}
         loading={deleting}
-      >
-        {canNotifyLine && <NotifyLineCheckbox checked={draft.state.notifyLine} onChange={draft.actions.setNotifyLine} />}
-      </ConfirmDeleteDialog>
+        error={deleteError}
+        expense={
+          original
+            ? {
+                description: original.description,
+                amount: Number(original.amount),
+                currency: original.currency || projectCurrency,
+                category: original.category,
+                expenseDate: original.expenseDate,
+                payerName: primaryPayerNameOf(original.payers),
+                participantCount: original.participants.length,
+              }
+            : null
+        }
+        canNotifyLine={canNotifyLine}
+        notifyLine={draft.state.notifyLine}
+        onNotifyLineChange={draft.actions.setNotifyLine}
+      />
     </>
   )
 }

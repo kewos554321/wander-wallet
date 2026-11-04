@@ -47,7 +47,7 @@ export function CategoryDonut({ categories, currency }: { categories: CategorySt
             <span className="h-2.5 w-2.5 shrink-0 rounded-v2-xs" style={{ background: COLORS[i % COLORS.length] }} aria-hidden="true" />
             <span className="flex flex-1 items-baseline gap-1 text-xs font-semibold">
               <span>{getCategoryLabel(c.category)}</span>
-              <span className="font-medium text-v2-ink-subtle">{Math.round(c.percent)}%</span>
+              <span className="font-medium text-v2-ink-muted">{Math.round(c.percent)}%</span>
             </span>
             <span className="text-xs font-semibold text-v2-ink-muted">{formatCurrency(Math.round(c.amount), currency)}</span>
           </li>

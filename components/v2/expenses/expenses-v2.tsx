@@ -3,15 +3,15 @@
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { useLiff } from "@/components/auth/liff-provider"
-import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { NotifyLineCheckbox } from "@/components/expense/notify-line-checkbox"
 import { QuickActions } from "@/components/v2/project/quick-actions"
 import { QuickExpenseV2 } from "@/components/v2/quick-expense/quick-expense-v2"
+import { primaryPayerName } from "@/lib/expense-payers"
 import { useCurrencyConversion, useExpenseFilters, useProjectData } from "@/lib/hooks"
 import { useProjectExpenses, type ProjectExpense } from "@/lib/hooks/useProjectExpenses"
 import { summarizeExpenses } from "@/lib/expense-list"
 import { formatTripDateRange } from "@/lib/trip"
+import { DeleteExpenseSheet } from "./delete-expense-sheet"
 import { ExpenseFilterBar } from "./expense-filter-bar"
 import { ExpensesV2View } from "./expenses-v2-view"
 import { loadFilters, saveFilters } from "./filter-storage"
@@ -21,8 +21,8 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
   const { project, members, loading: projectLoading, projectCurrency, precision } = useProjectData(projectId)
   const { expenses, loading, deleting, canNotifyLine, deleteExpense, refetch } =
     useProjectExpenses(projectId, { projectName: project?.name || "" })
-  const f = useExpenseFilters(expenses)
   const { convert } = useCurrencyConversion({ projectCurrency, precision })
+  const f = useExpenseFilters(expenses, { convertAmount: convert })
 
   // Restore filters saved for this project when returning to the list (e.g.
   // pressing back from a card), then keep them persisted until cleared.
@@ -71,6 +71,17 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
 
   const currentMemberId = members.find((m) => m.user?.id === user?.id)?.id ?? null
   const dateRange = project ? formatTripDateRange(project.startDate, project.endDate) : null
+  const deleteExpenseSummary = deleteTarget
+    ? {
+        description: deleteTarget.description,
+        amount: Number(deleteTarget.amount),
+        currency: deleteTarget.currency || projectCurrency,
+        category: deleteTarget.category,
+        expenseDate: deleteTarget.expenseDate,
+        payerName: primaryPayerName(deleteTarget.payers),
+        participantCount: deleteTarget.participants.length,
+      }
+    : null
   const memberMeta = new Map(
     members.map((m) => [m.id, { image: m.user?.image ?? null, isPlaceholder: !m.user, userId: m.user?.id ?? null }]),
   )
@@ -157,15 +168,16 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
         )}
       </div>
 
-      <ConfirmDeleteDialog
+      <DeleteExpenseSheet
         open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-        description="確定要刪除這筆支出嗎？此操作無法復原。"
+        onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
         loading={deleting}
-      >
-        {canNotifyLine && <NotifyLineCheckbox checked={notifyLine} onChange={setNotifyLine} />}
-      </ConfirmDeleteDialog>
+        expense={deleteExpenseSummary}
+        canNotifyLine={canNotifyLine}
+        notifyLine={notifyLine}
+        onNotifyLineChange={setNotifyLine}
+      />
 
       <Dialog open={!!viewingImage} onOpenChange={() => setViewingImage(null)}>
         <DialogContent className="max-w-3xl p-2">

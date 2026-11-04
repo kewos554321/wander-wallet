@@ -157,7 +157,7 @@ export function SplitDetailSheet({
           <SheetSectionRow
             id="personal"
             label="個人項目"
-            value={<span className={personal > 0 ? "text-v2-lake" : "text-v2-ink-subtle"}>{personal > 0 ? money(personal) : "—"}</span>}
+            value={<span className={personal > 0 ? "text-v2-lake" : "text-v2-ink-muted"}>{personal > 0 ? money(personal) : "—"}</span>}
             supporting={personalSupporting}
             expanded={section === "personal"}
             onToggle={() => openSection("personal")}
