@@ -16,7 +16,7 @@ function RateTag({ chip }: { chip: RateChip }) {
   return (
     <span
       data-testid="rate-source"
-      className="inline-flex shrink-0 items-center gap-1 rounded-full bg-v2-paper/15 px-2 py-[3px] text-[10px] font-bold leading-none text-v2-paper"
+      className="inline-flex shrink-0 items-center gap-1 rounded-full bg-v2-paper/15 px-2 py-[3px] text-[11px] font-bold leading-none text-v2-paper"
     >
       <span className={`h-1.5 w-1.5 rounded-full ${CHIP_DOT[chip.tone]}`} aria-hidden="true" />
       {chip.chip}
@@ -147,7 +147,7 @@ export function AmountCard({
               <span className="tabular-nums">{rate != null ? roundRateForDisplay(rate) : "—"}</span>
               <span>{projectCurrency}</span>
               {rateChip?.context && (
-                <span data-testid="rate-context" className="ml-auto text-[10px] opacity-70">
+                <span data-testid="rate-context" className="ml-auto text-[12px] opacity-70">
                   {rateChip.context}
                 </span>
               )}
@@ -173,7 +173,7 @@ export function AmountCard({
               )}
               <span>{projectCurrency}</span>
               {rateChip?.context && (
-                <span data-testid="rate-context" className="text-[10px] opacity-70">
+                <span data-testid="rate-context" className="text-[12px] opacity-70">
                   {rateChip.context}
                 </span>
               )}

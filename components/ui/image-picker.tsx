@@ -232,7 +232,7 @@ export function ImagePicker({
       />
 
       {hasImage ? (
-        <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+        <div className="relative rounded-v2-lg overflow-hidden border border-slate-200 dark:border-slate-800">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={value.preview || value.image || ""}
@@ -259,7 +259,7 @@ export function ImagePicker({
             type="button"
             onClick={handleCameraClick}
             disabled={disabled}
-            className="flex-1 h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary/50 dark:hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground"
+            className="flex-1 h-24 rounded-v2-lg border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary/50 dark:hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground"
           >
             <Camera className="h-5 w-5" />
             <span className="text-sm">拍照</span>
@@ -268,7 +268,7 @@ export function ImagePicker({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
-            className="flex-1 h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary/50 dark:hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground"
+            className="flex-1 h-24 rounded-v2-lg border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary/50 dark:hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground"
           >
             <ImagePlus className="h-5 w-5" />
             <span className="text-sm">選擇圖片</span>
@@ -460,7 +460,7 @@ export function SimpleImagePicker({
       />
 
       {image ? (
-        <div className="relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+        <div className="relative rounded-v2-md overflow-hidden border border-slate-200 dark:border-slate-700">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={image}
@@ -483,7 +483,7 @@ export function SimpleImagePicker({
               type="button"
               onClick={handleCameraClick}
               disabled={disabled || uploading}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 rounded-v2-md border border-dashed border-slate-300 dark:border-slate-600 text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {uploading ? (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -497,7 +497,7 @@ export function SimpleImagePicker({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || uploading}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 rounded-v2-md border border-dashed border-slate-300 dark:border-slate-600 text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {uploading && !showCamera ? (
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />

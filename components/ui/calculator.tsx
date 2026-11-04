@@ -89,7 +89,7 @@ export function Calculator({ onApply, onClose, initialValue }: CalculatorProps) 
   return (
     <div className="space-y-3">
       {/* 顯示區 */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-v2-lg p-4">
         <div className="text-right">
           <p className="text-sm text-muted-foreground min-h-[20px] font-mono">
             {expression || "0"}
@@ -112,7 +112,7 @@ export function Calculator({ onApply, onClose, initialValue }: CalculatorProps) 
           const isEquals = btn === "="
           const isZero = btn === "0" && idx === 16
 
-          let className = "h-11 rounded-xl font-semibold text-lg transition-all active:scale-95 "
+          let className = "h-11 rounded-v2-lg font-semibold text-lg transition-all active:scale-95 "
 
           if (isClear) {
             className += "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200"

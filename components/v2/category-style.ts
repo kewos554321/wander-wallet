@@ -1,14 +1,14 @@
 import { CATEGORY_ICONS, type ExpenseCategory } from "@/lib/constants/expenses"
 
 export const CATEGORY_TONES: Record<ExpenseCategory, string> = {
-  food: "bg-v2-coral-soft text-v2-coral",
-  transport: "bg-v2-lake-soft text-v2-lake-mid",
-  accommodation: "bg-v2-plum-soft text-v2-plum",
-  ticket: "bg-v2-olive-soft text-v2-olive",
+  food: "bg-v2-coral-soft text-v2-coral-deep",
+  transport: "bg-v2-lake-soft text-v2-lake",
+  accommodation: "bg-v2-plum-soft text-v2-plum-strong",
+  ticket: "bg-v2-olive-soft text-v2-olive-strong",
   shopping: "bg-v2-rose-soft text-v2-rose",
-  entertainment: "bg-v2-sky-soft text-v2-sky",
-  gift: "bg-v2-gold-soft text-v2-gold",
-  other: "bg-v2-sand text-v2-ink-muted",
+  entertainment: "bg-v2-sky-soft text-v2-sky-strong",
+  gift: "bg-v2-gold-soft text-v2-gold-strong",
+  other: "bg-v2-sand text-v2-ink",
 }
 
 /**

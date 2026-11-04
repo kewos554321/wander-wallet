@@ -198,30 +198,30 @@ export function ExpenseMap({ expenses, mapStyle = "standard", onExpenseClick }: 
                 <div style="font-weight: 700; font-size: 18px; color: ${color};">
                   ${formatCurrency(expense.amount, expense.currency)}
                 </div>
-                <div style="font-size: 12px; color: #94a3b8;">
+                <div style="font-size: 12px; color: #B7AE9D;">
                   ${categoryName}
                 </div>
               </div>
             </div>
             <div style="
-              background: #f8fafc;
+              background: #FAF7F2;
               border-radius: 8px;
               padding: 10px;
               margin-bottom: 8px;
             ">
-              <div style="font-weight: 500; font-size: 14px; color: #334155; margin-bottom: 4px;">
+              <div style="font-weight: 500; font-size: 14px; color: #1B1815; margin-bottom: 4px;">
                 ${expense.description || "無描述"}
               </div>
-              <div style="font-size: 12px; color: #94a3b8; display: flex; align-items: center; gap: 4px;">
+              <div style="font-size: 12px; color: #B7AE9D; display: flex; align-items: center; gap: 4px;">
                 👤 ${payerNames}
-                <span style="color: #cbd5e1;">•</span>
+                <span style="color: #E7DFD2;">•</span>
                 📅 ${new Date(expense.expenseDate).toLocaleDateString("zh-TW")}
               </div>
             </div>
             ${expense.location ? `
               <div style="
                 font-size: 11px;
-                color: #64748b;
+                color: #6E6860;
                 display: flex;
                 align-items: flex-start;
                 gap: 4px;

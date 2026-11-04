@@ -365,6 +365,10 @@
   --color-v2-on-dark: var(--v2-on-dark);
   --color-v2-gold-tint: var(--v2-gold-tint);
   --color-v2-lightbox: var(--v2-lightbox);
+  --color-v2-olive-strong: var(--v2-olive-strong);
+  --color-v2-gold-strong: var(--v2-gold-strong);
+  --color-v2-sky-strong: var(--v2-sky-strong);
+  --color-v2-plum-strong: var(--v2-plum-strong);
   --font-v2-serif: var(--font-noto-serif-tc), serif;
   --font-v2-sans: var(--font-noto-sans-tc), sans-serif;
 
@@ -437,6 +441,10 @@
   --v2-on-dark: #FFFFFF;
   --v2-gold-tint: #F0E0AD;
   --v2-lightbox: rgb(23 20 18 / 0.96);
+  --v2-olive-strong: #4C5A26;
+  --v2-gold-strong: #74591A;
+  --v2-sky-strong: #35507A;
+  --v2-plum-strong: #4E4174;
 
   /* Map the legacy shadcn tokens onto v2 so imported primitives (popover,
      calendar, dialog, select, confirm…) inherit the v2 palette instead of the
@@ -538,6 +546,10 @@
   --v2-on-dark: #FFFFFF;
   --v2-gold-tint: #4A3C18;
   --v2-lightbox: rgb(23 20 18 / 0.96);
+  --v2-olive-strong: #C9D3A6;
+  --v2-gold-strong: #E0C77E;
+  --v2-sky-strong: #A9C2E2;
+  --v2-plum-strong: #C3B6E0;
 }
 
 .dark [data-ui="v2"] [data-cover-art] { background-color: var(--cover-bg-dark); color: var(--cover-fg-dark); }

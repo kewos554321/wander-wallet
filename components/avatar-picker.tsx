@@ -48,21 +48,37 @@ export const AVATAR_ICONS: { id: string; icon: LucideIcon; label: string }[] = [
   { id: "anchor", icon: Anchor, label: "船錨" },
 ]
 
-// 12 種顏色
+// 12 種顏色 — v2 palette (names describe the actual tone)
 export const AVATAR_COLORS = [
-  { id: "red", bg: "bg-red-500", hex: "#ef4444" },
-  { id: "orange", bg: "bg-orange-500", hex: "#f97316" },
-  { id: "amber", bg: "bg-amber-500", hex: "#f59e0b" },
-  { id: "yellow", bg: "bg-yellow-500", hex: "#eab308" },
-  { id: "lime", bg: "bg-lime-500", hex: "#84cc16" },
-  { id: "green", bg: "bg-green-500", hex: "#22c55e" },
-  { id: "teal", bg: "bg-brand-500", hex: "#5eb4b0" },
-  { id: "cyan", bg: "bg-cyan-500", hex: "#06b6d4" },
-  { id: "blue", bg: "bg-blue-500", hex: "#3b82f6" },
-  { id: "indigo", bg: "bg-indigo-500", hex: "#6366f1" },
-  { id: "purple", bg: "bg-purple-500", hex: "#a855f7" },
-  { id: "pink", bg: "bg-pink-500", hex: "#ec4899" },
+  { id: "lake", bg: "bg-[#1B5847]", hex: "#1B5847" },
+  { id: "lake-mid", bg: "bg-[#2F8F74]", hex: "#2F8F74" },
+  { id: "coral", bg: "bg-[#E8825A]", hex: "#E8825A" },
+  { id: "coral-strong", bg: "bg-[#C4602F]", hex: "#C4602F" },
+  { id: "gold", bg: "bg-[#9C7A28]", hex: "#9C7A28" },
+  { id: "olive", bg: "bg-[#6B7A3A]", hex: "#6B7A3A" },
+  { id: "plum", bg: "bg-[#6B5B95]", hex: "#6B5B95" },
+  { id: "rose", bg: "bg-[#A14A68]", hex: "#A14A68" },
+  { id: "sky", bg: "bg-[#4A6FA5]", hex: "#4A6FA5" },
+  { id: "danger", bg: "bg-[#C4472F]", hex: "#C4472F" },
+  { id: "ink", bg: "bg-[#2A241F]", hex: "#2A241F" },
+  { id: "muted", bg: "bg-[#6E6860]", hex: "#6E6860" },
 ]
+
+// Old Tailwind ids still resolve (stored avatars are `avatar:icon:<oldId>`).
+const LEGACY_AVATAR_COLOR: Record<string, { id: string; hex: string }> = {
+  red: { id: "coral-strong", hex: "#C4602F" },
+  orange: { id: "coral", hex: "#E8825A" },
+  amber: { id: "gold", hex: "#9C7A28" },
+  yellow: { id: "gold", hex: "#9C7A28" },
+  lime: { id: "olive", hex: "#6B7A3A" },
+  green: { id: "lake-mid", hex: "#2F8F74" },
+  teal: { id: "lake", hex: "#1B5847" },
+  cyan: { id: "sky", hex: "#4A6FA5" },
+  blue: { id: "sky", hex: "#4A6FA5" },
+  indigo: { id: "plum", hex: "#6B5B95" },
+  purple: { id: "plum", hex: "#6B5B95" },
+  pink: { id: "rose", hex: "#A14A68" },
+}
 
 // 解析頭像字串 (格式: avatar:icon:color)
 export function parseAvatarString(avatarString: string | null | undefined): {
@@ -92,9 +108,19 @@ export function AvatarIcon({ iconId, className }: { iconId: string; className?: 
   return <IconComponent className={className} />
 }
 
-// 取得顏色
+// 取得顏色（新 id 優先，舊 Tailwind id 由 alias 對應）
 export function getAvatarColor(colorId: string): string {
-  return AVATAR_COLORS.find((c) => c.id === colorId)?.hex || "#6366f1"
+  return (
+    AVATAR_COLORS.find((c) => c.id === colorId)?.hex ||
+    LEGACY_AVATAR_COLOR[colorId]?.hex ||
+    AVATAR_COLORS[0].hex
+  )
+}
+
+// 舊 id → 新 id（picker 的選中狀態需要）
+export function normalizeAvatarColorId(colorId: string): string {
+  if (AVATAR_COLORS.some((c) => c.id === colorId)) return colorId
+  return LEGACY_AVATAR_COLOR[colorId]?.id || AVATAR_COLORS[0].id
 }
 
 interface AvatarPickerProps {
@@ -110,12 +136,12 @@ export function AvatarPicker({
   open,
   onOpenChange,
   currentIcon = "user",
-  currentColor = "indigo",
+  currentColor = "lake",
   onSelect,
   loading = false,
 }: AvatarPickerProps) {
   const [selectedIcon, setSelectedIcon] = useState(currentIcon)
-  const [selectedColor, setSelectedColor] = useState(currentColor)
+  const [selectedColor, setSelectedColor] = useState(normalizeAvatarColorId(currentColor))
 
   const selectedColorHex = getAvatarColor(selectedColor)
   const selectedIconData = AVATAR_ICONS.find((i) => i.id === selectedIcon)

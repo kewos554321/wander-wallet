@@ -147,7 +147,7 @@ export function ImageCropper({
           <DialogTitle>裁切圖片</DialogTitle>
         </DialogHeader>
 
-        <div className="relative w-full h-[300px] bg-slate-900 rounded-lg overflow-hidden">
+        <div className="relative w-full h-[300px] bg-slate-900 rounded-v2-md overflow-hidden">
           <Cropper
             image={imageSrc}
             crop={crop}
