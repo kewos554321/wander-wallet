@@ -2,19 +2,18 @@ import { describe, it, expect, vi } from "vitest"
 import { render, screen, fireEvent, within } from "@testing-library/react"
 
 vi.mock("@/components/v2/expense-form/location-picker-v2", () => ({ LocationPickerV2: () => <div data-testid="location-picker" /> }))
-vi.mock("@/components/v2/expense-form/v2-image-picker", () => ({ V2ImagePicker: () => <div data-testid="image-picker" /> }))
 vi.mock("@/components/ui/currency-select", () => ({ CurrencySelect: ({ value }: { value: string }) => <div data-testid="currency">{value}</div> }))
 
 import { ConfirmStep } from "@/components/v2/quick-expense/confirm-step"
-import { fromParsed, type QuickItem } from "@/lib/quick-expense/draft"
+import { parsedToQuickItems, type QuickItem } from "@/lib/quick-expense/draft"
 
 const members = [{ id: "a", displayName: "小雨" }, { id: "b", displayName: "志明" }, { id: "c", displayName: "阿凱" }]
-const items: QuickItem[] = fromParsed([
+const items: QuickItem[] = parsedToQuickItems([
   { id: "1", amount: 60, description: "早餐", category: "food", currency: "TWD", payers: [{ memberId: "a", amount: 60 }], participantIds: ["a", "b", "c"], selected: true },
   { id: "2", amount: 150, description: "計程車", category: "transport", currency: "TWD", payers: [{ memberId: "b", amount: 150 }], participantIds: ["a", "b"], selected: true },
 ])
 const many = (n: number): QuickItem[] =>
-  fromParsed(
+  parsedToQuickItems(
     Array.from({ length: n }, (_, i) => ({
       id: String(i + 1),
       amount: 10 * (i + 1),
@@ -28,10 +27,16 @@ const many = (n: number): QuickItem[] =>
   )
 
 const setup = (o: Partial<Parameters<typeof ConfirmStep>[0]> = {}) => {
-  const p = { items, members, index: 0, onIndexChange: vi.fn(), onItemsChange: vi.fn(), onReinput: vi.fn(), onSubmit: vi.fn(), onClose: vi.fn(), canNotifyLine: true, notifyLine: true, onNotifyLineChange: vi.fn(), error: null, ...o }
+  const p = { items, members, index: 0, onIndexChange: vi.fn(), onItemChange: vi.fn(), onRemoveItem: vi.fn(), onReinput: vi.fn(), onSubmit: vi.fn(), onClose: vi.fn(), canNotifyLine: true, notifyLine: true, onNotifyLineChange: vi.fn(), error: null, ...o }
   render(<ConfirmStep {...p} />)
-  return p
+  const patchFromLastChange = () => {
+    const [index, updater] = vi.mocked(p.onItemChange).mock.calls.at(-1) ?? []
+    return updater ? { index, patch: (updater as (state: QuickItem) => QuickItem)(items[index as number]) } : null
+  }
+  return { ...p, patchFromLastChange }
 }
+
+const card = (name: string | RegExp) => screen.getByText(name).closest("div.rounded-2xl") as HTMLElement
 
 describe("ConfirmStep", () => {
   it("shows the result-page title", () => {
@@ -39,13 +44,14 @@ describe("ConfirmStep", () => {
     expect(screen.getByRole("heading", { name: "AI 辨識結果" })).toBeInTheDocument()
   })
 
-  it("shows position label, progress dots, split title, total card and submit label", () => {
+  it("shows position label, progress dots, the shared split panel, total card and submit label", () => {
     setup()
     expect(screen.getByText("1 / 2")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "第 1 筆" })).toHaveClass("w-6", "bg-v2-lake")
     expect(screen.getByRole("button", { name: "第 1 筆" })).toHaveAttribute("aria-current", "true")
     expect(screen.getByRole("button", { name: "第 2 筆" })).toHaveClass("w-2", "bg-v2-line")
-    expect(screen.getByRole("region", { name: "分攤成員" })).toBeInTheDocument()
+    expect(screen.getByText("誰付這筆")).toBeInTheDocument()
+    expect(screen.getByText(/誰一起分/)).toBeInTheDocument()
     expect(screen.getByText("共 2 筆")).toBeInTheDocument()
     expect(screen.getByText("TWD 210")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "新增 2 筆" })).toBeInTheDocument()
@@ -73,13 +79,12 @@ describe("ConfirmStep", () => {
     expect(screen.getByRole("button", { name: "第 5 筆" })).toHaveClass("w-2", "bg-v2-line")
   })
 
-  it("edits amount keeping partial input and rejecting letters", () => {
+  it("edits the amount through the item updater and strips invalid input", () => {
     const p = setup()
     fireEvent.change(screen.getByLabelText("金額"), { target: { value: "12." } })
-    expect(p.onItemsChange).toHaveBeenLastCalledWith([{ ...items[0], amount: "12." }, items[1]])
-    vi.mocked(p.onItemsChange).mockClear()
+    expect(p.patchFromLastChange()).toMatchObject({ index: 0, patch: { amount: "12" } })
     fireEvent.change(screen.getByLabelText("金額"), { target: { value: "12a" } })
-    expect(p.onItemsChange).not.toHaveBeenCalled()
+    expect(p.patchFromLastChange()).toMatchObject({ index: 0, patch: { amount: "12" } })
   })
 
   it("applies the in-card calculator result to the amount", () => {
@@ -88,25 +93,23 @@ describe("ConfirmStep", () => {
     fireEvent.click(screen.getByRole("button", { name: "C" }))
     fireEvent.click(screen.getByRole("button", { name: "7" }))
     fireEvent.click(screen.getByRole("button", { name: "✓" }))
-    expect(p.onItemsChange).toHaveBeenLastCalledWith([{ ...items[0], amount: "7" }, items[1]])
+    expect(p.patchFromLastChange()).toMatchObject({ index: 0, patch: { amount: "7" } })
     expect(screen.getByLabelText("金額")).toBeInTheDocument()
   })
 
-  it("changes payer and participants", () => {
+  it("changes payer and participants through the shared split panel", () => {
     const p = setup()
-    fireEvent.click(within(screen.getByRole("group", { name: "付款成員" })).getByRole("checkbox", { name: "志明" }))
-    expect(p.onItemsChange).toHaveBeenLastCalledWith([{ ...items[0], payerIds: ["a", "b"], pinnedPayerAmounts: {} }, items[1]])
-    fireEvent.click(within(screen.getByRole("region", { name: "分攤成員" })).getByRole("button", { name: "阿凱" }))
-    expect(p.onItemsChange).toHaveBeenLastCalledWith([expect.objectContaining({ participantIds: ["a", "b"] }), items[1]])
-    fireEvent.click(screen.getByRole("button", { name: "取消全選" }))
-    expect(p.onItemsChange).toHaveBeenLastCalledWith([expect.objectContaining({ participantIds: [] }), items[1]])
+    fireEvent.click(within(card("誰付這筆")).getByRole("button", { name: /志明/ }))
+    expect(p.patchFromLastChange()?.patch).toMatchObject({ payerIds: ["a", "b"], pinnedPayerAmounts: {} })
+    fireEvent.click(within(card(/誰一起分/)).getByRole("button", { name: /^阿凱$/ }))
+    expect(p.patchFromLastChange()?.patch.pool).toEqual(["a", "b"])
   })
 
   it("removes the current item from the top-right pill and moves the index back when needed", () => {
     const p = setup({ index: 1 })
     expect(screen.getAllByRole("button", { name: "刪除此筆" })).toHaveLength(1)
     fireEvent.click(screen.getByRole("button", { name: "刪除此筆" }))
-    expect(p.onItemsChange).toHaveBeenLastCalledWith([items[0]])
+    expect(p.onRemoveItem).toHaveBeenLastCalledWith(1)
     expect(p.onIndexChange).toHaveBeenLastCalledWith(0)
   })
 
@@ -129,7 +132,7 @@ describe("ConfirmStep", () => {
   })
 
   it("returns null when the index no longer points at an item", () => {
-    const p = { items, members, index: 9, onIndexChange: vi.fn(), onItemsChange: vi.fn(), onReinput: vi.fn(), onSubmit: vi.fn(), onClose: vi.fn(), canNotifyLine: false, notifyLine: false, onNotifyLineChange: vi.fn(), error: null }
+    const p = { items, members, index: 9, onIndexChange: vi.fn(), onItemChange: vi.fn(), onRemoveItem: vi.fn(), onReinput: vi.fn(), onSubmit: vi.fn(), onClose: vi.fn(), canNotifyLine: false, notifyLine: false, onNotifyLineChange: vi.fn(), error: null }
     const { container } = render(<ConfirmStep {...p} />)
     expect(container).toBeEmptyDOMElement()
   })

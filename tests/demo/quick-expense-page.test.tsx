@@ -7,6 +7,7 @@ vi.mock("next/font/google", () => ({
 vi.mock("@/lib/quick-expense/speech-input", () => ({
   useSpeechInput: () => ({ recording: false, transcribing: false, error: null }),
 }))
+vi.mock("@/components/auth/liff-provider", () => ({ useAuthFetch: () => vi.fn() }))
 import DemoQuickExpensePage from "@/app/demo/quick-expense/page"
 
 describe("demo quick-expense page", () => {
@@ -18,6 +19,6 @@ describe("demo quick-expense page", () => {
     render(<DemoQuickExpensePage />)
     fireEvent.click(screen.getByRole("button", { name: /確認步驟/ }))
     // The confirm card renders the description inside a labelled text input.
-    expect(screen.getByLabelText("描述")).toHaveValue("晚餐 拉麵")
+    expect(screen.getByLabelText(/描述/)).toHaveValue("晚餐 拉麵")
   })
 })

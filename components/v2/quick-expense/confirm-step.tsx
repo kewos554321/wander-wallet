@@ -4,6 +4,8 @@ import { useRef, useState } from "react"
 import { Check, ChevronLeft, ChevronRight, RotateCcw, Send, Trash2, X } from "lucide-react"
 import { formatCurrency } from "@/lib/constants/currencies"
 import type { PreviewRateInfo } from "@/lib/currency-conversion"
+import type { DraftState } from "@/lib/expense-draft"
+import type { RecentRate } from "@/lib/recent-rates"
 import { itemTotals, type QuickItem } from "@/lib/quick-expense/draft"
 import { QuickItemCard } from "./quick-item-card"
 
@@ -13,12 +15,13 @@ const SWIPE_THRESHOLD = 50
 // the gesture to an axis so a vertical scroll never switches cards.
 const AXIS_SLOP = 10
 
-export function ConfirmStep({ items, members, index, onIndexChange, onItemsChange, onReinput, onSubmit, onClose, canNotifyLine, notifyLine, onNotifyLineChange, error, projectCurrency, previewRateInfo }: {
+export function ConfirmStep({ items, members, index, onIndexChange, onItemChange, onRemoveItem, onReinput, onSubmit, onClose, canNotifyLine, notifyLine, onNotifyLineChange, error, projectCurrency, previewRateInfo, rateContext, recentRates }: {
   items: QuickItem[]
   members: Member[]
   index: number
   onIndexChange: (i: number) => void
-  onItemsChange: (items: QuickItem[]) => void
+  onItemChange: (index: number, updater: (state: DraftState) => DraftState) => void
+  onRemoveItem: (index: number) => void
   onReinput: () => void
   onSubmit: (notifyLine: boolean) => void
   onClose: () => void
@@ -28,6 +31,8 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
   error: string | null
   projectCurrency?: string
   previewRateInfo?: (currency: string) => PreviewRateInfo
+  rateContext?: (currency: string) => { liveRate: number | null; liveTimestamp: number | null }
+  recentRates?: (currency: string) => RecentRate[]
 }) {
   const touchStart = useRef<{ x: number; y: number } | null>(null)
   const axis = useRef<"x" | "y" | null>(null)
@@ -36,9 +41,8 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
   const go = (i: number) => i >= 0 && i < items.length && onIndexChange(i)
   const isFirst = index === 0
   const isLast = index === items.length - 1
-  const patch = (p: Partial<QuickItem>) => onItemsChange(items.map((it, i) => (i === index ? { ...it, ...p } : it)))
   const remove = () => {
-    onItemsChange(items.filter((_, i) => i !== index))
+    onRemoveItem(index)
     if (index > 0 && index >= items.length - 1) onIndexChange(index - 1)
   }
   const totals = itemTotals(items).map((t) => formatCurrency(t.total, t.currency)).join(" · ")
@@ -147,7 +151,16 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemsChang
         className="mt-2"
         style={{ transform: dragX ? `translateX(${dragX}px)` : undefined, transition: dragX ? "none" : "transform 200ms ease" }}
       >
-        <QuickItemCard key={current.id} item={current} members={members} onChange={patch} projectCurrency={projectCurrency} previewRateInfo={previewRateInfo} />
+        <QuickItemCard
+          key={current.id}
+          item={current}
+          members={members}
+          onChange={(updater) => onItemChange(index, updater)}
+          projectCurrency={projectCurrency}
+          previewRateInfo={previewRateInfo}
+          rateContext={rateContext}
+          recentRates={recentRates}
+        />
       </div>
       {/* Reserve room for the fixed action bar below. It can stack the LINE
           toggle, an error line, the totals card and the buttons (~224px), so a

@@ -337,12 +337,12 @@ describe("QuickExpenseV2", () => {
     setup()
     typeAndParse()
     await screen.findByText("1 / 2")
-    expect(await screen.findByText("京都車站")).toBeInTheDocument()
+    expect(await screen.findByText(/京都車站/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "新增 2 筆" }))
     await waitFor(() => expect(save).toHaveBeenCalled())
-    const savedItems = save.mock.calls[0][0] as { location: string | null; latitude: number | null }[]
-    expect(savedItems.map((item) => item.location)).toEqual(["京都車站", "京都車站"])
-    expect(savedItems[0].latitude).toBe(34.9)
+    const savedItems = save.mock.calls[0][0] as { location: { location: string | null; latitude: number | null } }[]
+    expect(savedItems.map((item) => item.location.location)).toEqual(["京都車站", "京都車站"])
+    expect(savedItems[0].location.latitude).toBe(34.9)
   })
 
   it("fills only items without a location, keeping the user's pick", async () => {
@@ -358,6 +358,7 @@ describe("QuickExpenseV2", () => {
     typeAndParse()
     await screen.findByText("1 / 2")
     // The user picks a location for the visible item before the device fix lands.
+    fireEvent.click(screen.getByRole("button", { name: /日期 · 地點 · 收據圖片/ }))
     fireEvent.click(screen.getByRole("button", { name: "地點" }))
     expect(screen.getByText("手動選的地點")).toBeInTheDocument()
 
@@ -367,8 +368,8 @@ describe("QuickExpenseV2", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "新增 2 筆" }))
     await waitFor(() => expect(save).toHaveBeenCalled())
-    const savedItems = save.mock.calls[0][0] as { location: string | null }[]
-    expect(savedItems.map((item) => item.location)).toEqual(["手動選的地點", "京都車站"])
+    const savedItems = save.mock.calls[0][0] as { location: { location: string | null } }[]
+    expect(savedItems.map((item) => item.location.location)).toEqual(["手動選的地點", "京都車站"])
   })
 
   it("ignores a failed device-location lookup", async () => {
@@ -378,6 +379,7 @@ describe("QuickExpenseV2", () => {
     typeAndParse()
     await screen.findByText("1 / 1")
     await waitFor(() => expect(getCurrentLocation).toHaveBeenCalled())
+    fireEvent.click(screen.getByRole("button", { name: /日期 · 地點 · 收據圖片/ }))
     expect(screen.getByText("無地點")).toBeInTheDocument()
   })
 })

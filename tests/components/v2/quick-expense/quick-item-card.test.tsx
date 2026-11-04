@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest"
 import { render, screen, fireEvent, within } from "@testing-library/react"
 
+vi.mock("@/components/auth/liff-provider", () => ({ useAuthFetch: () => vi.fn() }))
 vi.mock("@/components/ui/currency-select", () => ({
   CurrencySelect: ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
     <select aria-label="幣別" value={value} onChange={(e) => onChange(e.target.value)}>
@@ -27,22 +28,10 @@ vi.mock("@/components/ui/calendar", () => ({
     </div>
   ),
 }))
-vi.mock("@/components/v2/expense-form/v2-image-picker", () => ({
-  V2ImagePicker: ({ onChange }: { onChange: (file: File) => void }) => (
-    <button
-      type="button"
-      onClick={() => onChange(new File(["x"], "receipt.jpg", { type: "image/jpeg" }))}
-    >
-      set-image
-    </button>
-  ),
-}))
 vi.mock("@/components/v2/expense-form/location-picker-v2", () => ({
   LocationPickerV2: ({
-    value,
     onChange,
   }: {
-    value: { location: string | null }
     onChange: (v: { location: string | null; latitude: number | null; longitude: number | null }) => void
   }) => (
     <button
@@ -55,7 +44,7 @@ vi.mock("@/components/v2/expense-form/location-picker-v2", () => ({
 }))
 
 import { QuickItemCard } from "@/components/v2/quick-expense/quick-item-card"
-import { fromParsed, type QuickItem } from "@/lib/quick-expense/draft"
+import { parsedToQuickItems, type QuickItem } from "@/lib/quick-expense/draft"
 
 const members = [
   { id: "a", displayName: "小雨" },
@@ -64,7 +53,7 @@ const members = [
 ]
 
 const item = (over: Partial<QuickItem> = {}): QuickItem => ({
-  ...fromParsed([
+  ...parsedToQuickItems([
     {
       id: "1",
       amount: 60,
@@ -79,196 +68,123 @@ const item = (over: Partial<QuickItem> = {}): QuickItem => ({
   ...over,
 })
 
-const setup = (over: Partial<QuickItem> = {}, extra: Partial<Parameters<typeof QuickItemCard>[0]> = {}) => {
-  const p = { item: item(over), members, onChange: vi.fn(), ...extra }
-  const utils = render(<QuickItemCard {...p} />)
-  return { ...p, ...utils }
+type Props = Parameters<typeof QuickItemCard>[0]
+
+const setup = (over: Partial<QuickItem> = {}, extra: Partial<Props> = {}) => {
+  const base = item(over)
+  const onChange = vi.fn()
+  render(<QuickItemCard item={base} members={members} onChange={onChange} projectCurrency="TWD" {...extra} />)
+  const patchFromLastChange = () => {
+    const updater = onChange.mock.calls.at(-1)?.[0] as ((state: QuickItem) => QuickItem) | undefined
+    return updater ? updater(base) : undefined
+  }
+  const patchFromAllChanges = () =>
+    onChange.mock.calls.reduce<QuickItem>(
+      (state, [updater]) => (updater as (state: QuickItem) => QuickItem)(state),
+      base,
+    )
+  return { onChange, base, patchFromLastChange, patchFromAllChanges }
 }
 
+const card = (name: string | RegExp) => screen.getByText(name).closest("div.rounded-2xl") as HTMLElement
+const openOptional = () => fireEvent.click(screen.getByRole("button", { name: /日期 · 地點 · 收據圖片/ }))
+
 describe("QuickItemCard", () => {
-  it("shows the shared split and the participant pills", () => {
-    setup({ amount: "60" })
-    const split = screen.getByRole("region", { name: "分攤成員" })
-    expect(within(split).queryByText(/剩餘/)).not.toBeInTheDocument()
-    expect(within(split).getByText("（$60）")).toBeInTheDocument()
-    expect(within(split).getByText("金額相符")).toBeInTheDocument()
-    expect(within(split).getByRole("button", { name: "小雨" })).toHaveAttribute("aria-pressed", "true")
-    expect(within(split).getByRole("button", { name: "取消全選" })).toBeInTheDocument()
+  it("renders the shared platform fields and split panel", () => {
+    setup()
+    expect(screen.getByLabelText("金額")).toHaveValue("60")
+    expect(screen.getByLabelText(/描述/)).toHaveValue("早餐")
+    expect(screen.getByText("誰付這筆")).toBeInTheDocument()
+    expect(screen.getByText(/誰一起分/)).toBeInTheDocument()
+    expect(screen.getByText("金額相符")).toBeInTheDocument()
   })
 
-  it("edits the description and currency", () => {
+  it("writes description, amount, currency and category through the functional updater", () => {
     const p = setup()
-    fireEvent.change(screen.getByLabelText("描述"), { target: { value: "晚餐" } })
-    expect(p.onChange).toHaveBeenLastCalledWith({ description: "晚餐" })
+    fireEvent.change(screen.getByLabelText(/描述/), { target: { value: "晚餐" } })
+    expect(p.patchFromLastChange()).toMatchObject({ description: "晚餐" })
+    fireEvent.change(screen.getByLabelText("金額"), { target: { value: "88" } })
+    expect(p.patchFromLastChange()).toMatchObject({ amount: "88" })
     fireEvent.change(screen.getByLabelText("幣別"), { target: { value: "JPY" } })
-    expect(p.onChange).toHaveBeenLastCalledWith({ currency: "JPY" })
+    expect(p.patchFromLastChange()).toMatchObject({ currency: "JPY" })
+    fireEvent.click(screen.getByRole("button", { name: "交通" }))
+    expect(p.patchFromLastChange()).toMatchObject({ category: "transport" })
   })
 
-  it("edits the amount only when the money input is valid", () => {
+  it("applies the same money guardrails as the add-expense form", () => {
     const p = setup()
-    fireEvent.change(screen.getByLabelText("金額"), { target: { value: "88.5" } })
-    expect(p.onChange).toHaveBeenLastCalledWith({ amount: "88.5" })
-    vi.mocked(p.onChange).mockClear()
     fireEvent.change(screen.getByLabelText("金額"), { target: { value: "8a" } })
-    expect(p.onChange).not.toHaveBeenCalled()
+    expect(p.patchFromLastChange()?.amount).toBe("8")
+    fireEvent.change(screen.getByLabelText("金額"), { target: { value: "999999999" } })
+    expect(p.patchFromLastChange()?.amount).toBe("99999999")
   })
 
-  it("applies the in-card calculator result and closes it", () => {
+  it("toggles payers and participants through the split panel", () => {
+    const p = setup()
+    fireEvent.click(within(card("誰付這筆")).getByRole("button", { name: /志明/ }))
+    expect(p.patchFromLastChange()).toMatchObject({ payerIds: ["a", "b"], pinnedPayerAmounts: {} })
+    fireEvent.click(within(card(/誰一起分/)).getByRole("button", { name: /^阿凱$/ }))
+    expect(p.patchFromLastChange()?.pool).toEqual(["a", "b"])
+  })
+
+  it("applies the in-card calculator result", () => {
     const p = setup()
     fireEvent.click(screen.getByRole("button", { name: "開啟計算機" }))
-    expect(screen.getByTestId("calc-display")).toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "C" }))
     fireEvent.click(screen.getByRole("button", { name: "9" }))
     fireEvent.click(screen.getByRole("button", { name: "✓" }))
-    expect(p.onChange).toHaveBeenLastCalledWith({ amount: "9" })
+    expect(p.patchFromLastChange()?.amount).toBe("9")
     expect(screen.queryByTestId("calc-display")).not.toBeInTheDocument()
   })
 
-  it("changes the category", () => {
+  it("writes the picked date, location and receipt image back", () => {
     const p = setup()
-    fireEvent.click(screen.getByRole("button", { name: "交通" }))
-    expect(p.onChange).toHaveBeenLastCalledWith({ category: "transport" })
-  })
-
-  it("adds and removes payers", () => {
-    const p = setup()
-    const payer = screen.getByRole("group", { name: "付款成員" })
-    fireEvent.click(within(payer).getByRole("checkbox", { name: "志明" }))
-    expect(p.onChange).toHaveBeenLastCalledWith({ payerIds: ["a", "b"], pinnedPayerAmounts: {} })
-    fireEvent.click(within(payer).getByRole("checkbox", { name: "小雨" }))
-    expect(p.onChange).toHaveBeenLastCalledWith({ payerIds: [], pinnedPayerAmounts: {} })
-  })
-
-  it("edits and clears an individual payer amount", () => {
-    const p = setup({ amount: "1280", payerIds: ["a", "b"], pinnedPayerAmounts: { a: "640" } })
-    const payer = screen.getByRole("group", { name: "付款成員" })
-    fireEvent.change(within(payer).getByLabelText("小雨的付款金額"), { target: { value: "800" } })
-    expect(p.onChange).toHaveBeenLastCalledWith({ pinnedPayerAmounts: { a: "800" } })
-    // Clearing keeps the key so the field stays open; the empty value is auto.
-    fireEvent.change(within(payer).getByLabelText("小雨的付款金額"), { target: { value: "" } })
-    expect(p.onChange).toHaveBeenLastCalledWith({ pinnedPayerAmounts: { a: "" } })
-  })
-
-  it("selects all payers", () => {
-    const p = setup({ payerIds: ["a"] })
-    fireEvent.click(within(screen.getByRole("group", { name: "付款成員" })).getByRole("button", { name: "全選" }))
-    expect(p.onChange).toHaveBeenLastCalledWith({ payerIds: ["a", "b", "c"], pinnedPayerAmounts: {} })
-  })
-
-  it("adds and removes individual participants", () => {
-    const p = setup({ participantIds: ["a"] })
-    const split = screen.getByRole("region", { name: "分攤成員" })
-    fireEvent.click(within(split).getByRole("button", { name: "志明" }))
-    expect(p.onChange).toHaveBeenLastCalledWith(expect.objectContaining({ participantIds: ["a", "b"] }))
-    vi.mocked(p.onChange).mockClear()
-    fireEvent.click(within(split).getByRole("button", { name: "小雨" }))
-    expect(p.onChange).toHaveBeenLastCalledWith(expect.objectContaining({ participantIds: [] }))
-  })
-
-  it("edits the split with the personal-items switch like the expense form", () => {
-    const p = setup({ participantIds: ["a", "b"] })
-    const split = screen.getByRole("region", { name: "分攤成員" })
-    fireEvent.click(within(split).getByRole("switch", { name: "先扣個人項目" }))
-    expect(p.onChange).toHaveBeenLastCalledWith(expect.objectContaining({ personalMode: true }))
-  })
-
-  it("selects all participants when not everyone is selected", () => {
-    const p = setup({ participantIds: ["a"] })
-    const split = screen.getByRole("region", { name: "分攤成員" })
-    fireEvent.click(within(split).getByRole("button", { name: "全選" }))
-    expect(p.onChange).toHaveBeenLastCalledWith(expect.objectContaining({ participantIds: ["a", "b", "c"] }))
-  })
-
-  it("clears the selection when everyone is selected", () => {
-    const p = setup()
-    const split = screen.getByRole("region", { name: "分攤成員" })
-    fireEvent.click(within(split).getByRole("button", { name: "取消全選" }))
-    expect(p.onChange).toHaveBeenLastCalledWith(expect.objectContaining({ participantIds: [] }))
-  })
-
-  it("writes the picked expense date back", () => {
-    const p = setup()
-    expect(screen.getByTestId("calendar-selected")).toHaveTextContent(new Date(p.item.expenseDate).toISOString())
+    openOptional()
+    expect(screen.getByTestId("calendar-selected")).toHaveTextContent(new Date(p.base.expenseDate).toISOString())
     fireEvent.click(screen.getByRole("button", { name: "pick-day" }))
-    expect(p.onChange).toHaveBeenLastCalledWith({ expenseDate: new Date("2026-03-05T12:00:00.000Z") })
-  })
+    expect(p.patchFromLastChange()?.expenseDate).toEqual(new Date("2026-03-05T12:00:00.000Z"))
 
-  it("ignores an empty calendar selection", () => {
-    const p = setup()
-    fireEvent.click(screen.getByRole("button", { name: "clear-day" }))
-    expect(p.onChange).not.toHaveBeenCalled()
-  })
-
-  it("writes the picked location and image back", () => {
-    const p = setup()
     fireEvent.click(screen.getByRole("button", { name: "set-location" }))
-    expect(p.onChange).toHaveBeenLastCalledWith({ location: "台北 101", latitude: 25.033, longitude: 121.5645 })
+    expect(p.patchFromLastChange()?.location).toEqual({ location: "台北 101", latitude: 25.033, longitude: 121.5645 })
+
     const createObjectURL = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:preview")
-    fireEvent.click(screen.getByRole("button", { name: "set-image" }))
-    const patch = vi.mocked(p.onChange).mock.calls.at(-1)?.[0] as {
-      image: { image: string | null; pendingFile: File | null; preview: string | null }
-    }
-    expect(patch.image.image).toBeNull()
-    expect(patch.image.pendingFile).toBeInstanceOf(File)
-    expect(patch.image.preview).toBe("blob:preview")
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [new File(["x"], "receipt.jpg", { type: "image/jpeg" })] } })
+    expect(p.patchFromLastChange()?.image).toMatchObject({ image: null, preview: "blob:preview" })
+    expect(p.patchFromLastChange()?.image.pendingFile).toBeInstanceOf(File)
     createObjectURL.mockRestore()
   })
 
-  it("shows the conversion note under the payer title for a foreign item", () => {
-    setup(
+  it("shows the conversion preview and opens the shared rate sheet", () => {
+    const p = setup(
       { currency: "JPY", amount: "1000" },
-      { projectCurrency: "USD", previewRateInfo: () => ({ rate: 0.0067, source: "live" as const }) }
+      {
+        projectCurrency: "TWD",
+        previewRateInfo: () => ({ rate: 0.21, source: "live" as const }),
+        rateContext: () => ({ liveRate: 0.21, liveTimestamp: null }),
+      },
     )
-    expect(screen.getByTestId("amount-conversion")).toHaveTextContent("≈ USD 6.70")
+    expect(screen.getByTestId("amount-conversion")).toHaveTextContent("≈ TWD 210")
     expect(screen.getByTestId("rate-source")).toHaveTextContent("市場")
-    const notes = screen.getAllByTestId("conversion-note")
-    expect(notes).toHaveLength(2)
-    expect(notes[0]).toHaveTextContent("僅為換算預覽；實際結算會先換匯，金額可能略有差異。")
+    fireEvent.click(screen.getByRole("button", { name: "調整匯率" }))
+    expect(screen.getByRole("dialog", { name: "匯率" })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "使用市場匯率" }))
+    expect(p.patchFromAllChanges()).toMatchObject({ exchangeRate: "0.21", ratePinned: true, rateKind: "market" })
   })
 
   it("hides the conversion UI for a same-currency item", () => {
     setup({ currency: "TWD" }, { projectCurrency: "TWD" })
     expect(screen.queryByTestId("amount-conversion")).not.toBeInTheDocument()
-    expect(screen.queryByTestId("conversion-note")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("rate-row")).not.toBeInTheDocument()
   })
 
-  it("pins the automatic rate as a custom rate", () => {
-    const p = setup(
-      { currency: "JPY", amount: "1000" },
-      { projectCurrency: "USD", previewRateInfo: () => ({ rate: 0.0067, source: "live" as const }) }
-    )
-    fireEvent.click(screen.getByRole("button", { name: "匯率自動，點擊自訂匯率" }))
-    expect(p.onChange).toHaveBeenLastCalledWith({ exchangeRate: "0.0067", ratePinned: true })
-  })
-
-  it("clears a pinned rate back to the automatic one", () => {
-    const p = setup(
-      { currency: "JPY", amount: "1000", exchangeRate: "0.01", ratePinned: true },
-      { projectCurrency: "USD", previewRateInfo: () => ({ rate: 0.0067, source: "live" as const }) }
-    )
-    expect(screen.getByLabelText("匯率")).toHaveValue("0.01")
-    fireEvent.click(screen.getByRole("button", { name: "匯率使用自訂，點擊還原自動" }))
-    expect(p.onChange).toHaveBeenLastCalledWith({ exchangeRate: "", ratePinned: false })
-  })
-
-  it("allocates a non-divisible split into whole units that sum to the total", () => {
-    setup({ amount: "100" }, { projectCurrency: "TWD" })
-    const shares = members.map((m) =>
-      Number(screen.getByLabelText(`${m.displayName}的分攤金額`).textContent?.replace(/[^0-9]/g, "") ?? "0"),
-    )
-    expect(shares.reduce((s, x) => s + x, 0)).toBe(100)
-    expect(shares.every((s) => Number.isInteger(s))).toBe(true)
-  })
-
-  it("renders the member image in the payer option when present", () => {
+  it("renders the member image in the payer pill when present", () => {
     const withImage = [
       { id: "a", displayName: "小雨", image: "https://cdn.example/xiaoyu.jpg" },
       { id: "b", displayName: "志明", image: null },
       { id: "c", displayName: "阿凱", image: null },
     ]
-    render(<QuickItemCard item={item()} members={withImage} onChange={vi.fn()} />)
-    const payer = screen.getByRole("group", { name: "付款成員" })
-    const checkbox = within(payer).getByRole("checkbox", { name: "小雨" })
-    expect(checkbox.closest("label")!.querySelector('img[src="https://cdn.example/xiaoyu.jpg"]')).toBeInTheDocument()
+    render(<QuickItemCard item={item()} members={withImage} onChange={vi.fn()} projectCurrency="TWD" />)
+    expect(within(card("誰付這筆")).getByRole("button", { name: /^小雨$/ }).querySelector('img[src="https://cdn.example/xiaoyu.jpg"]')).toBeInTheDocument()
   })
 })

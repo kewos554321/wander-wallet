@@ -6,9 +6,10 @@ import { useAuthFetch } from "@/components/auth/liff-provider"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { resolvePreviewRate } from "@/lib/currency-conversion"
 import { getCurrentLocation } from "@/lib/geolocation"
+import type { DraftState } from "@/lib/expense-draft"
 import { useCurrencyConversion } from "@/lib/hooks/useCurrencyConversion"
-import { fromParsed, validateItems, type QuickItem } from "@/lib/quick-expense/draft"
-import { parseReceipt, parseText, receiptToItem } from "@/lib/quick-expense/parse"
+import { parsedToQuickItems, receiptToQuickItem, validateItems, type QuickItem } from "@/lib/quick-expense/draft"
+import { parseReceipt, parseText } from "@/lib/quick-expense/parse"
 import { useQuickSave } from "@/lib/quick-expense/use-quick-save"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { CameraStep } from "./camera-step"
@@ -45,8 +46,15 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
   // The settlement currency is the project currency; the AI result card
   // resolves each item's preview rate against it (mirrors the expense form).
   const projectCurrency = currency
-  const { exchangeRates, refetch: refetchRates } = useCurrencyConversion({ projectCurrency, autoFetch: false })
+  const { exchangeRates, ratesTimestamp, refetch: refetchRates } = useCurrencyConversion({ projectCurrency, autoFetch: false })
   const previewRateInfo = (c: string) => resolvePreviewRate(c, projectCurrency, exchangeRates)
+  const rateContext = (c: string) => ({
+    liveRate: resolvePreviewRate(c, projectCurrency, exchangeRates).rate,
+    liveTimestamp: ratesTimestamp,
+  })
+  // Quick entry has no edit history, so the rate sheet only offers the live
+  // rate and a custom one.
+  const recentRates = () => []
   const [step, setStep] = useState<Step>(initialStep)
   const [mode, setMode] = useState<QuickInputMode>("text")
   const [text, setText] = useState("")
@@ -136,8 +144,8 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
       if (!loc || !mountedRef.current) return
       setItems((prev) =>
         prev.map((item) =>
-          item.location == null
-            ? { ...item, location: loc.location, latitude: loc.latitude, longitude: loc.longitude }
+          item.location.location == null
+            ? { ...item, location: { location: loc.location, latitude: loc.latitude, longitude: loc.longitude } }
             : item
         )
       )
@@ -169,7 +177,7 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
         // The image tab is active: analyse the receipt only.
         const result = await parseReceipt(authFetch, inputImage.file)
         showItems([
-          receiptToItem(result, {
+          receiptToQuickItem(result, {
             currency,
             payerId: currentUserMemberId,
             memberIds: plainMembers.map((m) => m.id),
@@ -179,7 +187,7 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
         ])
       } else {
         const results = await parseText(authFetch, { transcript: text.trim(), members: plainMembers, currentUserMemberId, defaultCurrency: currency })
-        showItems(fromParsed(results))
+        showItems(parsedToQuickItems(results))
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : inputImage ? "收據辨識失敗" : "解析失敗，請重試")
@@ -193,7 +201,12 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
     if (file) attachImage(file)
   }
 
-  const handleItemsChange = (next: QuickItem[]) => {
+  const handleItemChange = (index: number, updater: (state: DraftState) => DraftState) => {
+    setItems((prev) => prev.map((it, i) => (i === index ? { ...updater(it), id: it.id } : it)))
+  }
+
+  const handleRemoveItem = (index: number) => {
+    const next = items.filter((_, i) => i !== index)
     if (next.length === 0) {
       setItems([])
       setError(null)
@@ -246,7 +259,8 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
             members={members}
             index={Math.min(index, items.length - 1)}
             onIndexChange={setIndex}
-            onItemsChange={handleItemsChange}
+            onItemChange={handleItemChange}
+            onRemoveItem={handleRemoveItem}
             onReinput={() => { setItems([]); setError(null); setStep("input"); clearInputImage(); setMode("text") }}
             onSubmit={handleSubmit}
             onClose={close}
@@ -256,6 +270,8 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
             error={error}
             projectCurrency={projectCurrency}
             previewRateInfo={previewRateInfo}
+            rateContext={rateContext}
+            recentRates={recentRates}
           />
         )}
       </div>

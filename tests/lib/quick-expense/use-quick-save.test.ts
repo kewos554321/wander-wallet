@@ -11,11 +11,11 @@ const batch = vi.fn().mockResolvedValue(true)
 vi.mock("@/lib/liff", () => ({ sendExpenseNotificationToChat: (d: unknown) => single(d), sendBatchExpenseNotificationToChat: (d: unknown) => batch(d) }))
 
 import { useQuickSave } from "@/lib/quick-expense/use-quick-save"
-import { fromParsed, type QuickItem } from "@/lib/quick-expense/draft"
+import { parsedToQuickItems, type QuickItem } from "@/lib/quick-expense/draft"
 
 const members = [{ id: "a", displayName: "小雨" }, { id: "b", displayName: "志明" }, { id: "c", displayName: "阿凱" }]
 const mk = (id: string, o: Partial<QuickItem> = {}): QuickItem => ({
-  ...fromParsed([{ id, amount: 100, description: "d", category: "food", currency: "TWD", payers: [{ memberId: "a", amount: 100 }], participantIds: ["a", "b", "c"], selected: true }])[0],
+  ...parsedToQuickItems([{ id, amount: 100, description: "d", category: "food", currency: "TWD", payers: [{ memberId: "a", amount: 100 }], participantIds: ["a", "b", "c"], selected: true }])[0],
   ...o,
 })
 const ok = () => ({ ok: true, json: async () => ({}) })
@@ -48,7 +48,7 @@ describe("useQuickSave", () => {
     const r = setup()
     await act(async () => {
       await r.current.save(
-        [mk("1", { amount: "1280", payerIds: ["a", "b"], pinnedPayerAmounts: { a: "800", b: "480" }, participantIds: ["a", "b"] })],
+        [mk("1", { amount: "1280", payerIds: ["a", "b"], pinnedPayerAmounts: { a: "800", b: "480" }, pool: ["a", "b"] })],
         { notifyLine: true }
       )
     })

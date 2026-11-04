@@ -59,7 +59,8 @@ export default function QuickExpenseDemoPage() {
           members={DEMO_MEMBERS}
           index={Math.min(index, items.length - 1)}
           onIndexChange={setIndex}
-          onItemsChange={setItems}
+          onItemChange={(index, updater) => setItems((prev) => prev.map((it, i) => (i === index ? { ...updater(it), id: it.id } : it)))}
+          onRemoveItem={(index) => setItems((prev) => prev.filter((_, i) => i !== index))}
           onReinput={() => setStep("input")}
           onSubmit={() => alert("（demo）新增支出")}
           onClose={() => setStep("input")}

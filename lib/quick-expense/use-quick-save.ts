@@ -2,13 +2,11 @@
 
 import { useCallback, useState } from "react"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
-import { buildSplitDetail } from "@/lib/expense-split"
-import { primaryPayerId } from "@/lib/expense-payers"
-import { deriveSplit, type SplitState } from "@/lib/split-draft"
+import { deriveExpenseDraft } from "@/lib/expense-draft"
 import { uploadImageToR2 } from "@/lib/image-utils"
 import { sendBatchExpenseNotificationToChat, sendExpenseNotificationToChat } from "@/lib/liff"
 import { mergePreferences } from "@/types/user-preferences"
-import { itemDerivedPayers, type QuickItem } from "./draft"
+import type { QuickItem } from "./draft"
 
 export interface SaveResult {
   savedIds: string[]
@@ -41,21 +39,18 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
               image = null
             }
           }
-          const amount = Number(item.amount)
-          const splitState: SplitState = {
-            pool: item.participantIds,
-            personalMode: item.personalMode,
-            personalItems: item.personalItems,
-            personalMembers: item.personalMembers,
-            customShares: item.customShares,
-          }
-          const derived = deriveSplit(amount, members.map((m) => m.id), splitState)
+          const derived = deriveExpenseDraft({
+            state: item,
+            members,
+            projectCurrency: item.currency,
+            participantOrder: members.map((m) => m.id),
+          })
           const res = await authFetch(`/api/projects/${projectId}/expenses`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              payers: itemDerivedPayers(item).payers,
-              amount,
+              payers: derived.payers,
+              amount: derived.splitInput.amount,
               currency: item.currency,
               exchangeRate:
                 item.ratePinned && item.exchangeRate?.trim() && Number(item.exchangeRate) > 0
@@ -64,12 +59,12 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
               description: item.description.trim() || null,
               category: item.category,
               image,
-              location: item.location,
-              latitude: item.latitude,
-              longitude: item.longitude,
+              location: item.location.location,
+              latitude: item.location.latitude,
+              longitude: item.location.longitude,
               expenseDate: item.expenseDate.toISOString(),
               participants: derived.weights.map((w) => ({ memberId: w.memberId, shareAmount: w.weight })),
-              splitDetail: buildSplitDetail(derived.splitInput),
+              splitDetail: derived.splitDetail,
             }),
           })
           if (!res.ok) {
@@ -86,17 +81,15 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
 
       if (saved.length > 0 && notifyLine && canNotifyLine && mergePreferences(user?.preferences).notifications.expenseCreated) {
         const summary = (e: QuickItem) => {
-          const state: SplitState = {
-            pool: e.participantIds,
-            personalMode: e.personalMode,
-            personalItems: e.personalItems,
-            personalMembers: e.personalMembers,
-            customShares: e.customShares,
-          }
-          const derived = deriveSplit(Number(e.amount), members.map((m) => m.id), state)
-          const primaryId = primaryPayerId(itemDerivedPayers(e).payers)
+          const derived = deriveExpenseDraft({
+            state: e,
+            members,
+            projectCurrency: e.currency,
+            participantOrder: members.map((m) => m.id),
+          })
+          const primaryId = derived.primaryPayerId
           return {
-            amount: Number(e.amount),
+            amount: derived.splitInput.amount,
             description: e.description || undefined,
             category: e.category || undefined,
             payerName: primaryId ? displayName(primaryId) : "未知",
