@@ -2,7 +2,6 @@
 
 import { useProjectData } from "@/lib/hooks"
 import { useProjectExpenses } from "@/lib/hooks/useProjectExpenses"
-import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { PhotosV2View } from "./photos-v2-view"
 
 export function PhotosV2({ projectId }: { projectId: string }) {
@@ -12,7 +11,6 @@ export function PhotosV2({ projectId }: { projectId: string }) {
   })
 
   return (
-    <UiV2Scope>
       <div className="mx-auto max-w-md">
         <PhotosV2View
           projectId={projectId}
@@ -21,6 +19,5 @@ export function PhotosV2({ projectId }: { projectId: string }) {
           loading={projectLoading || expensesLoading}
         />
       </div>
-    </UiV2Scope>
   )
 }

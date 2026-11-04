@@ -20,12 +20,12 @@ vi.mock("@/components/v2/currency/currency-v2", () => ({ CurrencyV2: ({ projectI
 vi.mock("@/components/v2/activity-logs/activity-logs-v2", () => ({ ActivityLogsV2: ({ projectId }: { projectId: string }) => <div data-testid="branch">{`v2-logs-${projectId}`}</div> }))
 vi.mock("@/components/v2/map/map-v2", () => ({ MapV2: ({ projectId }: { projectId: string }) => <div data-testid="branch">{`v2-map-${projectId}`}</div> }))
 
-import NotesPage from "@/app/projects/[id]/notes/page"
-import PhotosPage from "@/app/projects/[id]/photos/page"
-import ExportPage from "@/app/projects/[id]/export/page"
-import CurrencyPage from "@/app/projects/[id]/currency/page"
-import ActivityLogsPage from "@/app/projects/[id]/activity-logs/page"
-import MapPage from "@/app/projects/[id]/map/page"
+import NotesPage from "@/app/(app)/projects/[id]/notes/page"
+import PhotosPage from "@/app/(app)/projects/[id]/photos/page"
+import ExportPage from "@/app/(app)/projects/[id]/export/page"
+import CurrencyPage from "@/app/(app)/projects/[id]/currency/page"
+import ActivityLogsPage from "@/app/(app)/projects/[id]/activity-logs/page"
+import MapPage from "@/app/(app)/projects/[id]/map/page"
 
 type PageProps = { params: Promise<{ id: string }> }
 

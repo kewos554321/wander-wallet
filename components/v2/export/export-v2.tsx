@@ -5,7 +5,6 @@ import { useCurrencyConversion, useProjectData } from "@/lib/hooks"
 import { useProjectExpenses } from "@/lib/hooks/useProjectExpenses"
 import { defaultExportOptions } from "@/lib/export/types"
 import type { ExportContentOptions, ExportFilterOptions, ExportFormat } from "@/lib/export/types"
-import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { buildExportData } from "./export-data"
 import { ExportV2View } from "./export-v2-view"
 
@@ -46,7 +45,6 @@ export function ExportV2({ projectId }: { projectId: string }) {
   }, [exporting, data, format, content, filters, projectName])
 
   return (
-    <UiV2Scope>
       <div className="mx-auto max-w-md">
         <ExportV2View
           projectId={projectId}
@@ -66,6 +64,5 @@ export function ExportV2({ projectId }: { projectId: string }) {
           onExport={handleExport}
         />
       </div>
-    </UiV2Scope>
   )
 }

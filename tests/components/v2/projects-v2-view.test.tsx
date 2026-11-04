@@ -27,6 +27,7 @@ vi.mock("@/components/ads/ad-container", () => ({
 vi.mock("@/lib/hooks/useProjects", () => ({ useProjects: () => mocks.useProjects() }))
 
 import { ProjectsV2 } from "@/components/v2/projects/projects-v2"
+import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 
 const local = (y: number, m: number, d: number) => new Date(y, m - 1, d, 12).toISOString()
 const now = new Date(2026, 10, 14, 9) // 2026-11-14 09:00
@@ -247,7 +248,11 @@ describe("ProjectsV2 container", () => {
     mocks.useLiff.mockReturnValue({ user: null })
     mocks.useProjects.mockReturnValue({ projects: [], loading: false })
 
-    render(<ProjectsV2 />)
+    render(
+      <UiV2Scope>
+        <ProjectsV2 />
+      </UiV2Scope>
+    )
 
     expect(document.querySelector('[data-ui="v2"]')).not.toBeNull()
   })

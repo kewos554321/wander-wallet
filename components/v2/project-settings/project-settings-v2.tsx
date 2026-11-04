@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { isoToLocalDate } from "@/components/v2/project/date-utils"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
-import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { toUpdatePayload, useProjectForm, type JoinMode, type ProjectFormValues } from "@/lib/hooks/use-project-form"
 import { DeleteProjectSheet } from "./delete-project-sheet"
 import { ProjectSettingsV2View } from "./project-settings-v2-view"
@@ -194,8 +193,6 @@ export function ProjectSettingsV2({ projectId }: { projectId: string }) {
   }
 
   return (
-    <UiV2Scope>
       <div className="mx-auto max-w-md">{content}</div>
-    </UiV2Scope>
   )
 }

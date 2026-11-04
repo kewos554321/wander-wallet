@@ -6,7 +6,6 @@ import { AdContainer } from "@/components/ads/ad-container"
 import { SettleShareDialog } from "@/components/v2/settle/settle-share-dialog"
 import { SettlementCalcDialog } from "@/components/v2/settle/settle-calc-dialog"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
-import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { useProjectData } from "@/lib/hooks"
 import { useSettlement } from "@/lib/hooks/useSettlement"
@@ -80,8 +79,6 @@ export function SettleV2({ projectId }: { projectId: string }) {
   }
 
   return (
-    <UiV2Scope>
       <div className="mx-auto max-w-md">{content}</div>
-    </UiV2Scope>
   )
 }

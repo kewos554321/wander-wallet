@@ -5,7 +5,6 @@ import type { DateRange } from "react-day-picker"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { useProjectData } from "@/lib/hooks"
 import { getCategoryLabel } from "@/lib/constants/expenses"
-import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { ActivityLogsV2View, type ActivityLog, type ActivityFiltersState } from "./activity-logs-v2-view"
 import type { NameOption } from "./filter-panels"
 
@@ -139,7 +138,6 @@ export function ActivityLogsV2({ projectId }: { projectId: string }) {
   }, [])
 
   return (
-    <UiV2Scope>
       <div className="mx-auto max-w-md">
         <ActivityLogsV2View
           projectId={projectId}
@@ -166,6 +164,5 @@ export function ActivityLogsV2({ projectId }: { projectId: string }) {
           onLoadMore={() => fetchLogs(logs.length, true)}
         />
       </div>
-    </UiV2Scope>
   )
 }

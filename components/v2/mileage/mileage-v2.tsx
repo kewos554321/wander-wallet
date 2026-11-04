@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useProjectData } from "@/lib/hooks"
-import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { MileageV2View } from "./mileage-v2-view"
 
 interface FuelPriceData {
@@ -68,7 +67,6 @@ export function MileageV2({ projectId }: { projectId: string }) {
   const canCalculate = totalKm > 0 && fuelEfficiency > 0 && fuelPrice > 0 && participants > 0
 
   return (
-    <UiV2Scope>
       <div className="mx-auto max-w-md">
         <MileageV2View
           projectId={projectId}
@@ -100,6 +98,5 @@ export function MileageV2({ projectId }: { projectId: string }) {
           onCalculate={() => setShowResult(true)}
         />
       </div>
-    </UiV2Scope>
   )
 }

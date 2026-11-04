@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { useAuthFetch } from "@/components/auth/liff-provider"
-import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { NotesV2View } from "./notes-v2-view"
 
 export function NotesV2({ projectId }: { projectId: string }) {
@@ -62,7 +61,6 @@ export function NotesV2({ projectId }: { projectId: string }) {
   }, [authFetch, projectId, memo, originalMemo, saving])
 
   return (
-    <UiV2Scope>
       <div className="mx-auto max-w-md">
         <NotesV2View
           projectId={projectId}
@@ -75,6 +73,5 @@ export function NotesV2({ projectId }: { projectId: string }) {
           onSave={handleSave}
         />
       </div>
-    </UiV2Scope>
   )
 }

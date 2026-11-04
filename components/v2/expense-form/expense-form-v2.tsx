@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
 import { NotifyLineCheckbox } from "@/components/expense/notify-line-checkbox"
-import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { useProjectData } from "@/lib/hooks"
 import { useCurrencyConversion } from "@/lib/hooks/useCurrencyConversion"
@@ -99,7 +98,6 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
   const title = mode === "create" ? "新增支出" : "編輯支出"
   if (projectLoading || expenseLoading) {
     return (
-      <UiV2Scope>
         <div className="mx-auto max-w-md">
           <V2TopBar title={title} backHref={`/projects/${projectId}`} />
           <div data-testid="v2-expense-form-skeleton" className="space-y-3 p-4">
@@ -107,17 +105,14 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
             <div className="h-40 animate-pulse rounded-2xl bg-v2-sand" />
           </div>
         </div>
-      </UiV2Scope>
     )
   }
   if (mode === "edit" && !expense) {
     return (
-      <UiV2Scope>
         <div className="mx-auto max-w-md">
           <V2TopBar title={title} backHref={`/projects/${projectId}`} />
           <p className="py-8 text-center text-v2-ink-muted">找不到這筆支出</p>
         </div>
-      </UiV2Scope>
     )
   }
 
@@ -161,7 +156,6 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
   }
 
   return (
-    <UiV2Scope>
       <div className="mx-auto max-w-md">
         <LoadedForm
           key={expenseId ?? "new"}
@@ -175,7 +169,6 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
           recentRates={recentRates}
         />
       </div>
-    </UiV2Scope>
   )
 }
 

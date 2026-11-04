@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
-import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { usePreferences } from "@/lib/hooks/use-preferences"
 import { emptyProjectForm, toCreatePayload, useProjectForm } from "@/lib/hooks/use-project-form"
 import { NewProjectV2View } from "./new-project-v2-view"
@@ -51,7 +50,6 @@ export function NewProjectV2() {
   }
 
   return (
-    <UiV2Scope>
       <div className="mx-auto max-w-md">
         <V2TopBar title="建立旅程" backHref="/projects" />
         <NewProjectV2View
@@ -62,6 +60,5 @@ export function NewProjectV2() {
           onCreate={handleCreate}
         />
       </div>
-    </UiV2Scope>
   )
 }

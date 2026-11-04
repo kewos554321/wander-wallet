@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { NotifyLineCheckbox } from "@/components/expense/notify-line-checkbox"
 import { QuickActions } from "@/components/v2/project/quick-actions"
 import { QuickExpenseV2 } from "@/components/v2/quick-expense/quick-expense-v2"
-import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { useCurrencyConversion, useExpenseFilters, useProjectData } from "@/lib/hooks"
 import { useProjectExpenses, type ProjectExpense } from "@/lib/hooks/useProjectExpenses"
 import { summarizeExpenses } from "@/lib/expense-list"
@@ -87,7 +86,7 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
   }
 
   return (
-    <UiV2Scope>
+    <>
       <div className="mx-auto max-w-md">
         {loading || projectLoading ? (
           <div data-testid="v2-expenses-skeleton" className="space-y-3 p-4">
@@ -178,6 +177,6 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
           )}
         </DialogContent>
       </Dialog>
-    </UiV2Scope>
+    </>
   )
 }

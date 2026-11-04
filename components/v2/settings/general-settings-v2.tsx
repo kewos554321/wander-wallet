@@ -6,7 +6,6 @@ import { Bell, BookOpen, ChevronRight, ExternalLink, HelpCircle, Loader2, Messag
 import { useLiff } from "@/components/auth/liff-provider"
 import { useTheme } from "@/components/system/theme-provider"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
-import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import { V2CurrencyField } from "@/components/v2/ui/currency-field"
 import type { CurrencyCode } from "@/lib/constants/currencies"
@@ -49,7 +48,6 @@ export function GeneralSettingsV2() {
   }
 
   return (
-    <UiV2Scope>
       <div className="mx-auto max-w-md">
         <V2TopBar title="通用設定" backHref="/projects" />
         <div className="flex flex-col gap-3.5 p-4">
@@ -198,6 +196,5 @@ export function GeneralSettingsV2() {
           </button>
         </div>
       </div>
-    </UiV2Scope>
   )
 }

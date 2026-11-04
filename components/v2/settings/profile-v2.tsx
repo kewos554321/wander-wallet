@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useLiff } from "@/components/auth/liff-provider"
-import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { ProfileV2View } from "./profile-v2-view"
 
 export function ProfileV2() {
@@ -10,7 +9,6 @@ export function ProfileV2() {
   const [logoutOpen, setLogoutOpen] = useState(false)
 
   return (
-    <UiV2Scope>
       <div className="mx-auto max-w-md">
         <ProfileV2View
           name={user?.name || ""}
@@ -24,6 +22,5 @@ export function ProfileV2() {
           }}
         />
       </div>
-    </UiV2Scope>
   )
 }

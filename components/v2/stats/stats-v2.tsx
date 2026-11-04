@@ -4,7 +4,6 @@ import { useMemo, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { JoinProjectDialog } from "@/components/project/join-project-dialog"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
-import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { useProjectOverview } from "@/lib/hooks/useProjectOverview"
 import { computeProjectStats } from "@/lib/project-stats"
@@ -65,8 +64,6 @@ export function StatsV2({ projectId }: { projectId: string }) {
   }
 
   return (
-    <UiV2Scope>
       <div className="mx-auto max-w-md">{content}</div>
-    </UiV2Scope>
   )
 }

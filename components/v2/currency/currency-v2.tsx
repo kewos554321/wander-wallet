@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useState } from "react"
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { useCurrencyConversion, useProjectData } from "@/lib/hooks"
-import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { getCurrencyDecimals } from "@/lib/constants/currencies"
 import { customRateDiff, rateFromRates } from "./format"
 import { CurrencyV2View } from "./currency-v2-view"
@@ -81,7 +80,6 @@ export function CurrencyV2({ projectId }: { projectId: string }) {
   }
 
   return (
-    <UiV2Scope>
       <div className="mx-auto max-w-md">
         <CurrencyV2View
           projectId={projectId}
@@ -110,6 +108,5 @@ export function CurrencyV2({ projectId }: { projectId: string }) {
           onRefresh={refetch}
         />
       </div>
-    </UiV2Scope>
   )
 }
