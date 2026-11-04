@@ -72,7 +72,7 @@ export function ProjectOverviewV2View({
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <button type="button" onClick={onShare} className={pill}>
+          <button type="button" onClick={onShare} data-tour="share" className={pill}>
             <Share2 className="h-4 w-4 shrink-0" strokeWidth={1.6} />
             分享
           </button>

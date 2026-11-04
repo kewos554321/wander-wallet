@@ -24,7 +24,11 @@ export function TripSummaryCard({
   const Decoration: LucideIcon = coverIcon ? COVER_ICON_COMPONENTS[coverIcon] : Sparkles
 
   return (
-    <div data-testid="v2-trip-summary-card" className="relative mx-4 mt-3 overflow-hidden rounded-v2-lg bg-v2-lake text-v2-paper">
+    <div
+      data-testid="v2-trip-summary-card"
+      data-tour="trip-summary"
+      className="relative mx-4 mt-3 overflow-hidden rounded-v2-lg bg-v2-lake text-v2-paper"
+    >
       <Decoration
         data-testid="trip-summary-decoration"
         data-cover={coverIcon ?? "sparkles"}

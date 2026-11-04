@@ -3,20 +3,27 @@
 import { useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { QuickExpenseV2 } from "@/components/v2/quick-expense/quick-expense-v2"
+import { ProjectTour } from "@/components/v2/onboarding/project-tour"
 import { JoinProjectDialog } from "@/components/project/join-project-dialog"
 import { InviteSheetV2 } from "@/components/v2/project/invite-sheet-v2"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { useLiff } from "@/components/auth/liff-provider"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { useOnboarding } from "@/lib/hooks/useOnboarding"
 import { useProjectOverview } from "@/lib/hooks/useProjectOverview"
 import { ProjectOverviewV2View } from "./project-overview-v2-view"
 
-// The onboarding tour targets v1 markup (data-tour) and is not shown in v2.
+// The tour only mounts once the overview (and its data-tour anchors) renders.
 export function ProjectOverviewV2({ projectId }: { projectId: string }) {
   const router = useRouter()
   const { user } = useLiff()
   const { project, loading, joinInfo, joining, joinProject, claimMember, refetch, summary } =
     useProjectOverview(projectId)
+  const {
+    isOnboardingCompleted,
+    isLoading: onboardingLoading,
+    completeOnboarding,
+  } = useOnboarding()
   const [showInvite, setShowInvite] = useState(false)
   // Which step the quick-expense overlay opens on; null means closed.
   const [quickStep, setQuickStep] = useState<"input" | null>(null)
@@ -76,6 +83,9 @@ export function ProjectOverviewV2({ projectId }: { projectId: string }) {
             refetch()
           }}
         />
+        {!onboardingLoading && !isOnboardingCompleted && (
+          <ProjectTour onComplete={completeOnboarding} onSkip={completeOnboarding} />
+        )}
       </>
     )
   }

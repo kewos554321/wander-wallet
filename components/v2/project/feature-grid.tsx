@@ -58,7 +58,7 @@ export function FeatureGrid({ projectId }: { projectId: string }) {
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <nav aria-label="功能" className="px-4 pt-5">
+    <nav aria-label="功能" data-tour="feature-grid" className="px-4 pt-5">
       <div className="rounded-v2-lg border border-v2-line bg-v2-surface px-3 pb-3 pt-4">
         <p className="mb-3 px-1 text-[13px] font-bold text-v2-lake">功能</p>
 
@@ -79,6 +79,7 @@ export function FeatureGrid({ projectId }: { projectId: string }) {
           <button
             type="button"
             aria-label="更多功能"
+            data-tour="more-features"
             aria-expanded={expanded}
             onClick={() => setExpanded((v) => !v)}
             className="flex w-[52px] flex-col items-center gap-[5px] rounded-v2-sm text-center transition-transform duration-150 ease-out active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"

@@ -16,6 +16,27 @@ vi.mock("@/components/auth/liff-provider", () => ({
   useLiff: () => ({ user: liff.user }),
   useAuthFetch: () => vi.fn(),
 }))
+const onboarding = vi.hoisted(() => ({
+  completed: true,
+  loading: false,
+  complete: vi.fn(),
+}))
+vi.mock("@/lib/hooks/useOnboarding", () => ({
+  useOnboarding: () => ({
+    isOnboardingCompleted: onboarding.completed,
+    isLoading: onboarding.loading,
+    completeOnboarding: onboarding.complete,
+    resetOnboarding: vi.fn(),
+  }),
+}))
+vi.mock("@/components/v2/onboarding/project-tour", () => ({
+  ProjectTour: ({ onComplete }: { onComplete: () => void }) => (
+    <button type="button" onClick={onComplete}>
+      stub-tour-complete
+    </button>
+  ),
+}))
+
 const quickExpenseProps = vi.hoisted(() => ({ current: null as Record<string, unknown> | null }))
 vi.mock("@/components/v2/quick-expense/quick-expense-v2", () => ({
   QuickExpenseV2: (props: Record<string, unknown>) => {
@@ -107,6 +128,18 @@ describe("ProjectOverviewV2View", () => {
     expect(screen.getByText("TWD 48,600 ／ TWD 76,000（剩餘 TWD 27,400）")).toBeInTheDocument()
     expect(screen.getByText("+TWD 4,820")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /查看結算明細/ })).toHaveAttribute("href", "/projects/p1/settle")
+  })
+
+  it("tags every tour anchor on the overview", () => {
+    const { container } = render(
+      <ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />
+    )
+
+    expect(container.querySelector("[data-tour='trip-summary']")).not.toBeNull()
+    expect(screen.getByRole("navigation", { name: "功能" })).toHaveAttribute("data-tour", "feature-grid")
+    expect(screen.getByRole("button", { name: "更多功能" })).toHaveAttribute("data-tour", "more-features")
+    expect(screen.getByRole("button", { name: "分享" })).toHaveAttribute("data-tour", "share")
+    expect(container.querySelector("[data-tour='add-expense-area']")).not.toBeNull()
   })
 
   it("uses the project cover icon on the trip summary card", () => {
@@ -486,6 +519,9 @@ describe("ProjectOverviewV2 container", () => {
   beforeEach(() => {
     mockOverview.mockReset()
     liff.user = { id: "u1" }
+    onboarding.completed = true
+    onboarding.loading = false
+    onboarding.complete.mockClear()
   })
 
   it("shows the join dialog for non-members", () => {
@@ -550,6 +586,61 @@ describe("ProjectOverviewV2 container", () => {
     expect(screen.getByText("TWD 48,600")).toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "分享" }))
     expect(screen.getByText("邀請旅伴")).toBeInTheDocument()
+  })
+
+  it("shows the tour for a member who has not finished onboarding and completes it", () => {
+    onboarding.completed = false
+    const refetch = vi.fn()
+    mockOverview.mockReturnValue({
+      project,
+      loading: false,
+      joinInfo: null,
+      joining: false,
+      joinProject: vi.fn(),
+      claimMember: vi.fn(),
+      refetch,
+      summary,
+    })
+    render(<ProjectOverviewV2 projectId="p1" />)
+
+    fireEvent.click(screen.getByRole("button", { name: "stub-tour-complete" }))
+
+    expect(onboarding.complete).toHaveBeenCalledOnce()
+  })
+
+  it("does not show the tour while the onboarding status is loading", () => {
+    onboarding.completed = false
+    onboarding.loading = true
+    mockOverview.mockReturnValue({
+      project,
+      loading: false,
+      joinInfo: null,
+      joining: false,
+      joinProject: vi.fn(),
+      claimMember: vi.fn(),
+      refetch: vi.fn(),
+      summary,
+    })
+    render(<ProjectOverviewV2 projectId="p1" />)
+
+    expect(screen.queryByRole("button", { name: "stub-tour-complete" })).not.toBeInTheDocument()
+  })
+
+  it("does not show the tour after onboarding is complete", () => {
+    onboarding.completed = true
+    mockOverview.mockReturnValue({
+      project,
+      loading: false,
+      joinInfo: null,
+      joining: false,
+      joinProject: vi.fn(),
+      claimMember: vi.fn(),
+      refetch: vi.fn(),
+      summary,
+    })
+    render(<ProjectOverviewV2 projectId="p1" />)
+
+    expect(screen.queryByRole("button", { name: "stub-tour-complete" })).not.toBeInTheDocument()
   })
 
   it("passes the signed-in user to the overview avatar", () => {

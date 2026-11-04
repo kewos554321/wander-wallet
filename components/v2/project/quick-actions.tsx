@@ -6,7 +6,10 @@ const pill =
 
 export function QuickActions({ projectId, onVoice }: { projectId: string; onVoice: () => void }) {
   return (
-    <div className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-4 z-50 flex flex-col items-end gap-3">
+    <div
+      data-tour="add-expense-area"
+      className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-4 z-50 flex flex-col items-end gap-3"
+    >
       <button
         type="button"
         onClick={onVoice}
