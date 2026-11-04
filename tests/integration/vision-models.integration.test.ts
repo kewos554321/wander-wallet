@@ -22,7 +22,7 @@ import { createQwenModel } from "@/lib/ai/qwen"
 
 // 50x50 pixel PNG image as base64 (red square - meets Qwen's minimum size requirement)
 // This is a valid PNG created programmatically
-const TEST_IMAGE_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAQklEQVR42u3PMQ0AAAgDINc/9K3hTSCQbRcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgJbCxAAABTUlEQVRogWNgGAWjYBSMglEwCkbBKBgFpAEACNgAAW/G4fQAAAAASUVORK5CYII="
+const TEST_IMAGE_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg=="
 
 const SIMPLE_PROMPT = `Analyze this image and respond with JSON only:
 {
