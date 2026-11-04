@@ -132,13 +132,14 @@ describe("ProjectOverviewV2View", () => {
     render(
       <ProjectOverviewV2View
         project={project}
-        summary={{ ...summary, totalAmount: 80000, budgetProgress: 100, budgetRemaining: -4000 }}
+        summary={{ ...summary, totalAmount: 80000, budgetProgress: 105.3, budgetRemaining: -4000 }}
         onShare={vi.fn()}
         onVoice={vi.fn()}
       />
     )
-    expect(screen.getByText("100%")).toBeInTheDocument()
-    expect(screen.getByText("TWD 80,000 ／ TWD 76,000（超支 TWD 4,000）")).toBeInTheDocument()
+    expect(screen.getByText("105%")).toBeInTheDocument()
+    expect(screen.getByTestId("v2-budget-overflow")).toBeInTheDocument()
+    expect(screen.getByText("TWD 80,000 ／ TWD 76,000（超出 TWD 4,000）")).toBeInTheDocument()
   })
 
   it("hides the budget bar without a budget and formats negative balances", () => {
@@ -548,7 +549,7 @@ describe("ProjectOverviewV2 container", () => {
     expect(screen.getByRole("heading", { name: "東京賞楓 5 日" })).toBeInTheDocument()
     expect(screen.getByText("TWD 48,600")).toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "分享" }))
-    expect(screen.getByText("邀請成員加入")).toBeInTheDocument()
+    expect(screen.getByText("邀請旅伴")).toBeInTheDocument()
   })
 
   it("passes the signed-in user to the overview avatar", () => {

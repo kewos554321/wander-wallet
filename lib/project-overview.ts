@@ -76,7 +76,9 @@ export function computeProjectSummary(
   const totalAmount = project.expenses.reduce((sum, e) => sum + convert(Number(e.amount), e.currency), 0)
   const perPerson = project.members.length > 0 ? totalAmount / project.members.length : 0
   const budget = project.budget ? Number(project.budget) : null
-  const budgetProgress = budget ? Math.min((totalAmount / budget) * 100, 100) : 0
+  // Keep the real percentage so overspending stays visible; consumers clamp the
+  // fill width, not the number they show.
+  const budgetProgress = budget ? (totalAmount / budget) * 100 : 0
   const budgetRemaining = budget ? budget - totalAmount : null
 
   const membership = currentUserId ? project.members.find((m) => m.user?.id === currentUserId) : undefined

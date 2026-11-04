@@ -77,11 +77,11 @@ describe("computeProjectSummary", () => {
     expect(computeProjectSummary(p, identity, "u1").userBalance).toBe(0)
   })
 
-  it("caps budget progress at 100 and keeps the negative remainder", () => {
+  it("keeps the real budget progress above 100 and the negative remainder", () => {
     const p = project({ budget: "300", expenses: [expense("a", "me", 400, { me: 200, chi: 200 })] })
     const s = computeProjectSummary(p, identity, "u1")
     expect(s.budget).toBe(300)
-    expect(s.budgetProgress).toBe(100)
+    expect(s.budgetProgress).toBeCloseTo(133.33, 1)
     expect(s.budgetRemaining).toBe(-100)
   })
 

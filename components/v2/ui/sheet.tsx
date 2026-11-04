@@ -64,6 +64,16 @@ export function Sheet({
     }
   }, [open])
 
+  // Lock background scroll while the sheet owns the viewport.
+  useEffect(() => {
+    if (!open) return
+    const previous = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = previous
+    }
+  }, [open])
+
   if (!open) return null
 
   return (
@@ -78,7 +88,7 @@ export function Sheet({
         aria-label={label}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-t-2xl bg-v2-surface p-5 shadow-lg outline-none sm:rounded-2xl"
+        className="w-full max-w-md rounded-t-2xl bg-v2-surface px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 shadow-lg outline-none sm:rounded-2xl"
       >
         {children}
       </div>

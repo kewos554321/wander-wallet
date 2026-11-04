@@ -23,7 +23,7 @@ interface ProjectOverviewV2ViewProps {
 }
 
 const pill =
-  "flex h-8 items-center gap-1.5 rounded-v2-sm border border-v2-lake-edge bg-v2-lake-soft px-2.5 text-[12px] font-semibold text-v2-lake"
+  "flex h-8 items-center gap-1.5 rounded-v2-sm border border-v2-lake-edge bg-v2-lake-soft px-2.5 text-[12px] font-semibold text-v2-lake transition-[transform,background-color] duration-150 ease-out hover:bg-v2-lake-tint active:scale-[.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
 
 export function ProjectOverviewV2View({
   project,
@@ -43,13 +43,13 @@ export function ProjectOverviewV2View({
         backHref="/projects"
         fixedBack
         backAriaLabel="回旅程列表"
-        backClassName="flex h-[34px] w-[34px] items-center justify-center"
+        backClassName="flex h-[34px] w-[34px] items-center justify-center rounded-full transition-transform duration-150 ease-out active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
         backIcon={<V2BrandMark />}
         actions={
           <Link
             href="/settings"
             aria-label="通用設定"
-            className="flex h-9 w-9 items-center justify-center"
+            className="flex h-9 w-9 items-center justify-center rounded-full transition-transform duration-150 ease-out active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
           >
             <V2Avatar
               image={currentUserImage ?? null}
@@ -63,6 +63,7 @@ export function ProjectOverviewV2View({
         }
       />
 
+      <div className="animate-v2-enter motion-reduce:animate-none">
       <div data-testid="v2-overview-header" className="flex items-start justify-between gap-3 px-4 pt-4">
         <div className="min-w-0">
           <h2 className="m-0 font-v2-serif text-2xl font-bold leading-8">{project.name}</h2>
@@ -97,6 +98,7 @@ export function ProjectOverviewV2View({
         members={project.members}
         currentMemberId={summary.currentMemberId}
       />
+      </div>
       <QuickActions projectId={project.id} onVoice={onVoice} />
     </>
   )

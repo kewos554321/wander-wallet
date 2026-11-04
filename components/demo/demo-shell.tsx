@@ -19,7 +19,7 @@ export function DemoShell({ children }: { children: ReactNode }) {
         <Link
           href="/demo"
           aria-label="回 Demo 目錄"
-          className="fixed bottom-4 left-4 z-50 rounded-full border border-v2-line bg-v2-surface px-3.5 py-2 text-[12px] font-bold text-v2-lake shadow-md"
+          className="fixed bottom-4 left-4 z-40 rounded-full border border-v2-line bg-v2-surface px-3.5 py-2 text-[12px] font-bold text-v2-lake shadow-md"
         >
           ← Demo 目錄
         </Link>

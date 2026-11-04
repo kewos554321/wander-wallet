@@ -416,7 +416,7 @@ export function ProjectOverviewV1({ projectId: id }: { projectId: string }) {
                       ? "bg-amber-500"
                       : "bg-emerald-500"
                   }`}
-                  style={{ width: `${budgetProgress}%` }}
+                  style={{ width: `${Math.min(budgetProgress, 100)}%` }}
                 />
               </div>
               <div className="flex items-center justify-between mt-2">

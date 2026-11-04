@@ -12,7 +12,7 @@ vi.mock("@/components/auth/liff-provider", () => ({
   useAuthFetch: () => vi.fn(),
 }))
 vi.mock("@/components/members/add-member-dialog", () => ({ AddMemberDialog: () => null }))
-vi.mock("@/components/project/invite-dialog", () => ({ InviteDialog: () => null }))
+vi.mock("@/components/v2/project/invite-sheet-v2", () => ({ InviteSheetV2: () => null }))
 vi.mock("@/components/ui/confirm-delete-dialog", async () => {
   const React = await import("react")
   return {

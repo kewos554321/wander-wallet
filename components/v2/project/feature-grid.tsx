@@ -67,7 +67,7 @@ export function FeatureGrid({ projectId }: { projectId: string }) {
             <Link
               key={path}
               href={`/projects/${projectId}/${path}`}
-              className="flex w-[52px] flex-col items-center gap-[5px] text-center"
+              className="flex w-[52px] flex-col items-center gap-[5px] rounded-v2-sm text-center transition-transform duration-150 ease-out active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
             >
               <span className={`flex h-[46px] w-[46px] items-center justify-center rounded-full ${toneAt(index)}`} aria-hidden="true">
                 <Icon className="h-[18px] w-[18px]" strokeWidth={1.7} />
@@ -81,7 +81,7 @@ export function FeatureGrid({ projectId }: { projectId: string }) {
             aria-label="更多功能"
             aria-expanded={expanded}
             onClick={() => setExpanded((v) => !v)}
-            className="flex w-[52px] flex-col items-center gap-[5px] text-center"
+            className="flex w-[52px] flex-col items-center gap-[5px] rounded-v2-sm text-center transition-transform duration-150 ease-out active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
           >
             <span
               className={`flex h-[46px] w-[46px] items-center justify-center rounded-full ${
@@ -96,14 +96,14 @@ export function FeatureGrid({ projectId }: { projectId: string }) {
         </div>
 
         {expanded && (
-          <div className="mt-3.5 border-t border-dashed border-v2-line pt-3.5">
+          <div className="mt-3.5 animate-v2-enter border-t border-dashed border-v2-line pt-3.5 motion-reduce:animate-none">
             <p className="mb-3 px-1 text-[11px] font-bold tracking-[.5px] text-v2-ink-subtle">更多功能</p>
             <div className="grid grid-cols-5 gap-x-1 gap-y-3">
               {SECONDARY.map(({ label, path, icon: Icon }, index) => (
                 <Link
                   key={path}
                   href={`/projects/${projectId}/${path}`}
-                  className="flex flex-col items-center gap-[5px] text-center"
+                  className="flex flex-col items-center gap-[5px] rounded-v2-sm text-center transition-transform duration-150 ease-out active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
                 >
                   <span className={`flex h-[46px] w-[46px] items-center justify-center rounded-full ${toneAt(PRIMARY.length + index)}`} aria-hidden="true">
                     <Icon className="h-[18px] w-[18px]" strokeWidth={1.6} />

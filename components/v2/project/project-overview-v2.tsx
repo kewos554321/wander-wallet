@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { QuickExpenseV2 } from "@/components/v2/quick-expense/quick-expense-v2"
 import { JoinProjectDialog } from "@/components/project/join-project-dialog"
-import { InviteDialog } from "@/components/project/invite-dialog"
+import { InviteSheetV2 } from "@/components/v2/project/invite-sheet-v2"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { useLiff } from "@/components/auth/liff-provider"
 import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
@@ -54,7 +54,7 @@ export function ProjectOverviewV2({ projectId }: { projectId: string }) {
           currentUserImage={user?.image ?? null}
           currentUserId={user?.id ?? null}
         />
-        <InviteDialog open={showInvite} onOpenChange={setShowInvite} projectId={project.id} projectName={project.name} />
+        <InviteSheetV2 open={showInvite} onOpenChange={setShowInvite} projectId={project.id} projectName={project.name} />
         <QuickExpenseV2
           open={quickStep !== null}
           onOpenChange={(open) => { if (!open) setQuickStep(null) }}

@@ -15,6 +15,9 @@ export function TripSummaryCard({
 }) {
   const { totalAmount, perPerson, budget, budgetProgress, budgetRemaining } = summary
   const fmt = (n: number) => formatCurrency(Math.round(n), currency)
+  const overBudget = budgetProgress > 100
+  const withinBudgetWidth = Math.min(budgetProgress, 100)
+  const overBudgetWidth = Math.min(Math.max(budgetProgress - 100, 0), 100)
 
   const parsed = parseCover(cover ?? null)
   const coverIcon = parsed.type === "icon" && parsed.iconId && COVER_ICON_COMPONENTS[parsed.iconId] ? parsed.iconId : null
@@ -36,13 +39,33 @@ export function TripSummaryCard({
         {budget !== null && budgetRemaining !== null && (
           <>
             <div className="mt-2.5 flex items-center gap-2">
-              <div className="h-[5px] flex-1 overflow-hidden rounded-full bg-[rgba(250,247,242,.22)]">
-                <div className="h-full rounded-full bg-v2-paper" style={{ width: `${budgetProgress}%` }} />
+              <div className="relative h-[5px] flex-1 overflow-hidden rounded-full bg-[rgba(250,247,242,.22)]">
+                <div
+                  className="h-full rounded-full bg-v2-paper transition-[width] duration-300 ease-out motion-reduce:transition-none"
+                  style={{ width: `${withinBudgetWidth}%` }}
+                />
+                {overBudget && (
+                  <div
+                    data-testid="v2-budget-overflow"
+                    className="absolute inset-y-0 right-0 rounded-full bg-v2-coral transition-[width] duration-300 ease-out motion-reduce:transition-none"
+                    style={{ width: `${overBudgetWidth}%` }}
+                  />
+                )}
               </div>
-              <span className="shrink-0 text-xs font-medium leading-4 tracking-[.5px]">{Math.round(budgetProgress)}%</span>
+              <span
+                className={`shrink-0 text-xs font-medium leading-4 tracking-[.5px] ${
+                  overBudget ? "text-v2-coral-tint" : ""
+                }`}
+              >
+                {Math.round(budgetProgress)}%
+              </span>
             </div>
-            <p className="mt-1 text-xs leading-4 tracking-[.4px] opacity-75">
-              {fmt(totalAmount)} ／ {fmt(budget)}（{budgetRemaining >= 0 ? `剩餘 ${fmt(budgetRemaining)}` : `超支 ${fmt(-budgetRemaining)}`}）
+            <p
+              className={`mt-1 text-xs leading-4 tracking-[.4px] ${
+                overBudget ? "font-semibold text-v2-coral-tint" : "opacity-75"
+              }`}
+            >
+              {fmt(totalAmount)} ／ {fmt(budget)}（{budgetRemaining >= 0 ? `剩餘 ${fmt(budgetRemaining)}` : `超出 ${fmt(-budgetRemaining)}`}）
             </p>
           </>
         )}

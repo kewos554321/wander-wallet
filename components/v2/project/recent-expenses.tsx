@@ -22,7 +22,10 @@ export function RecentExpenses({ projectId, expenses, members, currentMemberId }
       <div data-testid="v2-recent-expenses-card" className="overflow-hidden rounded-v2-md border border-v2-line bg-v2-surface">
         <div className="flex items-baseline justify-between px-3.5 pb-2 pt-3.5">
           <p className="m-0 text-[13px] font-bold text-v2-lake">最近支出</p>
-          <Link href={`/projects/${projectId}/expenses`} className="text-xs font-medium tracking-[.5px] text-v2-link">
+          <Link
+            href={`/projects/${projectId}/expenses`}
+            className="rounded text-xs font-medium tracking-[.5px] text-v2-link transition-colors duration-150 hover:text-v2-lake focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
+          >
             查看全部
           </Link>
         </div>
@@ -53,7 +56,9 @@ export function RecentExpenses({ projectId, expenses, members, currentMemberId }
               <Link
                 key={expense.id}
                 href={`/projects/${projectId}/expenses/${expense.id}/edit`}
-                className={`flex items-start gap-2.5 px-3 py-3 ${i < recent.length - 1 ? "border-b border-v2-line-soft" : ""}`}
+                className={`flex items-start gap-2.5 px-3 py-3 transition-colors duration-150 hover:bg-v2-paper active:bg-v2-sand focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none ${
+                  i < recent.length - 1 ? "border-b border-v2-line-soft" : ""
+                }`}
               >
                 <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${CATEGORY_TONES[key]}`} aria-hidden="true">
                   <Icon className="h-[18px] w-[18px]" strokeWidth={1.6} />

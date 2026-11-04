@@ -380,7 +380,7 @@ export default function UiConsistencyDemoPage() {
       <header>
         <h1 className="m-0 font-v2-serif text-[24px] font-bold leading-tight text-v2-ink">收斂到 v2：一致性對照</h1>
         <p className="m-0 mt-2 max-w-[68ch] text-[13px] leading-relaxed text-v2-ink-muted">
-          這是設計對照 demo，不動 production。左側重現目前程式碼的實際輸出，右側是建議調整；每一組都只改視覺與互動語彙，不改商業邏輯。
+          這是設計對照紀錄。左側是調整前的輸出，右側是調整後的目標；預算、分享、動效三組已套用到 v2 元件，其餘仍為提案。每一組都只改視覺與互動語彙，不改商業邏輯。
         </p>
       </header>
 

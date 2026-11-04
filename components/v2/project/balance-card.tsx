@@ -21,14 +21,14 @@ export function BalanceCard({ balance, currency, projectId }: { balance: number;
             onClick={() => setShowInfo((v) => !v)}
             aria-label="說明餘額計算方式"
             aria-expanded={showInfo}
-            className="flex h-4 w-4 items-center justify-center rounded-full border border-v2-check p-0 text-v2-ink-subtle"
+            className="flex h-4 w-4 items-center justify-center rounded-full border border-v2-check p-0 text-v2-ink-subtle transition-colors duration-150 hover:bg-v2-lake-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
           >
             <Info className="h-2.5 w-2.5" strokeWidth={2} />
           </button>
         </div>
         <Link
           href={`/projects/${projectId}/settle`}
-          className="inline-flex items-center gap-1 text-xs font-medium leading-4 tracking-[.5px] text-v2-link"
+          className="inline-flex items-center gap-1 rounded text-xs font-medium leading-4 tracking-[.5px] text-v2-link transition-colors duration-150 hover:text-v2-lake focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
         >
           查看結算明細
           <ArrowRight className="h-[11px] w-[11px]" strokeWidth={2.2} />

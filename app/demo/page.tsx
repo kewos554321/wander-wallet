@@ -32,6 +32,7 @@ const GROUPS: { title: string; note: string; items: { href: string; label: strin
       { href: "/demo/projects", label: "專案列表", desc: "所有旅程卡片", },
       { href: "/demo/new-project", label: "新專案", desc: "封面、名稱、日期、幣別、預算" },
       { href: "/demo/overview", label: "專案總覽", desc: "摘要、餘額、最近支出、快速操作" },
+      { href: "/demo/overview-overbudget", label: "專案總覽（超預算）", desc: "118% 預算、橘色溢出段與超出金額" },
       { href: "/demo/project-settings", label: "專案設定", desc: "改名、日期、幣別、刪除" },
     ],
   },

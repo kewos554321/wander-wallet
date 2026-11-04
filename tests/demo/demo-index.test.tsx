@@ -9,16 +9,18 @@ vi.mock("next/font/google", () => ({
 import DemoIndexPage from "@/app/demo/page"
 
 const ROUTES = [
+  "/demo/ui-consistency",
   "/demo/expenses", "/demo/add-expense", "/demo/quick-expense", "/demo/rate-sheet",
-  "/demo/projects", "/demo/new-project", "/demo/overview", "/demo/project-settings",
-  "/demo/settle", "/demo/profile", "/demo/export", "/demo/login",
+  "/demo/projects", "/demo/new-project", "/demo/overview", "/demo/overview-overbudget",
+  "/demo/project-settings", "/demo/settle", "/demo/profile", "/demo/export", "/demo/login",
 ]
 
 describe("demo index", () => {
-  it("links to all 12 screens", () => {
+  it("links to every demo screen", () => {
     render(<DemoIndexPage />)
+    const hrefs = screen.getAllByRole("link").map((link) => link.getAttribute("href"))
     for (const href of ROUTES) {
-      expect(screen.getByRole("link", { name: new RegExp(href) })).toHaveAttribute("href", href)
+      expect(hrefs).toContain(href)
     }
   })
 })

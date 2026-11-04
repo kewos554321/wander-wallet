@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react"
 import { AddMemberDialog } from "@/components/members/add-member-dialog"
-import { InviteDialog } from "@/components/project/invite-dialog"
+import { InviteSheetV2 } from "@/components/v2/project/invite-sheet-v2"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { useProjectMembers } from "@/lib/hooks/useProjectMembers"
@@ -47,7 +47,7 @@ export function MembersV2({ projectId }: { projectId: string }) {
           onAdd={() => setShowAdd(true)}
           onRemove={removeOne}
         />
-        <InviteDialog open={showInvite} onOpenChange={setShowInvite} projectId={m.project.id} projectName={m.project.name} />
+        <InviteSheetV2 open={showInvite} onOpenChange={setShowInvite} projectId={m.project.id} projectName={m.project.name} />
         <AddMemberDialog open={showAdd} onOpenChange={setShowAdd} onAdd={m.addMember} />
       </>
     )
