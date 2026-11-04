@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { notoSansTC, notoSerifTC } from "@/components/v2/fonts";
 import "./globals.css";
 import { ThemeProvider } from "@/components/system/theme-provider";
 import { LiffProvider } from "@/components/auth/liff-provider";
@@ -130,7 +131,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-TW" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${notoSansTC.variable} ${notoSerifTC.variable} font-sans antialiased`}>
         <LiffProvider>
           <ThemeProvider defaultTheme="system" enableSystem>
             <AuthGate>

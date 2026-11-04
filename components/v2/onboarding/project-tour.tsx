@@ -28,17 +28,8 @@ export const PROJECT_TOUR_STEPS: DriveStep[] = [
     element: "[data-tour='feature-grid']",
     popover: {
       title: "主要功能",
-      description: "成員、結算、統計、匯率都在這裡，點一下就能進入。",
+      description: "成員、結算、統計、匯率都在這裡；點「更多」還有歷史、里程、匯出、筆記、地圖與照片。",
       side: "top",
-      align: "center",
-    },
-  },
-  {
-    element: "[data-tour='more-features']",
-    popover: {
-      title: "更多功能",
-      description: "點「更多」展開歷史、里程、匯出、筆記、地圖與照片。",
-      side: "bottom",
       align: "center",
     },
   },
@@ -97,11 +88,13 @@ export function ProjectTour({ onComplete, onSkip }: ProjectTourProps) {
       stagePadding: 8,
       stageRadius: 12,
       onDestroyStarted: () => {
-        if (driverRef.current?.hasNextStep()) {
+        // Closed on the last step = completed; closed earlier = skipped.
+        if (instance.hasNextStep()) {
           onSkipRef.current?.()
+        } else {
+          onCompleteRef.current()
         }
-        onCompleteRef.current()
-        driverRef.current?.destroy()
+        instance.destroy()
       },
     })
 

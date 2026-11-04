@@ -67,7 +67,10 @@ export function SettleV2View(props: SettleV2ViewProps) {
                 1 {code} = {rate.toFixed(data.summary.precision ?? 2)} {data.summary.currency}
               </p>
             ))}
-            <Link href={`/projects/${props.projectId}/settings`} className="mt-1 inline-block font-semibold text-v2-link">
+            <Link
+              href={`/projects/${props.projectId}/settings`}
+              className="mt-1 inline-block rounded font-semibold text-v2-link transition-colors duration-150 hover:text-v2-lake focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
+            >
               前往專案設定調整匯率
             </Link>
           </div>
@@ -85,7 +88,10 @@ export function SettleV2View(props: SettleV2ViewProps) {
         expenseCount={data.summary.totalExpenses}
       />
       <div className="mx-4 mt-3.5 text-center">
-        <Link href={`/projects/${props.projectId}/stats`} className="inline-flex items-center gap-[5px] text-xs font-semibold text-v2-ink-muted">
+        <Link
+          href={`/projects/${props.projectId}/stats`}
+          className="inline-flex items-center gap-[5px] rounded text-xs font-semibold text-v2-ink-muted transition-colors duration-150 hover:text-v2-lake focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
+        >
           <BarChart3 className="h-[13px] w-[13px]" aria-hidden="true" />
           查看統計
           <ChevronRight className="h-[11px] w-[11px]" strokeWidth={2.2} aria-hidden="true" />

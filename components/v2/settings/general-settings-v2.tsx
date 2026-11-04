@@ -48,7 +48,7 @@ export function GeneralSettingsV2() {
   }
 
   return (
-      <div className="mx-auto max-w-md">
+      <div className="mx-auto max-w-md animate-v2-enter motion-reduce:animate-none">
         <V2TopBar title="通用設定" backHref="/projects" />
         <div className="flex flex-col gap-3.5 p-4">
           {error && (
@@ -61,7 +61,7 @@ export function GeneralSettingsV2() {
             type="button"
             aria-label="編輯個人資料"
             onClick={() => router.push("/settings/profile")}
-            className="flex items-center gap-3.5 rounded-v2-lg bg-v2-lake p-4 text-left text-v2-paper"
+            className="flex items-center gap-3.5 rounded-v2-lg bg-v2-lake p-4 text-left text-v2-paper transition-transform duration-150 ease-out active:scale-[.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
           >
             <V2Avatar
               image={user?.image ?? null}
@@ -89,8 +89,8 @@ export function GeneralSettingsV2() {
                     type="button"
                     aria-pressed={active}
                     onClick={() => setTheme(value)}
-                    className={`flex flex-1 flex-col items-center gap-1.5 rounded-xl border px-2 py-3 ${
-                      active ? "border-[1.5px] border-v2-lake bg-v2-lake-soft" : "border-v2-line bg-v2-paper"
+                    className={`flex flex-1 flex-col items-center gap-1.5 rounded-xl border px-2 py-3 transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none ${
+                      active ? "border-[1.5px] border-v2-lake bg-v2-lake-soft" : "border-v2-line bg-v2-paper hover:bg-v2-sand"
                     }`}
                   >
                     <Icon aria-hidden="true" className={`h-4 w-4 ${active ? "text-v2-lake" : "text-v2-ink-muted"}`} />

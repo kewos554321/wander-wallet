@@ -37,7 +37,6 @@ describe("ProjectTour", () => {
       null,
       "[data-tour='trip-summary']",
       "[data-tour='feature-grid']",
-      "[data-tour='more-features']",
       "[data-tour='share']",
       "[data-tour='add-expense-area']",
       null,
@@ -63,7 +62,7 @@ describe("ProjectTour", () => {
     expect(onComplete).toHaveBeenCalledOnce()
   })
 
-  it("counts an early close as a skip and still completes onboarding", () => {
+  it("counts an early close as a skip instead of a completion", () => {
     const onComplete = vi.fn()
     const onSkip = vi.fn()
     render(<ProjectTour onComplete={onComplete} onSkip={onSkip} />)
@@ -72,7 +71,7 @@ describe("ProjectTour", () => {
     ;(driverSpy.config?.onDestroyStarted as () => void)()
 
     expect(onSkip).toHaveBeenCalledOnce()
-    expect(onComplete).toHaveBeenCalledOnce()
+    expect(onComplete).not.toHaveBeenCalled()
   })
 
   it("does not restart the tour when the callbacks change", () => {

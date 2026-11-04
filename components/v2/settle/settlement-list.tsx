@@ -17,7 +17,7 @@ interface SettlementListProps {
 }
 
 const actionButton =
-  "inline-flex items-center gap-1.5 rounded-lg border border-v2-lake-edge bg-v2-lake-soft px-3 py-1.5 text-xs font-semibold text-v2-lake"
+  "inline-flex items-center gap-1.5 rounded-lg border border-v2-lake-edge bg-v2-lake-soft px-3 py-1.5 text-xs font-semibold text-v2-lake transition-[transform,background-color] duration-150 ease-out hover:bg-v2-lake-tint active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
 
 export function SettlementList({
   settlements,

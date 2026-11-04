@@ -33,7 +33,7 @@ export function ProjectsV2View({ projects, loading, userName, userImage, userId,
   const visible = projects.filter((p) => filter === "all" || getTripStatus(p.endDate, now) === filter)
 
   return (
-    <div className="pb-5">
+    <div className="animate-v2-enter pb-5 motion-reduce:animate-none">
       <div className="flex items-center justify-between px-5 pb-1 pt-[22px]">
         <div className="flex items-center gap-2">
           <V2BrandMark />
@@ -42,7 +42,7 @@ export function ProjectsV2View({ projects, loading, userName, userImage, userId,
         <Link
           href="/settings"
           aria-label="通用設定"
-          className="flex h-9 w-9 items-center justify-center"
+          className="flex h-9 w-9 items-center justify-center rounded-full transition-transform duration-150 ease-out active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
         >
           <V2Avatar
             image={userImage ?? null}
@@ -66,7 +66,7 @@ export function ProjectsV2View({ projects, loading, userName, userImage, userId,
         <Link
           href="/projects/new"
           aria-label="建立新旅程"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-v2-lake text-v2-on-lake shadow-v2-lake-md"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-v2-lake text-v2-on-lake shadow-v2-lake-md transition-transform duration-150 ease-out hover:scale-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
         >
           <Plus className="h-[19px] w-[19px]" strokeWidth={2.2} />
         </Link>
@@ -81,8 +81,8 @@ export function ProjectsV2View({ projects, loading, userName, userImage, userId,
             onClick={() => setFilter(value)}
             className={
               filter === value
-                ? "rounded-full bg-v2-lake px-[18px] py-2 text-sm font-medium leading-5 tracking-[.1px] text-v2-on-lake"
-                : "rounded-full px-3.5 py-2 text-sm font-medium leading-5 tracking-[.1px] text-v2-ink-muted"
+                ? "rounded-full bg-v2-lake px-[18px] py-2 text-sm font-medium leading-5 tracking-[.1px] text-v2-on-lake transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
+                : "rounded-full px-3.5 py-2 text-sm font-medium leading-5 tracking-[.1px] text-v2-ink-muted transition-colors duration-150 hover:bg-v2-sand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
             }
           >
             {label}
@@ -107,7 +107,7 @@ export function ProjectsV2View({ projects, loading, userName, userImage, userId,
             <p className="mt-1 text-xs text-v2-ink-muted">建立旅程來記錄旅行中的共同開銷</p>
             <Link
               href="/projects/new"
-              className="mt-5 inline-flex rounded-full bg-v2-lake px-6 py-3 text-[15px] font-bold text-v2-on-lake"
+              className="mt-5 inline-flex rounded-full bg-v2-lake px-6 py-3 text-[15px] font-bold text-v2-on-lake transition-transform duration-150 ease-out active:scale-[.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
             >
               建立旅程
             </Link>
@@ -132,7 +132,7 @@ function ProjectCard({ project, currentUserId }: { project: ProjectListItem; cur
   return (
     <Link
       href={`/projects/${project.id}`}
-      className="flex items-start gap-3 rounded-2xl border border-v2-line bg-v2-surface p-3 shadow-v2-card"
+      className="flex items-start gap-3 rounded-2xl border border-v2-line bg-v2-surface p-3 shadow-v2-card transition-[transform,box-shadow] duration-150 ease-out hover:shadow-v2-lg active:scale-[.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
     >
       <CoverThumb cover={project.cover} />
       <div className="min-w-0 flex-1">
