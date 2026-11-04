@@ -206,14 +206,13 @@ function QuickExpenseFlow({ onOpenChange, projectId, projectName, members, curre
   }
 
   const handleRemoveItem = (index: number) => {
-    const next = items.filter((_, i) => i !== index)
-    if (next.length === 0) {
+    if (items.length <= 1) {
       setItems([])
       setError(null)
       setStep("input")
       return
     }
-    setItems(next)
+    setItems((prev) => prev.filter((_, i) => i !== index))
   }
 
   const handleSubmit = async (shouldNotifyLine: boolean) => {

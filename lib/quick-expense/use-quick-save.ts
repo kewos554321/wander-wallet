@@ -40,6 +40,8 @@ export function useQuickSave({ projectId, projectName, members }: { projectId: s
               image = null
             }
           }
+          // Weights and splitDetail are currency-independent; projectCurrency
+          // only drives the display conversion handled by the confirm card.
           const derived = deriveExpenseDraft({
             state: item,
             members,

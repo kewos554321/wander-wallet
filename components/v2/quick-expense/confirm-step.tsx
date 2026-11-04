@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { Check, ChevronLeft, ChevronRight, RotateCcw, Send, Trash2, X } from "lucide-react"
 import { formatCurrency } from "@/lib/constants/currencies"
 import type { PreviewRateInfo } from "@/lib/currency-conversion"
@@ -45,6 +45,10 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemChange
     onRemoveItem(index)
     if (index > 0 && index >= items.length - 1) onIndexChange(index - 1)
   }
+  const changeItem = useCallback(
+    (updater: (state: DraftState) => DraftState) => onItemChange(index, updater),
+    [index, onItemChange],
+  )
   const totals = itemTotals(items).map((t) => formatCurrency(t.total, t.currency)).join(" · ")
 
   const startSwipe = (e: React.TouchEvent) => {
@@ -155,7 +159,7 @@ export function ConfirmStep({ items, members, index, onIndexChange, onItemChange
           key={current.id}
           item={current}
           members={members}
-          onChange={(updater) => onItemChange(index, updater)}
+          onChange={changeItem}
           projectCurrency={projectCurrency}
           previewRateInfo={previewRateInfo}
           rateContext={rateContext}

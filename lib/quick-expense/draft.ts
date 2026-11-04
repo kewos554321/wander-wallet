@@ -1,6 +1,7 @@
 import type { ExpenseItemResult } from "@/lib/ai/expense-parser"
 import type { DraftMember, DraftState } from "@/lib/expense-draft"
-import { deriveExpenseDraft } from "@/lib/expense-draft"
+import { createDraftActions, deriveExpenseDraft } from "@/lib/expense-draft"
+import { expenseFormIssues } from "@/components/v2/expense-form/split-guardrails"
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/lib/constants/expenses"
 import { derivePayerShares } from "@/lib/expense-payers"
 import { newSplitItem, type SplitDraftItem } from "@/lib/split-draft"
@@ -40,7 +41,10 @@ function itemBase(id: string, currency: string, today: Date): QuickItem {
 
 export function parsedToQuickItems(results: ExpenseItemResult[], today: Date = new Date()): QuickItem[] {
   return results.map((result) => {
-    const payerIds = result.payers.map((p) => p.memberId)
+    // A malformed/legacy parse may omit payers; keep the item editable and let
+    // validateItems explain that a payer is required instead of failing the batch.
+    const payers = result.payers ?? []
+    const payerIds = payers.map((p) => p.memberId)
     // Pin amounts only when the AI returned an explicit split that differs from
     // a plain equal split, so a default single/equal payer stays auto.
     const equal = derivePayerShares({
@@ -51,11 +55,11 @@ export function parsedToQuickItems(results: ExpenseItemResult[], today: Date = n
     }).shares
     const isEqualPayerSplit =
       payerIds.length > 0 &&
-      result.payers.length === equal.length &&
-      result.payers.every((p, i) => Math.abs(p.amount - equal[i].amount) <= 0.01)
+      payers.length === equal.length &&
+      payers.every((p, i) => Math.abs(p.amount - equal[i].amount) <= 0.01)
     const pinnedPayerAmounts: Record<string, string> = {}
     if (!isEqualPayerSplit) {
-      for (const p of result.payers) pinnedPayerAmounts[p.memberId] = String(p.amount)
+      for (const p of payers) pinnedPayerAmounts[p.memberId] = String(p.amount)
     }
 
     // Seed "先扣個人項目" from whatever the AI extracted (if any).
@@ -127,8 +131,20 @@ export function validateItems(
     const item = items[i]
     const n = i + 1
     const derived = derivedOf(item, members)
-    const amount = derived.splitInput.amount
-    if (!(amount > 0)) return { index: i, message: `第 ${n} 筆請輸入有效金額` }
+    const issues = expenseFormIssues(
+      { state: item, actions: createDraftActions(() => {}, members), derived },
+      members,
+    )
+    // The batch keeps its historical "please enter a valid amount" copy for
+    // empty/zero/invalid input; newer guardrail messages pass through.
+    if (issues.amountIssue) {
+      const message =
+        issues.amountIssue === "請輸入金額" || issues.amountIssue === "金額必須大於 0"
+          ? "請輸入有效金額"
+          : issues.amountIssue
+      return { index: i, message: `第 ${n} 筆${message}` }
+    }
+    if (issues.descMissing) return { index: i, message: `第 ${n} 筆請填寫描述，讓大家知道這筆是什麼` }
     if (item.payerIds.length === 0) return { index: i, message: `第 ${n} 筆請選擇付款成員` }
     if (derived.error === "付款金額合計超過支出金額") return { index: i, message: `第 ${n} 筆付款金額合計超過支出金額` }
     if (derived.error === "付款金額與支出金額不符") return { index: i, message: `第 ${n} 筆付款金額與支出金額不符` }
@@ -144,6 +160,9 @@ export function validateItems(
       return { index: i, message: `第 ${n} 筆個人項目總額不可超過支出總額` }
     }
     if (!derived.matches) return { index: i, message: `第 ${n} 筆分攤金額與支出金額不符` }
+    // Anything else the shared form blocks (fixed share over total, negative
+    // share, touched-but-incomplete personal item).
+    if (issues.splitIssue) return { index: i, message: `第 ${n} 筆${issues.splitIssue}` }
   }
   return null
 }

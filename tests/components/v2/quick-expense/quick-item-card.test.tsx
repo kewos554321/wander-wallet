@@ -111,6 +111,13 @@ describe("QuickItemCard", () => {
     expect(p.patchFromLastChange()).toMatchObject({ category: "transport" })
   })
 
+  it("composes sequential edits without losing the AI item id", () => {
+    const p = setup()
+    fireEvent.change(screen.getByLabelText(/描述/), { target: { value: "晚餐" } })
+    fireEvent.change(screen.getByLabelText("金額"), { target: { value: "88" } })
+    expect(p.patchFromAllChanges()).toMatchObject({ id: "1", description: "晚餐", amount: "88" })
+  })
+
   it("applies the same money guardrails as the add-expense form", () => {
     const p = setup()
     fireEvent.change(screen.getByLabelText("金額"), { target: { value: "8a" } })

@@ -65,6 +65,12 @@ describe("parsedToQuickItems", () => {
     expect(q.pinnedPayerAmounts).toEqual({})
   })
 
+  it("keeps a missing payers list editable instead of throwing", () => {
+    const [q] = parsedToQuickItems([{ ...base, payers: undefined as unknown as typeof base.payers }])
+    expect(q.payerIds).toEqual([])
+    expect(validateItems([q], members)).toEqual({ index: 0, message: "第 1 筆請選擇付款成員" })
+  })
+
   it("seeds personal items and enables personal mode", () => {
     const [q] = parsedToQuickItems([
       {
@@ -151,6 +157,26 @@ describe("validateItems", () => {
       personalItems: { a: [{ id: "i1", name: "", amount: "10" }] },
     })
     expect(validateItems([withItem], members)).toEqual({ index: 0, message: "第 1 筆：小雨 有個人項目未填寫名稱" })
+  })
+
+  it("blocks a blank description like the add-expense form", () => {
+    expect(validateItems([item({ description: "  " })], members)).toEqual({
+      index: 0,
+      message: "第 1 筆請填寫描述，讓大家知道這筆是什麼",
+    })
+  })
+
+  it("blocks an amount over the currency limit", () => {
+    expect(validateItems([item({ amount: "999999999" })], members)?.message).toContain("金額不可超過")
+  })
+
+  it("blocks a touched personal item with a blank amount", () => {
+    const withItem = item({
+      personalMode: true,
+      personalMembers: ["a"],
+      personalItems: { a: [{ id: "i1", name: "咖啡", amount: "" }] },
+    })
+    expect(validateItems([withItem], members)?.message).toContain("尚未填寫完整")
   })
 })
 

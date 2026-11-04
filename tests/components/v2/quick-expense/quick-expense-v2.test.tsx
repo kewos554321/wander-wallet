@@ -114,6 +114,20 @@ describe("QuickExpenseV2", () => {
     expect(parseText.mock.calls[0][1]).toEqual({ transcript: "早餐 100", members, currentUserMemberId: "a", defaultCurrency: "TWD" })
   })
 
+  it("saves edits from the shared fields with the original item id", async () => {
+    parseText.mockResolvedValue([parsed("1")])
+    save.mockResolvedValue({ savedIds: ["1"], failed: null })
+    setup()
+    typeAndParse()
+    await screen.findByText("1 / 1")
+    fireEvent.change(screen.getByLabelText("金額"), { target: { value: "250" } })
+    fireEvent.change(screen.getByLabelText(/描述/), { target: { value: "晚餐" } })
+    fireEvent.click(screen.getByRole("button", { name: "新增 1 筆" }))
+    await waitFor(() => expect(save).toHaveBeenCalled())
+    const saved = save.mock.calls[0][0] as { id: string; amount: string; description: string }[]
+    expect(saved[0]).toMatchObject({ id: "1", amount: "250", description: "晚餐" })
+  })
+
   it("keeps the text and shows the error when parsing fails or returns nothing", async () => {
     parseText.mockRejectedValueOnce(new Error("解析失敗了"))
     setup()

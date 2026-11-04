@@ -113,6 +113,20 @@ describe("ConfirmStep", () => {
     expect(p.onIndexChange).toHaveBeenLastCalledWith(0)
   })
 
+  it("deletes the first item without moving the index", () => {
+    const p = setup({ index: 0 })
+    fireEvent.click(screen.getByRole("button", { name: "刪除此筆" }))
+    expect(p.onRemoveItem).toHaveBeenLastCalledWith(0)
+    expect(p.onIndexChange).not.toHaveBeenCalled()
+  })
+
+  it("deletes a middle item without moving the index", () => {
+    const p = setup({ items: many(3), index: 1 })
+    fireEvent.click(screen.getByRole("button", { name: "刪除此筆" }))
+    expect(p.onRemoveItem).toHaveBeenLastCalledWith(1)
+    expect(p.onIndexChange).not.toHaveBeenCalled()
+  })
+
   it("submits with the LINE toggle prop value, reports toggle changes, reinputs, and shows errors", () => {
     const p = setup({ error: "第 1 筆請選擇付款成員", notifyLine: false })
     expect(screen.getByRole("alert")).toHaveTextContent("第 1 筆請選擇付款成員")
