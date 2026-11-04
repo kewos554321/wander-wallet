@@ -159,6 +159,25 @@ describe("ExpenseFilterBar panels", () => {
     expect(props.onClearPayers).toHaveBeenCalled()
   })
 
+  it("uses the lake brand colour for the current user in the payer panel", () => {
+    renderBar()
+    fireEvent.click(screen.getByRole("button", { name: /付款成員/ }))
+    const option = screen.getByRole("checkbox", { name: "我" }).closest("button")
+    expect(option).not.toBeNull()
+    const avatar = option!.querySelector('[aria-hidden="true"]')
+    expect(avatar).not.toBeNull()
+    expect(avatar).toHaveClass("bg-v2-lake")
+    expect(avatar).toHaveClass("text-v2-on-lake")
+  })
+
+  it("uses the sand placeholder style for a placeholder payer option", () => {
+    renderBar({ payers: [{ id: "chi", displayName: "志明", isPlaceholder: true }] })
+    fireEvent.click(screen.getByRole("button", { name: /付款成員/ }))
+    const option = screen.getByRole("checkbox", { name: "志明" }).closest("button")
+    expect(option).not.toBeNull()
+    expect(within(option!).getByTestId("placeholder-avatar")).toHaveTextContent("志")
+  })
+
   it("shows the empty state when there are no payers", () => {
     renderBar({ payers: [] })
     fireEvent.click(screen.getByRole("button", { name: /付款成員/ }))

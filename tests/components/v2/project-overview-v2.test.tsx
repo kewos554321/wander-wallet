@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent, within } from "@testing-library/react"
 import type { OverviewProject, ProjectSummary } from "@/lib/project-overview"
+import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 
 vi.mock("next/font/google", () => ({
   Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
@@ -202,6 +203,51 @@ describe("ProjectOverviewV2View", () => {
     expect(screen.getByText("購物")).toBeInTheDocument() // description fallback to category label
   })
 
+  it("seeds a linked member's avatar from the user id, not the member id", () => {
+    const linkedProject: OverviewProject = {
+      ...project,
+      members: [
+        { id: "m-1", role: "owner", displayName: "Emma", user: { id: "u1", name: "Emma", email: "e@x.com", image: null } },
+        { id: "m-2", role: "member", displayName: "志明", user: null },
+      ],
+      expenses: [
+        {
+          id: "e1",
+          amount: 100,
+          currency: "TWD",
+          description: "拉麵",
+          category: "food",
+          createdAt: local(11, 16),
+          payers: [{ memberId: "m-1", amount: 100 }],
+          participants: [
+            { id: "p1", memberId: "m-1", shareAmount: 50 },
+            { id: "p2", memberId: "m-2", shareAmount: 50 },
+          ],
+        },
+      ],
+    }
+    render(<ProjectOverviewV2View project={linkedProject} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
+    const card = screen.getByTestId("v2-recent-expenses-card")
+    const actual = within(card).getAllByText("E", { exact: true })[0]
+    const expected = render(<V2Avatar image={null} name="Emma" seed="u1" />)
+    const tone = (el: Element) => el.className.match(/bg-v2-(?:lake-tint|coral-soft|plum-soft|rose-soft|gold-soft)/)?.[0]
+    expect(tone(actual)).toBe(tone(expected.container.querySelector('[aria-hidden="true"]')!))
+  })
+
+  it("uses the lake brand colour for the current user's avatar in recent expenses", () => {
+    render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
+    const card = screen.getByTestId("v2-recent-expenses-card")
+    const avatar = within(card).getAllByText("E", { exact: true })[0]
+    expect(avatar).toHaveClass("bg-v2-lake")
+    expect(avatar).toHaveClass("text-v2-on-lake")
+  })
+
+  it("uses the sand placeholder style for the placeholder payer and participant", () => {
+    render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
+    const card = screen.getByTestId("v2-recent-expenses-card")
+    expect(within(card).getAllByTestId("placeholder-avatar")).toHaveLength(2)
+  })
+
   it("shows a compact multi-payer label with the primary payer and payer count", () => {
     const multiPayer: OverviewProject["expenses"][number] = {
       id: "e3",
@@ -265,7 +311,7 @@ describe("ProjectOverviewV2View", () => {
     expect(within(card).getByText("+1")).toBeInTheDocument()
   })
 
-  it("uses a neutral tint for members without a real avatar and keeps chosen avatar colors", () => {
+  it("uses the real initial for the current user and the initial for legacy avatar strings", () => {
     const withAvatars: OverviewProject = {
       ...project,
       members: [
@@ -290,18 +336,9 @@ describe("ProjectOverviewV2View", () => {
     }
     render(<ProjectOverviewV2View project={withAvatars} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
     const card = screen.getByTestId("v2-recent-expenses-card")
-    // "我" is the fallback initial for the current user (no real avatar) appearing
-    // as both payer and participant; those must not get an auto color.
-    const fallbacks = within(card).getAllByText("我", { exact: true })
-    expect(fallbacks.length).toBeGreaterThan(0)
-    for (const el of fallbacks) {
-      expect(el.className).toContain("bg-v2-sand")
-      expect(el.className).not.toMatch(/bg-v2-(lake|coral|plum)/)
-    }
-    // A member with a chosen avatar keeps its own color, not the neutral tint.
-    const chosen = card.querySelectorAll('[style*="background-color"]')
-    expect(chosen.length).toBeGreaterThan(0)
-    chosen.forEach((el) => expect(el.className).not.toContain("bg-v2-sand"))
+    expect(within(card).getAllByText("E", { exact: true }).length).toBeGreaterThan(0)
+    expect(within(card).getAllByText("志", { exact: true }).length).toBeGreaterThan(0)
+    expect(card.querySelector('[style*="background-color"]')).toBeNull()
   })
 
   it("lets the payer name truncate instead of clipping the split count", () => {
@@ -374,6 +411,24 @@ describe("ProjectOverviewV2View", () => {
     render(<ProjectOverviewV2View project={project} summary={summary} onShare={vi.fn()} onVoice={vi.fn()} />)
     const back = screen.getByRole("link", { name: "回旅程列表" })
     expect(within(back).getByTestId("v2-brand-mark")).toBeInTheDocument()
+  })
+
+  it("uses the lake brand colour for the header avatar without a LINE photo", () => {
+    render(
+      <ProjectOverviewV2View
+        project={project}
+        summary={summary}
+        onShare={vi.fn()}
+        onVoice={vi.fn()}
+        currentUserName="小明"
+        currentUserId="u1"
+      />
+    )
+    const link = screen.getByRole("link", { name: "通用設定" })
+    const avatar = link.querySelector('[aria-hidden="true"]')
+    expect(avatar).not.toBeNull()
+    expect(avatar).toHaveClass("bg-v2-lake")
+    expect(avatar).toHaveClass("text-v2-on-lake")
   })
 
   it("shows the current user's avatar instead of the project creator's initial", () => {

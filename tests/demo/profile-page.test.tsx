@@ -5,10 +5,6 @@ vi.mock("next/font/google", () => ({
   Noto_Sans_TC: () => ({ variable: "font-var-sans" }),
 }))
 vi.mock("next/image", () => ({ default: (p: { src: string; alt: string }) => <img src={p.src} alt={p.alt} /> }))
-vi.mock("@/components/avatar-picker", () => ({
-  AvatarDisplay: () => null,
-  AvatarPicker: () => null,
-}))
 import DemoProfilePage from "@/app/demo/profile/page"
 
 describe("demo profile page", () => {

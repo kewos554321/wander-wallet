@@ -18,6 +18,7 @@ export function ProjectsV2() {
           loading={loading}
           userName={user?.name ?? null}
           userImage={user?.image ?? null}
+          userId={user?.id ?? null}
           now={new Date()}
           adSlot={<AdContainer placement="project-list" variant="banner" />}
         />

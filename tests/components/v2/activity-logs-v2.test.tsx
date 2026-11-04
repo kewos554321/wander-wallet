@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest"
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react"
 import { ActivityLogsV2View, type ActivityLog, type ActivityFiltersState } from "@/components/v2/activity-logs/activity-logs-v2-view"
 
 vi.mock("next/font/google", () => ({
@@ -87,6 +87,23 @@ describe("ActivityLogsV2View", () => {
     expect(screen.getByText("顯示 2 / 2 筆")).toBeInTheDocument()
   })
 
+  it("uses the lake brand colour for the current user's actor avatar", () => {
+    renderView({ currentMemberId: "m1" })
+    const card = screen.getByTestId("activity-card-l1")
+    const avatar = within(card).getByText("志", { exact: true })
+    expect(avatar).toHaveClass("bg-v2-lake")
+    expect(avatar).toHaveClass("text-v2-on-lake")
+  })
+
+  it("renders the actor's LINE image when present", () => {
+    const withImage: ActivityLog = {
+      ...baseLog,
+      actor: { id: "m1", displayName: "志明", user: { id: "u-zhi", image: "https://cdn.example/zhi.jpg" } },
+    }
+    renderView({ logs: [withImage], filteredLogs: [withImage] })
+    expect(document.querySelector('img[src="https://cdn.example/zhi.jpg"]')).toBeInTheDocument()
+  })
+
   it("does not offer a created-date filter", () => {
     renderView()
     expect(screen.queryByText("建立日期")).not.toBeInTheDocument()
@@ -157,7 +174,7 @@ describe("ActivityLogsV2View", () => {
     fireEvent.click(screen.getByRole("button", { name: "付款日期" }))
     const panel = screen.getByTestId("filter-panel")
     expect(panel.className).toContain("w-[236px]")
-    expect(panel.className).toContain("rounded-[10px]")
+    expect(panel.className).toContain("rounded-v2-sm")
   })
 
   it("clamps an over-wide filter panel to the filter grid", () => {

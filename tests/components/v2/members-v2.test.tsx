@@ -69,6 +69,15 @@ describe("MembersV2View", () => {
     expect(within(kai).getByText("尚未加入")).toBeInTheDocument()
   })
 
+  it("uses the lake brand colour for the current user's avatar", () => {
+    renderView()
+    const me = screen.getByTestId("member-m1")
+    const avatar = me.querySelector('[aria-hidden="true"]')
+    expect(avatar).not.toBeNull()
+    expect(avatar).toHaveClass("bg-v2-lake")
+    expect(avatar).toHaveClass("text-v2-on-lake")
+  })
+
   it("moves the join-method link into its own row outside the members card", () => {
     renderView()
     const link = screen.getByRole("link", { name: /成員加入方式/ })
@@ -115,12 +124,12 @@ describe("MembersV2View", () => {
     expect(props.onAdd).toHaveBeenCalled()
   })
 
-  it("renders the member image when present, else the initial", () => {
+  it("renders member images, initials and the placeholder style", () => {
     const withImage = {
       ...project,
       members: [
         { ...project.members[0], user: { ...project.members[0].user!, image: "https://cdn.example/emma.jpg" } },
-        project.members[1],
+        { ...project.members[1], user: { ...project.members[1].user!, image: "avatar:cat:red" } },
         project.members[2],
       ],
     }
@@ -128,7 +137,11 @@ describe("MembersV2View", () => {
     const emma = screen.getByTestId("member-m1")
     expect(emma.querySelector('img[src="https://cdn.example/emma.jpg"]')).toBeInTheDocument()
     const mei = screen.getByTestId("member-m2")
-    expect(within(mei).getByText("小")).toBeInTheDocument()
+    expect(within(mei).getByText("小", { exact: true })).toBeInTheDocument()
+    expect(mei.querySelector("svg.lucide-cat")).toBeNull()
+    const kai = screen.getByTestId("member-m3")
+    expect(within(kai).getByTestId("placeholder-avatar")).toBeInTheDocument()
+    expect(within(kai).getByText("阿")).toBeInTheDocument()
   })
 })
 

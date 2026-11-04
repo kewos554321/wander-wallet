@@ -345,6 +345,7 @@ describe("activity-log", () => {
               displayName: true,
               user: {
                 select: {
+                  id: true,
                   image: true,
                 },
               },

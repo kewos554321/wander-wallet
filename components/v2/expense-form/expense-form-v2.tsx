@@ -121,14 +121,16 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
     )
   }
 
+  const currentMemberId = members.find((m) => m.user?.id === user?.id)?.id ?? members[0]?.id ?? ""
   const draftMembers = members.map((m) => ({
     id: m.id,
     displayName: m.displayName,
     image: m.user?.image ?? null,
+    userId: m.userId,
+    isCurrentUser: m.id === currentMemberId,
     isPlaceholder: !m.userId,
     remainderDiscrepancy: m.remainderDiscrepancy ?? 0,
   }))
-  const currentMemberId = members.find((m) => m.user?.id === user?.id)?.id ?? draftMembers[0]?.id ?? ""
   const init: DraftInit = {
     members: draftMembers,
     currency: projectCurrency,

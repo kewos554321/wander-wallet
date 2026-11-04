@@ -50,10 +50,20 @@ function equalSplitData(): SettleData {
   }
 }
 
-function renderDialog(data: SettleData, onOpenChange = vi.fn(), open = true) {
+function renderDialog(
+  data: SettleData,
+  onOpenChange = vi.fn(),
+  open = true,
+  placeholderMemberIds?: ReadonlySet<string>
+) {
   render(
     <UiV2Scope>
-      <SettlementCalcDialog open={open} onOpenChange={onOpenChange} data={data} />
+      <SettlementCalcDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        data={data}
+        placeholderMemberIds={placeholderMemberIds}
+      />
     </UiV2Scope>
   )
   return onOpenChange
@@ -176,6 +186,12 @@ describe("SettlementCalcDialog (A26)", () => {
     expect(split.textContent).toContain("溫泉")
     expect(split.textContent).toContain("共同")
     expect(split.textContent).toContain("TWD 320")
+  })
+
+  it("uses the sand placeholder style for a placeholder payer", () => {
+    renderDialog(equalSplitData(), vi.fn(), true, new Set(["a"]))
+    const payer = screen.getByTestId("payer-line")
+    expect(within(payer).getByTestId("placeholder-avatar")).toHaveTextContent("志")
   })
 
   it("does not render a negative custom amount from a rounding remainder", () => {

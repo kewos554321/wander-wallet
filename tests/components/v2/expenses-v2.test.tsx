@@ -164,6 +164,27 @@ describe("ExpensesV2View", () => {
     expect(card.querySelector('img[src="https://cdn.example/zhi.jpg"]')).toBeInTheDocument()
   })
 
+  it("uses the lake brand colour for the current user's participant avatar", () => {
+    renderView()
+    const card = screen.getByRole("link", { name: /一蘭拉麵晚餐/ })
+    const avatar = within(card).getByText("E", { exact: true })
+    expect(avatar).toHaveClass("bg-v2-lake")
+    expect(avatar).toHaveClass("text-v2-on-lake")
+  })
+
+  it("uses the sand placeholder style for both the placeholder payer and participant", () => {
+    const linkedMe = { ...me, user: { id: "u1", name: "Emma", email: "e@x.com", image: null } }
+    const withPlaceholderPayer = expense({
+      participants: [
+        { id: "p1", shareAmount: 640, member: zhi },
+        { id: "p2", shareAmount: 640, member: linkedMe },
+      ],
+    })
+    renderView({ expenses: [withPlaceholderPayer], allCount: 1 })
+    const card = screen.getByRole("link", { name: /一蘭拉麵晚餐/ })
+    expect(within(card).getAllByTestId("placeholder-avatar")).toHaveLength(2)
+  })
+
   it("shows a compact multi-payer label with the primary payer and payer count", () => {
     const multi = expense({
       id: "e8",

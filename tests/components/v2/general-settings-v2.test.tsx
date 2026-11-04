@@ -89,7 +89,10 @@ describe("GeneralSettingsV2", () => {
     render(<GeneralSettingsV2 />)
     const card = screen.getByLabelText("編輯個人資料")
     expect(card.querySelector("img")).toBeNull()
-    expect(within(card).getByText("E")).toBeInTheDocument()
+    const initial = within(card).getByText("E")
+    expect(initial).toBeInTheDocument()
+    expect(initial.closest('[aria-hidden="true"]')).toHaveClass("bg-v2-lake")
+    expect(initial.closest('[aria-hidden="true"]')).toHaveClass("text-v2-on-lake")
   })
 
   it("shows the legacy-UI switch and toggles it on click", () => {

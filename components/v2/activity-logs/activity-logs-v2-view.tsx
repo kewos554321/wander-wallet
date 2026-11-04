@@ -6,6 +6,7 @@ import { zhTW } from "date-fns/locale"
 import { CalendarDays, CircleX, Coins, DollarSign, Pencil, Plus, SlidersHorizontal, Tag, Trash2, User, Users } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
+import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
 import { SearchField } from "@/components/v2/ui/search-field"
 import { FilterPopover } from "@/components/v2/expenses/filter-popover"
 import { AmountPanel, CategoryPanel, CurrencyPanel, DatePanel } from "@/components/v2/expenses/filter-panels"
@@ -30,7 +31,7 @@ export interface ActivityLog {
     currency?: string
   } | null
   createdAt: string
-  actor: { id: string; displayName: string; user: { image: string | null } | null } | null
+  actor: { id: string; displayName: string; user: { id: string; image: string | null } | null } | null
 }
 
 export interface ActivityFiltersState {
@@ -47,6 +48,7 @@ export interface ActivityFiltersState {
 export interface ActivityLogsV2ViewProps {
   projectId: string
   projectCurrency: string
+  currentMemberId?: string | null
   logs: ActivityLog[]
   filteredLogs: ActivityLog[]
   total: number
@@ -98,6 +100,7 @@ export function ActivityLogsV2View(props: ActivityLogsV2ViewProps) {
   const {
     projectId,
     projectCurrency,
+    currentMemberId,
     logs,
     filteredLogs,
     loading,
@@ -206,9 +209,18 @@ export function ActivityLogsV2View(props: ActivityLogsV2ViewProps) {
                     </div>
                     <div className="px-3.5 py-2.5">
                       <div className="mb-2 flex items-center gap-1.5">
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-v2-lake-soft text-[10px]">
-                          {log.actor ? log.actor.displayName.charAt(0) : "🧾"}
-                        </span>
+                        {log.actor ? (
+                          <V2Avatar
+                            image={log.actor.user?.image ?? null}
+                            name={log.actor.displayName}
+                            seed={avatarSeed(log.actor.user?.id, log.actor.id)}
+                            variant={log.actor.id === currentMemberId ? "brand" : undefined}
+                            className="h-5 w-5 rounded-full"
+                            fallbackClassName="text-[10px]"
+                          />
+                        ) : (
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-v2-lake-soft text-[10px]">🧾</span>
+                        )}
                         <span className="text-[12px]">{log.actor?.displayName ?? "系統"}</span>
                       </div>
                       {log.metadata ? (

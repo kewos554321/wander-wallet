@@ -1,29 +1,48 @@
-import { parseAvatarString, getAvatarColor, AvatarIcon } from "@/components/avatar-picker"
+const TONES = [
+  "bg-v2-lake-tint text-v2-lake",
+  "bg-v2-coral-soft text-v2-coral-strong",
+  "bg-v2-plum-soft text-v2-plum",
+  "bg-v2-rose-soft text-v2-rose",
+  "bg-v2-gold-soft text-v2-gold",
+]
 
-interface V2AvatarProps {
-  image: string | null
-  name: string | null
-  className?: string
-  fallbackClassName?: string
-  iconClassName?: string
+/** Linked accounts keep one colour across projects; placeholders use their member id. */
+export function avatarSeed(userId?: string | null, memberId?: string | null): string | undefined {
+  return userId || memberId || undefined
 }
 
-export function V2Avatar({ image, name, className = "", fallbackClassName = "", iconClassName }: V2AvatarProps) {
-  const parsed = parseAvatarString(image)
-
-  if (parsed) {
-    return (
-      <span
-        aria-hidden="true"
-        className={`inline-flex items-center justify-center ${className}`}
-        style={{ backgroundColor: getAvatarColor(parsed.colorId) }}
-      >
-        <AvatarIcon iconId={parsed.iconId} className={`text-v2-on-dark ${iconClassName ?? ""}`} />
-      </span>
-    )
+function hashSeed(value: string): number {
+  let hash = 0
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0
   }
+  return hash
+}
 
-  if (image) {
+function isImageSource(image: string | null | undefined): image is string {
+  return Boolean(image && /^(https?:\/\/|data:image\/|\/)/.test(image))
+}
+
+interface V2AvatarProps {
+  image: string | null | undefined
+  name: string | null | undefined
+  seed?: string | null
+  placeholder?: boolean
+  variant?: "default" | "on-lake" | "brand"
+  className?: string
+  fallbackClassName?: string
+}
+
+export function V2Avatar({
+  image,
+  name,
+  seed,
+  placeholder = false,
+  variant = "default",
+  className = "",
+  fallbackClassName = "",
+}: V2AvatarProps) {
+  if (isImageSource(image)) {
     return (
       <span aria-hidden="true" className={`inline-flex overflow-hidden ${className}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -32,9 +51,22 @@ export function V2Avatar({ image, name, className = "", fallbackClassName = "", 
     )
   }
 
+  const initial = name?.trim().charAt(0).toUpperCase() || "?"
+  const tone = placeholder
+    ? "bg-v2-sand text-v2-ink-subtle"
+    : variant === "brand"
+      ? "bg-v2-lake text-v2-on-lake"
+      : variant === "on-lake"
+        ? "bg-v2-paper/15 text-v2-paper"
+        : TONES[hashSeed(seed || name?.trim() || "?") % TONES.length]
+
   return (
-    <span aria-hidden="true" className={`inline-flex items-center justify-center ${className} ${fallbackClassName}`}>
-      {name?.trim().charAt(0).toUpperCase() || "?"}
+    <span
+      aria-hidden="true"
+      data-testid={placeholder ? "placeholder-avatar" : undefined}
+      className={`inline-flex items-center justify-center ${className} ${tone} ${fallbackClassName}`}
+    >
+      {initial}
     </span>
   )
 }

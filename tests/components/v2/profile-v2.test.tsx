@@ -6,18 +6,10 @@ vi.mock("next/font/google", () => ({
   Noto_Serif_TC: () => ({ variable: "font-var-serif" }),
   Noto_Sans_TC: () => ({ variable: "font-var-sans" }),
 }))
-vi.mock("@/components/avatar-picker", () => ({
-  AvatarPicker: () => null,
-  AvatarDisplay: ({ avatarString }: { avatarString: string }) => <div data-testid="avatar-display">{avatarString}</div>,
-  parseAvatarString: () => null,
-  generateAvatarString: (icon: string, color: string) => `avatar:${icon}:${color}`,
-}))
 
 const mockUseLiff = vi.hoisted(() => vi.fn())
-const mockAuthFetch = vi.hoisted(() => vi.fn())
 vi.mock("@/components/auth/liff-provider", () => ({
   useLiff: () => mockUseLiff(),
-  useAuthFetch: () => mockAuthFetch,
 }))
 
 import { ProfileV2 } from "@/components/v2/settings/profile-v2"
@@ -26,13 +18,7 @@ function renderView(overrides: Partial<Parameters<typeof ProfileV2View>[0]> = {}
   const props: Parameters<typeof ProfileV2View>[0] = {
     name: "Emma",
     image: null,
-    avatarData: null,
-    hasExternalImage: false,
-    pickerOpen: false,
-    saving: false,
-    onOpenPicker: vi.fn(),
-    onPickerOpenChange: vi.fn(),
-    onSelectAvatar: vi.fn(),
+    userId: "u1",
     logoutOpen: false,
     onLogoutOpenChange: vi.fn(),
     onLogout: vi.fn(),
@@ -43,7 +29,7 @@ function renderView(overrides: Partial<Parameters<typeof ProfileV2View>[0]> = {}
 }
 
 describe("ProfileV2View", () => {
-  it("renders the profile header and info rows", () => {
+  it("renders the profile header and info rows without an edit entry", () => {
     renderView()
     expect(screen.getByRole("heading", { name: "個人資料" })).toBeInTheDocument()
     expect(screen.getByText("名稱")).toBeInTheDocument()
@@ -52,13 +38,21 @@ describe("ProfileV2View", () => {
     expect(screen.getByText("LINE 用戶")).toBeInTheDocument()
     expect(screen.getByText("登入方式")).toBeInTheDocument()
     expect(screen.getByText("LINE 帳號")).toBeInTheDocument()
-    expect(screen.getByText("點擊更換頭像")).toBeInTheDocument()
+    expect(screen.queryByText("點擊更換頭像")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("profile-avatar")).not.toBeInTheDocument()
   })
 
-  it("opens the avatar picker", () => {
-    const props = renderView()
-    fireEvent.click(screen.getByTestId("profile-avatar"))
-    expect(props.onOpenPicker).toHaveBeenCalled()
+  it("renders the LINE image when present", () => {
+    renderView({ image: "https://x/e.png" })
+    expect(document.querySelector('img[src="https://x/e.png"]')).toBeInTheDocument()
+  })
+
+  it("renders the name initial in the lake brand colour when there is no image", () => {
+    renderView()
+    const initial = screen.getByText("E", { exact: true })
+    expect(initial).toBeInTheDocument()
+    expect(initial).toHaveClass("bg-v2-lake")
+    expect(initial).toHaveClass("text-v2-on-lake")
   })
 
   it("asks for logout confirmation then logs out", () => {
@@ -76,8 +70,10 @@ describe("ProfileV2View", () => {
 
 describe("ProfileV2 container", () => {
   beforeEach(() => {
-    mockUseLiff.mockReset().mockReturnValue({ user: { name: "Emma", image: null }, refreshSession: vi.fn(), logout: vi.fn() })
-    mockAuthFetch.mockReset()
+    mockUseLiff.mockReset().mockReturnValue({
+      user: { id: "u1", name: "Emma", image: null },
+      logout: vi.fn(),
+    })
   })
 
   it("renders the profile page", () => {

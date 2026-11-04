@@ -2,15 +2,7 @@ import { formatCurrency } from "@/lib/constants/currencies"
 import type { MemberStat } from "@/lib/project-stats"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 
-const AVATAR_TONES = [
-  "bg-v2-lake-tint text-v2-lake",
-  "bg-v2-coral-soft text-v2-coral-strong",
-  "bg-v2-plum-soft text-v2-plum",
-  "bg-v2-gold-soft text-v2-gold",
-  "bg-v2-rose-soft text-v2-rose",
-]
-
-type RankingMember = MemberStat & { image?: string | null }
+type RankingMember = MemberStat & { image?: string | null; isPlaceholder?: boolean; seed?: string }
 
 export function MemberRanking({ members, currency, currentMemberId }: { members: RankingMember[]; currency: string; currentMemberId: string | null }) {
   const ranked = [...members].sort((a, b) => b.share - a.share)
@@ -29,9 +21,12 @@ export function MemberRanking({ members, currency, currentMemberId }: { members:
           <li key={m.id} className="flex items-center gap-2.5">
             <V2Avatar
               image={m.image ?? null}
-              name={label}
+              name={m.name}
+              seed={m.seed ?? m.id}
+              variant={m.id === currentMemberId ? "brand" : undefined}
+              placeholder={m.isPlaceholder}
               className="h-[26px] w-[26px] shrink-0 rounded-full"
-              fallbackClassName={`text-[10px] font-bold ${AVATAR_TONES[i % AVATAR_TONES.length]}`}
+              fallbackClassName="text-[10px] font-bold"
             />
             <span
               role="meter"

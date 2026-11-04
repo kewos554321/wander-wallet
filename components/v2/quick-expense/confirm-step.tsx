@@ -10,7 +10,7 @@ import type { RecentRate } from "@/lib/recent-rates"
 import { itemTotals, type QuickItem } from "@/lib/quick-expense/draft"
 import { QuickItemCard } from "./quick-item-card"
 
-type Member = { id: string; displayName: string; image?: string | null; remainderDiscrepancy?: number }
+type Member = { id: string; displayName: string; image?: string | null; userId?: string | null; isCurrentUser?: boolean; isPlaceholder?: boolean; remainderDiscrepancy?: number }
 const SWIPE_THRESHOLD = 50
 // Movement below this many pixels on both axes stays ambiguous; past it we lock
 // the gesture to an axis so a vertical scroll never switches cards.

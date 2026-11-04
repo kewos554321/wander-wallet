@@ -1,23 +1,16 @@
 "use client"
 
 import { useRef } from "react"
-import Image from "next/image"
-import { Calendar, LogOut, Mail, Pencil, User } from "lucide-react"
+import { Calendar, LogOut, Mail, User } from "lucide-react"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { SECTION_CARD } from "@/components/v2/expense-form/section-card"
 import { useDismiss } from "@/components/v2/use-dismiss"
-import { AvatarDisplay, AvatarPicker } from "@/components/avatar-picker"
+import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 
 export interface ProfileV2ViewProps {
   name: string
   image: string | null
-  avatarData: { iconId: string; colorId: string } | null
-  hasExternalImage: boolean
-  pickerOpen: boolean
-  saving: boolean
-  onOpenPicker: () => void
-  onPickerOpenChange: (open: boolean) => void
-  onSelectAvatar: (iconId: string, colorId: string) => void
+  userId?: string | null
   logoutOpen: boolean
   onLogoutOpenChange: (open: boolean) => void
   onLogout: () => void
@@ -32,13 +25,7 @@ const ROWS: { label: string; value: string; icon: typeof User }[] = [
 export function ProfileV2View({
   name,
   image,
-  avatarData,
-  hasExternalImage,
-  pickerOpen,
-  saving,
-  onOpenPicker,
-  onPickerOpenChange,
-  onSelectAvatar,
+  userId,
   logoutOpen,
   onLogoutOpenChange,
   onLogout,
@@ -51,21 +38,14 @@ export function ProfileV2View({
       <V2TopBar title="個人資料" backHref="/settings" titleClassName="text-[17px] font-semibold" />
 
       <div className="flex flex-col items-center gap-3 pt-5">
-        <button type="button" data-testid="profile-avatar" onClick={onOpenPicker} className="relative">
-          {avatarData ? (
-            <AvatarDisplay avatarString={image ?? ""} size="lg" />
-          ) : hasExternalImage ? (
-            <Image src={image!} alt="頭像" width={88} height={88} className="h-[88px] w-[88px] rounded-full object-cover" />
-          ) : (
-            <span className="flex h-[88px] w-[88px] items-center justify-center rounded-full bg-v2-lake font-v2-serif text-[30px] font-bold text-v2-paper">
-              {name.charAt(0) || "?"}
-            </span>
-          )}
-          <span className="absolute bottom-0.5 right-0.5 flex h-7 w-7 items-center justify-center rounded-full border border-v2-line bg-v2-surface text-v2-lake">
-            <Pencil className="h-3.5 w-3.5" />
-          </span>
-        </button>
-        <p className="text-[12px] text-v2-ink-muted">點擊更換頭像</p>
+        <V2Avatar
+          image={image}
+          name={name}
+          seed={userId}
+          variant="brand"
+          className="h-[88px] w-[88px] rounded-full"
+          fallbackClassName="font-v2-serif text-[30px] font-bold"
+        />
         <h2 className="m-0 font-v2-serif text-[22px] font-bold text-v2-ink">{name || "使用者"}</h2>
       </div>
 
@@ -113,15 +93,6 @@ export function ProfileV2View({
           </div>
         </div>
       ) : null}
-
-      <AvatarPicker
-        open={pickerOpen}
-        onOpenChange={onPickerOpenChange}
-        currentIcon={avatarData?.iconId || "user"}
-        currentColor={avatarData?.colorId || "indigo"}
-        onSelect={onSelectAvatar}
-        loading={saving}
-      />
     </div>
   )
 }

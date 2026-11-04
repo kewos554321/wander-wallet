@@ -130,6 +130,33 @@ describe("ProjectsV2View", () => {
     expect(link.querySelector("img")).toHaveAttribute("src", "https://x/a.png")
   })
 
+  it("uses the lake brand colour for the signed-in user's fallback avatar", () => {
+    render(<ProjectsV2View projects={projects} loading={false} userName="Emma" userId="u1" now={now} />)
+    const link = screen.getByRole("link", { name: "通用設定" })
+    const avatar = link.querySelector('[aria-hidden="true"]')
+    expect(avatar).not.toBeNull()
+    expect(avatar).toHaveClass("bg-v2-lake")
+    expect(avatar).toHaveClass("text-v2-on-lake")
+  })
+
+  it("renders real images in the member stack and uses placeholder styling without accounts", () => {
+    const withImage = projects.map((p) =>
+      p.id === "tokyo"
+        ? {
+            ...p,
+            members: [
+              { ...p.members[0], user: { id: "u1", name: "小美", email: "m@x.com", image: "https://cdn.example/mei.jpg" } },
+              ...p.members.slice(1),
+            ],
+          }
+        : p
+    )
+    render(<ProjectsV2View projects={withImage} loading={false} userName="Emma" now={now} />)
+    const tokyo = screen.getByRole("link", { name: /東京賞楓 5 日/ })
+    expect(tokyo.querySelector('img[src="https://cdn.example/mei.jpg"]')).toBeInTheDocument()
+    expect(within(tokyo).getAllByTestId("placeholder-avatar").length).toBeGreaterThan(0)
+  })
+
   it("shows an empty state", () => {
     render(<ProjectsV2View projects={[]} loading={false} userName={null} now={now} />)
     expect(screen.getByText("還沒有旅程")).toBeInTheDocument()

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest"
-import { render, screen, fireEvent, within } from "@testing-library/react"
+import { render, screen, fireEvent, within, cleanup } from "@testing-library/react"
 import { PayerPicker } from "@/components/v2/expense-form/payer-picker"
 
 const members = [
@@ -271,7 +271,7 @@ describe("PayerPicker", () => {
     expect(name).toHaveAttribute("title", "非常非常長的名字測試")
   })
 
-  it("uses the neutral avatar for a placeholder member", () => {
+  it("uses the neutral avatar with the member initial for a placeholder member", () => {
     setup({
       members: [
         { id: "a", displayName: "小雨", isPlaceholder: true },
@@ -284,7 +284,40 @@ describe("PayerPicker", () => {
       ],
     })
     // The placeholder's pill and row both render the neutral badge.
-    expect(screen.getAllByTestId("placeholder-avatar")).toHaveLength(2)
+    const avatars = screen.getAllByTestId("placeholder-avatar")
+    expect(avatars).toHaveLength(2)
+    expect(avatars[0]).toHaveTextContent("小")
+  })
+
+  it("shows the initial for a legacy avatar string instead of a custom icon", () => {
+    setup({ members: [{ id: "a", displayName: "小雨", image: "avatar:cat:red" }], payerIds: ["a"] })
+    expect(screen.getAllByText("小", { exact: true }).length).toBeGreaterThan(0)
+    expect(document.querySelector("svg.lucide-cat")).toBeNull()
+  })
+
+  it("keeps the same avatar tone when a member appears at a different index", () => {
+    setup({
+      members: [{ id: "a", displayName: "小雨" }],
+      payerIds: ["a"],
+      payers: [{ memberId: "a", amount: 100 }],
+    })
+    const first = screen.getAllByText("小", { exact: true })[0].className
+    cleanup()
+
+    setup({
+      members: [{ id: "x", displayName: "志明" }, { id: "a", displayName: "小雨" }],
+      payerIds: ["a"],
+      payers: [{ memberId: "a", amount: 100 }],
+    })
+    const second = screen.getAllByText("小", { exact: true })[0].className
+    expect(second).toBe(first)
+  })
+
+  it("uses the lake brand colour for the current user's avatar", () => {
+    setup({ members: [{ id: "a", displayName: "小雨", isCurrentUser: true }], payerIds: ["a"], payers: [{ memberId: "a", amount: 100 }] })
+    const avatar = screen.getAllByText("小", { exact: true })[0]
+    expect(avatar).toHaveClass("bg-v2-lake")
+    expect(avatar).toHaveClass("text-v2-on-lake")
   })
 
   it("does not use the neutral avatar for members with an account", () => {

@@ -52,6 +52,7 @@ export function ProjectOverviewV2({ projectId }: { projectId: string }) {
           onVoice={() => setQuickStep("input")}
           currentUserName={user?.name ?? null}
           currentUserImage={user?.image ?? null}
+          currentUserId={user?.id ?? null}
         />
         <InviteDialog open={showInvite} onOpenChange={setShowInvite} projectId={project.id} projectName={project.name} />
         <QuickExpenseV2
@@ -64,6 +65,8 @@ export function ProjectOverviewV2({ projectId }: { projectId: string }) {
             id: m.id,
             displayName: m.displayName,
             image: m.user?.image ?? null,
+            userId: m.user?.id ?? null,
+            isCurrentUser: m.id === summary.currentMemberId,
             isPlaceholder: !m.user,
             remainderDiscrepancy: m.remainderDiscrepancy ?? 0,
           }))}

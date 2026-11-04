@@ -7,7 +7,7 @@ import type { ProjectListItem, ProjectListMember } from "@/lib/hooks/useProjects
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { formatTripDateRange, getGreeting, getTripDays, getTripStatus, type TripStatus } from "@/lib/trip"
 import { CoverThumb } from "./cover-thumb"
-import { V2Avatar } from "@/components/v2/ui/v2-avatar"
+import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
 import { V2BrandMark } from "@/components/v2/ui/v2-brand-mark"
 
 type Filter = "all" | TripStatus
@@ -18,25 +18,17 @@ const FILTERS: { value: Filter; label: string }[] = [
   { value: "completed", label: "已完成" },
 ]
 
-// Avatar tones cycle through the v2 palette.
-const AVATAR_TONES = [
-  "bg-v2-lake-soft text-v2-lake",
-  "bg-v2-coral-soft text-v2-coral",
-  "bg-v2-plum-soft text-v2-plum",
-  "bg-v2-rose-soft text-v2-rose",
-  "bg-v2-gold-soft text-v2-gold",
-]
-
 interface ProjectsV2ViewProps {
   projects: ProjectListItem[]
   loading: boolean
   userName: string | null
   userImage?: string | null
+  userId?: string | null
   now: Date
   adSlot?: ReactNode
 }
 
-export function ProjectsV2View({ projects, loading, userName, userImage, now, adSlot }: ProjectsV2ViewProps) {
+export function ProjectsV2View({ projects, loading, userName, userImage, userId, now, adSlot }: ProjectsV2ViewProps) {
   const [filter, setFilter] = useState<Filter>("all")
   const visible = projects.filter((p) => filter === "all" || getTripStatus(p.endDate, now) === filter)
 
@@ -55,8 +47,10 @@ export function ProjectsV2View({ projects, loading, userName, userImage, now, ad
           <V2Avatar
             image={userImage ?? null}
             name={userName}
+            seed={userId}
+            variant="brand"
             className="h-9 w-9 rounded-full"
-            fallbackClassName="bg-v2-lake text-sm font-bold text-v2-paper"
+            fallbackClassName="text-sm font-bold"
           />
         </Link>
       </div>
@@ -121,14 +115,14 @@ export function ProjectsV2View({ projects, loading, userName, userImage, now, ad
         ) : visible.length === 0 ? (
           <p className="py-10 text-center text-[13px] text-v2-ink-muted">沒有符合的旅程</p>
         ) : (
-          visible.map((p) => <ProjectCard key={p.id} project={p} />)
+          visible.map((p) => <ProjectCard key={p.id} project={p} currentUserId={userId} />)
         )}
       </div>
     </div>
   )
 }
 
-function ProjectCard({ project }: { project: ProjectListItem }) {
+function ProjectCard({ project, currentUserId }: { project: ProjectListItem; currentUserId?: string | null }) {
   const days = getTripDays(project.startDate, project.endDate)
   const memberCount = project._count.members || project.members.length
   const dateLine = project.startDate
@@ -152,7 +146,7 @@ function ProjectCard({ project }: { project: ProjectListItem }) {
         </div>
         <p className="mb-2 mt-0.5 truncate text-xs leading-4 tracking-[.4px] text-v2-ink-muted">{dateLine}</p>
         <div className="flex items-center justify-between">
-          <AvatarStack members={project.members} total={memberCount} />
+          <AvatarStack members={project.members} total={memberCount} currentUserId={currentUserId} />
           <p className="m-0 font-v2-serif text-base font-bold leading-6 tracking-[.15px] tabular-nums text-v2-lake">
             {formatCurrency(project.totalAmount, project.currency || DEFAULT_CURRENCY)}
           </p>
@@ -162,19 +156,26 @@ function ProjectCard({ project }: { project: ProjectListItem }) {
   )
 }
 
-function AvatarStack({ members, total }: { members: ProjectListMember[]; total: number }) {
+function AvatarStack({ members, total, currentUserId }: { members: ProjectListMember[]; total: number; currentUserId?: string | null }) {
   const shown = members.slice(0, 3)
   const extra = total - shown.length
-  const bubble = "flex h-5 w-5 items-center justify-center rounded-full border-2 border-v2-surface text-[10px] font-bold"
+  const bubble = "flex h-5 w-5 items-center justify-center rounded-full border-2 border-v2-surface"
 
   return (
     <div className="flex">
       {shown.map((m, i) => (
-        <div key={m.id} className={`${bubble} ${AVATAR_TONES[i % AVATAR_TONES.length]} ${i > 0 ? "-ml-1.5" : ""}`}>
-          {m.displayName.charAt(0)}
-        </div>
+        <V2Avatar
+          key={m.id}
+          image={m.user?.image ?? null}
+          name={m.displayName}
+          seed={avatarSeed(m.user?.id, m.id)}
+          variant={m.user?.id === currentUserId ? "brand" : undefined}
+          placeholder={!m.user}
+          className={`${bubble} ${i > 0 ? "-ml-1.5" : ""}`}
+          fallbackClassName="text-[10px] font-bold"
+        />
       ))}
-      {extra > 0 && <div className={`${bubble} -ml-1.5 bg-v2-line text-[7px] text-v2-ink-muted`}>+{extra}</div>}
+      {extra > 0 && <div className={`${bubble} -ml-1.5 bg-v2-line text-[7px] font-bold text-v2-ink-muted`}>+{extra}</div>}
     </div>
   )
 }

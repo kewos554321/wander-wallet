@@ -42,13 +42,14 @@ describe("StatsV2View", () => {
     expect(within(legend).getByText("TWD 19,440")).toBeInTheDocument()
   })
 
-  it("ranks members by share with 我 for the current member", () => {
+  it("ranks members by share with the real initial and 我 in the meter label", () => {
     render(<StatsV2View projectId="p1" currency="TWD" stats={stats} currentMemberId="me" />)
     const rows = within(screen.getByRole("list", { name: "成員排行" })).getAllByRole("listitem")
-    expect(rows[0]).toHaveTextContent("我")
+    expect(rows[0]).toHaveTextContent("E")
     expect(rows[0]).toHaveTextContent("TWD 18,200")
+    expect(within(rows[0]).getByText("E", { exact: true })).toHaveClass("bg-v2-lake")
     expect(rows[1]).toHaveTextContent("志")
-    expect(within(rows[0]).getByRole("meter")).toHaveAttribute("aria-valuenow", "100")
+    expect(within(rows[0]).getByRole("meter", { name: "我" })).toHaveAttribute("aria-valuenow", "100")
     expect(within(rows[1]).getByRole("meter")).toHaveAttribute("aria-valuenow", "54")
   })
 
@@ -141,5 +142,43 @@ describe("StatsV2 container", () => {
     expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
     expect(screen.getByTestId("v2-stats-skeleton")).toBeInTheDocument()
     expect(screen.getByRole("heading", { level: 1, name: "統計" })).toBeInTheDocument()
+  })
+
+  it("uses the sand placeholder style for a placeholder member in the ranking", () => {
+    mockProjectOverview.mockReturnValue({
+      project: {
+        id: "p1",
+        name: "東京",
+        currency: "TWD",
+        startDate: null,
+        endDate: null,
+        members: [
+          { id: "chi", role: "member", displayName: "志明", userId: null, user: null },
+          { id: "me", role: "owner", displayName: "Emma", userId: "u1", user: { id: "u1", name: "Emma", email: "e@x.com", image: null } },
+        ],
+        expenses: [
+          {
+            id: "e1",
+            amount: 100,
+            currency: "TWD",
+            category: "food",
+            expenseDate: "2026-11-12",
+            createdAt: "2026-11-12T00:00:00.000Z",
+            payers: [{ memberId: "chi", amount: 100 }],
+            participants: [{ memberId: "chi", shareAmount: 100 }],
+          },
+        ],
+      },
+      loading: false,
+      joinInfo: null,
+      joining: false,
+      joinProject: vi.fn(),
+      claimMember: vi.fn(),
+      summary: { currentMemberId: "me" },
+      convert: (n: number) => n,
+    })
+    render(<StatsV2 projectId="p1" />)
+    const list = screen.getByRole("list", { name: "成員排行" })
+    expect(within(list).getByTestId("placeholder-avatar")).toHaveTextContent("志")
   })
 })

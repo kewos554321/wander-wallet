@@ -23,6 +23,10 @@ export interface DraftMember {
   id: string
   displayName: string
   image?: string | null
+  /** Linked account id; used as the stable avatar seed when present. */
+  userId?: string | null
+  /** True for the signed-in user; their avatar fallback uses the lake brand colour. */
+  isCurrentUser?: boolean
   /** True for a member with no linked account (成員頁面的「佔位成員」). */
   isPlaceholder?: boolean
   /** Per-project remainder ledger; decides which member absorbs a rounding unit. */

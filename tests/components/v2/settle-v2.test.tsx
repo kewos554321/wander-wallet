@@ -164,11 +164,14 @@ describe("SettleV2View", () => {
     expect(list).toContainElement(screen.getByTestId("settlement-0"))
   })
 
-  it("uses the gold tone for the current user avatar", () => {
+  it("uses the member's real initial and lake brand colour for the current user avatar", () => {
     renderView()
     const row = screen.getByTestId("settlement-0")
-    // Intentional token check: the current member's avatar must use the gold tone.
-    expect(within(row).getByTestId("settlement-avatar-me").className).toContain("bg-v2-gold-soft")
+    const avatar = within(row).getByTestId("settlement-avatar-me")
+    expect(avatar).toHaveTextContent("E")
+    const avatarRoot = avatar.querySelector('[aria-hidden="true"]')
+    expect(avatarRoot).toHaveClass("bg-v2-lake")
+    expect(avatarRoot).toHaveClass("text-v2-on-lake")
   })
 })
 
@@ -208,5 +211,33 @@ describe("SettleV2 container", () => {
     expect(screen.getByRole("heading", { level: 1, name: "結算" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "返回" })).toHaveAttribute("href", "/projects/p1")
     expect(screen.getByTestId("v2-settle-skeleton")).toBeInTheDocument()
+  })
+
+  it("uses the sand placeholder style for a placeholder settlement member", () => {
+    mockProjectData.mockReturnValue({
+      project: { startDate: null, endDate: null, expenses: [] },
+      members: [
+        { id: "chi", role: "member", displayName: "志明", userId: null, user: null },
+        { id: "me", role: "owner", displayName: "Emma", userId: "u1", user: { id: "u1", name: "Emma", email: "e@x.com", image: null } },
+      ],
+    })
+    mockSettlement.mockReturnValue({
+      data: {
+        ...data,
+        settlements: [
+          { from: { memberId: "chi", displayName: "志明", userImage: null }, to: { memberId: "me", displayName: "Emma", userImage: null }, amount: 2400 },
+        ],
+      },
+      loading: false,
+      error: null,
+      displayCurrencyCode: "TWD",
+      setDisplayCurrency: vi.fn(),
+      toDisplay: (n: number) => n,
+      shareText: "",
+    })
+    render(<SettleV2 projectId="p1" />)
+    const row = screen.getByTestId("settlement-0")
+    expect(within(row).getByTestId("settlement-avatar-chi")).toHaveTextContent("志")
+    expect(within(row).getByTestId("placeholder-avatar")).toBeInTheDocument()
   })
 })

@@ -12,6 +12,8 @@ export interface SettleV2ViewProps {
   projectId: string
   data: SettleData
   currentMemberId: string | null
+  placeholderMemberIds?: ReadonlySet<string>
+  memberSeeds?: ReadonlyMap<string, string>
   dailyAverage: number
   displayCurrencyCode: string
   currencyOptions: string[]
@@ -73,7 +75,8 @@ export function SettleV2View(props: SettleV2ViewProps) {
       )}
       <SettlementList
         settlements={data.settlements}
-        memberIds={data.balances.map((b) => b.memberId)}
+        placeholderMemberIds={props.placeholderMemberIds}
+        memberSeeds={props.memberSeeds}
         currentMemberId={props.currentMemberId}
         currencyCode={props.displayCurrencyCode}
         toDisplay={toDisplay}

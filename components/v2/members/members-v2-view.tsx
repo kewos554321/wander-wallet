@@ -1,17 +1,9 @@
 import Link from "next/link"
-import { ChevronRight, Settings2, Share2, UserMinus, UserPlus, User } from "lucide-react"
+import { ChevronRight, Settings2, Share2, UserMinus, UserPlus } from "lucide-react"
 import type { MembersProject } from "@/lib/hooks/useProjectMembers"
 import { JOIN_MODE_OPTIONS } from "@/lib/hooks/use-project-form"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
-import { V2Avatar } from "@/components/v2/ui/v2-avatar"
-
-const AVATAR_TONES = [
-  "bg-v2-lake-tint text-v2-lake",
-  "bg-v2-coral-soft text-v2-coral-strong",
-  "bg-v2-plum-soft text-v2-plum",
-  "bg-v2-rose-soft text-v2-rose",
-  "bg-v2-gold-soft text-v2-gold",
-]
+import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
 
 export interface MembersV2ViewProps {
   project: MembersProject
@@ -63,21 +55,15 @@ export function MembersV2View(props: MembersV2ViewProps) {
               data-testid={`member-${member.id}`}
               className={`flex items-center gap-3 ${i < project.members.length - 1 ? "border-b border-v2-line-soft py-3.5" : "pt-3.5"}`}
             >
-              {isPlaceholder ? (
-                <span
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-v2-sand text-v2-ink-subtle"
-                  aria-hidden="true"
-                >
-                  <User className="h-[19px] w-[19px]" strokeWidth={1.7} />
-                </span>
-              ) : (
-                <V2Avatar
-                  image={member.user?.image ?? null}
-                  name={member.displayName}
-                  className="h-11 w-11 shrink-0 rounded-full"
-                  fallbackClassName={`text-sm font-bold ${AVATAR_TONES[i % AVATAR_TONES.length]}`}
-                />
-              )}
+              <V2Avatar
+                image={member.user?.image ?? null}
+                name={member.displayName}
+                seed={avatarSeed(member.userId, member.id)}
+                variant={isMe ? "brand" : undefined}
+                placeholder={isPlaceholder}
+                className="h-11 w-11 shrink-0 rounded-full"
+                fallbackClassName="text-sm font-bold"
+              />
               <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-center gap-1.5">
                   <span className="text-[13px] font-bold">{member.displayName}</span>

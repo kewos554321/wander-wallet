@@ -3,17 +3,10 @@ import { formatCurrency } from "@/lib/constants/currencies"
 import type { SettleSettlement } from "@/lib/hooks/useSettlement"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 
-const AVATAR_TONES = [
-  "bg-v2-lake-tint text-v2-lake",
-  "bg-v2-gold-soft text-v2-gold",
-  "bg-v2-rose-soft text-v2-rose",
-  "bg-v2-coral-soft text-v2-coral-strong",
-  "bg-v2-plum-soft text-v2-plum",
-]
-
 interface SettlementListProps {
   settlements: SettleSettlement[]
-  memberIds: string[]
+  placeholderMemberIds?: ReadonlySet<string>
+  memberSeeds?: ReadonlyMap<string, string>
   currentMemberId: string | null
   currencyCode: string
   toDisplay: (amount: number) => number
@@ -28,7 +21,8 @@ const actionButton =
 
 export function SettlementList({
   settlements,
-  memberIds,
+  placeholderMemberIds,
+  memberSeeds,
   currentMemberId,
   currencyCode,
   toDisplay,
@@ -36,10 +30,6 @@ export function SettlementList({
   onShare,
   expenseCount,
 }: SettlementListProps) {
-  const tone = (memberId: string) =>
-    memberId === currentMemberId
-      ? "bg-v2-gold-soft text-v2-gold"
-      : AVATAR_TONES[Math.max(0, memberIds.indexOf(memberId)) % AVATAR_TONES.length]
   const name = (memberId: string, displayName: string) => (memberId === currentMemberId ? "我" : displayName)
 
   const person = (memberId: string, displayName: string, image: string | null) => {
@@ -48,9 +38,17 @@ export function SettlementList({
       <>
         <span
           data-testid={`settlement-avatar-${memberId}`}
-          className={`flex h-[26px] w-[26px] shrink-0 items-center justify-center overflow-hidden rounded-full ${tone(memberId)}`}
+          className="flex h-[26px] w-[26px] shrink-0 items-center justify-center overflow-hidden rounded-full"
         >
-          <V2Avatar image={image} name={label} className="h-full w-full rounded-full" fallbackClassName="text-[11px] font-bold" />
+          <V2Avatar
+            image={image}
+            name={displayName}
+            seed={memberSeeds?.get(memberId) ?? memberId}
+            variant={memberId === currentMemberId ? "brand" : undefined}
+            placeholder={placeholderMemberIds?.has(memberId)}
+            className="h-full w-full rounded-full"
+            fallbackClassName="text-[11px] font-bold"
+          />
         </span>
         <span data-testid={`settlement-name-${memberId}`} className="text-sm font-medium leading-5 tracking-[.1px]">
           {label}

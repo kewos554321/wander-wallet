@@ -17,9 +17,9 @@
 
 import { useEffect, useState } from "react"
 import { CheckCircle2, ChevronRight, Pin } from "lucide-react"
-import { memberPillClass, memberTone } from "@/components/v2/expense-form/payer-picker"
+import { memberPillClass } from "@/components/v2/expense-form/payer-picker"
 import { SECTION_CARD, SECTION_TITLE } from "@/components/v2/expense-form/section-card"
-import { MemberAvatar } from "@/components/v2/ui/member-avatar"
+import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
 import { formatAmount } from "@/lib/constants/currencies"
 import { fromMinorUnits, roundMajorToMinor } from "@/lib/currency-conversion"
 import type { DraftMember, useExpenseDraft } from "@/components/v2/expense-form/use-expense-draft"
@@ -74,7 +74,6 @@ export function SplitPanel({
   }, [platform, state.personalMode, actions])
 
   const nameOf = (id: string) => members.find((m) => m.id === id)?.displayName ?? ""
-  const tone = (id: string) => memberTone(members.findIndex((m) => m.id === id))
   const memberOf = (id: string) => members.find((m) => m.id === id)
 
   // Settlement preview: the ONLY switch is the footer toggle; it drives this.
@@ -160,12 +159,14 @@ export function SplitPanel({
 
   const pill = (m: DraftMember, on: boolean, onClick: () => void) => (
     <button key={m.id} type="button" aria-pressed={on} onClick={onClick} className={memberPillClass(on)}>
-      <MemberAvatar
+      <V2Avatar
         image={m.image ?? null}
         name={m.displayName}
+        seed={avatarSeed(m.userId, m.id)}
+        variant={m.isCurrentUser ? "brand" : undefined}
         placeholder={m.isPlaceholder}
         className={`h-4 w-4 rounded-full ${on ? "" : "opacity-40"}`}
-        fallbackClassName={`text-[8px] font-bold ${tone(m.id)}`}
+        fallbackClassName="text-[8px] font-bold"
       />
       <span className="max-w-[5.5em] truncate text-[11px] font-semibold">{m.displayName}</span>
     </button>
@@ -201,7 +202,7 @@ export function SplitPanel({
                 <div key={p.memberId} className="border-b border-v2-line-soft bg-v2-lake-soft px-3 py-3 last:border-b-0">
                   <div className={`grid ${platformGrid} items-center gap-2`}>
                     <span className="flex h-6 items-center justify-center">
-                      <MemberAvatar image={memberOf(p.memberId)?.image ?? null} name={nameOf(p.memberId)} placeholder={memberOf(p.memberId)?.isPlaceholder} className="h-6 w-6 shrink-0 rounded-full" fallbackClassName={`text-[10px] font-bold ${tone(p.memberId)}`} iconClassName="h-3 w-3" />
+                      <V2Avatar image={memberOf(p.memberId)?.image ?? null} name={nameOf(p.memberId)} seed={avatarSeed(memberOf(p.memberId)?.userId, p.memberId)} variant={memberOf(p.memberId)?.isCurrentUser ? "brand" : undefined} placeholder={memberOf(p.memberId)?.isPlaceholder} className="h-6 w-6 shrink-0 rounded-full" fallbackClassName="text-[10px] font-bold" />
                     </span>
                     <span className={nameCell}>{nameOf(p.memberId)}</span>
                     {settleView ? (
@@ -250,7 +251,7 @@ export function SplitPanel({
                 <div key={p.memberId} className="border-b border-v2-line-soft bg-v2-lake-soft px-1.5 py-3 last:border-b-0">
                   <div className={`grid ${payerGridCols} items-center gap-1`}>
                     <span className="flex h-6 items-center justify-center">
-                      <MemberAvatar image={memberOf(p.memberId)?.image ?? null} name={nameOf(p.memberId)} placeholder={memberOf(p.memberId)?.isPlaceholder} className="h-6 w-6 shrink-0 rounded-full" fallbackClassName={`text-[10px] font-bold ${tone(p.memberId)}`} iconClassName="h-3 w-3" />
+                      <V2Avatar image={memberOf(p.memberId)?.image ?? null} name={nameOf(p.memberId)} seed={avatarSeed(memberOf(p.memberId)?.userId, p.memberId)} variant={memberOf(p.memberId)?.isCurrentUser ? "brand" : undefined} placeholder={memberOf(p.memberId)?.isPlaceholder} className="h-6 w-6 shrink-0 rounded-full" fallbackClassName="text-[10px] font-bold" />
                     </span>
                     <span className={nameCell}>{nameOf(p.memberId)}</span>
                     {settleView ? (
@@ -360,7 +361,7 @@ export function SplitPanel({
               <div key={id} className="border-b border-v2-line-soft bg-v2-lake-soft px-3 py-3 last:border-b-0">
                 <div className={`grid ${platformGrid} items-center gap-2`}>
                   <span className="flex h-6 items-center justify-center">
-                    <MemberAvatar image={memberOf(id)?.image ?? null} name={nameOf(id)} placeholder={memberOf(id)?.isPlaceholder} className="h-6 w-6 shrink-0 rounded-full" fallbackClassName={`text-[10px] font-bold ${tone(id)}`} iconClassName="h-3 w-3" />
+                    <V2Avatar image={memberOf(id)?.image ?? null} name={nameOf(id)} seed={avatarSeed(memberOf(id)?.userId, id)} variant={memberOf(id)?.isCurrentUser ? "brand" : undefined} placeholder={memberOf(id)?.isPlaceholder} className="h-6 w-6 shrink-0 rounded-full" fallbackClassName="text-[10px] font-bold" />
                   </span>
                   <div className="min-w-0">
                     <span className={`${nameCell} block`}>{nameOf(id)}</span>
@@ -418,7 +419,7 @@ export function SplitPanel({
                 <div key={id} className="border-b border-v2-line-soft bg-v2-lake-soft px-1.5 py-3 last:border-b-0">
                   <div className={`grid ${gridCols} items-center gap-1`}>
                   <span className={`flex h-6 items-center justify-center ${cellOutline}`}>
-                    <MemberAvatar image={memberOf(id)?.image ?? null} name={nameOf(id)} placeholder={memberOf(id)?.isPlaceholder} className="h-6 w-6 shrink-0 rounded-full" fallbackClassName={`text-[10px] font-bold ${tone(id)}`} iconClassName="h-3 w-3" />
+                    <V2Avatar image={memberOf(id)?.image ?? null} name={nameOf(id)} seed={avatarSeed(memberOf(id)?.userId, id)} variant={memberOf(id)?.isCurrentUser ? "brand" : undefined} placeholder={memberOf(id)?.isPlaceholder} className="h-6 w-6 shrink-0 rounded-full" fallbackClassName="text-[10px] font-bold" />
                   </span>
                   <span className={`${nameCell} ${cellOutline}`}>{nameOf(id)}</span>
                   {state.personalMode && (

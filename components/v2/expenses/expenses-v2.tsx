@@ -72,8 +72,14 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
 
   const currentMemberId = members.find((m) => m.user?.id === user?.id)?.id ?? null
   const dateRange = project ? formatTripDateRange(project.startDate, project.endDate) : null
-  const memberImage = new Map(members.map((m) => [m.id, m.user?.image ?? null]))
-  const withImage = <T extends { id: string }>(list: T[]) => list.map((m) => ({ ...m, image: memberImage.get(m.id) ?? null }))
+  const memberMeta = new Map(
+    members.map((m) => [m.id, { image: m.user?.image ?? null, isPlaceholder: !m.user, userId: m.user?.id ?? null }]),
+  )
+  const withImage = <T extends { id: string }>(list: T[]) =>
+    list.map((m) => ({
+      ...m,
+      ...(memberMeta.get(m.id) ?? { image: null, isPlaceholder: false, userId: null }),
+    }))
 
   async function confirmDelete() {
     if (!deleteTarget) return
@@ -137,7 +143,9 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
                 id: m.id,
                 displayName: m.displayName,
                 image: m.user?.image ?? null,
-                isPlaceholder: !m.user,
+                userId: m.userId,
+                isCurrentUser: m.id === currentMemberId,
+                isPlaceholder: !m.userId,
                 remainderDiscrepancy: m.remainderDiscrepancy ?? 0,
               }))}
               currentUserMemberId={currentMemberId ?? ""}

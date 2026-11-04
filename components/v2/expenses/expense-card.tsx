@@ -5,8 +5,7 @@ import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import type { ProjectExpense } from "@/lib/hooks/useProjectExpenses"
 import { primaryPayerId, primaryPayerName } from "@/lib/expense-payers"
 import { CATEGORY_TONES, categoryKey } from "@/components/v2/category-style"
-import { V2Avatar } from "@/components/v2/ui/v2-avatar"
-import { NEUTRAL_AVATAR_TONE } from "./avatar-tone"
+import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
 import { SwipeRow } from "./swipe-row"
 
 const monthDay = (iso: string): string => {
@@ -69,22 +68,27 @@ export function ExpenseCard({
         <div className="mt-[5px] flex items-center gap-1.5 overflow-hidden whitespace-nowrap">
           <V2Avatar
             image={primaryPayer?.member.user?.image ?? null}
-            name={payerLabel}
+            name={primaryPayer?.member.displayName ?? payerLabel}
+            seed={avatarSeed(primaryPayer?.member.userId, primaryPayer?.memberId ?? primaryId)}
+            variant={isMe ? "brand" : undefined}
+            placeholder={!primaryPayer?.member.userId}
             className="h-3.5 w-3.5 shrink-0 rounded-full"
-            fallbackClassName={`text-[7px] font-bold ${NEUTRAL_AVATAR_TONE}`}
+            fallbackClassName="text-[7px] font-bold"
           />
           <span className="shrink-0 text-[11px] font-medium">{payerText}</span>
           <span className="h-px w-2 shrink-0 bg-v2-check" aria-hidden="true" />
           <span className="flex shrink-0" aria-hidden="true">
             {shown.map((m, i) => {
-              const label = m.id === currentMemberId ? "我" : m.displayName
               return (
                 <V2Avatar
                   key={m.id}
                   image={m.user?.image ?? null}
-                  name={label}
+                  name={m.displayName}
+                  seed={avatarSeed(m.userId, m.id)}
+                  variant={m.id === currentMemberId ? "brand" : undefined}
+                  placeholder={!m.userId}
                   className={`h-3.5 w-3.5 rounded-full border-2 border-v2-surface ${i > 0 ? "-ml-[5px]" : ""}`}
-                  fallbackClassName={`text-[6px] font-bold ${NEUTRAL_AVATAR_TONE}`}
+                  fallbackClassName="text-[6px] font-bold"
                 />
               )
             })}

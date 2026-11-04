@@ -160,6 +160,7 @@ export async function getActivityLogs(
           displayName: true,
           user: {
             select: {
+              id: true,
               image: true,
             },
           },

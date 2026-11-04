@@ -22,6 +22,8 @@ export function SettleV2({ projectId }: { projectId: string }) {
 
   const baseCurrency = s.data?.summary.currency || DEFAULT_CURRENCY
   const currentMemberId = members.find((m) => m.user?.id === user?.id)?.id ?? null
+  const placeholderMemberIds = new Set(members.filter((m) => !m.userId).map((m) => m.id))
+  const memberSeeds = new Map(members.map((m) => [m.id, m.userId ?? m.id]))
 
   let content: ReactNode
   if (s.loading) {
@@ -53,6 +55,8 @@ export function SettleV2({ projectId }: { projectId: string }) {
           projectId={projectId}
           data={s.data}
           currentMemberId={currentMemberId}
+          placeholderMemberIds={placeholderMemberIds}
+          memberSeeds={memberSeeds}
           dailyAverage={dailyAverage}
           displayCurrencyCode={s.displayCurrencyCode}
           currencyOptions={[baseCurrency, ...Object.keys(s.data.summary.exchangeRatesUsed ?? {})]}
@@ -63,7 +67,14 @@ export function SettleV2({ projectId }: { projectId: string }) {
           onShare={() => setShowShare(true)}
         />
         <SettleShareDialog open={showShare} onOpenChange={setShowShare} shareText={s.shareText} />
-        <SettlementCalcDialog open={showCalc} onOpenChange={setShowCalc} data={s.data} />
+        <SettlementCalcDialog
+          open={showCalc}
+          onOpenChange={setShowCalc}
+          data={s.data}
+          currentMemberId={currentMemberId}
+          placeholderMemberIds={placeholderMemberIds}
+          memberSeeds={memberSeeds}
+        />
       </>
     )
   }

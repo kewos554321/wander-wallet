@@ -61,6 +61,7 @@ export async function GET(
               displayName: true,
               user: {
                 select: {
+                  id: true,
                   image: true,
                 },
               },

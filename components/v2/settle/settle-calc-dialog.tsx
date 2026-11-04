@@ -11,6 +11,9 @@ interface SettlementCalcDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   data: SettleData
+  currentMemberId?: string | null
+  placeholderMemberIds?: ReadonlySet<string>
+  memberSeeds?: ReadonlyMap<string, string>
 }
 
 const STEP_BADGE =
@@ -57,7 +60,7 @@ function splitLine(expense: SettleExpenseDetail, currency: string): string {
 
 // "計算過程" dialog, ported from the shared v1 dialog so it can be rendered
 // inline inside the UiV2Scope tree (v2 tokens resolve; no shadcn Portal).
-export function SettlementCalcDialog({ open, onOpenChange, data }: SettlementCalcDialogProps) {
+export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId, placeholderMemberIds, memberSeeds }: SettlementCalcDialogProps) {
   const cardRef = useRef<HTMLDivElement>(null)
   const titleId = useId()
   useDismiss(cardRef, () => onOpenChange(false), open)
@@ -122,7 +125,7 @@ export function SettlementCalcDialog({ open, onOpenChange, data }: SettlementCal
                   {expense.payers.map((p, i) => (
                     <span key={p.memberId} className="inline-flex items-center gap-1">
                       {i > 0 ? <span aria-hidden="true">、</span> : null}
-                      <V2Avatar image={p.userImage ?? null} name={p.displayName} className="h-4 w-4 rounded-full" />
+                      <V2Avatar image={p.userImage ?? null} name={p.displayName} seed={memberSeeds?.get(p.memberId) ?? p.memberId} variant={p.memberId === currentMemberId ? "brand" : undefined} placeholder={placeholderMemberIds?.has(p.memberId)} className="h-4 w-4 rounded-full" fallbackClassName="text-[8px] font-bold" />
                       <span>{p.displayName}</span>
                       <span className="text-v2-gold">{formatCurrency(p.convertedAmount, currency)}</span>
                     </span>

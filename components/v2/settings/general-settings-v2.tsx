@@ -70,8 +70,10 @@ export function GeneralSettingsV2() {
             <V2Avatar
               image={user?.image ?? null}
               name={displayName}
-              className="h-12 w-12 shrink-0 rounded-full"
-              fallbackClassName="bg-v2-paper/15 text-base font-bold"
+              seed={user?.id ?? null}
+              variant="brand"
+              className="h-12 w-12 shrink-0 rounded-full ring-2 ring-v2-paper/70"
+              fallbackClassName="text-base font-bold"
             />
             <span className="min-w-0 flex-1">
               <p className="m-0 font-v2-serif text-[15px] font-semibold">{displayName}</p>

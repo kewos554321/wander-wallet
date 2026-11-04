@@ -6,7 +6,7 @@ import { Check, ChevronLeft, ChevronRight, CircleX } from "lucide-react"
 import { CATEGORY_LABELS, EXPENSE_CATEGORIES } from "@/lib/constants/expenses"
 import { formatAmount } from "@/lib/constants/currencies"
 import { CATEGORY_TONES } from "@/components/v2/category-style"
-import { V2Avatar } from "@/components/v2/ui/v2-avatar"
+import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
 
 function PanelHeader({ title, onClear, showClear }: { title: string; onClear: () => void; showClear: boolean }) {
   return (
@@ -71,7 +71,7 @@ export function MemberPanel({
   round = false,
 }: {
   title: string
-  members: { id: string; displayName: string; image?: string | null }[]
+  members: { id: string; displayName: string; image?: string | null; isPlaceholder?: boolean; isCurrentUser?: boolean; userId?: string | null }[]
   selected: Set<string>
   onToggle: (id: string) => void
   onClear: () => void
@@ -98,8 +98,11 @@ export function MemberPanel({
               <V2Avatar
                 image={member.image ?? null}
                 name={member.displayName}
+                seed={avatarSeed(member.userId, member.id)}
+                variant={member.isCurrentUser ? "brand" : undefined}
+                placeholder={member.isPlaceholder}
                 className="h-[18px] w-[18px] shrink-0 rounded-full"
-                fallbackClassName="bg-v2-lake-tint text-[8px] font-bold text-v2-lake"
+                fallbackClassName="text-[8px] font-bold"
               />
               <span className="text-left">{member.displayName}</span>
             </button>

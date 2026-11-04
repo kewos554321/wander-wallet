@@ -16,8 +16,19 @@ export function StatsV2({ projectId }: { projectId: string }) {
   const stats = useMemo(() => {
     if (!project) return null
     const base = computeProjectStats(project, convert, project.currency)
-    const imageById = new Map(project.members.map((m) => [m.id, m.user?.image ?? null]))
-    return { ...base, members: base.members.map((m) => ({ ...m, image: imageById.get(m.id) ?? null })) }
+    const memberMeta = new Map(
+      project.members.map((m) => [
+        m.id,
+        { image: m.user?.image ?? null, isPlaceholder: !m.user, seed: m.user?.id ?? m.id },
+      ]),
+    )
+    return {
+      ...base,
+      members: base.members.map((m) => ({
+        ...m,
+        ...(memberMeta.get(m.id) ?? { image: null, isPlaceholder: false, seed: m.id }),
+      })),
+    }
   }, [project, convert])
 
   let content: ReactNode

@@ -4,8 +4,7 @@ import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { getRecentExpenses, type OverviewExpense, type OverviewMember } from "@/lib/project-overview"
 import { primaryPayerId, primaryPayerName } from "@/lib/expense-payers"
 import { CATEGORY_TONES, categoryKey } from "@/components/v2/category-style"
-import { V2Avatar } from "@/components/v2/ui/v2-avatar"
-import { NEUTRAL_AVATAR_TONE } from "@/components/v2/expenses/avatar-tone"
+import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
 
 interface RecentExpensesProps {
   projectId: string
@@ -71,22 +70,27 @@ export function RecentExpenses({ projectId, expenses, members, currentMemberId }
                   <span className="mt-0.5 flex items-center gap-1 whitespace-nowrap text-[11px] leading-4 text-v2-ink-muted">
                     <V2Avatar
                       image={payerMember?.user?.image ?? null}
-                      name={payerLabel}
+                      name={payerMember?.displayName ?? payerLabel}
+                      seed={avatarSeed(payerMember?.user?.id, primaryId)}
+                      variant={isMe ? "brand" : undefined}
+                      placeholder={!payerMember?.user}
                       className="h-3.5 w-3.5 shrink-0 rounded-full"
-                      fallbackClassName={`text-[7px] font-bold ${NEUTRAL_AVATAR_TONE}`}
+                      fallbackClassName="text-[7px] font-bold"
                     />
                     <span className="min-w-0 truncate font-medium">{payerText}</span>
                     <span className="h-px w-2 shrink-0 bg-v2-check" aria-hidden="true" />
                     <span className="flex shrink-0" aria-hidden="true">
                       {shown.map((m, idx) => {
-                        const label = m.id === currentMemberId ? "我" : m.displayName
                         return (
                           <V2Avatar
                             key={m.id}
                             image={m.user?.image ?? null}
-                            name={label}
+                            name={m.displayName}
+                            seed={avatarSeed(m.user?.id, m.id)}
+                            variant={m.id === currentMemberId ? "brand" : undefined}
+                            placeholder={!m.user}
                             className={`h-3.5 w-3.5 rounded-full border-2 border-v2-surface ${idx > 0 ? "-ml-[5px]" : ""}`}
-                            fallbackClassName={`text-[6px] font-bold ${NEUTRAL_AVATAR_TONE}`}
+                            fallbackClassName="text-[6px] font-bold"
                           />
                         )
                       })}

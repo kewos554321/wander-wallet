@@ -19,6 +19,7 @@ interface ProjectOverviewV2ViewProps {
   onVoice: () => void
   currentUserName?: string | null
   currentUserImage?: string | null
+  currentUserId?: string | null
 }
 
 const pill =
@@ -31,6 +32,7 @@ export function ProjectOverviewV2View({
   onVoice,
   currentUserName,
   currentUserImage,
+  currentUserId,
 }: ProjectOverviewV2ViewProps) {
   const currency = project.currency || DEFAULT_CURRENCY
 
@@ -52,8 +54,10 @@ export function ProjectOverviewV2View({
             <V2Avatar
               image={currentUserImage ?? null}
               name={currentUserName ?? null}
+              seed={currentUserId}
+              variant="brand"
               className="h-9 w-9 rounded-full"
-              fallbackClassName="bg-v2-lake text-sm font-bold text-v2-paper"
+              fallbackClassName="text-sm font-bold"
             />
           </Link>
         }

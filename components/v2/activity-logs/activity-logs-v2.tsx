@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { DateRange } from "react-day-picker"
-import { useAuthFetch } from "@/components/auth/liff-provider"
+import { useAuthFetch, useLiff } from "@/components/auth/liff-provider"
 import { useProjectData } from "@/lib/hooks"
 import { getCategoryLabel } from "@/lib/constants/expenses"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
@@ -33,7 +33,9 @@ function withinRange(date: string | undefined, range: DateRange | undefined): bo
 
 export function ActivityLogsV2({ projectId }: { projectId: string }) {
   const authFetch = useAuthFetch()
-  const { projectCurrency } = useProjectData(projectId)
+  const { user } = useLiff()
+  const { projectCurrency, members } = useProjectData(projectId)
+  const currentMemberId = members?.find((m) => m.user?.id === user?.id)?.id ?? null
   const [logs, setLogs] = useState<ActivityLog[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -142,6 +144,7 @@ export function ActivityLogsV2({ projectId }: { projectId: string }) {
         <ActivityLogsV2View
           projectId={projectId}
           projectCurrency={projectCurrency}
+          currentMemberId={currentMemberId}
           logs={logs}
           filteredLogs={filteredLogs}
           total={total}

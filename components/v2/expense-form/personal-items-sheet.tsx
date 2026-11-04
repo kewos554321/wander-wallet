@@ -6,8 +6,7 @@
 
 import { useEffect, useState } from "react"
 import { X } from "lucide-react"
-import { memberTone } from "@/components/v2/expense-form/payer-picker"
-import { MemberAvatar } from "@/components/v2/ui/member-avatar"
+import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
 import { formatAmount } from "@/lib/constants/currencies"
 import type { DraftMember, useExpenseDraft } from "@/components/v2/expense-form/use-expense-draft"
 import { isTouchedItem } from "./personal-item-state"
@@ -54,7 +53,6 @@ export function PersonalItemsSheet({
 
   const member = members.find((m) => m.id === memberId)
   const name = member?.displayName ?? ""
-  const tone = memberTone(members.findIndex((m) => m.id === memberId))
   const items = state.personalItems[memberId] ?? []
   // Blank rows are placeholders: drop them on close so "no items" really means none.
   const close = () => {
@@ -84,7 +82,7 @@ export function PersonalItemsSheet({
       >
         <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-v2-check" aria-hidden="true" />
         <div className="flex items-center gap-3 border-b border-v2-line px-4 pb-3 pt-2">
-          <MemberAvatar image={member?.image ?? null} name={name} placeholder={member?.isPlaceholder} className="h-8 w-8 shrink-0 rounded-full" fallbackClassName={`text-[12px] font-bold ${tone}`} iconClassName="h-4 w-4" />
+          <V2Avatar image={member?.image ?? null} name={name} seed={avatarSeed(member?.userId, memberId)} variant={member?.isCurrentUser ? "brand" : undefined} placeholder={member?.isPlaceholder} className="h-8 w-8 shrink-0 rounded-full" fallbackClassName="text-[12px] font-bold" />
           <div className="min-w-0 flex-1">
             <h2 className="m-0 font-v2-serif text-[16px] font-bold leading-tight text-v2-ink">{name} 的個人項目</h2>
             <p className="m-0 text-[11px] text-v2-ink-muted">先記下來，剩下的再由大家共同分攤</p>

@@ -3,17 +3,17 @@
 import { CheckCircle2 } from "lucide-react"
 import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
 import { roundMajorToMinor } from "@/lib/currency-conversion"
-import { MemberAvatar } from "@/components/v2/ui/member-avatar"
+import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
 import type { SplitDraft } from "@/lib/split-draft"
 import type { DraftMember } from "./use-expense-draft"
-import { memberTone } from "./payer-picker"
 
 export interface SummaryRow {
   id: string
   name: string
   image: string | null
+  seed: string
+  isCurrentUser: boolean
   isPlaceholder: boolean
-  tone: string
   personal: number
   pool: number
   total: number
@@ -26,15 +26,16 @@ export function buildSummaryRows(members: DraftMember[], draft: SplitDraft): Sum
   const { derived } = draft
   const shareOf = (id: string) => derived.shares.find((s) => s.memberId === id)?.shareAmount ?? 0
   const personalOf = (id: string) => derived.splitInput.personalItems[id]?.reduce((sum, i) => sum + i.amount, 0) ?? 0
-  return members.map((m, index) => {
+  return members.map((m) => {
     const personal = personalOf(m.id)
     const total = shareOf(m.id)
     return {
       id: m.id,
       name: m.displayName,
       image: m.image ?? null,
+      seed: avatarSeed(m.userId, m.id)!,
+      isCurrentUser: m.isCurrentUser ?? false,
       isPlaceholder: m.isPlaceholder ?? false,
-      tone: memberTone(index),
       personal,
       pool: Math.round((total - personal) * 100) / 100,
       total,
@@ -142,13 +143,14 @@ export function SplitSummary({
           {visibleRows.map((r) => (
             <div key={r.id} role="row" className={`${cols} border-t border-v2-line-soft bg-v2-lake-soft py-2.5 first:border-t-0`}>
               <span role="rowheader" className="flex min-w-0 items-center gap-2 text-left text-[13px] font-semibold">
-                <MemberAvatar
+                <V2Avatar
                   image={r.image}
                   name={r.name}
+                  seed={r.seed}
+                  variant={r.isCurrentUser ? "brand" : undefined}
                   placeholder={r.isPlaceholder}
                   className="h-[22px] w-[22px] shrink-0 rounded-full"
-                  fallbackClassName={`text-[9px] font-bold ${r.tone}`}
-                  iconClassName="h-[11px] w-[11px]"
+                  fallbackClassName="text-[9px] font-bold"
                 />
                 <span className="truncate">{r.name}</span>
               </span>

@@ -2,23 +2,17 @@ import { CheckCircle2, Pin, PinOff, UserMinus } from "lucide-react"
 import { formatAmount, formatCurrency } from "@/lib/constants/currencies"
 import { roundMajorToMinor } from "@/lib/currency-conversion"
 import { toMoneyInput } from "@/lib/money-input"
-import { MemberAvatar } from "@/components/v2/ui/member-avatar"
+import { V2Avatar, avatarSeed } from "@/components/v2/ui/v2-avatar"
 import type { PayerShare } from "@/lib/expense-payers"
 import type { DraftMember } from "./use-expense-draft"
 import { CurrencyToggle } from "./currency-toggle"
 import { SECTION_CARD, SECTION_TITLE } from "./section-card"
-
-const AVATAR_TONES = ["bg-v2-lake-tint text-v2-lake", "bg-v2-coral-soft text-v2-coral-strong", "bg-v2-plum-soft text-v2-plum", "bg-v2-rose-soft text-v2-rose"]
 
 // Shared member pill look for the payer, personal-item and shared-pool pickers.
 export function memberPillClass(selected: boolean) {
   return `inline-flex items-center gap-1 rounded-full px-2.5 py-1 ${
     selected ? "border border-v2-lake bg-v2-lake text-v2-on-lake" : "border border-v2-lake-border bg-v2-lake-soft text-v2-ink opacity-50"
   }`
-}
-
-export function memberTone(index: number) {
-  return AVATAR_TONES[index % AVATAR_TONES.length]
 }
 
 export function PayerPicker({
@@ -119,7 +113,7 @@ export function PayerPicker({
 
       {!settleView && (
         <div className="mb-2.5 flex flex-wrap gap-2">
-          {members.map((m, i) => {
+          {members.map((m) => {
             const checked = payerIds.includes(m.id)
             return (
               <label key={m.id} className={`cursor-pointer ${memberPillClass(checked)}`}>
@@ -130,12 +124,14 @@ export function PayerPicker({
                   onChange={() => onTogglePayer(m.id)}
                   aria-label={m.displayName}
                 />
-                <MemberAvatar
+                <V2Avatar
                   image={m.image ?? null}
                   name={m.displayName}
+                  seed={avatarSeed(m.userId, m.id)}
+                  variant={m.isCurrentUser ? "brand" : undefined}
                   placeholder={m.isPlaceholder}
                   className="h-4 w-4 rounded-full"
-                  fallbackClassName={`text-[8px] font-bold ${memberTone(i)}`}
+                  fallbackClassName="text-[8px] font-bold"
                 />
                 <span className="max-w-[5.5em] truncate text-[11px] font-semibold" title={m.displayName}>
                   {m.displayName}
@@ -166,13 +162,14 @@ export function PayerPicker({
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <MemberAvatar
+                  <V2Avatar
                     image={members.find((m) => m.id === p.memberId)?.image ?? null}
                     name={nameOf(p.memberId)}
+                    seed={avatarSeed(members.find((m) => m.id === p.memberId)?.userId, p.memberId)}
+                    variant={members.find((m) => m.id === p.memberId)?.isCurrentUser ? "brand" : undefined}
                     placeholder={members.find((m) => m.id === p.memberId)?.isPlaceholder}
                     className="h-7 w-7 shrink-0 rounded-full"
-                    fallbackClassName={`text-[11px] font-bold ${memberTone(members.findIndex((m) => m.id === p.memberId))}`}
-                    iconClassName="h-[14px] w-[14px]"
+                    fallbackClassName="text-[11px] font-bold"
                   />
                   <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{nameOf(p.memberId)}</span>
                   {editable ? (
