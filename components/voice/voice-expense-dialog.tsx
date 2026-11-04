@@ -37,7 +37,6 @@ import {
   Copy,
   Check,
   ChevronDown,
-  ChevronUp,
 } from "lucide-react"
 import { ImagePicker, type ImagePickerValue } from "@/components/ui/image-picker"
 import {
@@ -1129,14 +1128,13 @@ export function VoiceExpenseDialog({
                   {process.env.NODE_ENV === "development" && debugInfo && (
                     <button
                       type="button"
+                      aria-expanded={debugExpanded}
                       onClick={() => setDebugExpanded(!debugExpanded)}
                       className="p-1 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {debugExpanded ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform ${debugExpanded ? "rotate-180" : ""}`}
+                      />
                     </button>
                   )}
                 </div>

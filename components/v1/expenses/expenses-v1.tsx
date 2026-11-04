@@ -292,7 +292,7 @@ export function ExpensesV1({ projectId: id }: { projectId: string }) {
               {/* 建立日期篩選 */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full justify-between">
+                  <Button variant="outline" size="sm" className="group w-full justify-between">
                     <span className="flex items-center gap-1 truncate">
                       <CalendarDays className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">
@@ -310,7 +310,7 @@ export function ExpensesV1({ projectId: id }: { projectId: string }) {
                         <span className="px-1 py-0.5 text-[10px] bg-primary text-primary-foreground rounded-full shrink-0">1</span>
                       )}
                     </span>
-                    <ChevronDown className="h-3 w-3 shrink-0" />
+                    <ChevronDown className="h-3 w-3 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="center">
@@ -321,7 +321,7 @@ export function ExpensesV1({ projectId: id }: { projectId: string }) {
               {/* 付款日期篩選 */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full justify-between">
+                  <Button variant="outline" size="sm" className="group w-full justify-between">
                     <span className="flex items-center gap-1 truncate">
                       <CalendarDays className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">
@@ -339,7 +339,7 @@ export function ExpensesV1({ projectId: id }: { projectId: string }) {
                         <span className="px-1 py-0.5 text-[10px] bg-primary text-primary-foreground rounded-full shrink-0">1</span>
                       )}
                     </span>
-                    <ChevronDown className="h-3 w-3 shrink-0" />
+                    <ChevronDown className="h-3 w-3 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { ChevronRight, MapPin, Navigation, Search, X, Loader2 } from "lucide-react"
+import { ChevronDown, MapPin, Navigation, Search, X, Loader2 } from "lucide-react"
 
 interface LocationResult {
   displayName: string
@@ -237,8 +237,8 @@ export function LocationPickerV2({ value, onChange, className, variant = "defaul
           <MapPin className="h-[18px] w-[18px] shrink-0 text-v2-ink-muted" aria-hidden="true" />
           <span className="flex-1 text-[13px] font-medium text-v2-ink">消費地點</span>
           <span className="max-w-[11rem] truncate text-[13px] text-v2-ink-muted">{value?.location ?? "新增地點"}</span>
-          <ChevronRight
-            className={`h-4 w-4 shrink-0 text-v2-ink-subtle transition-transform ${isOpen ? "rotate-90" : ""}`}
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 text-v2-ink-subtle transition-transform ${isOpen ? "rotate-180" : ""}`}
             aria-hidden="true"
           />
         </button>

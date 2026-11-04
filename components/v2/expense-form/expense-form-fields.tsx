@@ -4,11 +4,16 @@
 // category, split panel, optional date/location/receipt section, and the LINE
 // notification checkbox. The add-expense page and the AI result page render
 // this same component so their fields cannot drift apart.
+//
+// Chevron rule (keep every row on this screen on the same logic):
+//   ▼ ChevronDown  = expands content in place; rotate 180° while open.
+//   › ChevronRight = opens another layer (bottom sheet / new page); never rotates.
+// Rows that take effect immediately (chips, toggles, segments) carry no chevron.
 
 import { useState } from "react"
 import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
-import { CalendarIcon, Camera, Check, ChevronDown, ChevronRight, Image as ImageIcon, Paperclip } from "lucide-react"
+import { CalendarIcon, Camera, Check, ChevronDown, Image as ImageIcon, Paperclip } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { AmountCard } from "@/components/v2/expense-form/amount-card"
@@ -221,14 +226,17 @@ export function ExpenseFormFields({
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="flex min-h-[56px] w-full items-center gap-3 px-1 text-left transition-colors hover:bg-v2-lake-tint/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
+                    className="group flex min-h-[56px] w-full items-center gap-3 px-1 text-left transition-colors hover:bg-v2-lake-tint/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
                   >
                     <CalendarIcon className="h-[18px] w-[18px] shrink-0 text-v2-ink-muted" aria-hidden="true" />
                     <span className="flex-1 text-[13px] font-medium text-v2-ink">支出日期</span>
                     <span className="truncate text-[13px] text-v2-ink-muted">
                       {format(state.expenseDate, "yyyy/MM/dd（EEEEE）", { locale: zhTW })}
                     </span>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-v2-ink-subtle" aria-hidden="true" />
+                    <ChevronDown
+                      className="h-4 w-4 shrink-0 text-v2-ink-subtle transition-transform group-data-[state=open]:rotate-180"
+                      aria-hidden="true"
+                    />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
