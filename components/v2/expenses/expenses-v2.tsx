@@ -6,6 +6,8 @@ import { useLiff } from "@/components/auth/liff-provider"
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { NotifyLineCheckbox } from "@/components/expense/notify-line-checkbox"
+import { QuickActions } from "@/components/v2/project/quick-actions"
+import { QuickExpenseV2 } from "@/components/v2/quick-expense/quick-expense-v2"
 import { UiV2Scope } from "@/components/v2/ui-v2-scope"
 import { useCurrencyConversion, useExpenseFilters, useProjectData } from "@/lib/hooks"
 import { useProjectExpenses, type ProjectExpense } from "@/lib/hooks/useProjectExpenses"
@@ -18,7 +20,7 @@ import { loadFilters, saveFilters } from "./filter-storage"
 export function ExpensesV2({ projectId }: { projectId: string }) {
   const { user } = useLiff()
   const { project, members, loading: projectLoading, projectCurrency, precision } = useProjectData(projectId)
-  const { expenses, loading, deleting, canNotifyLine, deleteExpense } =
+  const { expenses, loading, deleting, canNotifyLine, deleteExpense, refetch } =
     useProjectExpenses(projectId, { projectName: project?.name || "" })
   const f = useExpenseFilters(expenses)
   const { convert } = useCurrencyConversion({ projectCurrency, precision })
@@ -66,6 +68,7 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
   const [deleteTarget, setDeleteTarget] = useState<ProjectExpense | null>(null)
   const [notifyLine, setNotifyLine] = useState(true)
   const [viewingImage, setViewingImage] = useState<string | null>(null)
+  const [quickExpenseOpen, setQuickExpenseOpen] = useState(false)
 
   const currentMemberId = members.find((m) => m.user?.id === user?.id)?.id ?? null
   const dateRange = project ? formatTripDateRange(project.startDate, project.endDate) : null
@@ -87,42 +90,63 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
             <div className="h-24 animate-pulse rounded-2xl bg-v2-sand" />
           </div>
         ) : (
-          <ExpensesV2View
-            projectId={projectId}
-            currency={projectCurrency}
-            dateRangeLabel={dateRange && dateRange !== "尚未設定日期" ? dateRange : null}
-            allCount={expenses.length}
-            expenses={f.filteredExpenses}
-            summary={summarizeExpenses(f.filteredExpenses, convert, projectCurrency)}
-            currentMemberId={currentMemberId}
-            now={new Date()}
-            filterBar={
-              <ExpenseFilterBar
-                filters={f.filters}
-                currency={projectCurrency}
-                maxAmount={f.maxAmount}
-                payers={withImage(f.uniquePayers)}
-                participants={withImage(f.uniqueParticipants)}
-                currencies={f.uniqueCurrencies}
-                hasActiveFilters={f.hasActiveFilters}
-                currentMemberId={currentMemberId}
-                onSearch={f.setSearchQuery}
-                onToggleCategory={f.toggleCategory}
-                onClearCategories={() => f.setCategories(new Set())}
-                onSetPayers={f.setPayers}
-                onClearPayers={() => f.setPayers(new Set())}
-                onToggleParticipant={f.toggleParticipant}
-                onClearParticipants={() => f.setParticipants(new Set())}
-                onToggleCurrency={f.toggleCurrency}
-                onClearCurrencies={() => f.setCurrencies(new Set())}
-                onAmountRange={f.setAmountRange}
-                onExpenseRange={f.setExpenseDateRange}
-                onClearFilters={f.clearFilters}
-              />
-            }
-            onRequestDelete={setDeleteTarget}
-            onViewImage={setViewingImage}
-          />
+          <>
+            <ExpensesV2View
+              projectId={projectId}
+              currency={projectCurrency}
+              dateRangeLabel={dateRange && dateRange !== "尚未設定日期" ? dateRange : null}
+              allCount={expenses.length}
+              expenses={f.filteredExpenses}
+              summary={summarizeExpenses(f.filteredExpenses, convert, projectCurrency)}
+              currentMemberId={currentMemberId}
+              now={new Date()}
+              filterBar={
+                <ExpenseFilterBar
+                  filters={f.filters}
+                  currency={projectCurrency}
+                  maxAmount={f.maxAmount}
+                  payers={withImage(f.uniquePayers)}
+                  participants={withImage(f.uniqueParticipants)}
+                  currencies={f.uniqueCurrencies}
+                  hasActiveFilters={f.hasActiveFilters}
+                  currentMemberId={currentMemberId}
+                  onSearch={f.setSearchQuery}
+                  onToggleCategory={f.toggleCategory}
+                  onClearCategories={() => f.setCategories(new Set())}
+                  onSetPayers={f.setPayers}
+                  onClearPayers={() => f.setPayers(new Set())}
+                  onToggleParticipant={f.toggleParticipant}
+                  onClearParticipants={() => f.setParticipants(new Set())}
+                  onToggleCurrency={f.toggleCurrency}
+                  onClearCurrencies={() => f.setCurrencies(new Set())}
+                  onAmountRange={f.setAmountRange}
+                  onExpenseRange={f.setExpenseDateRange}
+                  onClearFilters={f.clearFilters}
+                />
+              }
+              onRequestDelete={setDeleteTarget}
+              onViewImage={setViewingImage}
+            />
+            <QuickActions projectId={projectId} onVoice={() => setQuickExpenseOpen(true)} />
+            <QuickExpenseV2
+              open={quickExpenseOpen}
+              onOpenChange={setQuickExpenseOpen}
+              projectId={projectId}
+              projectName={project?.name ?? ""}
+              members={members.map((m) => ({
+                id: m.id,
+                displayName: m.displayName,
+                image: m.user?.image ?? null,
+                isPlaceholder: !m.user,
+                remainderDiscrepancy: m.remainderDiscrepancy ?? 0,
+              }))}
+              currentUserMemberId={currentMemberId ?? ""}
+              currency={projectCurrency}
+              onSuccess={() => {
+                refetch()
+              }}
+            />
+          </>
         )}
       </div>
 

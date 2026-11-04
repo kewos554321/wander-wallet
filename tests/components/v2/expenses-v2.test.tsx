@@ -262,6 +262,18 @@ describe("ExpensesV2 container", () => {
     expect(screen.getByText("尚無支出記錄")).toBeInTheDocument()
   })
 
+  it("renders the floating quick actions", () => {
+    render(<ExpensesV2 projectId="p1" />)
+    expect(screen.getByRole("link", { name: "手動新增支出" })).toHaveAttribute("href", "/projects/p1/expenses/new")
+    expect(screen.getByRole("button", { name: /AI 快速記帳/ })).toBeInTheDocument()
+  })
+
+  it("opens the AI quick-expense flow from the floating action", () => {
+    render(<ExpensesV2 projectId="p1" />)
+    fireEvent.click(screen.getByRole("button", { name: /AI 快速記帳/ }))
+    expect(screen.getByRole("heading", { level: 1, name: "AI 快速記帳" })).toBeInTheDocument()
+  })
+
   it("renders the loading skeleton", () => {
     mocks.projectExpenses.mockReturnValue({
       expenses: [],
