@@ -468,13 +468,14 @@ export function SplitPanel({
         </div>
       ))}
 
-      {/* 即時結果；金額還不合法時由金額卡／footer 說明，不在這裡重複 */}
+      {/* 即時結果；金額還不合法時由金額卡／footer 說明，不在這裡重複。
+          這裡刻意不加 live role：fixed footer 是唯一的 alert，
+          這段保留視覺提示與「查看」的焦點目的地，避免同一句被念兩次。 */}
       {!amountInvalid && (
         <div
           id="expense-split-result"
           tabIndex={-1}
           className={`mt-3 flex items-center justify-end gap-1 rounded text-right text-xs font-bold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-v2-danger ${result.ok ? "text-v2-link" : "text-v2-danger"}`}
-          role={result.ok ? undefined : "alert"}
         >
           {result.ok && <CheckCircle2 className="h-3 w-3 shrink-0" aria-hidden="true" />}
           {result.text}

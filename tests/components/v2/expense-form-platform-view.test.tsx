@@ -126,6 +126,7 @@ describe("ExpenseFormPlatformView", () => {
 
     expect(screen.getByRole("button", { name: /新增支出/ })).toBeDisabled()
     const alerts = screen.getAllByRole("alert").map((el) => el.textContent?.trim())
+    expect(alerts).toHaveLength(1)
     expect(alerts.some((text) => text?.includes("固定金額"))).toBe(true)
     expect(alerts.some((text) => text?.includes("TWD 200"))).toBe(true)
     expect(screen.getByRole("button", { name: "查看" })).toBeInTheDocument()

@@ -12,7 +12,7 @@ import { AlertCircle, Volume2 } from "lucide-react"
 const MESSAGE = "阿明的固定金額比總額多 TWD 200"
 
 export function AlertAnnouncementDemo({ view }: { view: "before" | "after" }) {
-  const inlineRole = view === "before" ? 'role="alert"' : 'role="status"'
+  const inlineRole = view === "before" ? 'role="alert"' : "no live role"
   const announcements = view === "before" ? [MESSAGE, MESSAGE] : [MESSAGE]
 
   return (
@@ -57,7 +57,7 @@ export function AlertAnnouncementDemo({ view }: { view: "before" | "after" }) {
         <p className="m-0 mt-1.5 text-[10px] leading-4 text-v2-paper/80">
           {view === "before"
             ? "inline 與 footer 都是 alert，所以同一句會被念兩次。"
-            : "只有 footer 是 alert；inline 改成 status，視覺保留但不再搶著朗讀。"}
+            : "只有 footer 是 alert；inline 移除 live role，視覺保留但不再自動朗讀。"}
         </p>
       </div>
     </div>

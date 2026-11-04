@@ -90,7 +90,7 @@ export default function ActionSafetyDemoPage() {
         <p className="m-0 mt-2 px-4 text-[12px] leading-5 text-v2-ink-muted">
           {alertView === "before"
             ? "改前：inline 與 footer 都是 alert，同一句會被念兩次。"
-            : "改後：footer 保留 alert；inline 改成 status，視覺提示還在，但只朗讀一次。"}
+            : "改後：footer 保留 alert；inline 移除 live role，視覺提示還在，但只朗讀一次。"}
         </p>
       </section>
 
