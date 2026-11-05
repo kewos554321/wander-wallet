@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Bell, BookOpen, ChevronRight, ExternalLink, HelpCircle, Loader2, MessageCircle, Monitor, Moon, Sun, Wallet } from "lucide-react"
+import { Bell, BookOpen, ChevronRight, ExternalLink, HelpCircle, Loader2, MessageCircle, Monitor, Moon, Palette, Sun, Wallet } from "lucide-react"
 import { useLiff } from "@/components/auth/liff-provider"
 import { useTheme } from "@/components/system/theme-provider"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
@@ -79,7 +79,10 @@ export function GeneralSettingsV2() {
           </button>
 
           <div className={`${cardClass} flex flex-col gap-3`}>
-            <p className={cardTitleClass}>外觀</p>
+            <div className="flex items-center gap-2">
+              <Palette className="h-[15px] w-[15px] text-v2-lake" aria-hidden="true" />
+              <p className={cardTitleClass}>外觀</p>
+            </div>
             <div className="flex gap-2">
               {APPEARANCE_OPTIONS.map(({ value, label, Icon }) => {
                 const active = theme === value

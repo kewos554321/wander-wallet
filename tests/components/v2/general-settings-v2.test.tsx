@@ -93,6 +93,13 @@ describe("GeneralSettingsV2", () => {
     expect(mockSetTheme).toHaveBeenCalledWith("light")
   })
 
+  it("shows an icon beside the appearance card title", () => {
+    render(<GeneralSettingsV2 />)
+    const icon = screen.getByText("外觀").previousElementSibling
+    expect(icon?.tagName.toLowerCase()).toBe("svg")
+    expect(icon).toHaveAttribute("aria-hidden", "true")
+  })
+
   it("explains the preference currency under the card title", () => {
     render(<GeneralSettingsV2 />)
     const copy = screen.getByText("建立新旅程時預設使用的幣別；旅程內以結算幣別為準")
