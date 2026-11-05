@@ -324,7 +324,7 @@ describe("ExpensesV2 container", () => {
     expect(screen.getByTestId("v2-expenses-skeleton")).toBeInTheDocument()
   })
 
-  it("opens the image lightbox", () => {
+  function renderExpenseWithImage() {
     const single = expense({ id: "e1", image: "https://example.com/x.jpg" })
     mocks.projectExpenses.mockReturnValue({
       expenses: [single],
@@ -337,9 +337,32 @@ describe("ExpensesV2 container", () => {
     })
     mocks.expenseFilters.mockReturnValue({ ...mocks.expenseFilters(), filteredExpenses: [single] })
     render(<ExpensesV2 projectId="p1" />)
+  }
+
+  it("opens the image lightbox", () => {
+    renderExpenseWithImage()
 
     fireEvent.click(screen.getByRole("button", { name: "查看圖片" }))
     expect(screen.getByAltText("消費圖片")).toBeInTheDocument()
+  })
+
+  it("zooms the image in and out in the lightbox", () => {
+    renderExpenseWithImage()
+    fireEvent.click(screen.getByRole("button", { name: "查看圖片" }))
+
+    fireEvent.click(screen.getByRole("button", { name: "放大圖片" }))
+    expect(screen.getByRole("button", { name: "縮小圖片" })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "縮小圖片" }))
+    expect(screen.getByRole("button", { name: "放大圖片" })).toBeInTheDocument()
+  })
+
+  it("closes the image lightbox", () => {
+    renderExpenseWithImage()
+    fireEvent.click(screen.getByRole("button", { name: "查看圖片" }))
+
+    fireEvent.click(screen.getByRole("button", { name: "關閉" }))
+    expect(screen.queryByAltText("消費圖片")).not.toBeInTheDocument()
   })
 
   // Sets up the real ConfirmDeleteDialog and drives it through the rendered
@@ -503,7 +526,7 @@ describe("ExpensesV2 container", () => {
     fireEvent.click(screen.getByRole("button", { name: "清除" }))
     expect(f.setPayers).toHaveBeenCalledWith(new Set())
 
-    fireEvent.click(screen.getByRole("button", { name: /^旅伴/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^分攤旅伴/ }))
     fireEvent.click(screen.getByRole("button", { name: "清除" }))
     expect(f.setParticipants).toHaveBeenCalledWith(new Set())
 

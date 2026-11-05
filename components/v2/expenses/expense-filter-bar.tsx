@@ -87,8 +87,8 @@ export function ExpenseFilterBar(props: ExpenseFilterBarProps) {
           />
         </FilterPopover>
 
-        <FilterPopover label="旅伴" icon={<Users className={icon} />} count={filters.selectedParticipants.size} open={openId === "participant"} onToggle={() => toggle("participant")} align="right" widthClass="w-[190px]" boundsRef={gridRef}>
-          <MemberPanel title="選擇旅伴（可複選）" members={members(props.participants)} selected={filters.selectedParticipants} onToggle={props.onToggleParticipant} onClear={props.onClearParticipants} />
+        <FilterPopover label="分攤旅伴" icon={<Users className={icon} />} count={filters.selectedParticipants.size} open={openId === "participant"} onToggle={() => toggle("participant")} align="right" widthClass="w-[190px]" boundsRef={gridRef}>
+          <MemberPanel title="選擇分攤旅伴" members={members(props.participants)} selected={filters.selectedParticipants} onToggle={props.onToggleParticipant} onClear={props.onClearParticipants} />
         </FilterPopover>
 
         {props.currencies.length > 1 && (

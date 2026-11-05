@@ -256,7 +256,7 @@ export function DatePanel({ range, onChange }: { range: DateRange | undefined; o
 
   return (
     <div className="max-h-[calc(100vh-160px)] overflow-y-auto">
-      <PanelHeader title="付款日期" onClear={() => onChange(undefined)} showClear={!!(range?.from || range?.to)} />
+      <PanelHeader title="選擇付款日期" onClear={() => onChange(undefined)} showClear={!!(range?.from || range?.to)} />
       <div className="px-2.5 pb-2.5 pt-2">
         <div className="mb-1.5 flex items-center justify-between">
           <button

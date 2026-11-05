@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
+import { X } from "lucide-react"
 import { useLiff } from "@/components/auth/liff-provider"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { QuickActions } from "@/components/v2/project/quick-actions"
 import { QuickExpenseV2 } from "@/components/v2/quick-expense/quick-expense-v2"
 import { primaryPayerName } from "@/lib/expense-payers"
@@ -67,7 +67,18 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
   const [deleteTarget, setDeleteTarget] = useState<ProjectExpense | null>(null)
   const [notifyLine, setNotifyLine] = useState(true)
   const [viewingImage, setViewingImage] = useState<string | null>(null)
+  const [imageZoomed, setImageZoomed] = useState(false)
   const [quickExpenseOpen, setQuickExpenseOpen] = useState(false)
+
+  function openImage(url: string) {
+    setImageZoomed(false)
+    setViewingImage(url)
+  }
+
+  function closeImage() {
+    setViewingImage(null)
+    setImageZoomed(false)
+  }
 
   const currentMemberId = members.find((m) => m.user?.id === user?.id)?.id ?? null
   const dateRange = project ? formatTripDateRange(project.startDate, project.endDate) : null
@@ -141,7 +152,7 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
                 />
               }
               onRequestDelete={setDeleteTarget}
-              onViewImage={setViewingImage}
+              onViewImage={openImage}
             />
             <QuickActions projectId={projectId} onVoice={() => setQuickExpenseOpen(true)} />
             <QuickExpenseV2
@@ -179,16 +190,48 @@ export function ExpensesV2({ projectId }: { projectId: string }) {
         onNotifyLineChange={setNotifyLine}
       />
 
-      <Dialog open={!!viewingImage} onOpenChange={() => setViewingImage(null)}>
-        <DialogContent className="max-w-3xl p-2">
-          <DialogHeader className="sr-only">
-            <DialogTitle>消費圖片</DialogTitle>
-          </DialogHeader>
-          {viewingImage && (
-            <Image src={viewingImage} alt="消費圖片" width={800} height={600} className="h-auto max-h-[80vh] w-full rounded-lg object-contain" />
-          )}
-        </DialogContent>
-      </Dialog>
+      {viewingImage && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="消費圖片"
+          data-testid="expense-image-lightbox"
+          onClick={closeImage}
+          className="fixed inset-0 z-50 overflow-auto bg-v2-lightbox"
+        >
+          <button
+            type="button"
+            aria-label="關閉"
+            onClick={closeImage}
+            className="fixed right-3.5 top-3.5 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-v2-paper/15 text-v2-paper"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div
+            className={imageZoomed ? "min-h-full w-full p-4" : "flex min-h-full w-full items-center justify-center p-4"}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              aria-label={imageZoomed ? "縮小圖片" : "放大圖片"}
+              onClick={() => setImageZoomed((zoomed) => !zoomed)}
+              className="block"
+            >
+              <Image
+                src={viewingImage}
+                alt="消費圖片"
+                width={1200}
+                height={1600}
+                className={
+                  imageZoomed
+                    ? "h-auto max-w-none rounded-lg"
+                    : "h-auto max-h-[85vh] w-auto max-w-full rounded-lg object-contain"
+                }
+              />
+            </button>
+          </div>
+        </div>
+      )}
     </>
   )
 }

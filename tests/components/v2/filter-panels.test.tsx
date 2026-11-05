@@ -186,9 +186,23 @@ describe("ExpenseFilterBar panels", () => {
 
   it("multi-selects participants", () => {
     const props = renderBar()
-    fireEvent.click(screen.getByRole("button", { name: /^旅伴/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^分攤旅伴/ }))
     fireEvent.click(screen.getByRole("checkbox", { name: "志明" }))
     expect(props.onToggleParticipant).toHaveBeenCalledWith("chi")
+  })
+
+  it("labels the participant filter with the split wording", () => {
+    renderBar()
+    const participant = screen.getByRole("button", { name: /^分攤旅伴/ })
+    expect(participant).toHaveTextContent("分攤旅伴")
+    fireEvent.click(participant)
+    expect(screen.getByText("選擇分攤旅伴")).toBeInTheDocument()
+  })
+
+  it("titles the date panel with the choose wording", () => {
+    renderBar()
+    fireEvent.click(screen.getByRole("button", { name: "付款日期" }))
+    expect(screen.getByText("選擇付款日期")).toBeInTheDocument()
   })
 
   it("toggles a currency and clears", () => {
@@ -300,7 +314,7 @@ describe("ExpenseFilterBar panels", () => {
     fireEvent.click(screen.getByRole("button", { name: /付款旅伴/ }))
     expect(screen.getByRole("checkbox", { name: "志明" })).toHaveAttribute("aria-checked", "true")
     fireEvent.mouseDown(document.body)
-    fireEvent.click(screen.getByRole("button", { name: /^旅伴/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^分攤旅伴/ }))
     expect(screen.getByRole("checkbox", { name: "我" })).toHaveAttribute("aria-checked", "true")
     fireEvent.mouseDown(document.body)
     fireEvent.click(screen.getByRole("button", { name: /幣別/ }))
