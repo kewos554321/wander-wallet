@@ -20,12 +20,11 @@ interface SettleSummaryGridProps {
   dailyAverage: number
   perPerson: number
   currencyCode: string
-  currencySelect?: React.ReactNode
 }
 
 const n = (value: number, currencyCode: string) => formatAmount(value, currencyCode)
 
-export function SettleSummaryGrid({ count, total, dailyAverage, perPerson, currencyCode, currencySelect }: SettleSummaryGridProps) {
+export function SettleSummaryGrid({ count, total, dailyAverage, perPerson, currencyCode }: SettleSummaryGridProps) {
   const tiles: Tile[] = [
     { label: "支出筆數", value: String(count), icon: Receipt, tone: LAKE },
     { label: `總金額(${currencyCode})`, value: n(total, currencyCode), icon: Calculator, tone: CORAL },
@@ -35,10 +34,7 @@ export function SettleSummaryGrid({ count, total, dailyAverage, perPerson, curre
 
   return (
     <div data-testid="settle-summary" className="mx-4 mt-3.5 rounded-2xl border border-v2-line bg-v2-surface p-4">
-      <div className="mb-2.5 flex items-center justify-between">
-        <p className="m-0 text-[13px] font-bold text-v2-lake">計算總覽</p>
-        {currencySelect}
-      </div>
+      <p className="m-0 mb-2.5 text-[13px] font-bold text-v2-lake">花費總覽</p>
       <div className="grid grid-cols-2 gap-2.5">
         {tiles.map(({ label, value, icon: Icon, tone, testId }) => (
           <div key={label} data-testid={testId} className={`flex flex-col items-center rounded-v2-md px-1 py-3 ${tone.bg}`}>

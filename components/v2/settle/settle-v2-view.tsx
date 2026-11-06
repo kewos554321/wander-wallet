@@ -1,7 +1,6 @@
 import type { ReactNode } from "react"
 import Link from "next/link"
 import { BarChart3, ChevronRight } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { SettleData } from "@/lib/hooks/useSettlement"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { SettleSummaryGrid } from "./settle-summary-grid"
@@ -16,8 +15,6 @@ export interface SettleV2ViewProps {
   memberSeeds?: ReadonlyMap<string, string>
   dailyAverage: number
   displayCurrencyCode: string
-  currencyOptions: string[]
-  onDisplayCurrency: (code: string) => void
   toDisplay: (amount: number) => number
   adSlot?: ReactNode
   onShowCalc: () => void
@@ -27,22 +24,6 @@ export interface SettleV2ViewProps {
 export function SettleV2View(props: SettleV2ViewProps) {
   const { data, toDisplay } = props
   const perPerson = data.balances.length > 0 ? data.summary.totalAmount / data.balances.length : 0
-
-  const currencySelect =
-    props.currencyOptions.length > 1 ? (
-      <Select value={props.displayCurrencyCode} onValueChange={props.onDisplayCurrency}>
-        <SelectTrigger size="sm" aria-label="顯示幣別" className="h-7 w-auto border-v2-line bg-v2-surface text-xs">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {props.currencyOptions.map((code) => (
-            <SelectItem key={code} value={code}>
-              {code}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    ) : null
 
   return (
     <>
@@ -54,7 +35,6 @@ export function SettleV2View(props: SettleV2ViewProps) {
         dailyAverage={toDisplay(props.dailyAverage)}
         perPerson={toDisplay(perPerson)}
         currencyCode={props.displayCurrencyCode}
-        currencySelect={currencySelect}
       />
       <SettlementList
         settlements={data.settlements}

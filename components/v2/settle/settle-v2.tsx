@@ -6,7 +6,6 @@ import { AdContainer } from "@/components/ads/ad-container"
 import { SettleShareDialog } from "@/components/v2/settle/settle-share-dialog"
 import { SettlementCalcDialog } from "@/components/v2/settle/settle-calc-dialog"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
-import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import { useProjectData } from "@/lib/hooks"
 import { useSettlement } from "@/lib/hooks/useSettlement"
 import { computeDailyAverage } from "@/lib/settlement"
@@ -19,7 +18,6 @@ export function SettleV2({ projectId }: { projectId: string }) {
   const [showShare, setShowShare] = useState(false)
   const [showCalc, setShowCalc] = useState(false)
 
-  const baseCurrency = s.data?.summary.currency || DEFAULT_CURRENCY
   const currentMemberId = members.find((m) => m.user?.id === user?.id)?.id ?? null
   const placeholderMemberIds = new Set(members.filter((m) => !m.userId).map((m) => m.id))
   const memberSeeds = new Map(members.map((m) => [m.id, m.userId ?? m.id]))
@@ -58,8 +56,6 @@ export function SettleV2({ projectId }: { projectId: string }) {
           memberSeeds={memberSeeds}
           dailyAverage={dailyAverage}
           displayCurrencyCode={s.displayCurrencyCode}
-          currencyOptions={[baseCurrency, ...Object.keys(s.data.summary.exchangeRatesUsed ?? {})]}
-          onDisplayCurrency={(code) => s.setDisplayCurrency(code === baseCurrency ? null : code)}
           toDisplay={s.toDisplay}
           adSlot={<AdContainer placement="settle" variant="banner" />}
           onShowCalc={() => setShowCalc(true)}

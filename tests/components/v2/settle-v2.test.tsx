@@ -43,8 +43,6 @@ function renderView(overrides: Partial<Parameters<typeof SettleV2View>[0]> = {})
     currentMemberId: "me",
     dailyAverage: 5932,
     displayCurrencyCode: "TWD",
-    currencyOptions: ["TWD", "JPY"],
-    onDisplayCurrency: vi.fn(),
     toDisplay: (n: number) => n,
     adSlot: <div>ad</div>,
     onShowCalc: vi.fn(),
@@ -90,19 +88,19 @@ describe("SettleV2View", () => {
     expect(screen.queryByRole("region", { name: "各人收支" })).not.toBeInTheDocument()
   })
 
-  it("wires calc, share, stats link and currency select", () => {
+  it("wires calc, share and stats link", () => {
     const props = renderView()
     fireEvent.click(screen.getByRole("button", { name: "計算說明" }))
     fireEvent.click(screen.getByRole("button", { name: "分享" }))
     expect(props.onShowCalc).toHaveBeenCalled()
     expect(props.onShare).toHaveBeenCalled()
     expect(screen.getByRole("link", { name: /查看統計/ })).toHaveAttribute("href", "/projects/p1/stats")
-    expect(screen.getByLabelText("顯示幣別")).toBeInTheDocument()
   })
 
-  it("hides the currency select with a single currency", () => {
-    renderView({ currencyOptions: ["TWD"] })
+  it("does not offer currency switching in the summary", () => {
+    renderView()
     expect(screen.queryByLabelText("顯示幣別")).not.toBeInTheDocument()
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument()
   })
 
   it("does not repeat the exchange-rate note and still shows the sponsor card", () => {
@@ -147,10 +145,10 @@ describe("SettleV2View", () => {
   it("keeps the summary heading inside the summary card", () => {
     renderView()
     const grid = screen.getByTestId("settle-summary")
-    expect(within(grid).getByText("計算總覽")).toBeInTheDocument()
+    expect(within(grid).getByText("花費總覽")).toBeInTheDocument()
   })
 
-  it("renders the summary values through the display-currency conversion", () => {
+  it("renders the summary values through toDisplay", () => {
     renderView({ toDisplay: (n) => n * 2 })
     const grid = screen.getByTestId("settle-summary")
     expect(within(grid).getByText("59,320")).toBeInTheDocument()

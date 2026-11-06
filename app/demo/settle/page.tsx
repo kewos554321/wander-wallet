@@ -22,8 +22,6 @@ export default function DemoSettlePage() {
         currentMemberId={DEMO_CURRENT_MEMBER_ID}
         dailyAverage={5932}
         displayCurrencyCode={DEMO_CURRENCY}
-        currencyOptions={[DEMO_CURRENCY, "JPY"]}
-        onDisplayCurrency={() => {}}
         toDisplay={(n) => n}
         onShowCalc={() => setShowCalc(true)}
         onShare={() => setShowShare(true)}
