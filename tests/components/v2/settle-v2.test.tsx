@@ -63,7 +63,7 @@ describe("SettleV2View", () => {
     expect(within(grid).getByText("29,660")).toBeInTheDocument()
     expect(within(grid).getByText("5,932")).toBeInTheDocument()
     expect(within(grid).getByText("14,830")).toBeInTheDocument()
-    expect(within(grid).getByText("總金額 (TWD)")).toBeInTheDocument()
+    expect(within(grid).getByText("總金額(TWD)")).toBeInTheDocument()
   })
 
   it("lists transfers with 我 for the current member", () => {
@@ -105,10 +105,10 @@ describe("SettleV2View", () => {
     expect(screen.queryByLabelText("顯示幣別")).not.toBeInTheDocument()
   })
 
-  it("shows the exchange-rate note and sponsor card", () => {
+  it("does not repeat the exchange-rate note and still shows the sponsor card", () => {
     renderView()
-    expect(screen.getByRole("link", { name: /前往旅程設定調整匯率/ })).toHaveAttribute("href", "/projects/p1/settings")
-    expect(screen.getByText("使用即時匯率結算")).toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: /前往旅程設定調整匯率/ })).not.toBeInTheDocument()
+    expect(screen.queryByText("使用即時匯率結算")).not.toBeInTheDocument()
     expect(screen.getByText("喜歡 Wander Wallet 嗎？")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /請我們喝杯咖啡/ })).toBeInTheDocument()
   })
@@ -137,10 +137,10 @@ describe("SettleV2View", () => {
     expect(within(screen.getByTestId("settle-summary")).getAllByText("0").length).toBeGreaterThan(0)
   })
 
-  it("labels the daily-average tile with the display currency", () => {
+  it("labels the daily-average tile without repeating the display currency", () => {
     renderView()
     const tile = screen.getByTestId("settle-tile-daily")
-    expect(within(tile).getByText("日均花費 (TWD)")).toBeInTheDocument()
+    expect(within(tile).getByText("日均花費(TWD)")).toBeInTheDocument()
     expect(within(tile).getByText("5,932")).toBeInTheDocument()
   })
 

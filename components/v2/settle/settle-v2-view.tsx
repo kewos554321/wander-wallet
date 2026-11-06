@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import Link from "next/link"
-import { BarChart3, ChevronRight, Info } from "lucide-react"
+import { BarChart3, ChevronRight } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { SettleData } from "@/lib/hooks/useSettlement"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
@@ -27,7 +27,6 @@ export interface SettleV2ViewProps {
 export function SettleV2View(props: SettleV2ViewProps) {
   const { data, toDisplay } = props
   const perPerson = data.balances.length > 0 ? data.summary.totalAmount / data.balances.length : 0
-  const rates = data.summary.exchangeRatesUsed ?? {}
 
   const currencySelect =
     props.currencyOptions.length > 1 ? (
@@ -57,25 +56,6 @@ export function SettleV2View(props: SettleV2ViewProps) {
         currencyCode={props.displayCurrencyCode}
         currencySelect={currencySelect}
       />
-      {Object.keys(rates).length > 0 && (
-        <div className="mx-4 mt-3 flex items-start gap-2 rounded-xl border border-v2-line bg-v2-surface px-3 py-2.5 text-xs text-v2-ink-muted">
-          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          <div>
-            <p className="m-0 font-medium text-v2-ink">使用即時匯率結算</p>
-            {Object.entries(rates).map(([code, rate]) => (
-              <p key={code} className="m-0">
-                1 {code} = {rate.toFixed(data.summary.precision ?? 2)} {data.summary.currency}
-              </p>
-            ))}
-            <Link
-              href={`/projects/${props.projectId}/settings`}
-              className="mt-1 inline-block rounded font-semibold text-v2-link transition-colors duration-150 hover:text-v2-lake focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none"
-            >
-              前往旅程設定調整匯率
-            </Link>
-          </div>
-        </div>
-      )}
       <SettlementList
         settlements={data.settlements}
         placeholderMemberIds={props.placeholderMemberIds}

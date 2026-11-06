@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useAuthFetch } from "@/components/auth/liff-provider"
-import { DEFAULT_CURRENCY, formatCurrency } from "@/lib/constants/currencies"
+import { DEFAULT_CURRENCY } from "@/lib/constants/currencies"
+import { buildSettlementShareText } from "@/lib/settlement-share"
 
 export interface SettleBalance {
   memberId: string
@@ -118,19 +119,10 @@ export function useSettlement(projectId: string) {
     [displayCurrency, data, baseCurrency]
   )
 
-  const shareText = useMemo(() => {
-    if (!data) return ""
-    const lines = ["💰 結算明細", `總支出：${formatCurrency(data.summary.totalAmount, baseCurrency)}`, ""]
-    if (data.settlements.length === 0) {
-      lines.push("✅ 所有人都已結清！")
-    } else {
-      lines.push("📋 轉帳清單：")
-      data.settlements.forEach((s, idx) => {
-        lines.push(`${idx + 1}. ${s.from.displayName} ➡️ ${s.to.displayName}：${formatCurrency(s.amount, baseCurrency)}`)
-      })
-    }
-    return lines.join("\n")
-  }, [data, baseCurrency])
+  const shareText = useMemo(
+    () => (data ? buildSettlementShareText(data, baseCurrency) : ""),
+    [data, baseCurrency]
+  )
 
   return { data, loading, error, displayCurrency, setDisplayCurrency, displayCurrencyCode, toDisplay, shareText, refetch }
 }

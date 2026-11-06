@@ -73,7 +73,13 @@ describe("useSettlement", () => {
     const { result } = renderHook(() => useSettlement("p1"))
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(result.current.shareText).toBe(
-      ["💰 結算明細", "總支出：TWD 60,730", "", "📋 轉帳清單：", "1. 小美 ➡️ Emma：TWD 2,400"].join("\n")
+      [
+        "💰 結算明細",
+        "總支出：TWD 60,730",
+        "",
+        "📋 轉帳清單：",
+        "1. 小美 ➡️ Emma：TWD 2,400",
+      ].join("\n")
     )
   })
 

@@ -6,7 +6,7 @@ import { DEFAULT_ICON_COVER } from "@/lib/covers"
 import type { ProjectListItem, ProjectListMember } from "@/lib/hooks/useProjects"
 import type { ProjectExpense, ExpenseMember } from "@/lib/hooks/useProjectExpenses"
 import type { OverviewProject, OverviewMember, OverviewExpense, ProjectSummary } from "@/lib/project-overview"
-import type { SettleData } from "@/lib/hooks/useSettlement"
+import type { SettleData, SettleExpenseDetail } from "@/lib/hooks/useSettlement"
 import type { RecentRate } from "@/lib/recent-rates"
 import type { ProjectFormValues } from "@/lib/hooks/use-project-form"
 import type { DraftMember } from "@/components/v2/expense-form/use-expense-draft"
@@ -92,6 +92,150 @@ export const DEMO_RECENT_RATES: RecentRate[] = [
   { rate: 0.2135, kind: "market", date: "2026-10-05", description: "計程車" },
 ]
 
+const DEMO_SETTLE_EXPENSES: SettleExpenseDetail[] = [
+  {
+    id: "se1",
+    description: "晚餐 · 拉麵",
+    amount: 12800,
+    currency: "JPY",
+    convertedAmount: 2752,
+    payers: [{ memberId: "me", displayName: "我", userImage: null, amount: 12800, convertedAmount: 2752 }],
+    participants: IDS.map((id) => ({
+      memberId: id,
+      displayName: NAME[id],
+      userImage: null,
+      shareAmount: 3200,
+      convertedShareAmount: 688,
+      personalItems: [],
+      sharedAmount: 688,
+    })),
+  },
+  {
+    id: "se2",
+    description: "飯店 2 晚",
+    amount: 8600,
+    currency: "TWD",
+    convertedAmount: 8600,
+    payers: [
+      { memberId: "me", displayName: "我", userImage: null, amount: 5000, convertedAmount: 5000 },
+      { memberId: "ming", displayName: "阿明", userImage: null, amount: 3600, convertedAmount: 3600 },
+    ],
+    participants: [
+      {
+        memberId: "me",
+        displayName: "我",
+        userImage: null,
+        shareAmount: 3650,
+        convertedShareAmount: 3650,
+        personalItems: [
+          { name: "溫泉", amount: 1500, convertedAmount: 1500 },
+          { name: "按摩", amount: 500, convertedAmount: 500 },
+        ],
+        sharedAmount: 1650,
+      },
+      ...(["ming", "kai", "ting"] as MemberId[]).map((id) => ({
+        memberId: id,
+        displayName: NAME[id],
+        userImage: null,
+        shareAmount: 1650,
+        convertedShareAmount: 1650,
+        personalItems: [],
+        sharedAmount: 1650,
+      })),
+    ],
+  },
+  {
+    id: "se3",
+    description: "藥妝採買",
+    amount: 3200,
+    currency: "TWD",
+    convertedAmount: 3200,
+    payers: [{ memberId: "ting", displayName: "小婷", userImage: null, amount: 3200, convertedAmount: 3200 }],
+    participants: [
+      {
+        memberId: "me",
+        displayName: "我",
+        userImage: null,
+        shareAmount: 1200,
+        convertedShareAmount: 1200,
+        personalItems: [
+          { name: "面膜", amount: 800, convertedAmount: 800 },
+          { name: "藥品", amount: 400, convertedAmount: 400 },
+        ],
+        sharedAmount: 0,
+      },
+      {
+        memberId: "ting",
+        displayName: "小婷",
+        userImage: null,
+        shareAmount: 1300,
+        convertedShareAmount: 1300,
+        personalItems: [{ name: "保養品", amount: 600, convertedAmount: 600 }],
+        sharedAmount: 700,
+      },
+      {
+        memberId: "ming",
+        displayName: "阿明",
+        userImage: null,
+        shareAmount: 700,
+        convertedShareAmount: 700,
+        personalItems: [],
+        sharedAmount: 700,
+      },
+    ],
+  },
+  {
+    id: "se4",
+    description: "計程車",
+    amount: 2600,
+    currency: "TWD",
+    convertedAmount: 2600,
+    payers: [{ memberId: "ting", displayName: "小婷", userImage: null, amount: 2600, convertedAmount: 2600 }],
+    participants: [
+      { memberId: "me", displayName: "我", userImage: null, shareAmount: 1000, convertedShareAmount: 1000, personalItems: [], sharedAmount: 0, customAmount: 1000 },
+      { memberId: "ming", displayName: "阿明", userImage: null, shareAmount: 800, convertedShareAmount: 800, personalItems: [], sharedAmount: 0, customAmount: 800 },
+      { memberId: "ting", displayName: "小婷", userImage: null, shareAmount: 500, convertedShareAmount: 500, personalItems: [], sharedAmount: 0, customAmount: 500 },
+      { memberId: "kai", displayName: "阿凱", userImage: null, shareAmount: 300, convertedShareAmount: 300, personalItems: [], sharedAmount: 0, customAmount: 300 },
+    ],
+  },
+  {
+    id: "se5",
+    description: "咖啡",
+    amount: 8.5,
+    currency: "USD",
+    convertedAmount: 264,
+    payers: [{ memberId: "ming", displayName: "阿明", userImage: null, amount: 8.5, convertedAmount: 264 }],
+    participants: IDS.map((id) => ({
+      memberId: id,
+      displayName: NAME[id],
+      userImage: null,
+      shareAmount: 2.125,
+      convertedShareAmount: 66,
+      personalItems: [],
+      sharedAmount: 66,
+    })),
+  },
+  {
+    id: "se6",
+    description: "阿明的私人溫泉",
+    amount: 900,
+    currency: "TWD",
+    convertedAmount: 900,
+    payers: [{ memberId: "ming", displayName: "阿明", userImage: null, amount: 900, convertedAmount: 900 }],
+    participants: [
+      {
+        memberId: "ming",
+        displayName: "阿明",
+        userImage: null,
+        shareAmount: 900,
+        convertedShareAmount: 900,
+        personalItems: [],
+        sharedAmount: 900,
+      },
+    ],
+  },
+]
+
 export const DEMO_SETTLE: SettleData = {
   balances: [
     { memberId: "me", displayName: "我", userImage: null, balance: 3370, totalPaid: 15520, totalShare: 12150 },
@@ -104,7 +248,7 @@ export const DEMO_SETTLE: SettleData = {
     { from: { memberId: "ming", displayName: "阿明", userImage: null }, to: { memberId: "me", displayName: "我", userImage: null }, amount: 1200 },
     { from: { memberId: "kai", displayName: "阿凱", userImage: null }, to: { memberId: "me", displayName: "我", userImage: null }, amount: 900 },
   ],
-  expenseDetails: [],
+  expenseDetails: DEMO_SETTLE_EXPENSES,
   summary: {
     totalExpenses: 12,
     totalAmount: 48600,
@@ -115,6 +259,18 @@ export const DEMO_SETTLE: SettleData = {
   },
 }
 
+// Same trip plus a deliberately wide row so the demo can be used to tune the
+// balance table's own horizontal scrolling.
+export const DEMO_SETTLE_CALC: SettleData = {
+  ...DEMO_SETTLE,
+  balances: [
+    ...DEMO_SETTLE.balances,
+    { memberId: "long", displayName: "長金額測試", userImage: null, balance: 0, totalPaid: 123456789, totalShare: 123456789 },
+  ],
+}
+
+// Three creditors; 阿凱 has not shared an account, so the payout page can demo
+// the "尚未提供" state alongside the link in the share text.
 const overviewMembers: OverviewMember[] = IDS.map((id) => ({
   id,
   role: id === "me" ? "creator" : "member",

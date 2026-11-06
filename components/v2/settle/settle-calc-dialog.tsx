@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useId, useRef } from "react"
-import { ArrowRight, CheckCircle2, ReceiptText, X } from "lucide-react"
+import { useEffect, useId, useRef, useState } from "react"
+import { ArrowRight, CheckCircle2, ReceiptText, User, X } from "lucide-react"
 import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
-import type { SettleData, SettleExpenseDetail } from "@/lib/hooks/useSettlement"
+import type { SettleData } from "@/lib/hooks/useSettlement"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import { useDismiss } from "@/components/v2/use-dismiss"
 
@@ -23,39 +23,10 @@ function StepBadge({ n }: { n: number }) {
   return <span className={STEP_BADGE}>{n}</span>
 }
 
-// The 分攤 line matches the design's "share（total ÷ n）" only when every
-// participant owes the same amount; otherwise list each member's share (the
-// data model allows arbitrary per-participant amounts).
-function splitLine(expense: SettleExpenseDetail, currency: string): string {
-  const participants = expense.participants ?? []
-  if (participants.length === 0) return "—"
-  const hasStructure = participants.some((p) => (p.personalItems?.length ?? 0) > 0 || p.customAmount != null)
-  if (!hasStructure) {
-    const first = participants[0].convertedShareAmount
-    const allEqual = participants.every((p) => Math.abs(p.convertedShareAmount - first) < 0.005)
-    if (allEqual) {
-      return `${formatCurrency(first, currency)}（${expense.convertedAmount} ÷ ${participants.length}）`
-    }
-    return participants
-      .map((p) => `${p.displayName} ${formatCurrency(p.convertedShareAmount, currency)}`)
-      .join("、")
-  }
-  return participants
-    .map((p) => {
-      const parts: string[] = []
-      const items = p.personalItems ?? []
-      if (items.length > 0) {
-        const shown = items
-          .slice(0, 2)
-          .map((i) => `${i.name} ${formatCurrency(i.convertedAmount, currency)}`)
-          .join("、")
-        parts.push(items.length > 2 ? `個人 ${shown} +${items.length - 2} 項` : `個人 ${shown}`)
-      }
-      if ((p.customAmount ?? 0) > 0.005) parts.push(`指定 ${formatCurrency(p.customAmount as number, currency)}`)
-      else if ((p.sharedAmount ?? 0) > 0.005) parts.push(`共同 ${formatCurrency(p.sharedAmount as number, currency)}`)
-      return `${p.displayName} ${parts.join(" + ")}`
-    })
-    .join("；")
+// Keep the sign in one place: +TWD 1,234 / -TWD 1,234 / TWD 0.
+function signedCurrency(amount: number, currency: string): string {
+  if (Math.abs(amount) < 0.005) return formatCurrency(0, currency)
+  return `${amount > 0 ? "+" : "-"}${formatCurrency(Math.abs(amount), currency)}`
 }
 
 // "計算過程" dialog, ported from the original shared dialog so it can be rendered
@@ -63,6 +34,7 @@ function splitLine(expense: SettleExpenseDetail, currency: string): string {
 export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId, placeholderMemberIds, memberSeeds }: SettlementCalcDialogProps) {
   const cardRef = useRef<HTMLDivElement>(null)
   const titleId = useId()
+  const [onlyMe, setOnlyMe] = useState(false)
   useDismiss(cardRef, () => onOpenChange(false), open)
 
   useEffect(() => {
@@ -73,11 +45,28 @@ export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId
 
   const { summary, balances, settlements } = data
   const currency = summary.currency || DEFAULT_CURRENCY
+  const canFilter = Boolean(currentMemberId)
+  const filtering = onlyMe && canFilter
+  const expenseDetails = data.expenseDetails ?? []
+  const visibleExpenses = filtering
+    ? expenseDetails.filter(
+        (expense) =>
+          expense.payers.some((payer) => payer.memberId === currentMemberId) ||
+          expense.participants.some((participant) => participant.memberId === currentMemberId)
+      )
+    : expenseDetails
+  const visibleBalances = filtering ? balances.filter((balance) => balance.memberId === currentMemberId) : balances
+  const visibleSettlements = filtering
+    ? settlements.filter(
+        (settlement) =>
+          settlement.from.memberId === currentMemberId || settlement.to.memberId === currentMemberId
+      )
+    : settlements
 
   return (
     <div
       data-testid="settle-calc-overlay"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-v2-overlay"
+      className="fixed inset-0 z-50 flex justify-center bg-v2-overlay"
       onClick={(event) => {
         if (event.target === event.currentTarget) onOpenChange(false)
       }}
@@ -88,7 +77,7 @@ export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative max-h-[85vh] w-[350px] max-w-[calc(100vw-40px)] overflow-y-auto rounded-v2-lg bg-v2-surface p-[22px] outline-none"
+        className="relative h-dvh w-full max-w-md overflow-y-auto bg-v2-surface p-[22px] outline-none"
       >
         <button
           type="button"
@@ -99,45 +88,90 @@ export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
 
-        <h2 id={titleId} className="mb-[18px] mt-0 flex items-center gap-2 font-v2-serif text-[17px] font-bold">
-          <ReceiptText className="h-[18px] w-[18px] text-v2-lake" strokeWidth={2} aria-hidden="true" />
-          計算過程
-        </h2>
+        <div className="mb-[18px] flex items-center justify-between gap-2 pr-8">
+          <h2 id={titleId} className="m-0 flex items-center gap-2 font-v2-serif text-[17px] font-bold">
+            <ReceiptText className="h-[18px] w-[18px] text-v2-lake" strokeWidth={2} aria-hidden="true" />
+            計算過程
+          </h2>
+          {canFilter && (
+            <button
+              type="button"
+              data-testid="only-me-toggle"
+              aria-pressed={onlyMe}
+              onClick={() => setOnlyMe((value) => !value)}
+              className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake motion-reduce:transition-none ${
+                onlyMe
+                  ? "border-v2-lake bg-v2-lake-soft text-v2-lake"
+                  : "border-v2-line bg-v2-surface text-v2-ink-muted hover:bg-v2-sand"
+              }`}
+            >
+              <User className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
+              只看我
+            </button>
+          )}
+        </div>
 
         {/* Step 1: 支出明細 */}
         <div className="mb-2.5 flex items-center gap-2">
           <StepBadge n={1} />
-          <p className="m-0 text-[13px] font-bold text-v2-lake">支出明細（共 {data.expenseDetails?.length || 0} 筆）</p>
+          <p className="m-0 text-[13px] font-bold text-v2-lake">支出明細（共 {visibleExpenses.length} 筆）</p>
         </div>
-        <div className="mb-[18px] ml-8 flex max-h-[150px] flex-col gap-1.5 overflow-y-auto v2-scroll">
-          {data.expenseDetails && data.expenseDetails.length > 0 ? (
-            data.expenseDetails.map((expense) => (
-              <div key={expense.id} className="rounded-v2-sm bg-v2-paper px-3 py-[9px]">
-                <p className="mb-[3px] mt-0 text-[13px] font-semibold">
-                  {expense.description} ·{" "}
-                  {expense.currency !== currency
-                    ? `${formatCurrency(expense.amount, expense.currency)} → `
-                    : ""}
-                  {formatCurrency(expense.convertedAmount, currency)}
-                </p>
-                <p data-testid="payer-line" className="m-0 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-v2-lake">
-                  <span>付款：</span>
-                  {expense.payers.map((p, i) => (
-                    <span key={p.memberId} className="inline-flex items-center gap-1">
-                      {i > 0 ? <span aria-hidden="true">、</span> : null}
-                      <V2Avatar image={p.userImage ?? null} name={p.displayName} seed={memberSeeds?.get(p.memberId) ?? p.memberId} variant={p.memberId === currentMemberId ? "brand" : undefined} placeholder={placeholderMemberIds?.has(p.memberId)} className="h-4 w-4 rounded-full" fallbackClassName="text-[8px] font-bold" />
-                      <span>{p.displayName}</span>
-                      <span className="text-v2-gold">{formatCurrency(p.convertedAmount, currency)}</span>
-                    </span>
-                  ))}
-                </p>
-                <p data-testid="split-line" className="m-0 text-[11px] text-v2-gold">
-                  {`分攤：${splitLine(expense, currency)}`}
-                </p>
-              </div>
-            ))
+        <div data-testid="expense-detail-list" className="mb-[18px] ml-8 flex max-h-[40vh] flex-col gap-1.5 overflow-y-auto v2-scroll">
+          {visibleExpenses.length > 0 ? (
+            visibleExpenses.map((expense) => {
+              const visiblePayers = filtering
+                ? expense.payers.filter((payer) => payer.memberId === currentMemberId)
+                : expense.payers
+              const visibleParticipants = filtering
+                ? expense.participants.filter((participant) => participant.memberId === currentMemberId)
+                : expense.participants
+
+              return (
+                <div key={expense.id} className="rounded-v2-sm bg-v2-paper px-3 py-[9px]">
+                  <p className="mb-[3px] mt-0 text-[13px] font-semibold">
+                    {expense.description} ·{" "}
+                    {expense.currency !== currency
+                      ? `${formatCurrency(expense.amount, expense.currency)} → `
+                      : ""}
+                    {formatCurrency(expense.convertedAmount, currency)}
+                  </p>
+                  {visiblePayers.length > 0 && (
+                    <p data-testid="payer-line" className="m-0 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-v2-lake">
+                      <span className="text-v2-ink-muted">{filtering ? "我付款：" : "付款："}</span>
+                      {visiblePayers.map((p, i) => (
+                        <span key={p.memberId} className="inline-flex items-center gap-1">
+                          {i > 0 ? <span aria-hidden="true">、</span> : null}
+                          <V2Avatar image={p.userImage ?? null} name={p.displayName} seed={memberSeeds?.get(p.memberId) ?? p.memberId} variant={p.memberId === currentMemberId ? "brand" : undefined} placeholder={placeholderMemberIds?.has(p.memberId)} className="h-4 w-4 rounded-full" fallbackClassName="text-[8px] font-bold" />
+                          {!filtering && <span data-payer-name className="text-v2-ink">{p.displayName}</span>}
+                          <span data-payer-amount className="text-v2-gold">{formatCurrency(p.convertedAmount, currency)}</span>
+                        </span>
+                      ))}
+                    </p>
+                  )}
+                  {(!filtering || visibleParticipants.length > 0) && (
+                    <p data-testid="split-line" className="m-0 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-v2-ink">
+                      <span className="text-v2-ink-muted">{filtering ? "我分攤：" : "分攤："}</span>
+                      {visibleParticipants.length > 0 ? (
+                        visibleParticipants.map((p, i) => (
+                          <span key={p.memberId} data-split-member className="inline-flex items-center gap-1">
+                            {i > 0 ? <span aria-hidden="true">、</span> : null}
+                            <V2Avatar image={p.userImage ?? null} name={p.displayName} seed={memberSeeds?.get(p.memberId) ?? p.memberId} variant={p.memberId === currentMemberId ? "brand" : undefined} placeholder={placeholderMemberIds?.has(p.memberId)} className="h-4 w-4 rounded-full" fallbackClassName="text-[8px] font-bold" />
+                            {!filtering && <span data-split-name className="text-v2-ink">{p.displayName}</span>}
+                            <span data-split-amount className="text-v2-gold">{formatCurrency(p.convertedShareAmount, currency)}</span>
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-v2-ink-muted">—</span>
+                      )}
+                    </p>
+                  )}
+                </div>
+              )
+            })
           ) : (
-            <p className="m-0 text-[11px] text-v2-ink-muted">尚無支出記錄</p>
+            <p className="m-0 text-[11px] text-v2-ink-muted">
+              {filtering && expenseDetails.length > 0 ? "沒有與我相關的支出" : "尚無支出記錄"}
+            </p>
           )}
         </div>
 
@@ -147,32 +181,43 @@ export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId
           <p className="m-0 text-[13px] font-bold text-v2-lake">計算各人總額</p>
         </div>
         <div className="mb-[18px] ml-8">
-          <table className="w-full overflow-hidden rounded-v2-sm bg-v2-paper text-[12px]">
-            <thead className="bg-v2-lake-soft">
-              <tr>
-                <th className="p-[7px] text-left text-[11px] font-medium text-v2-lake">旅伴</th>
-                <th className="p-[7px] text-left text-[11px] font-medium text-v2-lake">已付</th>
-                <th className="p-[7px] text-left text-[11px] font-medium text-v2-lake">應付</th>
-                <th className="p-[7px] text-left text-[11px] font-medium text-v2-lake">餘額</th>
-              </tr>
-            </thead>
-            <tbody>
-              {balances.map((b) => (
-                <tr key={b.memberId}>
-                  <td className="p-[7px]">{b.displayName}</td>
-                  <td className="p-[7px] text-v2-lake">{formatCurrency(b.totalPaid, currency)}</td>
-                  <td className="p-[7px] text-v2-gold">{formatCurrency(b.totalShare, currency)}</td>
-                  <td
-                    data-testid={`balance-${b.memberId}`}
-                    className={`p-[7px] font-medium ${b.balance < -0.01 ? "text-v2-danger" : "text-v2-lake"}`}
-                  >
-                    {b.balance > 0.01 ? "+" : ""}
-                    {formatCurrency(b.balance, currency)}
-                  </td>
+          <div data-testid="balance-table-scroll" className="overflow-x-auto rounded-v2-sm">
+            <table className="w-full min-w-max bg-v2-paper text-[12px]">
+              <thead className="bg-v2-lake-soft">
+                <tr>
+                  <th className="whitespace-nowrap p-[7px] text-left text-[11px] font-medium text-v2-lake">旅伴</th>
+                  <th className="whitespace-nowrap p-[7px] text-left text-[11px] font-medium text-v2-lake">已付</th>
+                  <th className="whitespace-nowrap p-[7px] text-left text-[11px] font-medium text-v2-lake">應付</th>
+                  <th className="whitespace-nowrap p-[7px] text-left text-[11px] font-medium text-v2-lake">餘額</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {visibleBalances.length > 0 ? (
+                  visibleBalances.map((b) => (
+                    <tr key={b.memberId}>
+                      <td className="whitespace-nowrap p-[7px]">{b.displayName}</td>
+                      <td className="whitespace-nowrap p-[7px] text-v2-lake">{formatCurrency(b.totalPaid, currency)}</td>
+                      <td className="whitespace-nowrap p-[7px] text-v2-gold">{formatCurrency(b.totalShare, currency)}</td>
+                      <td
+                        data-testid={`balance-${b.memberId}`}
+                        className={`whitespace-nowrap p-[7px] font-medium ${
+                          b.balance < -0.005 ? "text-v2-danger" : b.balance > 0.005 ? "text-v2-lake" : "text-v2-ink-muted"
+                        }`}
+                      >
+                        {signedCurrency(b.balance, currency)}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="p-[9px] text-center text-[11px] text-v2-ink-muted">
+                      找不到你的成員資料
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
           <p className="m-0 mt-2 text-[10px] text-v2-ink-muted">餘額 = 已付金額 − 應付金額（正數表示應收回，負數表示需付出）</p>
         </div>
 
@@ -182,10 +227,10 @@ export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId
           <p className="m-0 text-[13px] font-bold text-v2-lake">結算方案</p>
         </div>
         <div className="ml-8">
-          {settlements.length > 0 ? (
+          {visibleSettlements.length > 0 ? (
             <>
               <div className="rounded-v2-sm bg-v2-lake-soft px-3 py-2.5">
-                {settlements.map((s, idx) => (
+                {visibleSettlements.map((s, idx) => (
                   <div
                     key={`${s.from.memberId}-${s.to.memberId}-${idx}`}
                     data-testid={`plan-${idx}`}
@@ -202,14 +247,22 @@ export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId
                 ))}
               </div>
               <p className="mb-0 mt-1.5 text-[10px] text-v2-ink-muted">
-                以上為最少轉帳次數的結算方案，共需 {settlements.length} 筆轉帳
+                {filtering
+                  ? `與你有關的轉帳共 ${visibleSettlements.length} 筆`
+                  : `以上為最少轉帳次數的結算方案，共需 ${visibleSettlements.length} 筆轉帳`}
               </p>
             </>
           ) : (
             <div className="rounded-v2-sm bg-v2-lake-soft px-3 py-4 text-center">
               <CheckCircle2 className="mx-auto mb-2 h-8 w-8 text-v2-lake" aria-hidden="true" />
               <p className="m-0 text-[13px] text-v2-lake">
-                {summary.totalExpenses === 0 ? "尚無支出記錄" : "所有人都已結清，無需轉帳！"}
+                {settlements.length > 0
+                  ? filtering
+                    ? "目前沒有與你有關的轉帳"
+                    : "所有人都已結清，無需轉帳！"
+                  : summary.totalExpenses === 0
+                    ? "尚無支出記錄"
+                    : "所有人都已結清，無需轉帳！"}
               </p>
             </div>
           )}

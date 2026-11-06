@@ -28,7 +28,10 @@ const GROUPS: { title: string; note: string; items: { href: string; label: strin
   {
     title: "結算",
     note: "誰該付誰多少",
-    items: [{ href: "/demo/settle", label: "結算", desc: "每人餘額、分帳清單、匯率摘要" }],
+    items: [
+      { href: "/demo/settle", label: "結算", desc: "轉帳建議與分享文字" },
+      { href: "/demo/settle-calc", label: "計算說明", desc: "支出明細、各人總額與結算方案（預設開啟）" },
+    ],
   },
   {
     title: "個人",

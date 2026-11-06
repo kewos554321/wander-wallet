@@ -11,6 +11,7 @@ describe("SettleSummaryGrid", () => {
     expect(within(grid).getByText("31.72")).toBeInTheDocument()
     expect(within(grid).getByText("10.50")).toBeInTheDocument()
     expect(within(grid).getByText("15.86")).toBeInTheDocument()
+    expect(within(grid).getByText("總金額(USD)")).toBeInTheDocument()
   })
 
   it("shows TWD without decimals", () => {
@@ -20,5 +21,15 @@ describe("SettleSummaryGrid", () => {
     const grid = screen.getByTestId("settle-summary")
     expect(within(grid).getByText("3,172")).toBeInTheDocument()
     expect(within(grid).getByText("1,586")).toBeInTheDocument()
+  })
+
+  it("shows the currency next to each money label", () => {
+    render(
+      <SettleSummaryGrid count={1} total={3172} dailyAverage={100} perPerson={1586} currencyCode="TWD" />,
+    )
+    const grid = screen.getByTestId("settle-summary")
+    expect(within(grid).getByText("總金額(TWD)")).toBeInTheDocument()
+    expect(within(grid).getByText("日均花費(TWD)")).toBeInTheDocument()
+    expect(within(grid).getByText("人均花費(TWD)")).toBeInTheDocument()
   })
 })

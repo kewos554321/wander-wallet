@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useId, useRef, useState } from "react"
-import { Check, Copy, X } from "lucide-react"
+import { Check, Copy, Ellipsis, X } from "lucide-react"
 import { useDismiss } from "@/components/v2/use-dismiss"
 
 interface SettleShareDialogProps {
@@ -46,6 +46,22 @@ export function SettleShareDialog({ open, onOpenChange, shareText }: SettleShare
     onOpenChange(false)
   }
 
+  // Native OS share sheet when available; otherwise "更多" behaves like copy so
+  // the button never becomes a dead end on desktop browsers.
+  async function handleMore() {
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: "結算結果", text: shareText })
+        onOpenChange(false)
+        return
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return
+        console.error("分享失敗:", err)
+      }
+    }
+    await handleCopy()
+  }
+
   if (!open) return null
 
   return (
@@ -62,7 +78,7 @@ export function SettleShareDialog({ open, onOpenChange, shareText }: SettleShare
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative w-[340px] max-w-[calc(100vw-40px)] rounded-v2-lg bg-v2-surface p-[22px] outline-none"
+        className="relative max-h-[90vh] w-[340px] max-w-[calc(100vw-40px)] overflow-y-auto rounded-v2-lg bg-v2-surface p-[22px] outline-none"
       >
         <button
           type="button"
@@ -84,7 +100,7 @@ export function SettleShareDialog({ open, onOpenChange, shareText }: SettleShare
           {shareText}
         </div>
 
-        <div className="flex gap-2.5">
+        <div className="flex gap-2">
           <button
             type="button"
             onClick={handleCopy}
@@ -113,6 +129,14 @@ export function SettleShareDialog({ open, onOpenChange, shareText }: SettleShare
               <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
             </svg>
             LINE 分享
+          </button>
+          <button
+            type="button"
+            onClick={handleMore}
+            className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-v2-md border border-v2-line bg-v2-surface text-[13px] font-semibold text-v2-ink-muted"
+          >
+            <Ellipsis className="h-3.5 w-3.5" aria-hidden="true" />
+            更多
           </button>
         </div>
       </div>
