@@ -42,6 +42,24 @@ describe("StatsV2View", () => {
     expect(within(legend).getByText("TWD 19,440")).toBeInTheDocument()
   })
 
+  it("keeps long category names and amounts from wrapping the legend row", () => {
+    const longStats = {
+      ...stats,
+      categories: [
+        { category: "交通運輸", amount: 99_999_999, percent: 88.5 },
+        { category: "food", amount: 12_345, percent: 11.5 },
+      ],
+    }
+    render(<StatsV2View projectId="p1" currency="TWD" stats={longStats} currentMemberId="me" />)
+    const legend = screen.getByRole("list", { name: "類別佔比" })
+    expect(legend.className).toContain("min-w-0")
+    expect(within(legend).getByText("交通運輸").className).toContain("truncate")
+    expect(within(legend).getByText("89%").className).toContain("whitespace-nowrap")
+    const amount = within(legend).getByText("TWD 99,999,999")
+    expect(amount.className).toContain("shrink-0")
+    expect(amount.className).toContain("whitespace-nowrap")
+  })
+
   it("ranks members by share with the real initial and 我 in the meter label", () => {
     render(<StatsV2View projectId="p1" currency="TWD" stats={stats} currentMemberId="me" />)
     const rows = within(screen.getByRole("list", { name: "旅伴排行" })).getAllByRole("listitem")

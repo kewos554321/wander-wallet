@@ -41,15 +41,17 @@ export function CategoryDonut({ categories, currency }: { categories: CategorySt
           ))}
         </g>
       </svg>
-      <ul aria-label="類別佔比" className="m-0 flex flex-1 list-none flex-col gap-[9px] p-0">
+      <ul aria-label="類別佔比" className="m-0 flex min-w-0 flex-1 list-none flex-col gap-[9px] p-0">
         {categories.map((c, i) => (
           <li key={c.category} className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 shrink-0 rounded-v2-xs" style={{ background: COLORS[i % COLORS.length] }} aria-hidden="true" />
-            <span className="flex flex-1 items-baseline gap-1 text-xs font-semibold">
-              <span>{getCategoryLabel(c.category)}</span>
-              <span className="font-medium text-v2-ink-muted">{Math.round(c.percent)}%</span>
+            <span className="flex min-w-0 flex-1 items-baseline gap-1 text-xs font-semibold">
+              <span className="min-w-0 truncate">{getCategoryLabel(c.category)}</span>
+              <span className="shrink-0 whitespace-nowrap font-medium text-v2-ink-muted">{Math.round(c.percent)}%</span>
             </span>
-            <span className="text-xs font-semibold text-v2-ink-muted">{formatCurrency(Math.round(c.amount), currency)}</span>
+            <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-v2-ink-muted">
+              {formatCurrency(Math.round(c.amount), currency)}
+            </span>
           </li>
         ))}
       </ul>
