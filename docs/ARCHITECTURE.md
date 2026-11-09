@@ -125,24 +125,28 @@ wander-wallet/
 
 ## API 中介層模式
 
-所有 API 路由遵循以下模式：
+API 路由目前直接使用 `getAuthUser` 驗證身分，並以 `NextResponse.json` 回傳統一的錯誤格式：
 
 ```typescript
+import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUser } from '@/lib/auth'
-import { successResponse, errorResponse } from '@/lib/api-response'
 
 export async function GET(req: NextRequest) {
   // 1. 驗證使用者
   const user = await getAuthUser(req)
   if (!user) {
-    return errorResponse('Unauthorized', 401)
+    return NextResponse.json({ error: '未授權' }, { status: 401 })
   }
 
-  // 2. 業務邏輯處理
+  // 2. 需要旅程權限時，確認使用者是該旅程的旅伴
+  // const membership = await prisma.projectMember.findFirst(...)
+  // if (!membership) return NextResponse.json({ error: '無權限訪問此旅程' }, { status: 403 })
+
+  // 3. 業務邏輯處理
   // ...
 
-  // 3. 回傳標準化回應
-  return successResponse(data)
+  // 4. 回傳回應
+  return NextResponse.json(data)
 }
 ```
 

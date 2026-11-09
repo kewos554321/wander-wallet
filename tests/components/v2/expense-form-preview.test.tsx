@@ -48,7 +48,6 @@ vi.mock("@/lib/hooks/useSaveExpense", () => ({
 }))
 
 vi.mock("@/components/v2/expense-form/location-picker-v2", () => ({ LocationPickerV2: () => null }))
-vi.mock("@/components/v2/expense-form/v2-image-picker", () => ({ V2ImagePicker: () => null }))
 vi.mock("@/lib/geolocation", () => ({ getCurrentLocation: () => Promise.resolve(null) }))
 
 // Native stub so the test can programmatically change the currency.

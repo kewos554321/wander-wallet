@@ -1,7 +1,7 @@
 import { buildSplitDetail, computeShares, type SplitDetail } from "@/lib/expense-split"
 import { derivePayerShares, type PayerShare } from "@/lib/expense-payers"
 import type { PreviewRateInfo } from "@/lib/currency-conversion"
-import type { ImagePickerValue } from "@/components/ui/image-picker"
+import type { ImagePickerValue } from "@/types/image"
 import {
   deriveSplit,
   newSplitItem,

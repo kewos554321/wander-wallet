@@ -365,7 +365,7 @@ describe("ExpensesV2 container", () => {
     expect(screen.queryByAltText("消費圖片")).not.toBeInTheDocument()
   })
 
-  // Sets up the real ConfirmDeleteDialog and drives it through the rendered
+  // Sets up the real DeleteExpenseSheet and drives it through the rendered
   // controls (rather than a stub) so the container's delete wiring is exercised.
   async function openDeleteDialog(options: { canNotifyLine: boolean; uncheck?: boolean; cancel?: boolean }) {
     const single = expense({ id: "e1" })
