@@ -188,6 +188,15 @@ describe("LocationPickerV2", () => {
     expect(await screen.findByText("網路錯誤，請稍後再試")).toBeInTheDocument()
   })
 
+  it("keeps a long location from squeezing the row label", () => {
+    const longName = "台北市".repeat(20)
+    render(<LocationPickerV2 variant="row" value={{ location: longName, latitude: 25.0, longitude: 121.5 }} onChange={vi.fn()} />)
+    expect(screen.getByText("消費地點")).toHaveClass("shrink-0")
+    const value = screen.getByText(longName)
+    expect(value).toHaveClass("min-w-0", "flex-1", "truncate")
+    expect(value).not.toHaveClass("max-w-[11rem]")
+  })
+
   // Coverage for the geolocation error branches.
   it("shows a permission error when geolocation is denied", async () => {
     setGeolocationReject(GEO_CODES.PERMISSION_DENIED)

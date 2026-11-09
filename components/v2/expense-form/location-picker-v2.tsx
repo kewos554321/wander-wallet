@@ -235,8 +235,8 @@ export function LocationPickerV2({ value, onChange, className, variant = "defaul
           className="flex min-h-[56px] w-full items-center gap-3 px-1 text-left transition-colors hover:bg-v2-lake-tint/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
         >
           <MapPin className="h-[18px] w-[18px] shrink-0 text-v2-ink-muted" aria-hidden="true" />
-          <span className="flex-1 text-[13px] font-medium text-v2-ink">消費地點</span>
-          <span className="max-w-[11rem] truncate text-[13px] text-v2-ink-muted">{value?.location ?? "新增地點"}</span>
+          <span className="shrink-0 text-[13px] font-medium text-v2-ink">消費地點</span>
+          <span className="min-w-0 flex-1 truncate text-right text-[13px] text-v2-ink-muted">{value?.location ?? "新增地點"}</span>
           <ChevronDown
             className={`h-4 w-4 shrink-0 text-v2-ink-muted transition-transform ${isOpen ? "rotate-180" : ""}`}
             aria-hidden="true"
