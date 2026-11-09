@@ -1,5 +1,6 @@
 // 共用 Hooks
 export { useCurrencyConversion } from "./useCurrencyConversion"
+export { useRateSeries, type RateRange, type RatePoint } from "./useRateSeries"
 export { useOnboarding } from "./useOnboarding"
 export {
   useProjectData,

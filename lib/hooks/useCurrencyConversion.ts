@@ -24,8 +24,14 @@ interface UseCurrencyConversionReturn {
   loading: boolean
   /** 是否使用備用匯率 */
   usingFallback: boolean
-  /** 匯率更新時間戳記 */
+  /** 上游匯率資料時間（不是本機抓取時間） */
   ratesTimestamp: number | null
+  /** 上游資料日期（YYYY-MM-DD） */
+  ratesDate: string | null
+  /** 匯率來源名稱 */
+  ratesSource: string | null
+  /** 匯率載入錯誤 */
+  error: string | null
   /** 重新取得匯率 */
   refetch: () => Promise<void>
 }
@@ -52,20 +58,28 @@ export function useCurrencyConversion(
   const [loading, setLoading] = useState(false)
   const [usingFallback, setUsingFallback] = useState(false)
   const [ratesTimestamp, setRatesTimestamp] = useState<number | null>(null)
+  const [ratesDate, setRatesDate] = useState<string | null>(null)
+  const [ratesSource, setRatesSource] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   // 取得匯率
   const fetchRates = useCallback(async () => {
     setLoading(true)
+    setError(null)
     try {
       const res = await authFetch("/api/exchange-rates")
-      if (res.ok) {
-        const data = await res.json()
-        setExchangeRates(data.rates)
-        setUsingFallback(data.usingFallback || false)
-        setRatesTimestamp(data.timestamp || null)
+      if (!res.ok) {
+        throw new Error("匯率載入失敗")
       }
-    } catch (error) {
-      console.error("取得匯率失敗:", error)
+      const data = await res.json()
+      setExchangeRates(data.rates)
+      setUsingFallback(data.usingFallback || false)
+      setRatesTimestamp(data.updatedAt ?? data.timestamp ?? null)
+      setRatesDate(data.date ?? null)
+      setRatesSource(data.source ?? null)
+    } catch (err) {
+      console.error("取得匯率失敗:", err)
+      setError("匯率載入失敗")
     } finally {
       setLoading(false)
     }
@@ -117,6 +131,9 @@ export function useCurrencyConversion(
     loading,
     usingFallback,
     ratesTimestamp,
+    ratesDate,
+    ratesSource,
+    error,
     refetch: fetchRates,
   }
 }

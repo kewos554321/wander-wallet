@@ -44,11 +44,6 @@ export function formatRelativeTime(timestamp: number, now: number = Date.now()):
   return `${Math.floor(hours / 24)} 天前`
 }
 
-export function isRatesStale(timestamp: number | null, now: number = Date.now()): boolean {
-  if (!timestamp) return false
-  return now - timestamp > 24 * 60 * 60 * 1000
-}
-
 export function customRateDiff(customRate: number, liveRate: number): number {
   if (!liveRate) return 0
   return ((customRate - liveRate) / liveRate) * 100
@@ -59,6 +54,63 @@ export function rateFromRates(from: string, to: string, rates: Record<string, nu
   const fromRate = rates[from] || 1
   const toRate = rates[to] || 1
   return toRate / fromRate
+}
+
+/**
+ * Cross rate, or null when a leg is genuinely missing. Unlike `rateFromRates`,
+ * this never turns absent data into a plausible-looking 1:1 rate.
+ */
+export function rateIfAvailable(
+  from: string,
+  to: string,
+  rates: Record<string, number> | null | undefined
+): number | null {
+  if (from === to) return 1
+  if (!rates) return null
+  const fromRate = rates[from]
+  const toRate = rates[to]
+  if (!Number.isFinite(fromRate) || !Number.isFinite(toRate) || fromRate === 0) return null
+  return toRate / fromRate
+}
+
+/** Percentage change from `baseline`, or null when either side is unknown. */
+export function rateDiffPercent(value: number | null, baseline: number | null): number | null {
+  if (value == null || baseline == null) return null
+  if (!Number.isFinite(value) || !Number.isFinite(baseline) || baseline === 0) return null
+  return ((value - baseline) / baseline) * 100
+}
+
+/** Rate display uses significant digits so VND and KRW both stay readable. */
+export function formatRate(rate: number): string {
+  return String(roundRateForDisplay(rate))
+}
+
+function parseRateDate(value: string | number): Date | null {
+  if (typeof value === "string") {
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/)
+    if (match) {
+      const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+      return Number.isNaN(date.getTime()) ? null : date
+    }
+  }
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+/** Calendar date for a rate, e.g. 2026/11/6. */
+export function formatRateDate(value: string | number | null): string | null {
+  if (value == null) return null
+  const date = parseRateDate(value)
+  if (!date) return null
+  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`
+}
+
+/** Local `YYYY-MM-DD` for date inputs; avoids UTC shifting the day. */
+export function localDateString(date: Date = new Date()): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
 }
 
 /**

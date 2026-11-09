@@ -16,15 +16,14 @@ afterEach(() => {
 
 describe("exchange-rate service", () => {
   describe("getExchangeRates", () => {
-    it("should fetch exchange rates from API", async () => {
+    it("should fetch the latest rates from Frankfurter", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () =>
-          Promise.resolve({
-            result: "success",
-            base_code: "USD",
-            rates: { USD: 1, TWD: 31.5, JPY: 150 },
-          }),
+          Promise.resolve([
+            { date: "2026-02-02", base: "USD", quote: "TWD", rate: 31.5 },
+            { date: "2026-02-02", base: "USD", quote: "JPY", rate: 150 },
+          ]),
       })
 
       const { getExchangeRates } = await import(
@@ -32,20 +31,25 @@ describe("exchange-rate service", () => {
       )
       const result = await getExchangeRates()
 
+      const url = String((mockFetch.mock.calls[0] as unknown[])[0])
+      expect(url).toContain("api.frankfurter.dev/v2/rates")
+      expect(url).toContain("base=USD")
       expect(result.base).toBe("USD")
-      expect(result.rates).toHaveProperty("USD")
-      expect(result.rates).toHaveProperty("TWD")
+      expect(result.rates).toHaveProperty("USD", 1)
+      expect(result.rates).toHaveProperty("TWD", 31.5)
+      expect(result.source).toBe("Frankfurter")
+      expect(result.date).toBe("2026-02-02")
+      expect(result.timestamp).toBe(new Date("2026-02-02T00:00:00Z").getTime())
+      expect(result.isFallback).toBe(false)
     })
 
     it("should use cache when rates are fresh", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () =>
-          Promise.resolve({
-            result: "success",
-            base_code: "USD",
-            rates: { USD: 1, TWD: 31.5 },
-          }),
+          Promise.resolve([
+            { date: "2026-02-02", base: "USD", quote: "TWD", rate: 31.5 },
+          ]),
       })
 
       const { getExchangeRates } = await import(
@@ -72,6 +76,8 @@ describe("exchange-rate service", () => {
       expect(result.base).toBe("USD")
       expect(result.rates).toHaveProperty("USD", 1)
       expect(result.rates).toHaveProperty("TWD")
+      expect(result.isFallback).toBe(true)
+      expect(result.source).toBe("Frankfurter")
     })
 
     it("should return fallback rates when API response is not ok", async () => {
@@ -88,10 +94,10 @@ describe("exchange-rate service", () => {
       expect(result.rates).toHaveProperty("USD", 1)
     })
 
-    it("should return fallback rates when API returns unsuccessful", async () => {
+    it("should return fallback rates when the API returns an error payload", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ result: "error", "error-type": "unsupported-code" }),
+        json: () => Promise.resolve({ status: 422, message: "invalid currency" }),
       })
 
       const { getExchangeRates } = await import(
@@ -128,7 +134,28 @@ describe("exchange-rate service", () => {
       expect(result.rates.USD).toBe(1)
       expect(result.rates.TWD).toBe(30.5)
       expect(result.rates.JPY).toBe(141.2)
-      expect(result.timestamp).toBe(new Date("2024-01-01").getTime())
+      expect(result.timestamp).toBe(new Date("2024-01-01T00:00:00Z").getTime())
+      expect(result.date).toBe("2024-01-01")
+      expect(result.source).toBe("Frankfurter")
+      expect(result.isFallback).toBe(false)
+    })
+
+    it("should report the date the provider actually returned", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { date: "2023-12-29", base: "USD", quote: "TWD", rate: 30.4 },
+          ]),
+      })
+
+      const { getHistoricalRates } = await import(
+        "@/lib/services/exchange-rate"
+      )
+      const result = await getHistoricalRates("2024-01-01")
+
+      expect(result.date).toBe("2023-12-29")
+      expect(result.timestamp).toBe(new Date("2023-12-29T00:00:00Z").getTime())
     })
 
     it("should pass the requested base currency to Frankfurter", async () => {
@@ -171,16 +198,97 @@ describe("exchange-rate service", () => {
       expect(mockFetch).toHaveBeenCalledTimes(1)
     })
 
-    it("should return fallback on error", async () => {
+    it("should throw instead of pretending fallback rates are history", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network error"))
 
       const { getHistoricalRates } = await import(
         "@/lib/services/exchange-rate"
       )
-      const result = await getHistoricalRates("2024-01-01")
 
-      expect(result.base).toBe("USD")
-      expect(result.rates).toHaveProperty("USD", 1)
+      await expect(getHistoricalRates("2024-01-01")).rejects.toThrow(
+        "查不到該日期的匯率"
+      )
+    })
+  })
+
+  describe("getRateSeries", () => {
+    it("should return sorted daily points for one pair", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { date: "2026-10-03", base: "USD", quote: "TWD", rate: 31.9 },
+            { date: "2026-10-01", base: "USD", quote: "TWD", rate: 31.8 },
+            { date: "2026-10-02", base: "USD", quote: "TWD", rate: 31.85 },
+          ]),
+      })
+
+      const { getRateSeries } = await import(
+        "@/lib/services/exchange-rate"
+      )
+      const result = await getRateSeries({
+        start: "2026-10-01",
+        end: "2026-10-03",
+        base: "USD",
+        quote: "TWD",
+      })
+
+      const url = String((mockFetch.mock.calls[0] as unknown[])[0])
+      expect(url).toContain("api.frankfurter.dev/v2/rates")
+      expect(url).toContain("from=2026-10-01")
+      expect(url).toContain("to=2026-10-03")
+      expect(url).toContain("base=USD")
+      expect(url).toContain("quotes=TWD")
+      expect(result).toEqual([
+        { date: "2026-10-01", rate: 31.8 },
+        { date: "2026-10-02", rate: 31.85 },
+        { date: "2026-10-03", rate: 31.9 },
+      ])
+    })
+
+    it("should cache a series by range and pair", async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { date: "2026-10-01", base: "USD", quote: "TWD", rate: 31.8 },
+          ]),
+      })
+
+      const { getRateSeries } = await import(
+        "@/lib/services/exchange-rate"
+      )
+      await getRateSeries({
+        start: "2026-10-01",
+        end: "2026-10-03",
+        base: "USD",
+        quote: "TWD",
+      })
+      await getRateSeries({
+        start: "2026-10-01",
+        end: "2026-10-03",
+        base: "USD",
+        quote: "TWD",
+      })
+
+      expect(mockFetch).toHaveBeenCalledTimes(1)
+    })
+
+    it("should throw instead of inventing a series on error", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("Network error"))
+
+      const { getRateSeries } = await import(
+        "@/lib/services/exchange-rate"
+      )
+
+      await expect(
+        getRateSeries({
+          start: "2026-10-01",
+          end: "2026-10-03",
+          base: "USD",
+          quote: "TWD",
+        })
+      ).rejects.toThrow("查不到趨勢資料")
     })
   })
 
@@ -199,11 +307,10 @@ describe("exchange-rate service", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () =>
-          Promise.resolve({
-            result: "success",
-            base_code: "USD",
-            rates: { USD: 1, TWD: 32, JPY: 150 },
-          }),
+          Promise.resolve([
+            { date: "2024-01-01", base: "USD", quote: "TWD", rate: 32 },
+            { date: "2024-01-01", base: "USD", quote: "JPY", rate: 150 },
+          ]),
       })
 
       const { convertCurrency } = await import(
@@ -219,11 +326,10 @@ describe("exchange-rate service", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () =>
-          Promise.resolve({
-            result: "success",
-            base_code: "USD",
-            rates: { USD: 1, TWD: 32, JPY: 150 },
-          }),
+          Promise.resolve([
+            { date: "2024-01-01", base: "USD", quote: "TWD", rate: 32 },
+            { date: "2024-01-01", base: "USD", quote: "JPY", rate: 150 },
+          ]),
       })
 
       const { convertCurrency } = await import(
@@ -241,11 +347,9 @@ describe("exchange-rate service", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () =>
-          Promise.resolve({
-            result: "success",
-            base_code: "USD",
-            rates: { USD: 1, TWD: 32 },
-          }),
+          Promise.resolve([
+            { date: "2024-01-01", base: "USD", quote: "TWD", rate: 32 },
+          ]),
       })
 
       const { getExchangeRate } = await import(
@@ -262,11 +366,9 @@ describe("exchange-rate service", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () =>
-          Promise.resolve({
-            result: "success",
-            base_code: "USD",
-            rates: { USD: 1 },
-          }),
+          Promise.resolve([
+            { date: "2024-01-01", base: "USD", quote: "TWD", rate: 32 },
+          ]),
       })
 
       const { getExchangeRates, isUsingFallbackRates } = await import(

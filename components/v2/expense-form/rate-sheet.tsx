@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useAuthFetch } from "@/components/auth/liff-provider"
 import { roundRateForDisplay } from "@/lib/currency-conversion"
 import { sanitizeDecimal } from "@/lib/numeric-input"
-import { formatRelativeTime, rateFromRates } from "@/components/v2/currency/format"
+import { rateFromRates } from "@/components/v2/currency/format"
 import type { RecentRate } from "@/lib/recent-rates"
 
 type Tab = "market" | "custom"
@@ -67,7 +67,6 @@ export function RateSheet({
   rate,
   customRate,
   liveRate,
-  liveTimestamp,
   appliedKind,
   recentRates,
   onUseRate,
@@ -196,9 +195,7 @@ export function RateSheet({
                       {historyLoading
                         ? "讀取中…"
                         : isToday
-                          ? liveTimestamp
-                            ? `今天 · 更新於 ${formatRelativeTime(liveTimestamp)}`
-                            : "今天 · 即時匯率"
+                          ? "最新 · 每日更新"
                           : `${date} · 歷史匯率`}
                     </p>
                   </div>

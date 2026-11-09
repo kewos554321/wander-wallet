@@ -202,13 +202,24 @@ describe("useCurrencyConversion", () => {
     it("should fetch rates automatically when autoFetch is true", async () => {
       mockAuthFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ rates: { USD: 1 } }),
+        json: () =>
+          Promise.resolve({
+            rates: { USD: 1 },
+            timestamp: 1770000000000,
+            date: "2026-11-06",
+            source: "Frankfurter",
+          }),
       })
 
-      renderHook(() => useCurrencyConversion({ autoFetch: true }))
+      const { result } = renderHook(() =>
+        useCurrencyConversion({ autoFetch: true })
+      )
 
       await waitFor(() => {
         expect(mockAuthFetch).toHaveBeenCalledWith("/api/exchange-rates")
+        expect(result.current.ratesTimestamp).toBe(1770000000000)
+        expect(result.current.ratesDate).toBe("2026-11-06")
+        expect(result.current.ratesSource).toBe("Frankfurter")
       })
     })
 
@@ -278,6 +289,7 @@ describe("useCurrencyConversion", () => {
       await waitFor(() => expect(result.current.loading).toBe(false))
 
       expect(result.current.exchangeRates).toBeNull()
+      expect(result.current.error).toBe("匯率載入失敗")
       expect(consoleSpy).toHaveBeenCalled()
 
       consoleSpy.mockRestore()
@@ -294,6 +306,7 @@ describe("useCurrencyConversion", () => {
       await waitFor(() => expect(result.current.loading).toBe(false))
 
       expect(result.current.exchangeRates).toBeNull()
+      expect(result.current.error).toBe("匯率載入失敗")
     })
   })
 
