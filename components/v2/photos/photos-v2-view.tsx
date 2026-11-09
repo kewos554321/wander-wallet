@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight, ImageIcon, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, ImageIcon, MapPin, User, X } from "lucide-react"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { CategoryChips, type CategoryChipItem } from "@/components/v2/ui/category-chips"
-import { CATEGORY_EMOJI, CATEGORY_TONES, categoryKey } from "@/components/v2/category-style"
-import { getCategoryLabel, type ExpenseCategory } from "@/lib/constants/expenses"
+import { CATEGORY_TONES, categoryKey } from "@/components/v2/category-style"
+import { CATEGORY_ICONS, getCategoryLabel, type ExpenseCategory } from "@/lib/constants/expenses"
 import { formatCurrency } from "@/lib/constants/currencies"
 import { primaryPayerName } from "@/lib/expense-payers"
 import { cn } from "@/lib/utils"
@@ -50,12 +50,14 @@ export function PhotosV2View({ projectId, currency, expenses, loading }: PhotosV
     return [...counts.entries()].map(([key, count]) => ({
       key,
       label: getCategoryLabel(key),
-      emoji: CATEGORY_EMOJI[key],
+      icon: CATEGORY_ICONS[key],
       count,
     }))
   }, [withPhotos])
 
   const selected = selectedIndex !== null && selectedIndex < filtered.length ? filtered[selectedIndex] : null
+  const selectedKey = selected ? categoryKey(selected.category) : null
+  const SelectedIcon = selectedKey ? CATEGORY_ICONS[selectedKey] : null
 
   const close = () => setSelectedIndex(null)
   const goPrev = () => setSelectedIndex((i) => (i === null || filtered.length === 0 ? i : (i - 1 + filtered.length) % filtered.length))
@@ -114,6 +116,7 @@ export function PhotosV2View({ projectId, currency, expenses, loading }: PhotosV
             <div className="grid grid-cols-2 gap-2.5 px-4 pt-3 sm:grid-cols-3 md:grid-cols-4">
               {filtered.map((expense, index) => {
                 const key = categoryKey(expense.category)
+                const Icon = CATEGORY_ICONS[key]
                 return (
                   <button
                     key={expense.id}
@@ -123,8 +126,9 @@ export function PhotosV2View({ projectId, currency, expenses, loading }: PhotosV
                     className="relative aspect-square overflow-hidden rounded-v2-md"
                   >
                     <Image src={expense.image!} alt={expense.description || "收據照片"} fill sizes="(max-width:640px) 50vw, 33vw" className="object-cover" />
-                    <span className={cn("absolute left-[7px] top-[7px] rounded-full bg-v2-surface px-2 py-[3px] text-[10px] font-semibold", CATEGORY_TONES[key])}>
-                      {CATEGORY_EMOJI[key]} {getCategoryLabel(key)}
+                    <span className={cn("absolute left-[7px] top-[7px] flex items-center gap-1 rounded-full bg-v2-surface px-2 py-[3px] text-[10px] font-semibold", CATEGORY_TONES[key])}>
+                      <Icon className="h-[11px] w-[11px]" strokeWidth={2} aria-hidden="true" />
+                      {getCategoryLabel(key)}
                     </span>
                     <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-v2-ink/75 to-transparent p-[9px] text-left text-v2-paper">
                       <span className="block font-v2-serif text-[13px] font-bold">{formatCurrency(expense.amount, expense.currency || currency)}</span>
@@ -175,17 +179,28 @@ export function PhotosV2View({ projectId, currency, expenses, loading }: PhotosV
           <div className="w-full max-w-4xl px-4" onClick={(e) => e.stopPropagation()}>
             <Image src={selected.image!} alt={selected.description || "收據照片"} width={800} height={600} className="mx-auto max-h-[70vh] w-auto rounded-lg object-contain" />
             <div className="mt-3 flex flex-col gap-1 text-v2-paper">
-              <span className={cn("w-fit rounded-full bg-v2-paper/15 px-2 py-0.5 text-[10px] font-semibold", CATEGORY_TONES[categoryKey(selected.category)])}>
-                {CATEGORY_EMOJI[categoryKey(selected.category)]} {getCategoryLabel(categoryKey(selected.category))}
+              <span className={cn("flex w-fit items-center gap-1 rounded-full bg-v2-paper/15 px-2 py-0.5 text-[10px] font-semibold", CATEGORY_TONES[selectedKey!])}>
+                {SelectedIcon ? <SelectedIcon className="h-[11px] w-[11px]" strokeWidth={2} aria-hidden="true" /> : null}
+                {getCategoryLabel(selectedKey!)}
               </span>
               <span className="font-v2-serif text-[15px] font-bold">{formatCurrency(selected.amount, selected.currency || currency)}</span>
               <span className="text-[13px]">{selected.description || "無描述"}</span>
-              <span className="text-[12px] opacity-80">
-                {new Date(selected.expenseDate).toLocaleDateString("zh-TW")} · 👤{" "}
-                {selected.payers.length > 1
-                  ? `${primaryPayerName(selected.payers)}等 ${selected.payers.length} 人`
-                  : primaryPayerName(selected.payers)}
-                {selected.location ? ` · 📍 ${selected.location}` : ""}
+              <span className="flex flex-wrap items-center gap-x-1 text-[12px] opacity-80">
+                <span>{new Date(selected.expenseDate).toLocaleDateString("zh-TW")}</span>
+                <span aria-hidden="true">·</span>
+                <User className="h-3 w-3 shrink-0" aria-hidden="true" />
+                <span>
+                  {selected.payers.length > 1
+                    ? `${primaryPayerName(selected.payers)}等 ${selected.payers.length} 人`
+                    : primaryPayerName(selected.payers)}
+                </span>
+                {selected.location ? (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
+                    <span>{selected.location}</span>
+                  </>
+                ) : null}
               </span>
               <div className="mt-1 flex items-center justify-between">
                 <Link href={`/projects/${projectId}/expenses/${selected.id}/edit`} className="text-[13px] font-semibold text-v2-paper underline">

@@ -51,6 +51,19 @@ describe("PhotosV2View", () => {
     expect(screen.getByTestId("category-chip-accommodation")).toHaveTextContent("住宿 1")
   })
 
+  it("uses the same lucide category icons as the add-expense picker", () => {
+    const { container } = renderView()
+    expect(screen.getByTestId("category-chip-food").querySelector("svg")).not.toBeNull()
+    expect(screen.getByTestId("photo-tile-e1").querySelector("svg")).not.toBeNull()
+    expect(container.textContent).not.toContain("🍜")
+
+    fireEvent.click(screen.getByTestId("photo-tile-e1"))
+    const lightbox = screen.getByTestId("photo-lightbox")
+    expect(lightbox.textContent).not.toContain("👤")
+    expect(lightbox.textContent).not.toContain("📍")
+    expect(lightbox.textContent).not.toContain("🍜")
+  })
+
   it("opens the lightbox and links to edit", () => {
     renderView()
     fireEvent.click(screen.getByTestId("photo-tile-e1"))
