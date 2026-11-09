@@ -1,11 +1,15 @@
 "use client"
 
+import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export interface CategoryChipItem {
   key: string
   label: string
-  emoji: string
+  /** Emoji fallback for surfaces that still use emoji (photos). */
+  emoji?: string
+  /** Line icon that matches the add-expense category picker. */
+  icon?: LucideIcon
   count: number
 }
 
@@ -40,17 +44,27 @@ export function CategoryChips({
       >
         {allLabel} {totalCount}
       </button>
-      {items.map((item) => (
-        <button
-          key={item.key}
-          type="button"
-          data-testid={`category-chip-${item.key}`}
-          onClick={() => onSelect(item.key)}
-          className={cn(CHIP, selected === item.key ? ACTIVE : IDLE)}
-        >
-          {item.emoji} {item.label} {item.count}
-        </button>
-      ))}
+      {items.map((item) => {
+        const Icon = item.icon
+        return (
+          <button
+            key={item.key}
+            type="button"
+            data-testid={`category-chip-${item.key}`}
+            onClick={() => onSelect(item.key)}
+            className={cn(CHIP, "inline-flex items-center gap-1", selected === item.key ? ACTIVE : IDLE)}
+          >
+            {Icon ? (
+              <Icon className="h-[13px] w-[13px]" strokeWidth={2} aria-hidden="true" />
+            ) : item.emoji ? (
+              <span aria-hidden="true">{item.emoji}</span>
+            ) : null}
+            <span>
+              {item.label} {item.count}
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 }

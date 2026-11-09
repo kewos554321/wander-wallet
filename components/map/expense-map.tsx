@@ -5,6 +5,7 @@ import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import { formatCurrency } from "@/lib/constants/currencies"
 import { CATEGORY_COLORS, CATEGORY_LABELS, type ExpenseCategory } from "@/lib/constants/expenses"
+import { categoryPinIconSvg } from "@/components/map/category-pin-icons"
 
 interface ExpenseLocation {
   id: string
@@ -56,17 +57,7 @@ interface ExpenseMapProps {
   onExpenseClick?: (expenseId: string) => void
 }
 
-// 分類 emoji 圖示
-const categoryEmojis: Record<string, string> = {
-  food: "🍽️",
-  transport: "🚗",
-  accommodation: "🏨",
-  ticket: "🎫",
-  shopping: "🛍️",
-  entertainment: "🎮",
-  gift: "🎁",
-  other: "📍",
-}
+// 分類圖示改由 category-pin-icons 產生，與新增支出頁同一組 lucide 線性 icon。
 
 export function ExpenseMap({ expenses, mapStyle = "standard", onExpenseClick }: ExpenseMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
@@ -123,10 +114,11 @@ export function ExpenseMap({ expenses, mapStyle = "standard", onExpenseClick }: 
     const markers: L.Marker[] = []
     validExpenses.forEach((expense) => {
       const category = (expense.category || "other") as ExpenseCategory
-      const emoji = categoryEmojis[category] || categoryEmojis.other
       const color = CATEGORY_COLORS[category] || CATEGORY_COLORS.other
       const categoryName = CATEGORY_LABELS[category] || "其他"
       const payerNames = (expense.payers ?? []).map((p) => p.displayName).join("、") || "—"
+      const pinIcon = categoryPinIconSvg(category, { size: 20, color: "#ffffff", strokeWidth: 2.1 })
+      const popupIcon = categoryPinIconSvg(category, { size: 22, color })
 
       // 可愛卡通風格標記
       const customIcon = L.divIcon({
@@ -150,9 +142,9 @@ export function ExpenseMap({ expenses, mapStyle = "standard", onExpenseClick }: 
             ">
               <span style="
                 transform: rotate(45deg);
-                font-size: 20px;
+                display: flex;
                 filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
-              ">${emoji}</span>
+              ">${pinIcon}</span>
             </div>
             <div style="
               position: absolute;
@@ -193,7 +185,15 @@ export function ExpenseMap({ expenses, mapStyle = "standard", onExpenseClick }: 
               gap: 8px;
               margin-bottom: 10px;
             ">
-              <span style="font-size: 28px;">${emoji}</span>
+              <span style="
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 36px;
+                height: 36px;
+                border-radius: 10px;
+                background: ${color}1f;
+              ">${popupIcon}</span>
               <div>
                 <div style="font-weight: 700; font-size: 18px; color: ${color};">
                   ${formatCurrency(expense.amount, expense.currency)}

@@ -4,11 +4,11 @@ import { useMemo, useState } from "react"
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { List, MapPin } from "lucide-react"
+import { CalendarDays, List, MapPin } from "lucide-react"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { CategoryChips, type CategoryChipItem } from "@/components/v2/ui/category-chips"
-import { CATEGORY_EMOJI, CATEGORY_TONES, categoryKey } from "@/components/v2/category-style"
-import { getCategoryLabel, type ExpenseCategory } from "@/lib/constants/expenses"
+import { CATEGORY_TONES, categoryKey } from "@/components/v2/category-style"
+import { CATEGORY_ICONS, getCategoryLabel, type ExpenseCategory } from "@/lib/constants/expenses"
 import { formatCurrency } from "@/lib/constants/currencies"
 import { primaryPayerName } from "@/lib/expense-payers"
 import { cn } from "@/lib/utils"
@@ -25,6 +25,11 @@ const STYLE_OPTIONS: { key: MapStyle; name: string; emoji: string }[] = [
   { key: "voyager", name: "繽紛風", emoji: "🌈" },
   { key: "toner", name: "極簡風", emoji: "✏️" },
 ]
+
+const monthDay = (iso: string): string => {
+  const d = new Date(iso)
+  return `${d.getMonth() + 1}/${d.getDate()}`
+}
 
 export interface MapExpense {
   id: string
@@ -44,14 +49,21 @@ export interface MapV2ViewProps {
   projectCurrency: string
   expenses: MapExpense[]
   loading: boolean
+  /** Demo previews can intercept selection instead of navigating to a real route. */
+  onSelectExpense?: (expenseId: string) => void
 }
 
-export function MapV2View({ projectId, projectCurrency, expenses, loading }: MapV2ViewProps) {
+export function MapV2View({ projectId, projectCurrency, expenses, loading, onSelectExpense }: MapV2ViewProps) {
   const router = useRouter()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [showList, setShowList] = useState(false)
   const [mapStyle, setMapStyle] = useState<MapStyle>("standard")
   const [showStylePicker, setShowStylePicker] = useState(false)
+
+  const openExpense = (expenseId: string) => {
+    if (onSelectExpense) onSelectExpense(expenseId)
+    else router.push(`/projects/${projectId}/expenses/${expenseId}/edit`)
+  }
 
   const withLocation = useMemo(
     () => expenses.filter((e) => e.latitude !== null && e.longitude !== null),
@@ -78,7 +90,7 @@ export function MapV2View({ projectId, projectCurrency, expenses, loading }: Map
       const key = categoryKey(e.category)
       counts.set(key, (counts.get(key) ?? 0) + 1)
     }
-    return [...counts.entries()].map(([key, count]) => ({ key, label: getCategoryLabel(key), emoji: CATEGORY_EMOJI[key], count }))
+    return [...counts.entries()].map(([key, count]) => ({ key, label: getCategoryLabel(key), icon: CATEGORY_ICONS[key], count }))
   }, [withLocation])
 
   return (
@@ -126,7 +138,7 @@ export function MapV2View({ projectId, projectCurrency, expenses, loading }: Map
               expenses={mapExpenses}
               projectCurrency={projectCurrency}
               mapStyle={mapStyle}
-              onExpenseClick={(id) => router.push(`/projects/${projectId}/expenses/${id}/edit`)}
+              onExpenseClick={openExpense}
             />
             <div className="absolute left-2.5 top-2.5 flex items-center gap-1.5 rounded-v2-sm border border-v2-line bg-v2-surface px-2.5 py-1.5 text-[11px] font-semibold text-v2-lake shadow-v2-sm">
               篩選中：{selectedCategory ? getCategoryLabel(selectedCategory) : "全部"}
@@ -164,23 +176,41 @@ export function MapV2View({ projectId, projectCurrency, expenses, loading }: Map
             <div className="flex flex-col gap-2.5 px-4 pt-3.5">
               {filtered.map((expense) => {
                 const key = categoryKey(expense.category)
+                const Icon = CATEGORY_ICONS[key]
+                const payerText = `${primaryPayerName(expense.payers)}${expense.payers.length > 1 ? `等 ${expense.payers.length} 人` : ""}付款`
                 return (
                   <button
                     key={expense.id}
                     type="button"
-                    onClick={() => router.push(`/projects/${projectId}/expenses/${expense.id}/edit`)}
-                    className="flex items-center gap-3 rounded-v2-md border border-v2-line bg-v2-surface px-3 py-2.5 text-left"
+                    onClick={() => openExpense(expense.id)}
+                    className="block w-full rounded-v2-md border border-v2-line bg-v2-surface p-[11px] text-left shadow-v2-xs"
                   >
-                    <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-v2-md text-[17px]", CATEGORY_TONES[key])}>{CATEGORY_EMOJI[key]}</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[14px]">{expense.description || "無描述"}</span>
-                      <span className="block text-[12px] text-v2-ink-muted">
-                        {primaryPayerName(expense.payers)}
-                        {expense.payers.length > 1 ? `等 ${expense.payers.length} 人` : ""}付款
-                        {expense.location ? ` · ${expense.location}` : ""}
+                    <span className="flex items-start gap-3">
+                      <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-v2-md", CATEGORY_TONES[key])}>
+                        <Icon className="h-[17px] w-[17px]" strokeWidth={1.6} aria-hidden="true" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="min-w-0 flex-1 truncate text-sm font-semibold leading-[19px]">
+                            {expense.description || "無描述"}
+                          </span>
+                          <span className="shrink-0 text-sm font-bold tabular-nums text-v2-ink">
+                            {formatCurrency(expense.amount, expense.currency || projectCurrency)}
+                          </span>
+                        </span>
+                        <span className="mt-[5px] flex items-center gap-[5px] overflow-hidden whitespace-nowrap">
+                          <CalendarDays className="h-[11px] w-[11px] shrink-0 text-v2-ink-muted" aria-hidden="true" />
+                          <span className="shrink-0 text-[11px] text-v2-ink-muted">付款日期</span>
+                          <span className="shrink-0 text-[11px] font-semibold text-v2-ink">{monthDay(expense.expenseDate)}</span>
+                          <span className="h-px w-2 shrink-0 bg-v2-check" aria-hidden="true" />
+                          <span className="truncate text-[11px] font-medium">{payerText}</span>
+                        </span>
+                        <span className="mt-[5px] flex items-center gap-[5px] overflow-hidden whitespace-nowrap">
+                          <MapPin className="h-3 w-3 shrink-0 text-v2-ink-muted" aria-hidden="true" />
+                          <span className="truncate text-[11px] text-v2-ink-muted">{expense.location || "未填寫地點"}</span>
+                        </span>
                       </span>
                     </span>
-                    <span className="shrink-0 text-[14px] font-bold">{formatCurrency(expense.amount, expense.currency || projectCurrency)}</span>
                   </button>
                 )
               })}

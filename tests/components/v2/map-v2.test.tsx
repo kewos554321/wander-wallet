@@ -58,6 +58,29 @@ describe("MapV2View", () => {
     expect(screen.getByTestId("category-chip-food")).toHaveTextContent("餐飲 1")
   })
 
+  it("uses the same lucide category icons as the add-expense picker", () => {
+    const { container } = render(
+      <MapV2View projectId="p1" projectCurrency="TWD" expenses={expenses} loading={false} />,
+    )
+    // Chips: line icon instead of emoji.
+    expect(screen.getByTestId("category-chip-food").querySelector("svg")).not.toBeNull()
+    expect(screen.getByTestId("category-chip-food")).not.toHaveTextContent("🍜")
+    // List rows: same icon tile as the expense cards.
+    fireEvent.click(screen.getByRole("button", { name: /顯示列表/ }))
+    const row = screen.getByText("一蘭拉麵晚餐").closest("button")
+    expect(row?.querySelector("svg")).not.toBeNull()
+    expect(container.textContent).not.toContain("🍜")
+  })
+
+  it("lets a preview intercept expense selection instead of navigating", () => {
+    push.mockClear()
+    const onSelectExpense = vi.fn()
+    renderView({ onSelectExpense })
+    fireEvent.click(screen.getByText("map-open"))
+    expect(onSelectExpense).toHaveBeenCalledWith("e1")
+    expect(push).not.toHaveBeenCalled()
+  })
+
   it("passes numeric coordinates to the map when the API serializes them as strings", () => {
     // Prisma Decimal fields arrive from the API as JSON strings.
     const stringyExpenses = expenses.map((e) => ({

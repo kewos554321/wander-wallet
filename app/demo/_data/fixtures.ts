@@ -12,6 +12,7 @@ import type { ProjectFormValues } from "@/lib/hooks/use-project-form"
 import type { DraftMember } from "@/components/v2/expense-form/use-expense-draft"
 import type { ExpenseItemResult } from "@/lib/ai/expense-parser"
 import { parsedToQuickItems, type QuickItem } from "@/lib/quick-expense/draft"
+import type { MapExpense } from "@/components/v2/map/map-v2-view"
 
 export const DEMO_PROJECT_ID = "tokyo"
 export const DEMO_CURRENCY = "TWD"
@@ -81,6 +82,43 @@ function buildExpense(seed: ExpenseSeed): ProjectExpense {
 }
 
 export const DEMO_EXPENSES: ProjectExpense[] = EXPENSE_SEEDS.map(buildExpense)
+
+// The map demo needs the same trip with real coordinates. 10 of the 12
+// expenses get a Tokyo location; the other two stay location-less so the
+// "還有 N 筆消費沒有位置資訊" footer is visible too.
+const MAP_LOCATIONS: Record<string, { location: string; latitude: number; longitude: number }> = {
+  e1: { location: "新宿 · 思い出横丁", latitude: 35.6938, longitude: 139.7034 },
+  e2: { location: "東京車站", latitude: 35.6812, longitude: 139.7671 },
+  e3: { location: "淺草 · 雷門", latitude: 35.7148, longitude: 139.7967 },
+  e4: { location: "澀谷 · 藥妝店", latitude: 35.6595, longitude: 139.7005 },
+  e5: { location: "池袋 · 拉麵街", latitude: 35.7295, longitude: 139.7109 },
+  e6: { location: "晴空塔", latitude: 35.7101, longitude: 139.8107 },
+  e7: { location: "表參道 · 咖啡", latitude: 35.6652, longitude: 139.7124 },
+  e8: { location: "六本木", latitude: 35.6627, longitude: 139.7316 },
+  e9: { location: "銀座 · 燒肉店", latitude: 35.6717, longitude: 139.7649 },
+  e10: { location: "上野 · 伴手禮街", latitude: 35.7138, longitude: 139.7773 },
+}
+
+export const DEMO_MAP_EXPENSES: MapExpense[] = DEMO_EXPENSES.map((expense) => {
+  const spot = MAP_LOCATIONS[expense.id]
+  return {
+    id: expense.id,
+    amount: expense.amount,
+    currency: expense.currency,
+    description: expense.description,
+    category: expense.category,
+    location: spot?.location ?? null,
+    latitude: spot?.latitude ?? null,
+    longitude: spot?.longitude ?? null,
+    expenseDate: expense.expenseDate,
+    payers: expense.payers.map((p) => ({
+      memberId: p.memberId,
+      amount: p.amount,
+      member: { displayName: p.member.displayName },
+    })),
+  }
+})
+
 
 // Fixed on purpose: the demo does not run cross-currency conversion (see the
 // plan's Review Focus 5), so this total is illustrative, not a sum of the list.
