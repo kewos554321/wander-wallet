@@ -4,7 +4,7 @@
 // auto/pinned helper, reset text button) but keeps the v2 amount field look.
 
 import { useEffect, useRef, useState } from "react"
-import { Pin, RotateCcw } from "lucide-react"
+import { RotateCcw } from "lucide-react"
 import { moneyPrefix } from "@/components/v2/ui/currency-field"
 import { formatAmount } from "@/lib/constants/currencies"
 import { amountLimitNote, sanitizeAmountInput } from "../split-guardrails"
@@ -42,7 +42,6 @@ export function ShareAmountEditor({
     <div className="my-2 rounded-xl bg-v2-sand px-3 py-3">
       <label className="flex items-center gap-2 rounded-xl border-[1.5px] border-v2-lake bg-v2-surface px-3.5 py-2.5 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-v2-lake">
         <span className="text-[16px] font-bold text-v2-ink-muted" aria-hidden="true">{moneyPrefix()}</span>
-        {pinned && <Pin className="h-3 w-3 shrink-0 fill-current text-v2-lake" aria-hidden="true" />}
         <input
           ref={inputRef}
           inputMode="decimal"

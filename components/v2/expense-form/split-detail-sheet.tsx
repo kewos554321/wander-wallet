@@ -119,7 +119,7 @@ export function SplitDetailSheet({
   }
 
   const personalSupporting = hasInvalidItems ? "尚未填完" : personal > 0 ? "個人項目先扣" : undefined
-  // A fixed share is communicated by the pin beside the value, not a second
+  // A fixed share is communicated by the "固定金額" row label, not a second
   // status sentence; auto still gets a short supporting line.
   const hasAnyPersonal =
     state.personalMode &&
@@ -211,15 +211,17 @@ export function SplitDetailSheet({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-v2-line bg-v2-surface px-4 py-3.5">
-          <span className="text-[11px] font-semibold text-v2-danger" role={hasInvalidItems ? "alert" : undefined}>
-            {hasInvalidItems ? "個人項目尚未填完" : ""}
-          </span>
+        <div className="border-t border-v2-line bg-v2-surface px-4 py-3.5">
+          {hasInvalidItems && (
+            <p className="m-0 mb-2 text-[11px] font-semibold text-v2-danger" role="alert">
+              個人項目尚未填完
+            </p>
+          )}
           <button
             type="button"
             onClick={close}
             disabled={hasInvalidItems}
-            className="min-h-12 rounded-v2-md bg-v2-lake px-8 text-[15px] font-bold text-v2-on-lake disabled:opacity-40"
+            className="min-h-12 w-full rounded-v2-md bg-v2-lake px-8 text-[15px] font-bold text-v2-on-lake disabled:opacity-40"
           >
             完成
           </button>

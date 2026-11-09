@@ -281,32 +281,32 @@ export function ExpenseFormFields({
               <LocationPickerV2 variant="row" value={state.location} onChange={actions.setLocation} />
             </div>
 
-            <div className="flex min-h-[56px] items-center gap-2 px-1">
+            <div className="flex min-h-[56px] flex-wrap items-center gap-x-2 gap-y-1 px-1 py-2">
               <Paperclip className="h-[18px] w-[18px] shrink-0 text-v2-lake" aria-hidden="true" />
-              <div className="flex min-w-0 flex-1 items-center gap-3 py-2">
-                <span className="shrink-0 text-[13px] font-semibold text-v2-ink">收據／照片</span>
-                <span className="ml-auto text-[13px] text-v2-ink-muted">{receiptImage ? "1 張" : "未附加"}</span>
+              <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-v2-ink">收據／照片</span>
+              <span className="shrink-0 whitespace-nowrap text-[13px] text-v2-ink-muted">{receiptImage ? "1 張" : "未附加"}</span>
+              <div className="ml-auto flex shrink-0 items-center gap-2">
                 {receiptImage && (
                   /* eslint-disable-next-line @next/next/no-img-element */
                   <img src={receiptImage} alt="收據照片" className="h-9 w-9 shrink-0 rounded-lg border border-v2-line object-cover" />
                 )}
+                <button
+                  type="button"
+                  onClick={receiptSource.openCamera}
+                  aria-label="拍照"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-v2-lake-soft text-v2-lake transition-colors hover:bg-v2-lake-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
+                >
+                  <Camera className="h-[18px] w-[18px]" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={receiptSource.openGallery}
+                  aria-label="從相簿選擇"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-v2-lake-soft text-v2-lake transition-colors hover:bg-v2-lake-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
+                >
+                  <ImageIcon className="h-[18px] w-[18px]" aria-hidden="true" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={receiptSource.openCamera}
-                aria-label="拍照"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-v2-lake-soft text-v2-lake transition-colors hover:bg-v2-lake-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
-              >
-                <Camera className="h-[18px] w-[18px]" aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                onClick={receiptSource.openGallery}
-                aria-label="從相簿選擇"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-v2-lake-soft text-v2-lake transition-colors hover:bg-v2-lake-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
-              >
-                <ImageIcon className="h-[18px] w-[18px]" aria-hidden="true" />
-              </button>
             </div>
             {receiptImage && (
               <div className="flex justify-end pb-1 pr-1">
