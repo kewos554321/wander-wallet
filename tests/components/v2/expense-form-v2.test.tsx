@@ -37,7 +37,6 @@ vi.mock("@/components/v2/expense-form/location-picker-v2", () => ({
     <span data-testid="location">{value?.location ?? ""}</span>
   ),
 }))
-vi.mock("@/components/v2/expense-form/v2-image-picker", () => ({ V2ImagePicker: () => null }))
 const mockGetCurrentLocation = vi.fn()
 vi.mock("@/lib/geolocation", () => ({ getCurrentLocation: () => mockGetCurrentLocation() }))
 

@@ -51,7 +51,6 @@ vi.mock("@/components/v2/expense-form/location-picker-v2", () => ({
     </button>
   ),
 }))
-vi.mock("@/components/v2/expense-form/v2-image-picker", () => ({ V2ImagePicker: () => null }))
 vi.mock("@/components/ui/currency-select", () => ({ CurrencySelect: () => null }))
 
 import { QuickExpenseV2 } from "@/components/v2/quick-expense/quick-expense-v2"

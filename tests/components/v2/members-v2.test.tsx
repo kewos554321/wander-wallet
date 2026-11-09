@@ -13,13 +13,6 @@ vi.mock("@/components/auth/liff-provider", () => ({
 }))
 vi.mock("@/components/v2/members/add-member-sheet", () => ({ AddMemberSheet: () => null }))
 vi.mock("@/components/v2/project/invite-sheet-v2", () => ({ InviteSheetV2: () => null }))
-vi.mock("@/components/ui/confirm-delete-dialog", async () => {
-  const React = await import("react")
-  return {
-    ConfirmDeleteDialog: (props: { open: boolean; onConfirm: () => void; confirmText?: string }) =>
-      props.open ? React.createElement("button", { onClick: props.onConfirm }, props.confirmText ?? "confirm") : null,
-  }
-})
 
 const mockProjectMembers = vi.fn()
 vi.mock("@/lib/hooks/useProjectMembers", () => ({ useProjectMembers: () => mockProjectMembers() }))
