@@ -8,20 +8,10 @@ export interface ExportContentOptions {
   statisticsSummary: boolean // 統計摘要
 }
 
-// 匯出篩選選項
-export interface ExportFilterOptions {
-  dateRange?: {
-    start: Date | null
-    end: Date | null
-  }
-  categories?: string[] // 分類篩選
-}
-
 // 完整匯出選項
 export interface ExportOptions {
   format: ExportFormat
   content: ExportContentOptions
-  filters: ExportFilterOptions
   projectName: string
 }
 
@@ -90,5 +80,4 @@ export const defaultExportOptions: Omit<ExportOptions, "projectName"> = {
     settlementInfo: true,
     statisticsSummary: false,
   },
-  filters: {},
 }

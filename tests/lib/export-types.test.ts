@@ -3,7 +3,6 @@ import {
   defaultExportOptions,
   type ExportFormat,
   type ExportContentOptions,
-  type ExportFilterOptions,
   type ExportOptions,
   type ExpenseExportData,
   type SettlementExportData,
@@ -31,8 +30,8 @@ describe("Export Types (lib/export/types.ts)", () => {
       expect(defaultExportOptions.content.statisticsSummary).toBe(false)
     })
 
-    it("should have empty filters by default", () => {
-      expect(defaultExportOptions.filters).toEqual({})
+    it("should not include filters by default", () => {
+      expect(defaultExportOptions).not.toHaveProperty("filters")
     })
   })
 
@@ -53,29 +52,6 @@ describe("Export Types (lib/export/types.ts)", () => {
       expect(options.expenseDetails).toBe(true)
       expect(options.settlementInfo).toBe(false)
       expect(options.statisticsSummary).toBe(true)
-    })
-
-    it("should accept valid ExportFilterOptions", () => {
-      const options: ExportFilterOptions = {
-        dateRange: {
-          start: new Date("2024-01-01"),
-          end: new Date("2024-12-31"),
-        },
-        categories: ["food", "transport"],
-      }
-      expect(options.dateRange?.start).toBeInstanceOf(Date)
-      expect(options.categories).toHaveLength(2)
-    })
-
-    it("should accept ExportFilterOptions with null dates", () => {
-      const options: ExportFilterOptions = {
-        dateRange: {
-          start: null,
-          end: null,
-        },
-      }
-      expect(options.dateRange?.start).toBeNull()
-      expect(options.dateRange?.end).toBeNull()
     })
 
     it("should accept valid ExpenseExportData", () => {
@@ -172,7 +148,6 @@ describe("Export Types (lib/export/types.ts)", () => {
           settlementInfo: true,
           statisticsSummary: true,
         },
-        filters: {},
         projectName: "My Project",
       }
       expect(options.format).toBe("pdf")

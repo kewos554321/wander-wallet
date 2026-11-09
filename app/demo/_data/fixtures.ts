@@ -427,7 +427,7 @@ export const DEMO_FORM_VALUES: ProjectFormValues = {
   joinMode: "both",
 }
 
-export const DEMO_EXPORT_COUNTS = { memberCount: 4, expenseCount: 12, filteredCount: 12 }
+export const DEMO_EXPORT_COUNTS = { memberCount: 4, expenseCount: 12 }
 
 const DEMO_PARSED_ITEMS: ExpenseItemResult[] = [
   {

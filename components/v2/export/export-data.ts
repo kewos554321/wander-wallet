@@ -2,7 +2,6 @@ import { getCategoryLabel } from "@/lib/constants/expenses"
 import { fromMinorUnits } from "@/lib/currency-conversion"
 import type {
   ExportData,
-  ExportFilterOptions,
   ExpenseExportData,
   MemberBalanceData,
   SettlementExportData,
@@ -31,7 +30,6 @@ export interface BuildExportInput {
   projectCurrency: string
   members: { id: string; displayName: string }[]
   expenses: ExportExpenseInput[]
-  filters: ExportFilterOptions
   ctx: ExportContext
 }
 
@@ -91,21 +89,9 @@ function buildSettlements(balances: MemberBalanceData[]): SettlementExportData[]
 
 /** Builds the `ExportData` payload from live project data. */
 export function buildExportData(input: BuildExportInput): ExportData {
-  const { projectName, projectCurrency, members, expenses, filters, ctx } = input
+  const { projectName, projectCurrency, members, expenses, ctx } = input
 
-  const categorySet = filters.categories && filters.categories.length ? new Set(filters.categories) : null
-  const start = filters.dateRange?.start ? new Date(filters.dateRange.start).setHours(0, 0, 0, 0) : null
-  const end = filters.dateRange?.end ? new Date(filters.dateRange.end).setHours(23, 59, 59, 999) : null
-
-  const filtered = expenses.filter((expense) => {
-    const time = new Date(expense.expenseDate).getTime()
-    if (start !== null && time < start) return false
-    if (end !== null && time > end) return false
-    if (categorySet && !categorySet.has(expense.category || "other")) return false
-    return true
-  })
-
-  const exportExpenses: ExpenseExportData[] = filtered.map((expense) => {
+  const exportExpenses: ExpenseExportData[] = expenses.map((expense) => {
     const amount = projectAmount(expense.amountProject, expense.amount, expense.currency, ctx)
     const ratio = expense.amount > 0 ? amount / expense.amount : 0
     return {
@@ -130,7 +116,7 @@ export function buildExportData(input: BuildExportInput): ExportData {
   const memberBalances: MemberBalanceData[] = members.map((member) => {
     let paid = 0
     let share = 0
-    for (const expense of filtered) {
+    for (const expense of expenses) {
       const amount = projectAmount(expense.amountProject, expense.amount, expense.currency, ctx)
       const ratio = expense.amount > 0 ? amount / expense.amount : 0
       for (const payer of expense.payers) {

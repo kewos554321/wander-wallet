@@ -93,7 +93,6 @@ const defaultOptions: ExportOptions = {
     settlementInfo: true,
     statisticsSummary: true,
   },
-  filters: {},
   projectName: "日本東京之旅",
 }
 

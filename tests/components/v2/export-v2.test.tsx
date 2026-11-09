@@ -29,15 +29,12 @@ function renderView(overrides: Partial<Parameters<typeof ExportV2View>[0]> = {})
     currency: "TWD",
     format: "csv",
     content: { expenseDetails: true, settlementInfo: true, statisticsSummary: false },
-    filters: {},
     memberCount: 4,
     expenseCount: 18,
-    filteredCount: 18,
     exporting: false,
     showLargeDataWarning: false,
     onFormatChange: vi.fn(),
     onContentChange: vi.fn(),
-    onFiltersChange: vi.fn(),
     onExport: vi.fn(),
     ...overrides,
   }
@@ -78,8 +75,8 @@ describe("ExportV2View", () => {
     expect(props.onExport).toHaveBeenCalled()
   })
 
-  it("disables export with no filtered expenses", () => {
-    renderView({ filteredCount: 0 })
+  it("disables export with no expenses", () => {
+    renderView({ expenseCount: 0 })
     expect(screen.getByTestId("export-submit")).toBeDisabled()
   })
 
@@ -88,10 +85,10 @@ describe("ExportV2View", () => {
     expect(screen.getByTestId("export-warning")).toBeInTheDocument()
   })
 
-  it("adds a category filter", () => {
-    const props = renderView()
-    fireEvent.click(screen.getByRole("button", { name: "餐飲" }))
-    expect(props.onFiltersChange).toHaveBeenCalledWith({ categories: ["food"] })
+  it("does not render filter controls", () => {
+    renderView()
+    expect(screen.queryByText("篩選條件")).not.toBeInTheDocument()
+    expect(screen.queryByText("日期範圍")).not.toBeInTheDocument()
   })
 })
 

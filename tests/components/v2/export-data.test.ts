@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest"
 import { convertToProjectCurrency, buildExportData, type ExportExpenseInput } from "@/components/v2/export/export-data"
-import type { ExportFilterOptions } from "@/lib/export/types"
 
 const ctx = { projectCurrency: "TWD", exchangeRates: { TWD: 31.5, JPY: 150 } as Record<string, number> | null }
 const members = [
@@ -54,8 +53,8 @@ describe("convertToProjectCurrency", () => {
 })
 
 describe("buildExportData", () => {
-  const build = (filters: ExportFilterOptions = {}) =>
-    buildExportData({ projectName: "Trip", projectCurrency: "TWD", members, expenses, filters, ctx })
+  const build = () =>
+    buildExportData({ projectName: "Trip", projectCurrency: "TWD", members, expenses, ctx })
 
   it("converts and totals the expenses", () => {
     const data = build()
@@ -101,7 +100,6 @@ describe("buildExportData", () => {
       projectCurrency: "USD",
       members,
       expenses: stored,
-      filters: {},
       ctx: usdCtx,
     })
     expect(data.expenses[0].amount).toBeCloseTo(31.72)
@@ -117,17 +115,6 @@ describe("buildExportData", () => {
     expect(food.percentage).toBeCloseTo(32.258, 2)
   })
 
-  it("filters by category", () => {
-    const data = build({ categories: ["food"] })
-    expect(data.expenses.map((e) => e.id)).toEqual(["e1"])
-    expect(data.statistics.totalAmount).toBe(1000)
-  })
-
-  it("filters by date range", () => {
-    const data = build({ dateRange: { start: new Date("2026-10-19T00:00:00.000Z"), end: null } })
-    expect(data.expenses.map((e) => e.id)).toEqual(["e2"])
-  })
-
   it("does not conflate two members with the same display name", () => {
     const dupMembers = [
       { id: "m1", displayName: "志明" },
@@ -137,7 +124,7 @@ describe("buildExportData", () => {
       { id: "d1", amount: 1000, currency: "TWD", description: null, category: "food", expenseDate: "2026-10-18T00:00:00.000Z", payers: [{ memberId: "m1", amount: 1000, member: { id: "m1", displayName: "志明" } }], participants: [{ shareAmount: 1000, member: { id: "m1", displayName: "志明" } }] },
       { id: "d2", amount: 2000, currency: "TWD", description: null, category: "food", expenseDate: "2026-10-18T00:00:00.000Z", payers: [{ memberId: "m2", amount: 2000, member: { id: "m2", displayName: "志明" } }], participants: [{ shareAmount: 2000, member: { id: "m2", displayName: "志明" } }] },
     ]
-    const data = buildExportData({ projectName: "Trip", projectCurrency: "TWD", members: dupMembers, expenses: dupExpenses, filters: {}, ctx })
+    const data = buildExportData({ projectName: "Trip", projectCurrency: "TWD", members: dupMembers, expenses: dupExpenses, ctx })
     expect(data.statistics.memberBreakdown).toEqual([
       { name: "志明", paid: 1000, share: 1000, balance: 0 },
       { name: "志明", paid: 2000, share: 2000, balance: 0 },
@@ -163,7 +150,7 @@ describe("buildExportData", () => {
         ],
       },
     ]
-    const data = buildExportData({ projectName: "Trip", projectCurrency: "TWD", members, expenses: multiPayerExpenses, filters: {}, ctx })
+    const data = buildExportData({ projectName: "Trip", projectCurrency: "TWD", members, expenses: multiPayerExpenses, ctx })
     expect(data.expenses[0].payer).toBe("志明、小美")
     expect(data.statistics.memberBreakdown).toEqual([
       { name: "志明", paid: 600, share: 500, balance: 100 },

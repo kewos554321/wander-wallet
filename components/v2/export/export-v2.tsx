@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react"
 import { useCurrencyConversion, useProjectData } from "@/lib/hooks"
 import { useProjectExpenses } from "@/lib/hooks/useProjectExpenses"
 import { defaultExportOptions } from "@/lib/export/types"
-import type { ExportContentOptions, ExportFilterOptions, ExportFormat } from "@/lib/export/types"
+import type { ExportContentOptions, ExportFormat } from "@/lib/export/types"
 import { buildExportData } from "./export-data"
 import { ExportV2View } from "./export-v2-view"
 
@@ -15,20 +15,19 @@ export function ExportV2({ projectId }: { projectId: string }) {
 
   const [format, setFormat] = useState<ExportFormat>(defaultExportOptions.format)
   const [content, setContent] = useState<ExportContentOptions>(defaultExportOptions.content)
-  const [filters, setFilters] = useState<ExportFilterOptions>(defaultExportOptions.filters)
   const [exporting, setExporting] = useState(false)
 
   const projectName = project?.name ?? ""
   const data = useMemo(
-    () => buildExportData({ projectName, projectCurrency, members, expenses, filters, ctx: { projectCurrency, exchangeRates } }),
-    [projectName, projectCurrency, members, expenses, filters, exchangeRates]
+    () => buildExportData({ projectName, projectCurrency, members, expenses, ctx: { projectCurrency, exchangeRates } }),
+    [projectName, projectCurrency, members, expenses, exchangeRates]
   )
 
   const handleExport = useCallback(async () => {
     if (exporting || data.expenses.length === 0) return
     setExporting(true)
     try {
-      const options = { format, content, filters, projectName }
+      const options = { format, content, projectName }
       if (format === "csv") {
         const { generateCSV, downloadCSV } = await import("@/lib/export/csv-generator")
         downloadCSV(generateCSV(data, options), `${projectName}_匯出`)
@@ -42,7 +41,7 @@ export function ExportV2({ projectId }: { projectId: string }) {
     } finally {
       setExporting(false)
     }
-  }, [exporting, data, format, content, filters, projectName])
+  }, [exporting, data, format, content, projectName])
 
   return (
       <div className="mx-auto max-w-md">
@@ -52,15 +51,12 @@ export function ExportV2({ projectId }: { projectId: string }) {
           currency={projectCurrency}
           format={format}
           content={content}
-          filters={filters}
           memberCount={members.length}
           expenseCount={expenses.length}
-          filteredCount={data.expenses.length}
           exporting={exporting}
           showLargeDataWarning={format === "pdf" && data.expenses.length > 500}
           onFormatChange={setFormat}
           onContentChange={setContent}
-          onFiltersChange={setFilters}
           onExport={handleExport}
         />
       </div>
