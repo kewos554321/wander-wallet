@@ -1,8 +1,8 @@
 "use client"
 
-// Shared camera/gallery plumbing for image fields. V2ImagePicker uses it for
-// its card + tiles; the receipt row uses it for two direct trailing icon
-// buttons, so camera and album each stay two taps from a collapsed section.
+// Shared camera/gallery plumbing for image fields. The receipt row uses it for
+// two direct trailing icon buttons, so camera and album each stay two taps from
+// a collapsed section.
 
 import { useRef, useState } from "react"
 import { CameraStep } from "@/components/v2/quick-expense/camera-step"

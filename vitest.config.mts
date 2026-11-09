@@ -24,8 +24,6 @@ export default defineConfig({
         "lib/speech.ts",
         "lib/hooks/index.ts",
         // Complex UI components with browser interactions
-        "components/avatar-picker.tsx",
-        "components/ui/image-picker.tsx",
         "components/ui/image-cropper.tsx",
         "components/ui/badge.tsx",
         "components/ui/label.tsx",
@@ -61,14 +59,10 @@ export default defineConfig({
         "lib/hooks/useExpenseFilters.ts",
         "lib/hooks/useCurrencyConversion.ts",
         "lib/hooks/useProjectData.ts",
-        // Logger with external dependencies
-        "lib/logger.ts",
         // Auth with NextAuth dependencies
         "lib/auth.ts",
         // Database with Prisma dependencies
         "lib/db.ts",
-        // Error handler edge cases
-        "lib/error-handler.ts",
         // LIFF SDK dependent
         "lib/liff.ts",
         // R2 storage with AWS SDK

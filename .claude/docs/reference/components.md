@@ -1,36 +1,37 @@
 # Component Reference
 
-## ConfirmDeleteDialog
+## DeleteExpenseSheet
 
-Location: `components/ui/confirm-delete-dialog.tsx`
+Location: `components/v2/expenses/delete-expense-sheet.tsx`
 
 ```tsx
-interface ConfirmDeleteDialogProps {
+interface DeleteExpenseSheetProps {
   open: boolean
-  onOpenChange: (open: boolean) => void
-  title?: string           // Default: "確認刪除"
-  description: string
+  onClose: () => void
   onConfirm: () => void
-  loading?: boolean        // Default: false
-  confirmText?: string     // Default: "刪除"
-  children?: React.ReactNode
+  loading?: boolean          // Default: false
+  error?: string | null
+  expense: DeleteExpenseSummaryProps | null
+  canNotifyLine?: boolean    // Default: false
+  notifyLine?: boolean       // Default: true
+  onNotifyLineChange?: (checked: boolean) => void
 }
 ```
 
 **Usage**:
 ```tsx
-<ConfirmDeleteDialog
-  open={showDeleteDialog}
-  onOpenChange={setShowDeleteDialog}
-  description="確定要刪除這筆支出嗎？此操作無法復原。"
+<DeleteExpenseSheet
+  open={showDeleteSheet}
+  onClose={() => setShowDeleteSheet(false)}
   onConfirm={handleDelete}
   loading={deleting}
->
-  {/* Optional children for extra content */}
-</ConfirmDeleteDialog>
+  expense={deleteExpenseSummary}
+  canNotifyLine={canNotifyLine}
+  notifyLine={notifyLine}
+  onNotifyLineChange={setNotifyLine}
+/>
 ```
 
 **Used in**:
-- `app/projects/[id]/expenses/page.tsx` - Single/batch expense delete
-- `app/projects/[id]/settings/page.tsx` - Project delete
-- `components/expense/expense-form.tsx` - Edit page expense delete
+- `components/v2/expenses/expenses-v2.tsx` - Single expense delete
+- `components/v2/expense-form/expense-form-v2.tsx` - Edit page expense delete

@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 
-// iOS LIFF has no getUserMedia; same detection as lib/image-utils.ts.
-// iPadOS 13+ reports a desktop "Macintosh" user agent, so it is distinguished
-// from a real Mac by touch support.
+// iOS LIFF has no getUserMedia. iPadOS 13+ reports a desktop "Macintosh" user
+// agent, so touch support distinguishes it from a real Mac.
 export function isIOSDevice(ua: string = typeof navigator === "undefined" ? "" : navigator.userAgent): boolean {
   if (/iPad|iPhone|iPod/.test(ua)) return true
   const maxTouchPoints = typeof navigator === "undefined" ? 0 : navigator.maxTouchPoints ?? 0
