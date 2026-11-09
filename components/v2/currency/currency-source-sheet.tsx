@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef } from "react"
 import { AlertTriangle, RefreshCw, X } from "lucide-react"
 import { useDismiss } from "@/components/v2/use-dismiss"
+import { useDialogHistory } from "@/components/v2/use-dialog-history"
 import { cn } from "@/lib/utils"
 
 interface CurrencySourceSheetProps {
@@ -31,6 +32,7 @@ export function CurrencySourceSheet({
   const cardRef = useRef<HTMLDivElement>(null)
   const titleId = useId()
   useDismiss(cardRef, onClose, open)
+  useDialogHistory(open, onClose, "currency-source")
 
   useEffect(() => {
     if (open) cardRef.current?.focus()

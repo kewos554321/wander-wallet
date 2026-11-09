@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react"
 import { Check, Copy, Ellipsis, X } from "lucide-react"
 import { useDismiss } from "@/components/v2/use-dismiss"
+import { useDialogHistory } from "@/components/v2/use-dialog-history"
 
 interface SettleShareDialogProps {
   open: boolean
@@ -18,6 +19,7 @@ export function SettleShareDialog({ open, onOpenChange, shareText }: SettleShare
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const titleId = useId()
   useDismiss(cardRef, () => onOpenChange(false), open)
+  useDialogHistory(open, () => onOpenChange(false), "settle-share")
 
   useEffect(() => {
     if (open) cardRef.current?.focus()

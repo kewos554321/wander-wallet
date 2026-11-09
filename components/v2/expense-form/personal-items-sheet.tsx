@@ -11,6 +11,7 @@ import { formatAmount } from "@/lib/constants/currencies"
 import type { DraftMember, useExpenseDraft } from "@/components/v2/expense-form/use-expense-draft"
 import { isTouchedItem } from "./personal-item-state"
 import { PersonalItemsEditor } from "./split-detail/personal-items-editor"
+import { useDialogHistory } from "@/components/v2/use-dialog-history"
 
 type Draft = ReturnType<typeof useExpenseDraft>
 
@@ -49,18 +50,25 @@ export function PersonalItemsSheet({
     return () => window.removeEventListener("keydown", onKey)
   }, [open, onClose, memberId, state.personalItems, actions])
 
+  // Blank rows are placeholders: drop them on close so "no items" really means none.
+  // Defined before the open guard so the phone back button runs the same cleanup
+  // as Escape / X / backdrop.
+  const close = () => {
+    if (memberId) {
+      for (const item of state.personalItems[memberId] ?? []) {
+        if (!isTouchedItem(item)) actions.removeItem(memberId, item.id)
+      }
+    }
+    onClose()
+  }
+
+  useDialogHistory(open, close, "personal-items")
+
   if (!open || !memberId) return null
 
   const member = members.find((m) => m.id === memberId)
   const name = member?.displayName ?? ""
   const items = state.personalItems[memberId] ?? []
-  // Blank rows are placeholders: drop them on close so "no items" really means none.
-  const close = () => {
-    for (const item of items) {
-      if (!isTouchedItem(item)) actions.removeItem(memberId, item.id)
-    }
-    onClose()
-  }
   const sum = items.reduce((s, i) => s + (Number(i.amount) || 0), 0)
   const money = (n: number) => `$${formatAmount(n, state.currency)}`
 

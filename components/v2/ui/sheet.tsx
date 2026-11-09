@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, type ReactNode } from "react"
+import { useDialogHistory } from "@/components/v2/use-dialog-history"
 
 const FOCUSABLE =
   'a[href],button:not([disabled]),textarea:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])'
@@ -32,6 +33,10 @@ export function Sheet({
   useEffect(() => {
     onCloseRef.current = onClose
   })
+
+  // Phone back closes the sheet instead of leaving the page (and pops the
+  // entry again when the sheet is dismissed by X / backdrop / Escape).
+  useDialogHistory(open, onClose, label)
 
   useEffect(() => {
     if (!open) return

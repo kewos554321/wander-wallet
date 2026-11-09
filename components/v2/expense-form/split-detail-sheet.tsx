@@ -15,6 +15,7 @@ import { countIncompleteItems, isTouchedItem } from "./personal-item-state"
 import { PersonalItemsEditor } from "./split-detail/personal-items-editor"
 import { ShareAmountEditor } from "./split-detail/share-amount-editor"
 import { SheetSectionRow } from "./split-detail/sheet-section-row"
+import { useDialogHistory } from "@/components/v2/use-dialog-history"
 
 type Draft = ReturnType<typeof useExpenseDraft>
 
@@ -52,6 +53,8 @@ export function SplitDetailSheet({
   useEffect(() => {
     closeRef.current = close
   })
+
+  useDialogHistory(open, close, "split-detail")
 
   // Focus enters the sheet, Tab stays inside, Escape closes, and closing
   // returns focus to the row that opened it.

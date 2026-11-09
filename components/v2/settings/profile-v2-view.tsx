@@ -5,6 +5,7 @@ import { Calendar, LogOut, Mail, User } from "lucide-react"
 import { V2TopBar } from "@/components/v2/layout/v2-top-bar"
 import { SECTION_CARD } from "@/components/v2/expense-form/section-card"
 import { useDismiss } from "@/components/v2/use-dismiss"
+import { useDialogHistory } from "@/components/v2/use-dialog-history"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 
 export interface ProfileV2ViewProps {
@@ -32,6 +33,7 @@ export function ProfileV2View({
 }: ProfileV2ViewProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   useDismiss(dialogRef, () => onLogoutOpenChange(false), logoutOpen)
+  useDialogHistory(logoutOpen, () => onLogoutOpenChange(false), "logout")
 
   return (
     <div className="min-h-screen">

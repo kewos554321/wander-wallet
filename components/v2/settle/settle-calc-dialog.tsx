@@ -6,6 +6,7 @@ import { formatCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currencies"
 import type { SettleData } from "@/lib/hooks/useSettlement"
 import { V2Avatar } from "@/components/v2/ui/v2-avatar"
 import { useDismiss } from "@/components/v2/use-dismiss"
+import { useDialogHistory } from "@/components/v2/use-dialog-history"
 
 interface SettlementCalcDialogProps {
   open: boolean
@@ -36,6 +37,7 @@ export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId
   const titleId = useId()
   const [onlyMe, setOnlyMe] = useState(false)
   useDismiss(cardRef, () => onOpenChange(false), open)
+  useDialogHistory(open, () => onOpenChange(false), "settle-calc")
 
   useEffect(() => {
     if (open) cardRef.current?.focus()

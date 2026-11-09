@@ -11,6 +11,7 @@ import { roundRateForDisplay } from "@/lib/currency-conversion"
 import { sanitizeDecimal } from "@/lib/numeric-input"
 import { rateFromRates } from "@/components/v2/currency/format"
 import type { RecentRate } from "@/lib/recent-rates"
+import { useDialogHistory } from "@/components/v2/use-dialog-history"
 
 type Tab = "market" | "custom"
 
@@ -82,6 +83,8 @@ export function RateSheet({
   const [customInput, setCustomInput] = useState("")
   // Guards against an older date lookup resolving after a newer one.
   const reqIdRef = useRef(0)
+
+  useDialogHistory(open, onClose, "rate-sheet")
 
   // Re-seed whenever the sheet opens (not on every rate change, so a selection
   // stays highlighted after the parent echoes it back).

@@ -12,6 +12,7 @@ import { formatAmount } from "@/lib/constants/currencies"
 import { derivePayerShares } from "@/lib/expense-payers"
 import type { DraftMember, useExpenseDraft } from "@/components/v2/expense-form/use-expense-draft"
 import { amountLimitNote, sanitizeAmountInput } from "./split-guardrails"
+import { useDialogHistory } from "@/components/v2/use-dialog-history"
 
 type Draft = ReturnType<typeof useExpenseDraft>
 
@@ -37,6 +38,8 @@ export function AmountSheet({
   // previous person's warning.
   const [note, setNote] = useState<{ memberId: string; text: string } | null>(null)
   const noteText = note?.memberId === memberId ? note.text : null
+
+  useDialogHistory(open, onClose, "amount-sheet")
 
   useEffect(() => {
     if (!open) return
