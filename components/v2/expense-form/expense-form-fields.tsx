@@ -1,7 +1,7 @@
 "use client"
 
 // Shared body of the expense form: amount + rate sheet, required description,
-// category, split panel, optional date/location/receipt section, and the LINE
+// split panel, optional category/date/location/receipt section, and the LINE
 // notification checkbox. The add-expense page and the AI result page render
 // this same component so their fields cannot drift apart.
 //
@@ -13,7 +13,7 @@
 import { useState } from "react"
 import { format } from "date-fns"
 import { zhTW } from "date-fns/locale"
-import { CalendarIcon, Camera, Check, ChevronDown, Image as ImageIcon, Paperclip } from "lucide-react"
+import { CalendarIcon, Camera, Check, ChevronDown, Image as ImageIcon, Paperclip, Tag } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { AmountCard } from "@/components/v2/expense-form/amount-card"
@@ -26,6 +26,7 @@ import { SECTION_CARD, SECTION_TITLE } from "@/components/v2/expense-form/sectio
 import { SplitPanel } from "@/components/v2/expense-form/split-panel"
 import { amountLimitNote, normalizeAmountForCurrency, sanitizeAmountInput } from "@/components/v2/expense-form/split-guardrails"
 import { rateChip } from "@/components/v2/currency/format"
+import { getCategoryLabel } from "@/lib/constants/expenses"
 import type { Draft, DraftMember } from "@/lib/expense-draft"
 import type { RecentRate } from "@/lib/recent-rates"
 
@@ -60,6 +61,7 @@ export function ExpenseFormFields({
   const { state, actions, derived } = draft
   const [showCalculator, setShowCalculator] = useState(false)
   const [optionalOpen, setOptionalOpen] = useState(false)
+  const [categoryOpen, setCategoryOpen] = useState(false)
   const [rateOpen, setRateOpen] = useState(false)
   const [amountNote, setAmountNote] = useState<string | null>(null)
   const [descTouched, setDescTouched] = useState(false)
@@ -86,9 +88,11 @@ export function ExpenseFormFields({
       actions.setImage({ image: null, pendingFile: file, preview: URL.createObjectURL(file) })
     },
   })
-  const optParts = [format(state.expenseDate, "MM/dd"), state.location.location].filter((v): v is string =>
-    Boolean(v),
-  )
+  const optParts = [
+    state.category ? getCategoryLabel(state.category) : "",
+    format(state.expenseDate, "MM/dd"),
+    state.location.location,
+  ].filter((v): v is string => Boolean(v))
   const optSummary = optParts.join(" · ")
   const lineLabel =
     notifyLineLabel ??
@@ -186,7 +190,8 @@ export function ExpenseFormFields({
         )}
       </div>
 
-      <CategoryPicker value={state.category} onChange={actions.setCategory} />
+      {/* 快速記帳卡片空間有限，類別維持直接顯示；完整表單則收進「選填」區塊。 */}
+      {mode === "quick" && <CategoryPicker value={state.category} onChange={actions.setCategory} />}
 
       {/* 分帳 — 專屬元件，直接內嵌。原/結算顯示只由底部那顆切換驅動 */}
       <SplitPanel members={members} draft={draft} displayCurrency={displayCurrency} variant={variant} />
@@ -201,7 +206,7 @@ export function ExpenseFormFields({
         >
           <span className="min-w-0 flex-1">
             <span className="flex items-center gap-2">
-              <span className="min-w-0 flex-1 text-[13px] font-bold text-v2-ink">日期 · 地點 · 收據圖片</span>
+              <span className="min-w-0 flex-1 text-[13px] font-bold text-v2-ink">類別 · 日期 · 地點 · 收據圖片</span>
               {receiptImage && (
                 <span
                   aria-label="已附加 1 張收據"
@@ -221,6 +226,32 @@ export function ExpenseFormFields({
 
         {optionalOpen && (
           <div className="mt-3 border-t border-v2-line-soft">
+            {mode !== "quick" && (
+              <div className="border-b border-v2-line-soft">
+                <button
+                  type="button"
+                  onClick={() => setCategoryOpen((v) => !v)}
+                  aria-expanded={categoryOpen}
+                  className="flex min-h-[56px] w-full items-center gap-3 px-1 text-left transition-colors hover:bg-v2-lake-tint/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
+                >
+                  <Tag className="h-[18px] w-[18px] shrink-0 text-v2-ink-muted" aria-hidden="true" />
+                  <span className="shrink-0 text-[13px] font-medium text-v2-ink">類別</span>
+                  <span className="min-w-0 flex-1 truncate text-right text-[13px] text-v2-ink-muted">
+                    {state.category ? getCategoryLabel(state.category) : "未選擇"}
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 text-v2-ink-muted transition-transform ${categoryOpen ? "rotate-180" : ""}`}
+                    aria-hidden="true"
+                  />
+                </button>
+                {categoryOpen && (
+                  <div className="px-1 pb-3">
+                    <CategoryPicker variant="plain" value={state.category} onChange={actions.setCategory} />
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="border-b border-v2-line-soft">
               <Popover>
                 <PopoverTrigger asChild>

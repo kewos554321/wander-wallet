@@ -130,7 +130,7 @@ export function initialState(init: DraftInit): DraftState {
       rateKind: null,
       rateDate: null,
       description: "",
-      category: "",
+      category: "other",
       payerIds: init.paidBy ? [init.paidBy] : [],
       pinnedPayerAmounts: {},
       expenseDate: new Date(),

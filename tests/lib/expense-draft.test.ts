@@ -19,6 +19,7 @@ describe("initialState", () => {
     expect(state.payerIds).toEqual(["a"])
     expect(state.pool).toEqual(["a"])
     expect(state.description).toBe("")
+    expect(state.category).toBe("other")
     expect(state.notifyLine).toBe(true)
   })
 })

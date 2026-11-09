@@ -4,7 +4,8 @@
 //
 // The split model lives in one dedicated component, SplitPanel, rendered INLINE
 // on the main screen (no sheet, no expand, no little links). The rest of the
-// screen stays lean: amount → description → 分帳 panel → 類別 → 選填 → save.
+// screen stays lean: amount → description → 分帳 panel → 選填（類別／日期／
+// 地點／收據）→ save.
 //
 // Driven by the SAME `useExpenseDraft` as the rest of the form; the amount card
 // + rate sheet are the untouched originals. The field body lives in

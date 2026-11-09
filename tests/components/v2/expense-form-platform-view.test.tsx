@@ -121,6 +121,27 @@ describe("ExpenseFormPlatformView", () => {
     expect(screen.queryByText("分攤金額")).not.toBeInTheDocument()
   })
 
+  it("tucks the category picker inside the optional section one layer down", () => {
+    const { hook, rerender } = renderForm()
+    expect(hook.result.current.state.category).toBe("other")
+    expect(screen.queryByRole("button", { name: "餐飲" })).not.toBeInTheDocument()
+
+    openOptionalSection()
+    // Opening the optional section still leaves the chips collapsed.
+    expect(screen.queryByRole("button", { name: "餐飲" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "類別 其他" })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "類別 其他" }))
+    fireEvent.click(screen.getByRole("button", { name: "餐飲" }))
+    rerender()
+    expect(hook.result.current.state.category).toBe("food")
+
+    // Collapsing the section keeps the chosen category visible in the summary.
+    fireEvent.click(screen.getByRole("button", { name: /類別 · 日期 · 地點 · 收據圖片/ }))
+    expect(screen.getByRole("button", { name: /類別 · 日期 · 地點 · 收據圖片/ })).toHaveTextContent("餐飲")
+    expect(screen.queryByRole("button", { name: "交通" })).not.toBeInTheDocument()
+  })
+
   it("requires a description before submit", () => {
     renderForm({}, { description: null })
     expect(screen.getByRole("button", { name: /新增支出/ })).toBeDisabled()
