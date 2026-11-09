@@ -91,6 +91,17 @@ describe("ExpenseFormPlatformView", () => {
     expect(screen.getAllByText("志明").length).toBeGreaterThan(0)
   })
 
+  it("hides the 均分 hint when only one member shares the expense", () => {
+    renderForm({}, { seedPool: false })
+    expect(screen.getByRole("button", { name: /查看小雨的分帳明細/ })).toBeInTheDocument()
+    expect(screen.queryByText("均分")).not.toBeInTheDocument()
+  })
+
+  it("shows the 均分 hint when several members share the expense", () => {
+    renderForm()
+    expect(screen.getAllByText("均分").length).toBeGreaterThan(0)
+  })
+
   it("keeps the ledger variant available for the demo comparison", () => {
     renderForm({ variant: "ledger" })
     expect(screen.getByText("共同分攤")).toBeInTheDocument()

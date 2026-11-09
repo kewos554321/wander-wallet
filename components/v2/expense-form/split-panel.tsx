@@ -355,6 +355,10 @@ export function SplitPanel({
             const personalCount = itemsOf(id).filter((i) => i.name.trim() !== "" || i.amount.trim() !== "").length
             const sharePinned = (state.customShares[id] ?? "").trim() !== ""
             const shareLabel = sharePinned ? "固定金額" : hasAnyPersonal ? "剩餘均分" : "均分"
+            // With one sharer the amount is obviously the full expense; a second
+            // method line adds no information (mirrors the single-payer rule
+            // above). A pinned share still needs the 固定金額 note.
+            const showShareMethod = pool.length > 1 || sharePinned
             // Only show the secondary common amount when it differs from the
             // total. No personal items + equal split = one number, not two.
             const showCommonAmount = Math.abs(commonAmount - total) > 0.005
@@ -378,24 +382,28 @@ export function SplitPanel({
                         {cellAmount(total)}
                         <ChevronRight className="h-3.5 w-3.5 shrink-0 text-v2-ink-muted" aria-hidden="true" />
                       </span>
-                      <span className={`inline-flex items-center gap-1 text-[11px] ${sharePinned ? "font-semibold text-v2-lake" : "font-normal text-v2-ink-muted"}`}>
-                        {shareLabel}{showCommonAmount ? ` ${money(commonAmount)}` : ""}
-                      </span>
+                      {showShareMethod && (
+                        <span className={`inline-flex items-center gap-1 text-[11px] ${sharePinned ? "font-semibold text-v2-lake" : "font-normal text-v2-ink-muted"}`}>
+                          {shareLabel}{showCommonAmount ? ` ${money(commonAmount)}` : ""}
+                        </span>
+                      )}
                     </span>
                   ) : (
                     <button
                       type="button"
                       onClick={() => setDetailId(id)}
-                      aria-label={`查看${nameOf(id)}的分帳明細（分攤金額 ${formatAmount(total, state.currency)} ${state.currency}，${shareLabel}${showCommonAmount ? ` ${formatAmount(commonAmount, state.currency)} ${state.currency}` : ""}${personalLabel ? `，${personalLabel}` : ""}${sharePinned ? "，已固定" : ""}）`}
+                      aria-label={`查看${nameOf(id)}的分帳明細（分攤金額 ${formatAmount(total, state.currency)} ${state.currency}${showShareMethod ? `，${shareLabel}${showCommonAmount ? ` ${formatAmount(commonAmount, state.currency)} ${state.currency}` : ""}` : ""}${personalLabel ? `，${personalLabel}` : ""}${sharePinned ? "，已固定" : ""}）`}
                       className={`${platformDetail} flex-col items-end gap-0.5 ${negative ? "text-v2-danger" : "text-v2-ink"}`}
                     >
                       <span className="inline-flex items-center gap-1">
                         {cellAmount(total)}
                         <ChevronRight className="h-3.5 w-3.5 shrink-0 text-v2-ink-muted" aria-hidden="true" />
                       </span>
-                      <span className={`inline-flex items-center gap-1 text-[11px] ${sharePinned ? "font-semibold text-v2-lake" : "font-normal text-v2-ink-muted"}`}>
-                        {shareLabel}{showCommonAmount ? ` ${money(commonAmount)}` : ""}
-                      </span>
+                      {showShareMethod && (
+                        <span className={`inline-flex items-center gap-1 text-[11px] ${sharePinned ? "font-semibold text-v2-lake" : "font-normal text-v2-ink-muted"}`}>
+                          {shareLabel}{showCommonAmount ? ` ${money(commonAmount)}` : ""}
+                        </span>
+                      )}
                     </button>
                   )}
                 </div>
