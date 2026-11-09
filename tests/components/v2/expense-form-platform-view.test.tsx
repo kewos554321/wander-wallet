@@ -97,6 +97,19 @@ describe("ExpenseFormPlatformView", () => {
     expect(screen.queryByText("均分")).not.toBeInTheDocument()
   })
 
+  it("selects every member from the 誰付這筆 section", () => {
+    const { hook, rerender } = renderForm({}, { seedPool: false })
+    const payerSection = document.getElementById("expense-payer-section") as HTMLElement
+    fireEvent.click(within(payerSection).getByRole("button", { name: "全選" }))
+    rerender()
+
+    expect(hook.result.current.state.payerIds).toEqual(["a", "b"])
+    const allSelected = within(payerSection).getByRole("button", { name: "取消全選" })
+    fireEvent.click(allSelected)
+    rerender()
+    expect(hook.result.current.state.payerIds).toEqual([])
+  })
+
   it("shows the 均分 hint when several members share the expense", () => {
     renderForm()
     expect(screen.getAllByText("均分").length).toBeGreaterThan(0)

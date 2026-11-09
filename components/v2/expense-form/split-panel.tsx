@@ -181,8 +181,19 @@ export function SplitPanel({
         tabIndex={-1}
         className={`${SECTION_CARD} focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-danger`}
       >
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-2 flex items-center gap-2">
         <p className={`m-0 ${SECTION_TITLE}`}>誰付這筆</p>
+        {!settleView && members.length > 1 && (
+          <div className="ml-auto flex shrink-0 items-center gap-3">
+            <button
+              type="button"
+              onClick={() => actions.setPayersAll(state.payerIds.length !== members.length)}
+              className="min-h-[44px] text-xs font-bold text-v2-lake focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
+            >
+              {state.payerIds.length === members.length ? "取消全選" : "全選"}
+            </button>
+          </div>
+        )}
       </div>
       <div className="flex flex-wrap gap-2">
         {members.map((m) => pill(m, state.payerIds.includes(m.id), () => actions.togglePayer(m.id)))}
