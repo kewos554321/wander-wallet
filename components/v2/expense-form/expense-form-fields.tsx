@@ -88,12 +88,10 @@ export function ExpenseFormFields({
       actions.setImage({ image: null, pendingFile: file, preview: URL.createObjectURL(file) })
     },
   })
-  const optParts = [
-    state.category ? getCategoryLabel(state.category) : "",
-    format(state.expenseDate, "MM/dd"),
-    state.location.location,
-  ].filter((v): v is string => Boolean(v))
-  const optSummary = optParts.join(" · ")
+  const optSummary = [format(state.expenseDate, "MM/dd"), state.location.location]
+    .filter((v): v is string => Boolean(v))
+    .join(" · ")
+  const categoryLabel = state.category ? getCategoryLabel(state.category) : ""
   const lineLabel =
     notifyLineLabel ??
     (mode === "edit" ? "變更後自動發送通知到群組" : mode === "quick" ? "新增後自動發送通知到群組" : "儲存後自動發送通知到群組")
@@ -206,7 +204,7 @@ export function ExpenseFormFields({
         >
           <span className="min-w-0 flex-1">
             <span className="flex items-center gap-2">
-              <span className="min-w-0 flex-1 text-[13px] font-bold text-v2-ink">類別 · 日期 · 地點 · 收據圖片</span>
+              <span className="min-w-0 flex-1 text-[13px] font-bold text-v2-lake">類別 · 日期 · 地點 · 收據圖片</span>
               {receiptImage && (
                 <span
                   aria-label="已附加 1 張收據"
@@ -216,7 +214,10 @@ export function ExpenseFormFields({
                 </span>
               )}
             </span>
-            <span className="mt-0.5 block truncate text-[11px] font-normal text-v2-ink-muted">{optSummary}</span>
+            <span className="mt-0.5 block truncate text-[11px] font-normal text-v2-ink-muted">
+              {categoryLabel ? `${categoryLabel} · ` : ""}
+              {optSummary}
+            </span>
           </span>
           <ChevronDown
             className={`mt-0.5 h-4 w-4 shrink-0 text-v2-ink-muted transition-transform ${optionalOpen ? "rotate-180" : ""}`}
@@ -234,10 +235,10 @@ export function ExpenseFormFields({
                   aria-expanded={categoryOpen}
                   className="flex min-h-[56px] w-full items-center gap-3 px-1 text-left transition-colors hover:bg-v2-lake-tint/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
                 >
-                  <Tag className="h-[18px] w-[18px] shrink-0 text-v2-ink-muted" aria-hidden="true" />
-                  <span className="shrink-0 text-[13px] font-medium text-v2-ink">類別</span>
+                  <Tag className="h-[18px] w-[18px] shrink-0 text-v2-lake" aria-hidden="true" />
+                  <span className="shrink-0 text-[13px] font-semibold text-v2-ink">類別</span>
                   <span className="min-w-0 flex-1 truncate text-right text-[13px] text-v2-ink-muted">
-                    {state.category ? getCategoryLabel(state.category) : "未選擇"}
+                    {categoryLabel || "未選擇"}
                   </span>
                   <ChevronDown
                     className={`h-4 w-4 shrink-0 text-v2-ink-muted transition-transform ${categoryOpen ? "rotate-180" : ""}`}
@@ -259,9 +260,9 @@ export function ExpenseFormFields({
                     type="button"
                     className="group flex min-h-[56px] w-full items-center gap-3 px-1 text-left transition-colors hover:bg-v2-lake-tint/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
                   >
-                    <CalendarIcon className="h-[18px] w-[18px] shrink-0 text-v2-ink-muted" aria-hidden="true" />
-                    <span className="flex-1 text-[13px] font-medium text-v2-ink">支出日期</span>
-                    <span className="truncate text-[13px] text-v2-ink-muted">
+                    <CalendarIcon className="h-[18px] w-[18px] shrink-0 text-v2-lake" aria-hidden="true" />
+                    <span className="shrink-0 text-[13px] font-semibold text-v2-ink">支出日期</span>
+                    <span className="min-w-0 flex-1 truncate text-right font-v2-serif text-[13px] font-semibold tabular-nums text-v2-ink-muted">
                       {format(state.expenseDate, "yyyy/MM/dd（EEEEE）", { locale: zhTW })}
                     </span>
                     <ChevronDown
@@ -281,9 +282,9 @@ export function ExpenseFormFields({
             </div>
 
             <div className="flex min-h-[56px] items-center gap-2 px-1">
-              <Paperclip className="h-[18px] w-[18px] shrink-0 text-v2-ink-muted" aria-hidden="true" />
+              <Paperclip className="h-[18px] w-[18px] shrink-0 text-v2-lake" aria-hidden="true" />
               <div className="flex min-w-0 flex-1 items-center gap-3 py-2">
-                <span className="shrink-0 text-[13px] font-medium text-v2-ink">收據／照片</span>
+                <span className="shrink-0 text-[13px] font-semibold text-v2-ink">收據／照片</span>
                 <span className="ml-auto text-[13px] text-v2-ink-muted">{receiptImage ? "1 張" : "未附加"}</span>
                 {receiptImage && (
                   /* eslint-disable-next-line @next/next/no-img-element */
@@ -294,7 +295,7 @@ export function ExpenseFormFields({
                 type="button"
                 onClick={receiptSource.openCamera}
                 aria-label="拍照"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-v2-ink-muted transition-colors hover:bg-v2-lake-tint hover:text-v2-lake focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-v2-lake-soft text-v2-lake transition-colors hover:bg-v2-lake-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
               >
                 <Camera className="h-[18px] w-[18px]" aria-hidden="true" />
               </button>
@@ -302,7 +303,7 @@ export function ExpenseFormFields({
                 type="button"
                 onClick={receiptSource.openGallery}
                 aria-label="從相簿選擇"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-v2-ink-muted transition-colors hover:bg-v2-lake-tint hover:text-v2-lake focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-v2-lake-soft text-v2-lake transition-colors hover:bg-v2-lake-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
               >
                 <ImageIcon className="h-[18px] w-[18px]" aria-hidden="true" />
               </button>
