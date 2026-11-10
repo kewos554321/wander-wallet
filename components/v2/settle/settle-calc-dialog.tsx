@@ -213,7 +213,7 @@ export function SettlementCalcDialog({ open, onOpenChange, data, currentMemberId
                 ) : (
                   <tr>
                     <td colSpan={4} className="p-[9px] text-center text-[11px] text-v2-ink-muted">
-                      找不到你的成員資料
+                      找不到你的旅伴資料
                     </td>
                   </tr>
                 )}

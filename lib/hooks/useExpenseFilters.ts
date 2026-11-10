@@ -10,7 +10,7 @@ export interface ExpenseParticipant {
   }
 }
 
-/** 付款者介面 */
+/** 付款旅伴介面 */
 export interface ExpensePayerRef {
   member: {
     id: string
@@ -39,7 +39,7 @@ export interface ExpenseFilters {
   selectedCurrencies: Set<string>
   amountRange: [number, number] // [min, max], 0 表示不限制
   createdDateRange: DateRange | undefined // 建立日期範圍
-  expenseDateRange: DateRange | undefined // 支出日期範圍
+  expenseDateRange: DateRange | undefined // 付款日期範圍
 }
 
 interface UseExpenseFiltersOptions {
@@ -65,9 +65,9 @@ interface UseExpenseFiltersReturn<T extends Expense> {
   toggleCategory: (category: string) => void
   /** 設定分類篩選 */
   setCategories: (categories: Set<string>) => void
-  /** 切換付款者篩選 */
+  /** 切換付款旅伴篩選 */
   togglePayer: (payerId: string) => void
-  /** 設定付款者篩選 */
+  /** 設定付款旅伴篩選 */
   setPayers: (payers: Set<string>) => void
   /** 切換旅伴篩選 */
   toggleParticipant: (memberId: string) => void
@@ -81,11 +81,11 @@ interface UseExpenseFiltersReturn<T extends Expense> {
   setAmountRange: (range: [number, number]) => void
   /** 設定建立日期範圍 */
   setCreatedDateRange: (range: DateRange | undefined) => void
-  /** 設定支出日期範圍 */
+  /** 設定付款日期範圍 */
   setExpenseDateRange: (range: DateRange | undefined) => void
   /** 清除所有篩選 */
   clearFilters: () => void
-  /** 唯一的付款者列表 */
+  /** 唯一的付款旅伴列表 */
   uniquePayers: Array<{ id: string; displayName: string }>
   /** 唯一的旅伴列表 */
   uniqueParticipants: Array<{ id: string; displayName: string }>
@@ -108,7 +108,7 @@ const DEFAULT_FILTERS: ExpenseFilters = {
 
 /**
  * 消費篩選 Hook
- * 提供搜尋、分類、付款者、金額範圍等多維度篩選
+ * 提供搜尋、分類、付款旅伴、金額範圍等多維度篩選
  */
 export function useExpenseFilters<T extends Expense>(
   expenses: T[],
@@ -140,7 +140,7 @@ export function useExpenseFilters<T extends Expense>(
     initialFilters?.expenseDateRange
   )
 
-  // 唯一付款者列表（一筆支出可有多位付款人）
+  // 唯一付款旅伴列表（一筆支出可有多位付款旅伴）
   const uniquePayers = useMemo(() => {
     const payerMap = new Map<string, { id: string; displayName: string }>()
     expenses.forEach((expense) => {
@@ -195,7 +195,7 @@ export function useExpenseFilters<T extends Expense>(
         selectedCategories.size === 0 ||
         (expense.category && selectedCategories.has(expense.category))
 
-      // 付款者篩選（消費的任一付款人符合即可）
+      // 付款旅伴篩選（消費的任一付款旅伴符合即可）
       const matchesPayer =
         selectedPayers.size === 0 || expense.payers.some((p) => selectedPayers.has(p.member.id))
 
@@ -233,7 +233,7 @@ export function useExpenseFilters<T extends Expense>(
         }
       }
 
-      // 支出日期篩選
+      // 付款日期篩選
       let matchesExpenseDate = true
       if (expenseDateRange?.from || expenseDateRange?.to) {
         const expDate = new Date(expense.expenseDate)
@@ -287,7 +287,7 @@ export function useExpenseFilters<T extends Expense>(
     })
   }, [])
 
-  // 切換付款者
+  // 切換付款旅伴
   const togglePayer = useCallback((payerId: string) => {
     setSelectedPayers((prev) => {
       const next = new Set(prev)

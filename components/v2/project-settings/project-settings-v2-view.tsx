@@ -118,7 +118,7 @@ export function ProjectSettingsV2View(props: ProjectSettingsV2ViewProps) {
 
       <div className={CARD}>
         <p className={CARD_TITLE}>結算幣別</p>
-        <p className={HELP_TEXT}>所有費用將以此幣別進行結算計算</p>
+        <p className={HELP_TEXT}>所有支出將以此幣別進行結算</p>
         <p data-testid="settlement-minor-unit" className={HELP_TEXT}>
           最小單位：{minorUnitLabel(values.currency)}
         </p>

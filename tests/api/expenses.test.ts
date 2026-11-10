@@ -263,7 +263,7 @@ describe("GET /api/projects/[id]/expenses", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("獲取費用列表失敗")
+    expect(data.error).toBe("獲取支出列表失敗")
   })
 })
 
@@ -434,7 +434,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("付款人必須是旅程旅伴")
+    expect(data.error).toBe("付款旅伴必須來自這趟旅程")
   })
 
   it("should return 400 if payers array is empty", async () => {
@@ -461,7 +461,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("至少需要一位付款人")
+    expect(data.error).toBe("至少需要一位付款旅伴")
     expect(prisma.expense.create).not.toHaveBeenCalled()
   })
 
@@ -493,7 +493,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("付款金額合計必須等於費用總額")
+    expect(data.error).toBe("付款金額合計必須等於支出總額")
     expect(prisma.expense.create).not.toHaveBeenCalled()
   })
 
@@ -524,7 +524,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("付款人不可重複")
+    expect(data.error).toBe("付款旅伴不可重複")
     expect(prisma.expense.create).not.toHaveBeenCalled()
   })
 
@@ -556,7 +556,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("分擔總額必須等於費用總額")
+    expect(data.error).toBe("分攤總額必須等於支出總額")
   })
 
   it("should create expense successfully", async () => {
@@ -950,7 +950,7 @@ describe("POST /api/projects/[id]/expenses", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("創建費用失敗")
+    expect(data.error).toBe("創建支出失敗")
   })
 
   it("stores a valid splitDetail", async () => {
@@ -1084,7 +1084,7 @@ describe("GET /api/projects/[id]/expenses/[expenseId]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toBe("費用不存在")
+    expect(data.error).toBe("支出不存在")
   })
 
   it("should return expense details", async () => {
@@ -1124,7 +1124,7 @@ describe("GET /api/projects/[id]/expenses/[expenseId]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("獲取費用失敗")
+    expect(data.error).toBe("獲取支出失敗")
   })
 })
 
@@ -1193,7 +1193,7 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toBe("費用不存在")
+    expect(data.error).toBe("支出不存在")
   })
 
   it("should return 400 if amount is negative", async () => {
@@ -1712,7 +1712,7 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("分擔總額必須等於費用總額")
+    expect(data.error).toBe("分攤總額必須等於支出總額")
   })
 
   it("should update expense successfully", async () => {
@@ -1900,7 +1900,7 @@ describe("PUT /api/projects/[id]/expenses/[expenseId]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("更新費用失敗")
+    expect(data.error).toBe("更新支出失敗")
   })
 
   function mockUpdateTransaction() {
@@ -2083,7 +2083,7 @@ describe("DELETE /api/projects/[id]/expenses/[expenseId]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toBe("費用不存在")
+    expect(data.error).toBe("支出不存在")
   })
 
   it("should soft delete expense successfully", async () => {
@@ -2108,7 +2108,7 @@ describe("DELETE /api/projects/[id]/expenses/[expenseId]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.message).toBe("費用已刪除")
+    expect(data.message).toBe("支出已刪除")
     expect(prisma.expense.update).toHaveBeenCalledWith({
       where: { id: "expense-123" },
       data: {
@@ -2170,7 +2170,7 @@ describe("DELETE /api/projects/[id]/expenses/[expenseId]", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("刪除費用失敗")
+    expect(data.error).toBe("刪除支出失敗")
   })
 })
 
@@ -2238,7 +2238,7 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("請提供要刪除的費用 ID")
+    expect(data.error).toBe("請提供要刪除的支出 ID")
   })
 
   it("should return 400 if expenseIds is empty array", async () => {
@@ -2260,7 +2260,7 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("請提供要刪除的費用 ID")
+    expect(data.error).toBe("請提供要刪除的支出 ID")
   })
 
   it("should return 404 if no valid expenses found", async () => {
@@ -2283,7 +2283,7 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toBe("找不到可刪除的費用")
+    expect(data.error).toBe("找不到可刪除的支出")
   })
 
   it("should soft delete expenses in batch successfully", async () => {
@@ -2333,7 +2333,7 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
 
     expect(response.status).toBe(200)
     expect(data.deleted).toBe(2)
-    expect(data.message).toBe("已刪除 2 筆費用")
+    expect(data.message).toBe("已刪除 2 筆支出")
     expect(prisma.expense.updateMany).toHaveBeenCalledWith({
       where: {
         id: { in: ["expense-123", "expense-456"] },
@@ -2491,6 +2491,6 @@ describe("DELETE /api/projects/[id]/expenses/batch", () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe("批量刪除費用失敗")
+    expect(data.error).toBe("批量刪除支出失敗")
   })
 })

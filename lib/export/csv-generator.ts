@@ -44,7 +44,7 @@ function generateExpenseSection(expenses: ExpenseExportData[]): string {
 
   // 標題列
   lines.push(
-    ["日期", "描述", "類別", "金額", "付款人", "分擔者"].map(escapeCSV).join(",")
+    ["日期", "描述", "類別", "金額", "付款旅伴", "分攤旅伴"].map(escapeCSV).join(",")
   )
 
   // 資料列
@@ -79,7 +79,7 @@ function generateSettlementSection(settlements: SettlementExportData[]): string 
   }
 
   // 標題列
-  lines.push(["付款人", "收款人", "金額"].map(escapeCSV).join(","))
+  lines.push(["付款旅伴", "收款人", "金額"].map(escapeCSV).join(","))
 
   // 資料列
   settlements.forEach((settlement) => {
@@ -137,7 +137,7 @@ function generateStatisticsSection(statistics: StatisticsExportData, currency: s
     lines.push("")
     lines.push("【旅伴餘額】")
     lines.push("")
-    lines.push(["旅伴", "已付金額", "應分擔", "餘額"].map(escapeCSV).join(","))
+    lines.push(["旅伴", "已付金額", "應付金額", "餘額"].map(escapeCSV).join(","))
 
     statistics.memberBreakdown.forEach((member) => {
       lines.push(

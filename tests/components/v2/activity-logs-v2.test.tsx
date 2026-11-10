@@ -82,7 +82,7 @@ describe("ActivityLogsV2View", () => {
     expect(screen.getByText("操作")).toBeInTheDocument()
     expect(screen.getByText("操作者")).toBeInTheDocument()
     expect(screen.getByText("類別")).toBeInTheDocument()
-    expect(screen.getByText("付款人")).toBeInTheDocument()
+    expect(screen.getByText("付款旅伴")).toBeInTheDocument()
     expect(screen.getByText("付款日期")).toBeInTheDocument()
     expect(screen.getByText("顯示 2 / 2 筆")).toBeInTheDocument()
   })
@@ -154,7 +154,7 @@ describe("ActivityLogsV2View", () => {
 
   it("opens every filter panel and toggles a category", () => {
     const props = renderView({ currencyOptions: ["TWD", "JPY"] })
-    for (const label of ["操作", "操作者", "類別", "付款人", "幣別", "金額", "付款日期"]) {
+    for (const label of ["操作", "操作者", "類別", "付款旅伴", "幣別", "金額", "付款日期"]) {
       fireEvent.click(screen.getAllByText(label)[0])
       expect(screen.getAllByTestId("filter-panel").length).toBeGreaterThan(0)
       fireEvent.click(screen.getAllByText(label)[0])

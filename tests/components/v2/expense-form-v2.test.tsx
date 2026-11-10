@@ -67,6 +67,30 @@ describe("ExpenseFormV2", () => {
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/projects/p1/expenses"))
   })
 
+  it("auto-fills the category from the description on blur", async () => {
+    mockAuthFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ success: true, data: { category: "food", confidence: 0.9 } }),
+    })
+    render(<ExpenseFormV2 projectId="p1" mode="create" />)
+    const description = await screen.findByLabelText(/描述/)
+    fireEvent.change(description, { target: { value: "一蘭拉麵晚餐" } })
+    fireEvent.blur(description)
+
+    await waitFor(() =>
+      expect(mockAuthFetch).toHaveBeenCalledWith(
+        "/api/expenses/categorize",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ description: "一蘭拉麵晚餐" }),
+        }),
+      ),
+    )
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /類別 · 日期 · 地點 · 收據圖片/ })).toHaveTextContent("餐飲"),
+    )
+  })
+
   it("shows the save error and stays", async () => {
     mockSave.mockResolvedValueOnce({ ok: false, error: "新增失敗" })
     render(<ExpenseFormV2 projectId="p1" mode="create" />)

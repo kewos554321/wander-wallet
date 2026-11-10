@@ -10,7 +10,7 @@ const GROUPS: { title: string; note: string; items: { href: string; label: strin
     items: [
       { href: "/demo/expenses", label: "支出列表", desc: "全部支出、分類/旅伴/日期篩選" },
       { href: "/demo/map", label: "消費地圖", desc: "地圖 pin、分類篩選、支出列表" },
-      { href: "/demo/add-expense", label: "新增支出", desc: "金額、付款人、分攤；外幣開匯率面板" },
+      { href: "/demo/add-expense", label: "新增支出", desc: "金額、付款旅伴、分攤；外幣開匯率面板" },
       { href: "/demo/quick-expense", label: "快速記帳", desc: "一句話或收據 → AI 解析 → 確認" },
       { href: "/demo/rate-sheet", label: "匯率面板", desc: "市場／自訂兩種來源" },
     ],

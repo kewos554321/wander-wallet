@@ -168,7 +168,7 @@ export async function DELETE(
       return NextResponse.json({ error: "不能移除自己" }, { status: 400 })
     }
 
-    // 檢查旅伴是否有關聯的支出記錄（只計算未刪除的費用）
+    // 檢查旅伴是否有關聯的支出記錄（只計算未刪除的支出）
     const [paidExpenses, participatedExpenses] = await Promise.all([
       prisma.expensePayer.count({
         where: {
@@ -190,7 +190,7 @@ export async function DELETE(
         messages.push(`${paidExpenses} 筆付款記錄`)
       }
       if (participatedExpenses > 0) {
-        messages.push(`${participatedExpenses} 筆分擔記錄`)
+        messages.push(`${participatedExpenses} 筆分攤記錄`)
       }
       return NextResponse.json(
         { error: `無法移除此旅伴，尚有 ${messages.join(" 和 ")}` },

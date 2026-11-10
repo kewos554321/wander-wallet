@@ -16,7 +16,7 @@ interface Participant {
   shareAmount: number | string
 }
 
-// 獲取旅程的所有費用
+// 獲取旅程的所有支出
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -43,7 +43,7 @@ export async function GET(
     const expenses = await prisma.expense.findMany({
       where: {
         projectId: id,
-        deletedAt: null, // 只取未刪除的費用
+        deletedAt: null, // 只取未刪除的支出
       },
       include: {
         payers: expensePayersInclude,
@@ -74,15 +74,15 @@ export async function GET(
 
     return NextResponse.json(expenses)
   } catch (error) {
-    console.error("獲取費用列表錯誤:", error)
+    console.error("獲取支出列表錯誤:", error)
     return NextResponse.json(
-      { error: "獲取費用列表失敗" },
+      { error: "獲取支出列表失敗" },
       { status: 500 }
     )
   }
 }
 
-// 創建新費用
+// 創建新支出
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -168,14 +168,14 @@ export async function POST(
       }
     }
 
-    // 驗證付款人（多人，金額合計須等於支出總額）
+    // 驗證付款旅伴（多人，金額合計須等於支出總額）
     const payerValidation = validatePayers(payers, amountNum, memberIdSet)
     if (!payerValidation.ok) {
       return NextResponse.json({ error: payerValidation.error }, { status: 400 })
     }
     const validatedPayers: PayerShare[] = payerValidation.payers
 
-    // 計算分擔總額並驗證
+    // 計算分攤總額並驗證
     const totalShare = participants.reduce(
       (sum: number, p: Participant) => sum + Number(p.shareAmount || 0),
       0
@@ -183,7 +183,7 @@ export async function POST(
 
     if (Math.abs(totalShare - amountNum) > 0.01) {
       return NextResponse.json(
-        { error: "分擔總額必須等於費用總額" },
+        { error: "分攤總額必須等於支出總額" },
         { status: 400 }
       )
     }
@@ -266,7 +266,7 @@ export async function POST(
       projectMembers.map((m) => [m.id, m.remainderDiscrepancy ?? 0])
     )
 
-    // 創建費用記錄（結算幣別金額 + 匯率快照；與尾差帳同交易）
+    // 創建支出記錄（結算幣別金額 + 匯率快照；與尾差帳同交易）
     const expense = await prisma.$transaction(async (tx) => {
       const created = await tx.expense.create({
         data: {
@@ -364,9 +364,9 @@ export async function POST(
 
     return NextResponse.json(expense, { status: 201 })
   } catch (error) {
-    console.error("創建費用錯誤:", error)
+    console.error("創建支出錯誤:", error)
     return NextResponse.json(
-      { error: "創建費用失敗" },
+      { error: "創建支出失敗" },
       { status: 500 }
     )
   }

@@ -6,7 +6,7 @@ export type ActionType = "create" | "update" | "delete"
 
 export type ChangesRecord = Record<string, { from: unknown; to: unknown }>
 
-// 費用實體的 metadata
+// 支出實體的 metadata
 export interface ExpenseMetadata {
   description?: string | null
   amount?: number

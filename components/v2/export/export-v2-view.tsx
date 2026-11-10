@@ -75,7 +75,7 @@ export function ExportV2View({
               checked={content.expenseDetails}
               onCheckedChange={(v) => onContentChange({ ...content, expenseDetails: v })}
               label="支出明細"
-              description="每筆支出的日期、金額、類別、付款人"
+              description="每筆支出的日期、金額、類別、付款旅伴"
             />
             <CheckboxRow
               checked={content.settlementInfo}

@@ -16,6 +16,7 @@ import { getCurrentLocation } from "@/lib/geolocation"
 import type { SplitDetail } from "@/lib/expense-split"
 import { ExpenseFormV2View } from "./expense-form-v2-view"
 import { useExpenseDraft, type DraftInit } from "./use-expense-draft"
+import type { CategorizeDescription } from "./use-category-classifier"
 import { recentRatesFor, type RecentRate } from "@/lib/recent-rates"
 
 interface LoadedExpense {
@@ -58,6 +59,28 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
     (currency: string) =>
       recentRatesFor({ expenses: project?.expenses ?? [], fromCurrency: currency, excludeExpenseId: expenseId }),
     [project, expenseId],
+  )
+
+  // Best-effort AI categorisation. Null means "no suggestion" so the form
+  // keeps whatever the user has chosen.
+  const categorize = useCallback<CategorizeDescription>(
+    async (description) => {
+      try {
+        const res = await authFetch("/api/expenses/categorize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ description }),
+        })
+        if (!res.ok) return null
+        const data = await res.json()
+        return typeof data?.data?.category === "string"
+          ? { category: data.data.category, confidence: Number(data.data.confidence) || 0 }
+          : null
+      } catch {
+        return null
+      }
+    },
+    [authFetch],
   )
 
   useEffect(() => {
@@ -166,6 +189,7 @@ export function ExpenseFormV2({ projectId, expenseId, mode }: Props) {
           original={expense}
           projectCurrency={projectCurrency}
           recentRates={recentRates}
+          categorize={categorize}
         />
       </div>
   )
@@ -180,12 +204,14 @@ function LoadedForm({
   original,
   projectCurrency,
   recentRates,
+  categorize,
 }: Props & {
   projectName: string
   init: DraftInit
   original: LoadedExpense | null
   projectCurrency: string
   recentRates: (currency: string) => RecentRate[]
+  categorize: CategorizeDescription
 }) {
   const router = useRouter()
   const { save, remove, saving, uploadingImage, deleting, canNotifyLine } = useSaveExpense(projectId)
@@ -338,6 +364,7 @@ function LoadedForm({
         previewRateInfo={previewRateInfo}
         rateContext={rateContext}
         recentRates={recentRates}
+        categorize={categorize}
       />
       <DeleteExpenseSheet
         open={showDelete}

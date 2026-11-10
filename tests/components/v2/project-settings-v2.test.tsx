@@ -211,7 +211,7 @@ describe("ProjectSettingsV2", () => {
     mockRoutes()
     render(<ProjectSettingsV2 projectId="p1" />)
     await screen.findByLabelText("旅程名稱")
-    const hint = screen.getByText("所有費用將以此幣別進行結算計算")
+    const hint = screen.getByText("所有支出將以此幣別進行結算")
     expect(hint.tagName).toBe("P")
     expect(screen.getByTestId("settlement-minor-unit").previousElementSibling).toBe(hint)
   })

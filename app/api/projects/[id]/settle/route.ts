@@ -155,7 +155,7 @@ export async function GET(
     const projectCurrency = project?.currency || DEFAULT_CURRENCY
     const precision = getCurrencyDecimals(projectCurrency)
 
-    // 獲取所有費用（只取未刪除的）
+    // 獲取所有支出（只取未刪除的）
     const expenses = await prisma.expense.findMany({
       where: {
         projectId: id,
@@ -210,7 +210,7 @@ export async function GET(
     })
 
     // 計算每個旅伴的餘額（使用 memberId，支援佔位旅伴）
-    // balance = 已付款總額 - 應該分擔總額
+    // balance = 已付款總額 - 應該分攤總額
     const balanceMap = new Map<string, Balance>()
 
     // 初始化所有旅伴的餘額為0（包括佔位旅伴）
@@ -296,7 +296,7 @@ export async function GET(
 
       const split = (expense.splitDetail as RawSplitDetail | null) ?? null
 
-      // 扣除每個旅伴應該分擔的金額
+      // 扣除每個旅伴應該分攤的金額
       expense.participants.forEach((participant) => {
         const shareAmount = participant.shareAmountProject != null
           ? fromMinorUnits(Number(participant.shareAmountProject), projectCurrency)
@@ -304,7 +304,7 @@ export async function GET(
         totalShared += shareAmount
         const participantBalance = balanceMap.get(participant.memberId)
         if (participantBalance) {
-          participantBalance.balance -= shareAmount // 應該分擔，餘額減少
+          participantBalance.balance -= shareAmount // 應該分攤，餘額減少
           participantBalance.totalShare += shareAmount // 記錄總分攤
         }
 

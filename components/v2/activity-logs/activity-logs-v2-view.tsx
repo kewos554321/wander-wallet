@@ -134,7 +134,7 @@ export function ActivityLogsV2View(props: ActivityLogsV2ViewProps) {
       ) : (
         <div className="px-4 pt-3">
           <div className="mb-2.5">
-            <SearchField value={filters.search} onChange={onSearch} placeholder="搜尋描述、付款人、操作者..." ariaLabel="搜尋紀錄" />
+            <SearchField value={filters.search} onChange={onSearch} placeholder="搜尋描述、付款旅伴、操作者..." ariaLabel="搜尋紀錄" />
           </div>
 
           <div ref={gridRef} className="mb-2.5 grid grid-cols-3 gap-2">
@@ -147,8 +147,8 @@ export function ActivityLogsV2View(props: ActivityLogsV2ViewProps) {
             <FilterPopover label="類別" icon={<Tag className="h-3.5 w-3.5" />} count={filters.categories.size} open={openPanel === "categories"} onToggle={() => togglePanel("categories")} align="right" widthClass="w-36" boundsRef={gridRef}>
               <CategoryPanel selected={filters.categories} onToggle={(k) => onToggle("categories", k)} onClear={() => filters.categories.forEach((k) => onToggle("categories", k))} />
             </FilterPopover>
-            <FilterPopover label="付款人" icon={<User className="h-3.5 w-3.5" />} count={filters.payers.size} open={openPanel === "payers"} onToggle={() => togglePanel("payers")} widthClass="w-36" boundsRef={gridRef}>
-              <NameListPanel title="誰付錢" options={payerOptions} selected={filters.payers} onToggle={(k) => onToggle("payers", k)} onClear={() => filters.payers.forEach((k) => onToggle("payers", k))} emptyText="無付款人" />
+            <FilterPopover label="付款旅伴" icon={<User className="h-3.5 w-3.5" />} count={filters.payers.size} open={openPanel === "payers"} onToggle={() => togglePanel("payers")} widthClass="w-36" boundsRef={gridRef}>
+              <NameListPanel title="誰付錢" options={payerOptions} selected={filters.payers} onToggle={(k) => onToggle("payers", k)} onClear={() => filters.payers.forEach((k) => onToggle("payers", k))} emptyText="無付款旅伴" />
             </FilterPopover>
             {showCurrency ? (
               <FilterPopover label="幣別" icon={<Coins className="h-3.5 w-3.5" />} count={filters.currencies.size} open={openPanel === "currencies"} onToggle={() => togglePanel("currencies")} widthClass="w-32" boundsRef={gridRef}>
@@ -228,7 +228,7 @@ export function ActivityLogsV2View(props: ActivityLogsV2ViewProps) {
                           <div className="min-w-0">
                             <p className="m-0 truncate text-[13px] font-semibold">{log.metadata.description || "無描述"}</p>
                             <p className="m-0 mt-0.5 text-[11px] text-v2-ink-muted">
-                              付款人：{log.metadata.payerName || "—"}
+                              付款旅伴：{log.metadata.payerName || "—"}
                               {log.metadata.expenseDate ? ` · ${new Date(log.metadata.expenseDate).toLocaleDateString("zh-TW")}` : ""}
                             </p>
                           </div>

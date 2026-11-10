@@ -81,8 +81,8 @@ export default function BrandPreviewPage() {
             <CardContent className="pt-6">
               <EmptyState
                 variant="no-projects"
-                title="還沒有專案"
-                description="建立你的第一個旅行專案"
+                title="還沒有旅程"
+                description="建立你的第一個旅程"
               />
             </CardContent>
           </Card>

@@ -55,7 +55,7 @@ describe.skipIf(SKIP_INTEGRATION)("parseExpenses Integration (multi-expense)", (
     })
 
     expect(result.expenses.length).toBeGreaterThanOrEqual(2)
-    // 每筆費用都應該有小華作為唯一付款人（全額）
+    // 每筆費用都應該有小華作為唯一付款旅伴（全額）
     result.expenses.forEach(expense => {
       expect(expense.payers).toEqual([{ memberId: "member-2", amount: expense.amount }])
       expect(expense.participantIds).toHaveLength(3) // 全部旅伴
@@ -70,7 +70,7 @@ describe.skipIf(SKIP_INTEGRATION)("parseExpenses Integration (multi-expense)", (
     })
 
     expect(result.expenses.length).toBeGreaterThanOrEqual(2)
-    // 每筆費用都應該有小明和小美作為分擔者
+    // 每筆費用都應該有小明和小美作為分攤旅伴
     result.expenses.forEach(expense => {
       expect(expense.participantIds).toContain("member-1") // 小明
       expect(expense.participantIds).toContain("member-3") // 小美

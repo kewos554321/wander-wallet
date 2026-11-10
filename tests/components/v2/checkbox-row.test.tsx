@@ -10,7 +10,7 @@ describe("CheckboxRow", () => {
         checked={false}
         onCheckedChange={onCheckedChange}
         label="支出明細"
-        description="每筆支出的日期、金額、類別、付款人"
+        description="每筆支出的日期、金額、類別、付款旅伴"
       />
     )
     const box = screen.getByRole("checkbox")
@@ -18,7 +18,7 @@ describe("CheckboxRow", () => {
     fireEvent.click(box)
     expect(onCheckedChange).toHaveBeenCalledWith(true)
     expect(screen.getByText("支出明細")).toBeInTheDocument()
-    expect(screen.getByText("每筆支出的日期、金額、類別、付款人")).toBeInTheDocument()
+    expect(screen.getByText("每筆支出的日期、金額、類別、付款旅伴")).toBeInTheDocument()
   })
 
   it("reflects the checked state", () => {

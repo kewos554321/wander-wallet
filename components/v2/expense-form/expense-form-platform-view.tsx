@@ -18,6 +18,7 @@ import { ExpenseFormFields } from "@/components/v2/expense-form/expense-form-fie
 import { expenseFormIssues } from "@/components/v2/expense-form/split-guardrails"
 import { formatCurrency } from "@/lib/constants/currencies"
 import type { DraftMember, useExpenseDraft } from "@/components/v2/expense-form/use-expense-draft"
+import type { CategorizeDescription } from "@/components/v2/expense-form/use-category-classifier"
 import type { RecentRate } from "@/lib/recent-rates"
 
 type Draft = ReturnType<typeof useExpenseDraft>
@@ -36,6 +37,8 @@ export interface ExpenseFormPlatformViewProps {
   previewRateInfo?: (currency: string) => { rate: number | null; source: "same" | "live" | "none" }
   rateContext?: (currency: string) => { liveRate: number | null; liveTimestamp: number | null }
   recentRates?: (currency: string) => RecentRate[]
+  /** Optional AI classifier; omit to disable auto-categorisation. */
+  categorize?: CategorizeDescription
   /** "ledger" = centered table (current after view); "platform" = Apple/Google list + detail sheet. */
   variant?: "ledger" | "platform"
 }
@@ -129,6 +132,7 @@ export function ExpenseFormPlatformView(props: ExpenseFormPlatformViewProps) {
         recentRates={props.recentRates}
         showNotifyLine={props.canNotifyLine}
         mode={props.mode}
+        categorize={props.categorize}
         variant={variant}
       />
 

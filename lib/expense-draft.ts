@@ -130,7 +130,7 @@ export function initialState(init: DraftInit): DraftState {
       rateKind: null,
       rateDate: null,
       description: "",
-      category: "other",
+      category: "",
       payerIds: init.paidBy ? [init.paidBy] : [],
       pinnedPayerAmounts: {},
       expenseDate: new Date(),
@@ -374,7 +374,7 @@ export function deriveExpenseDraft({
   else if (state.payerIds.length === 0) error = "請選擇付款旅伴"
   else if (!payerResult.ok) error = "付款金額合計超過支出金額"
   else if (!payerMatches) error = "付款金額與支出金額不符"
-  else if (base.splitInput.participantIds.length === 0) error = "請選擇至少一位分擔者"
+  else if (base.splitInput.participantIds.length === 0) error = "請選擇至少一位分攤旅伴"
   else if (unnamed) error = `${members.find((m) => m.id === unnamed)?.displayName} 有個人項目未填寫名稱`
   else if (base.personalTotal > base.splitInput.amount) error = "個人項目總額不可超過支出總額"
   else if (!base.matches) error = "分攤金額與支出金額不符"

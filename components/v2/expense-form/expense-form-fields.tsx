@@ -19,6 +19,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { AmountCard } from "@/components/v2/expense-form/amount-card"
 import { CalculatorPad } from "@/components/v2/expense-form/calculator-pad"
 import { CategoryPicker } from "@/components/v2/expense-form/category-picker"
+import {
+  useCategoryClassifier,
+  type CategorizeDescription,
+} from "@/components/v2/expense-form/use-category-classifier"
 import { LocationPickerV2 } from "@/components/v2/expense-form/location-picker-v2"
 import { RateSheet } from "@/components/v2/expense-form/rate-sheet"
 import { useImageSource } from "@/components/v2/expense-form/use-image-source"
@@ -42,6 +46,8 @@ export interface ExpenseFormFieldsProps {
   showNotifyLine?: boolean
   notifyLineLabel?: string
   mode?: "create" | "edit" | "quick"
+  /** Optional AI classifier; omit to disable auto-categorisation. */
+  categorize?: CategorizeDescription
   /** "ledger" is demo-only; production always uses "platform". */
   variant?: "ledger" | "platform"
 }
@@ -56,9 +62,17 @@ export function ExpenseFormFields({
   showNotifyLine = false,
   notifyLineLabel,
   mode = "create",
+  categorize,
   variant = "platform",
 }: ExpenseFormFieldsProps) {
   const { state, actions, derived } = draft
+  const categoryClassifier = useCategoryClassifier({
+    mode,
+    category: state.category,
+    description: state.description,
+    categorize,
+    onCategory: actions.setCategory,
+  })
   const [showCalculator, setShowCalculator] = useState(false)
   const [optionalOpen, setOptionalOpen] = useState(false)
   const [categoryOpen, setCategoryOpen] = useState(false)
@@ -177,7 +191,10 @@ export function ExpenseFormFields({
           id="after-desc"
           value={state.description}
           onChange={(e) => actions.setDescription(e.target.value)}
-          onBlur={() => setDescTouched(true)}
+          onBlur={() => {
+            setDescTouched(true)
+            categoryClassifier.classify()
+          }}
           placeholder="這筆是什麼？例如：一蘭拉麵晚餐"
           className="w-full rounded-xl border border-v2-line bg-v2-paper px-3.5 py-3 text-[13px] outline-none focus-visible:border-v2-lake"
         />
@@ -261,7 +278,7 @@ export function ExpenseFormFields({
                     className="group flex min-h-[56px] w-full items-center gap-3 px-1 text-left transition-colors hover:bg-v2-lake-tint/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v2-lake"
                   >
                     <CalendarIcon className="h-[18px] w-[18px] shrink-0 text-v2-lake" aria-hidden="true" />
-                    <span className="shrink-0 text-[13px] font-semibold text-v2-ink">支出日期</span>
+                    <span className="shrink-0 text-[13px] font-semibold text-v2-ink">付款日期</span>
                     <span className="min-w-0 flex-1 truncate text-right font-v2-serif text-[13px] font-semibold tabular-nums text-v2-ink-muted">
                       {format(state.expenseDate, "yyyy/MM/dd（EEEEE）", { locale: zhTW })}
                     </span>

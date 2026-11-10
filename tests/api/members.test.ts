@@ -449,7 +449,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("無法移除此旅伴，尚有 3 筆分擔記錄")
+    expect(data.error).toBe("無法移除此旅伴，尚有 3 筆分攤記錄")
     // Verify that expense: { deletedAt: null } is used in the query
     expect(prisma.expenseParticipant.count).toHaveBeenCalledWith({
       where: { memberId: "member-456", expense: { deletedAt: null } },
@@ -474,7 +474,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("無法移除此旅伴，尚有 2 筆付款記錄 和 3 筆分擔記錄")
+    expect(data.error).toBe("無法移除此旅伴，尚有 2 筆付款記錄 和 3 筆分攤記錄")
   })
 
   it("should allow removal if member only has soft-deleted expenses", async () => {

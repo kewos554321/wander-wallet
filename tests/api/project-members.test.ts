@@ -450,7 +450,7 @@ describe("DELETE /api/projects/[id]/members", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toContain("5 筆分擔記錄")
+    expect(data.error).toContain("5 筆分攤記錄")
   })
 
   it("should return 400 if member has both paid and participated expenses", async () => {
@@ -476,7 +476,7 @@ describe("DELETE /api/projects/[id]/members", () => {
 
     expect(response.status).toBe(400)
     expect(data.error).toContain("2 筆付款記錄")
-    expect(data.error).toContain("4 筆分擔記錄")
+    expect(data.error).toContain("4 筆分攤記錄")
   })
 
   it("should delete member successfully", async () => {

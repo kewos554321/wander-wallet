@@ -11,7 +11,7 @@ import {
 } from "lucide-react"
 
 /**
- * 費用類別值列表
+ * 支出類別值列表
  */
 export const EXPENSE_CATEGORIES = [
   "food",

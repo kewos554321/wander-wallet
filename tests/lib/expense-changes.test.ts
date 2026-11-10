@@ -44,7 +44,7 @@ describe("buildExpenseChanges", () => {
       { field: "date", label: "日期", oldValue: "2026/11/16", newValue: "2026/11/17" },
       { field: "location", label: "地點", oldValue: "無", newValue: "上野" },
       { field: "image", label: "圖片", oldValue: "無", newValue: "有圖片" },
-      { field: "participants", label: "分攤者", oldValue: "2人", newValue: "3人" },
+      { field: "participants", label: "分攤旅伴", oldValue: "2人", newValue: "3人" },
     ])
   })
 

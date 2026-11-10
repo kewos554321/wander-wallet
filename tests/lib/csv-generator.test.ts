@@ -91,14 +91,14 @@ describe("generateCSV", () => {
     expect(csv).toContain("描述")
     expect(csv).toContain("類別")
     expect(csv).toContain("金額")
-    expect(csv).toContain("付款人")
-    expect(csv).toContain("分擔者")
+    expect(csv).toContain("付款旅伴")
+    expect(csv).toContain("分攤旅伴")
   })
 
   it("should include settlement info when enabled", () => {
     const csv = generateCSV(mockExportData, defaultOptions)
     expect(csv).toContain("【結算資訊】")
-    expect(csv).toContain("付款人")
+    expect(csv).toContain("付款旅伴")
     expect(csv).toContain("收款人")
   })
 
@@ -131,7 +131,7 @@ describe("generateCSV", () => {
     const csv = generateCSV(mockExportData, defaultOptions)
     expect(csv).toContain("【旅伴餘額】")
     expect(csv).toContain("已付金額")
-    expect(csv).toContain("應分擔")
+    expect(csv).toContain("應付金額")
     expect(csv).toContain("餘額")
   })
 

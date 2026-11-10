@@ -122,18 +122,18 @@ describe("validatePayers", () => {
   })
 
   it("rejects a missing/empty list", () => {
-    expect(validatePayers(undefined, 100, members)).toEqual({ ok: false, error: "至少需要一位付款人" })
-    expect(validatePayers([], 100, members)).toEqual({ ok: false, error: "至少需要一位付款人" })
+    expect(validatePayers(undefined, 100, members)).toEqual({ ok: false, error: "至少需要一位付款旅伴" })
+    expect(validatePayers([], 100, members)).toEqual({ ok: false, error: "至少需要一位付款旅伴" })
   })
 
   it("rejects duplicate members", () => {
     const result = validatePayers([{ memberId: "a", amount: 50 }, { memberId: "a", amount: 50 }], 100, members)
-    expect(result).toEqual({ ok: false, error: "付款人不可重複" })
+    expect(result).toEqual({ ok: false, error: "付款旅伴不可重複" })
   })
 
   it("rejects non-members", () => {
     const result = validatePayers([{ memberId: "z", amount: 100 }], 100, members)
-    expect(result).toEqual({ ok: false, error: "付款人必須是旅程旅伴" })
+    expect(result).toEqual({ ok: false, error: "付款旅伴必須來自這趟旅程" })
   })
 
   it("rejects negative amounts", () => {
@@ -143,7 +143,7 @@ describe("validatePayers", () => {
 
   it("rejects a total that does not match the amount", () => {
     const result = validatePayers([{ memberId: "a", amount: 30 }], 100, members)
-    expect(result).toEqual({ ok: false, error: "付款金額合計必須等於費用總額" })
+    expect(result).toEqual({ ok: false, error: "付款金額合計必須等於支出總額" })
   })
 
   it("tolerates floating point within 0.01", () => {

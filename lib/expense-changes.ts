@@ -91,7 +91,7 @@ export function buildExpenseChanges(
   const oldIds = [...original.participantIds].sort()
   const newIds = [...next.participantIds].sort()
   if (oldIds.length !== newIds.length || oldIds.some((id, i) => id !== newIds[i])) {
-    changes.push({ field: "participants", label: "分攤者", oldValue: `${oldIds.length}人`, newValue: `${newIds.length}人` })
+    changes.push({ field: "participants", label: "分攤旅伴", oldValue: `${oldIds.length}人`, newValue: `${newIds.length}人` })
   }
   return changes
 }

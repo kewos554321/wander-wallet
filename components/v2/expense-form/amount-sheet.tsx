@@ -113,7 +113,7 @@ export function AmountSheet({
           <V2Avatar image={member?.image ?? null} name={name} seed={avatarSeed(member?.userId, memberId)} variant={member?.isCurrentUser ? "brand" : undefined} placeholder={member?.isPlaceholder} className="h-8 w-8 shrink-0 rounded-full" fallbackClassName="text-[12px] font-bold" />
           <div className="min-w-0 flex-1">
             <h2 className="m-0 font-v2-serif text-[16px] font-bold leading-tight text-v2-ink">{isPayer ? `${name} 付了多少` : `${name} 的共同分攤`}</h2>
-            <p className="m-0 text-[11px] text-v2-ink-muted">{isPayer ? "輸入金額就會固定這一位，其他付款人自動平分剩下的" : "輸入金額就會固定這一位，其他人自動平分剩下的"}</p>
+            <p className="m-0 text-[11px] text-v2-ink-muted">{isPayer ? "輸入金額就會固定這一位，其他付款旅伴自動平分剩下的" : "輸入金額就會固定這一位，其他人自動平分剩下的"}</p>
           </div>
           <button type="button" onClick={onClose} aria-label="關閉" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-v2-sand text-v2-ink">
             <X className="h-4 w-4" />

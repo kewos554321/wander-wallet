@@ -27,17 +27,17 @@ const ExpenseItemSchema = z.object({
       z.object({
         name: z
           .string()
-          .describe("付款人名字；如果說「我付」「我先付」則填入目前用戶名字"),
+          .describe("付款旅伴名字；如果說「我付」「我先付」則填入目前用戶名字"),
         amount: z
           .number()
           .optional()
-          .describe("這位付款人出的金額；只有在對話中有明確說出該人金額時才填"),
+          .describe("這位付款旅伴出的金額；只有在對話中有明確說出該人金額時才填"),
       })
     )
-    .describe("這筆費用的付款人清單，可多人；未提及付款人時放入目前用戶一人"),
+    .describe("這筆費用的付款旅伴清單，可多人；未提及付款旅伴時放入目前用戶一人"),
   participantNames: z
     .array(z.string())
-    .describe("這筆費用的分擔者名字陣列，如果說「大家」「全部」則填入所有成員"),
+    .describe("這筆費用的分攤旅伴名字陣列，如果說「大家」「全部」則填入所有成員"),
   personalItems: z
     .array(
       z.object({
@@ -58,7 +58,7 @@ const ExpenseItemSchema = z.object({
 export const ParsedExpensesSchema = z.object({
   expenses: z
     .array(ExpenseItemSchema)
-    .describe("解析出的費用列表，每個消費項目一筆，每筆費用有獨立的付款人和分擔者"),
+    .describe("解析出的費用列表，每個消費項目一筆，每筆費用有獨立的付款旅伴和分攤旅伴"),
   confidence: z
     .number()
     .min(0)
@@ -104,8 +104,8 @@ export interface ExpenseItemResult {
   description: string
   category: ExpenseCategory
   currency: string // 幣別代碼
-  payers: PayerShare[] // 這筆費用的付款人與各自金額（合計 = amount）
-  participantIds: string[] // 這筆費用的分擔者 ID 陣列
+  payers: PayerShare[] // 這筆費用的付款旅伴與各自金額（合計 = amount）
+  participantIds: string[] // 這筆費用的分攤旅伴 ID 陣列
   personalItems?: ResolvedPersonalItem[] // 先扣的個人項目（已對應成員 ID）
   selected: boolean // 是否選中要儲存
 }
@@ -158,27 +158,27 @@ const EXPENSES_PARSER_PROMPT = ChatPromptTemplate.fromMessages([
 
 4. 類別：根據內容判斷最適合的分類
 
-5. 每筆費用的付款人（payers）：
-   - 特別注意：每筆費用可以有不同的付款人，而且同一筆可以有多位付款人！
-   - 「我付 800、小明 480」→ 兩位付款人：目前用戶 amount 800，小明 amount 480
-   - 只有「我付」「我先付」「我幫大家付」→ 一位付款人：目前用戶（不填 amount，代表全額）
-   - 「XXX 付」「XXX 幫大家付」→ 一位付款人：XXX（不填 amount）
-   - 多個名字但沒說各自金額，例如「小明、小華付」→ 多位付款人：小明、小華（都不填 amount，之後均分）
-   - 若多筆費用連續出現且只有最後提到付款人，則這些費用共用該付款人
-   - 例如「早餐50、午餐60，我幫大家先付」→ 兩筆費用，付款人都是目前用戶
-   - 例如「晚餐100，tommy幫大家付」→ 一筆費用，付款人是 tommy
+5. 每筆費用的付款旅伴（payers）：
+   - 特別注意：每筆費用可以有不同的付款旅伴，而且同一筆可以有多位付款旅伴！
+   - 「我付 800、小明 480」→ 兩位付款旅伴：目前用戶 amount 800，小明 amount 480
+   - 只有「我付」「我先付」「我幫大家付」→ 一位付款旅伴：目前用戶（不填 amount，代表全額）
+   - 「XXX 付」「XXX 幫大家付」→ 一位付款旅伴：XXX（不填 amount）
+   - 多個名字但沒說各自金額，例如「小明、小華付」→ 多位付款旅伴：小明、小華（都不填 amount，之後均分）
+   - 若多筆費用連續出現且只有最後提到付款旅伴，則這些費用共用該付款旅伴
+   - 例如「早餐50、午餐60，我幫大家先付」→ 兩筆費用，付款旅伴都是目前用戶
+   - 例如「晚餐100，tommy幫大家付」→ 一筆費用，付款旅伴是 tommy
    - 如果沒提到 → 預設為目前用戶一位（全額）
 
-6. 每筆費用的分擔者（participantNames）：
-   - 特別注意：每筆費用可以有不同的分擔者！
+6. 每筆費用的分攤旅伴（participantNames）：
+   - 特別注意：每筆費用可以有不同的分攤旅伴！
    - 如果說「大家」「全部」「一起分」「AA」「大家分」→ 填入所有成員
-   - 如果說「XXX 幫 A 跟 B 付」→ 分擔者是 A 和 B
-   - 如果說「XXX 幫她自己跟 YYY 付」→ 分擔者是 XXX 和 YYY
-   - 例如「交通 90, monica 幫她自己跟 tommy 付」→ 分擔者是 monica 和 tommy
-   - 如果沒提到分擔者 → 預設所有成員
+   - 如果說「XXX 幫 A 跟 B 付」→ 分攤旅伴是 A 和 B
+   - 如果說「XXX 幫她自己跟 YYY 付」→ 分攤旅伴是 XXX 和 YYY
+   - 例如「交通 90, monica 幫她自己跟 tommy 付」→ 分攤旅伴是 monica 和 tommy
+   - 如果沒提到分攤旅伴 → 預設所有成員
 
 7. 每筆費用的個人項目（personalItems）：
-   - 「個人項目」是某位成員在這筆消費中專屬、要先從總額扣除的部分；扣完剩下的才由共同分攤者均分。
+   - 「個人項目」是某位成員在這筆消費中專屬、要先從總額扣除的部分；扣完剩下的才由共同分攤旅伴均分。
    - 例如「晚餐 1200，jay 飲料 200 先扣，大家分」→ personalItems 加入一筆：person 填 "jay"、name 填 "飲料"、amount 填 200，而整筆 amount 仍為 1200
    - 例如「早餐 300，小明自己買了 100 的咖啡」→ personalItems 加入一筆：person 填 "小明"、name 填 "咖啡"、amount 填 100
    - 例如「門票 900，我和小明各有一張 300 的票」→ personalItems 加入兩筆：person 分別填 "我" 與 "小明"、name 皆填 "門票"、amount 皆填 300
@@ -217,7 +217,7 @@ export async function parseExpenses(
   }
 
   if (members.length === 0) {
-    throw new Error("專案沒有成員")
+    throw new Error("旅程沒有旅伴")
   }
 
   const chain = createExpensesParserChain()
@@ -230,15 +230,15 @@ export async function parseExpenses(
     currentUserName,
   })
 
-  // 轉換費用項目，每筆費用有獨立的付款人和分擔者
+  // 轉換費用項目，每筆費用有獨立的付款旅伴和分攤旅伴
   const allMemberIds = members.map((m) => m.id)
   const expenses: ExpenseItemResult[] = parsed.expenses.map((expense, index) => {
-    // 將付款人名字轉換為 ID 並推算各自金額
+    // 將付款旅伴名字轉換為 ID 並推算各自金額
     const payers = resolvePayers(expense.payers ?? [], expense.amount, members, currentUserName)
 
-    // 將分擔者名字轉換為 ID
+    // 將分攤旅伴名字轉換為 ID
     const participantIds = mapNamesToIds(expense.participantNames, members)
-    // 如果沒有找到任何分擔者，預設全部成員
+    // 如果沒有找到任何分攤旅伴，預設全部成員
     const finalParticipantIds = participantIds.length > 0 ? participantIds : allMemberIds
 
     // 幣別：AI 有解析到就用，否則用專案預設
@@ -280,7 +280,7 @@ export async function parseExpense(
   const firstExpense = result.expenses[0]
 
   if (!firstExpense) {
-    throw new Error("無法解析費用內容")
+    throw new Error("無法解析支出內容")
   }
 
   return {
@@ -296,7 +296,7 @@ export async function parseExpense(
 /* c8 ignore stop */
 
 /**
- * 單一 parsed 付款人（AI 原始輸出，名字 + 選填金額）
+ * 單一 parsed 付款旅伴（AI 原始輸出，名字 + 選填金額）
  */
 export interface ParsedPayer {
   name: string
@@ -304,11 +304,11 @@ export interface ParsedPayer {
 }
 
 /**
- * 將 AI 解析出的付款人名字對應到成員 ID 並推算金額。
+ * 將 AI 解析出的付款旅伴名字對應到成員 ID 並推算金額。
  *
- * - 有提供金額者視為指定（pin），其餘付款人均分剩餘金額
- * - 多位付款人都沒提供金額 → 全額均分
- * - 完全沒提到付款人 → 目前用戶單獨付全額
+ * - 有提供金額者視為指定（pin），其餘付款旅伴均分剩餘金額
+ * - 多位付款旅伴都沒提供金額 → 全額均分
+ * - 完全沒提到付款旅伴 → 目前用戶單獨付全額
  * - 若 AI 提供的金額合計超過支出金額，退回全額均分，讓使用者可在確認步驟修正
  *
  * 金額運算重用 lib/expense-payers.ts，確保與表單／伺服器一致。
@@ -334,7 +334,7 @@ export function resolvePayers(
 
   let payerIds = ordered.map((p) => p.memberId)
   if (payerIds.length === 0) {
-    // 完全沒提到付款人 → 目前用戶單獨付全額（找不到時退回第一位成員）。
+    // 完全沒提到付款旅伴 → 目前用戶單獨付全額（找不到時退回第一位成員）。
     const current = members.find((m) => m.displayName === currentUserName) ?? members[0]
     if (!current) return []
     payerIds = [current.id]

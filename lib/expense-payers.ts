@@ -96,16 +96,16 @@ export function validatePayers(
   memberIds: Set<string>
 ): { ok: true; payers: PayerShare[] } | { ok: false; error: string } {
   const fail = (error: string) => ({ ok: false as const, error })
-  if (!Array.isArray(value) || value.length === 0) return fail("至少需要一位付款人")
+  if (!Array.isArray(value) || value.length === 0) return fail("至少需要一位付款旅伴")
 
   const seen = new Set<string>()
   const payers: PayerShare[] = []
   for (const item of value) {
-    if (!item || typeof item !== "object") return fail("付款人格式不正確")
+    if (!item || typeof item !== "object") return fail("付款旅伴格式不正確")
     const { memberId, amount: rawAmount } = item as Record<string, unknown>
-    if (typeof memberId !== "string" || memberId.length === 0) return fail("付款人格式不正確")
-    if (seen.has(memberId)) return fail("付款人不可重複")
-    if (!memberIds.has(memberId)) return fail("付款人必須是旅程旅伴")
+    if (typeof memberId !== "string" || memberId.length === 0) return fail("付款旅伴格式不正確")
+    if (seen.has(memberId)) return fail("付款旅伴不可重複")
+    if (!memberIds.has(memberId)) return fail("付款旅伴必須來自這趟旅程")
     const payerAmount = Number(rawAmount)
     if (!Number.isFinite(payerAmount) || payerAmount < 0) return fail("付款金額不正確")
     seen.add(memberId)
@@ -113,7 +113,7 @@ export function validatePayers(
   }
 
   const total = payers.reduce((sum, p) => sum + p.amount, 0)
-  if (Math.abs(total - amount) > 0.01) return fail("付款金額合計必須等於費用總額")
+  if (Math.abs(total - amount) > 0.01) return fail("付款金額合計必須等於支出總額")
 
   return { ok: true, payers }
 }

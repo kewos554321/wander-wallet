@@ -123,7 +123,7 @@ export function NewProjectV2View({ values, set, submitting, error, onCreate }: N
 
         <div className={CARD}>
           <p className={CARD_TITLE}>結算幣別</p>
-          <p className={HELP_TEXT}>所有費用將以此幣別進行結算計算</p>
+          <p className={HELP_TEXT}>所有支出將以此幣別進行結算</p>
           <p className={HELP_TEXT}>最小單位：{minorUnitLabel(values.currency)}</p>
           <V2CurrencyField value={values.currency} onChange={(c) => set("currency", c)} disabled={submitting} ariaLabel="結算幣別" />
         </div>

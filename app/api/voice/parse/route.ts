@@ -11,7 +11,7 @@ interface RequestBody {
 
 /**
  * POST /api/voice/parse
- * 使用 AI 解析語音/文字輸入的費用內容
+ * 使用 AI 解析語音/文字輸入的支出內容
  */
 export async function POST(req: NextRequest) {
   try {

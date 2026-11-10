@@ -235,7 +235,7 @@ export async function sendExpenseNotificationToChat(data: ExpenseNotificationDat
       ],
       alignItems: "center" as const,
     },
-    // 第二行：付款人 + 分攤資訊
+    // 第二行：付款旅伴 + 分攤資訊
     {
       type: "text" as const,
       text: `${data.payerName} 付 · ${data.participantCount}人分攤 · 每人 ${perPersonAmount}`,
@@ -445,7 +445,7 @@ export async function sendDeleteNotificationToChat(data: DeleteNotificationData)
             ],
             alignItems: "center" as const,
           },
-          // 第二行：付款人 + 分攤資訊
+          // 第二行：付款旅伴 + 分攤資訊
           {
             type: "text" as const,
             text: `${data.payerName} 付 · ${data.participantCount}人分攤 · 每人 ${perPersonAmount}`,
@@ -497,7 +497,7 @@ export async function sendBatchExpenseNotificationToChat(data: BatchExpenseNotif
     minimumFractionDigits: 0,
   }).format(totalAmount)
 
-  // 生成費用列表內容
+  // 生成支出列表內容
   const expenseContents = data.expenses.flatMap((expense, index) => {
     const categoryEmoji = CATEGORY_EMOJIS[expense.category || "other"] || "💰"
 
@@ -545,7 +545,7 @@ export async function sendBatchExpenseNotificationToChat(data: BatchExpenseNotif
         ],
         alignItems: "center" as const,
       },
-      // 第二行：付款人 + 分攤資訊
+      // 第二行：付款旅伴 + 分攤資訊
       {
         type: "text" as const,
         text: `${expense.payerName} 付 · ${expense.participantCount}人分攤 · 每人 ${perPersonAmount}`,
@@ -634,7 +634,7 @@ export async function sendBatchExpenseNotificationToChat(data: BatchExpenseNotif
             type: "separator" as const,
             color: "#EEEEEE",
           },
-          // 費用列表
+          // 支出列表
           {
             type: "box" as const,
             layout: "vertical" as const,
@@ -686,7 +686,7 @@ export async function sendBatchDeleteNotificationToChat(data: BatchDeleteNotific
     minimumFractionDigits: 0,
   }).format(totalAmount)
 
-  // 生成費用列表內容
+  // 生成支出列表內容
   const expenseContents = data.expenses.flatMap((expense, index) => {
     const categoryEmoji = CATEGORY_EMOJIS[expense.category || "other"] || "💰"
 
@@ -730,7 +730,7 @@ export async function sendBatchDeleteNotificationToChat(data: BatchDeleteNotific
         ],
         alignItems: "center" as const,
       },
-      // 第二行：付款人資訊
+      // 第二行：付款旅伴資訊
       {
         type: "text" as const,
         text: `${expense.payerName} 付 · ${expense.participantCount}人分攤`,
@@ -819,7 +819,7 @@ export async function sendBatchDeleteNotificationToChat(data: BatchDeleteNotific
             type: "separator" as const,
             color: "#EEEEEE",
           },
-          // 費用列表
+          // 支出列表
           {
             type: "box" as const,
             layout: "vertical" as const,

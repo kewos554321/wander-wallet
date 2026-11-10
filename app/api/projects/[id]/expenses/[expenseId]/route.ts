@@ -17,7 +17,7 @@ interface Participant {
   shareAmount: number | string
 }
 
-// 獲取單個費用詳情
+// 獲取單個支出詳情
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; expenseId: string }> }
@@ -45,7 +45,7 @@ export async function GET(
       where: {
         id: expenseId,
         projectId: id,
-        deletedAt: null, // 只取未刪除的費用
+        deletedAt: null, // 只取未刪除的支出
       },
       include: {
         payers: expensePayersInclude,
@@ -71,20 +71,20 @@ export async function GET(
     })
 
     if (!expense) {
-      return NextResponse.json({ error: "費用不存在" }, { status: 404 })
+      return NextResponse.json({ error: "支出不存在" }, { status: 404 })
     }
 
     return NextResponse.json(expense)
   } catch (error) {
-    console.error("獲取費用錯誤:", error)
+    console.error("獲取支出錯誤:", error)
     return NextResponse.json(
-      { error: "獲取費用失敗" },
+      { error: "獲取支出失敗" },
       { status: 500 }
     )
   }
 }
 
-// 更新費用
+// 更新支出
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; expenseId: string }> }
@@ -112,12 +112,12 @@ export async function PUT(
     const { payers, amount, currency, exchangeRate, description, category, image, location, latitude, longitude, participants, expenseDate, splitDetail, rateKind, rateDate } = body
     const hasSplitDetailField = Object.prototype.hasOwnProperty.call(body, "splitDetail")
 
-    // 獲取現有費用（包含付款人和旅伴資訊）
+    // 獲取現有支出（包含付款與旅伴資訊）
     const existingExpense = await prisma.expense.findFirst({
       where: {
         id: expenseId,
         projectId: id,
-        deletedAt: null, // 只取未刪除的費用
+        deletedAt: null, // 只取未刪除的支出
       },
       include: {
         payers: {
@@ -144,7 +144,7 @@ export async function PUT(
     })
 
     if (!existingExpense) {
-      return NextResponse.json({ error: "費用不存在" }, { status: 404 })
+      return NextResponse.json({ error: "支出不存在" }, { status: 404 })
     }
 
     // 驗證金額
@@ -162,7 +162,7 @@ export async function PUT(
 
     const effectiveAmount = amount !== undefined ? Number(amount) : Number(existingExpense.amount)
 
-    // 驗證所有旅伴（用於付款人與旅伴）
+    // 驗證所有旅伴（付款與分攤）
     const projectMembers = await prisma.projectMember.findMany({
       where: {
         projectId: id,
@@ -191,7 +191,7 @@ export async function PUT(
         }
       }
 
-      // 驗證分擔總額
+      // 驗證分攤總額
       const totalShare = participants.reduce(
         (sum: number, p: Participant) => sum + Number(p.shareAmount || 0),
         0
@@ -199,13 +199,13 @@ export async function PUT(
 
       if (Math.abs(totalShare - effectiveAmount) > 0.01) {
         return NextResponse.json(
-          { error: "分擔總額必須等於費用總額" },
+          { error: "分攤總額必須等於支出總額" },
           { status: 400 }
         )
       }
     }
 
-    // 付款人（多人）：必須提供，且金額合計等於支出總額
+    // 付款旅伴（多人）：必須提供，且金額合計等於支出總額
     const payerValidation = validatePayers(payers, effectiveAmount, memberIds)
     if (!payerValidation.ok) {
       return NextResponse.json({ error: payerValidation.error }, { status: 400 })
@@ -242,7 +242,7 @@ export async function PUT(
       fixedParticipantIds = Object.keys(existingDetail?.customShares ?? {})
     }
 
-    // 更新費用（匯率轉換在結算時執行）
+    // 更新支出（匯率轉換在結算時執行）
     const updateData: {
       amount?: number
       currency?: string
@@ -370,7 +370,7 @@ export async function PUT(
       updateData.rateDate = rateMeta.date
     }
 
-    // 旅伴名稱映射（付款人顯示用）
+    // 旅伴名稱映射（付款旅伴顯示用）
     const memberNameMap: Record<string, string> = Object.fromEntries(
       existingExpense.payers.map((p) => [p.memberId, p.member.displayName])
     )
@@ -397,7 +397,7 @@ export async function PUT(
 
     let changesWithNames: Record<string, { from: unknown; to: unknown }> | null = changes ? { ...changes } : null
 
-    // 付款人（可多人）有變更時記錄串接名稱
+    // 付款旅伴（可多人）有變更時記錄串接名稱
     if (oldPayerKey !== newPayerKey) {
       const payerChange = {
         from: payerLabel(existingExpense.payers),
@@ -454,7 +454,7 @@ export async function PUT(
       }
     }
 
-    // 取得新主要付款人名稱（活動紀錄 metadata）
+    // 取得新主要付款旅伴名稱（活動紀錄 metadata）
     const activityPayerName = memberNameMap[primaryPayer] ?? "未知"
 
     await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -490,7 +490,7 @@ export async function PUT(
         }
       }
 
-      // 重建付款人（含結算幣別金額）
+      // 重建付款旅伴（含結算幣別金額）
       await tx.expensePayer.deleteMany({ where: { expenseId } })
       await tx.expensePayer.createMany({
         data: validatedPayers.map((p) => ({
@@ -501,7 +501,7 @@ export async function PUT(
         })),
       })
 
-      // 更新費用
+      // 更新支出
       await tx.expense.update({
         where: { id: expenseId },
         data: updateData,
@@ -537,7 +537,7 @@ export async function PUT(
       }
     })
 
-    // 返回更新後的費用
+    // 返回更新後的支出
     const expense = await prisma.expense.findUnique({
       where: { id: expenseId },
       include: {
@@ -567,15 +567,15 @@ export async function PUT(
 
     return NextResponse.json(expense)
   } catch (error) {
-    console.error("更新費用錯誤:", error)
+    console.error("更新支出錯誤:", error)
     return NextResponse.json(
-      { error: "更新費用失敗" },
+      { error: "更新支出失敗" },
       { status: 500 }
     )
   }
 }
 
-// 刪除費用
+// 刪除支出
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; expenseId: string }> }
@@ -599,12 +599,12 @@ export async function DELETE(
       return NextResponse.json({ error: "無權限訪問此旅程" }, { status: 403 })
     }
 
-    // 獲取費用詳情
+    // 獲取支出詳情
     const expense = await prisma.expense.findFirst({
       where: {
         id: expenseId,
         projectId: id,
-        deletedAt: null, // 只取未刪除的費用
+        deletedAt: null, // 只取未刪除的支出
       },
       include: {
         payers: {
@@ -621,7 +621,7 @@ export async function DELETE(
     })
 
     if (!expense) {
-      return NextResponse.json({ error: "費用不存在" }, { status: 404 })
+      return NextResponse.json({ error: "支出不存在" }, { status: 404 })
     }
 
     // 如果有 R2 圖片，刪除
@@ -632,12 +632,12 @@ export async function DELETE(
           await deleteFile(key)
         } catch (error) {
           console.error("刪除 R2 圖片失敗:", error)
-          // 繼續執行，不影響費用刪除
+          // 繼續執行，不影響支出刪除
         }
       }
     }
 
-    // 刪除費用：回滾尾差帳（外幣或任何已寫入結算金額的費用）
+    // 刪除支出：回滾尾差帳（外幣或任何已寫入結算金額的支出）
     const deleteProject = await prisma.project.findUnique({
       where: { id },
       select: { currency: true },
@@ -690,7 +690,7 @@ export async function DELETE(
       ?? expense.payers[0]?.member.displayName
       ?? "未知"
 
-    // 記錄操作歷史（包含被刪除費用的 metadata 快照）
+    // 記錄操作歷史（包含被刪除支出的 metadata 快照）
     await createActivityLog({
       projectId: id,
       actorMemberId: membership.id,
@@ -709,11 +709,11 @@ export async function DELETE(
 
     // 通知改由前端使用 LIFF sendMessages API 發送（以用戶身份）
 
-    return NextResponse.json({ message: "費用已刪除" })
+    return NextResponse.json({ message: "支出已刪除" })
   } catch (error) {
-    console.error("刪除費用錯誤:", error)
+    console.error("刪除支出錯誤:", error)
     return NextResponse.json(
-      { error: "刪除費用失敗" },
+      { error: "刪除支出失敗" },
       { status: 500 }
     )
   }

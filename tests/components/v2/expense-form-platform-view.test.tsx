@@ -121,17 +121,23 @@ describe("ExpenseFormPlatformView", () => {
     expect(screen.queryByText("分攤金額")).not.toBeInTheDocument()
   })
 
+  it("labels the optional date row 付款日期", () => {
+    renderForm()
+    openOptionalSection()
+    expect(screen.getByText("付款日期")).toBeInTheDocument()
+  })
+
   it("tucks the category picker inside the optional section one layer down", () => {
     const { hook, rerender } = renderForm()
-    expect(hook.result.current.state.category).toBe("other")
+    expect(hook.result.current.state.category).toBe("")
     expect(screen.queryByRole("button", { name: "餐飲" })).not.toBeInTheDocument()
 
     openOptionalSection()
     // Opening the optional section still leaves the chips collapsed.
     expect(screen.queryByRole("button", { name: "餐飲" })).not.toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "類別 其他" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "類別 未選擇" })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole("button", { name: "類別 其他" }))
+    fireEvent.click(screen.getByRole("button", { name: "類別 未選擇" }))
     fireEvent.click(screen.getByRole("button", { name: "餐飲" }))
     rerender()
     expect(hook.result.current.state.category).toBe("food")

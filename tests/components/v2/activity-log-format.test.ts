@@ -3,7 +3,7 @@ import { getActionText, getActionTone, categoryLabel, formatChanges } from "@/co
 
 describe("getActionText", () => {
   it("names the action and entity", () => {
-    expect(getActionText("create", "expense")).toBe("新增費用")
+    expect(getActionText("create", "expense")).toBe("新增支出")
     expect(getActionText("update", "member")).toBe("編輯旅伴")
     expect(getActionText("delete", "project")).toBe("刪除項目")
   })
@@ -45,7 +45,7 @@ describe("formatChanges", () => {
   it("formats a participants change", () => {
     expect(
       formatChanges({ participants: { from: { count: 2, removed: ["小美"] }, to: { count: 3, added: ["阿明"] } } }, "TWD")
-    ).toEqual([{ label: "分攤者", from: "2人", to: "3人（移除：小美；加入：阿明）" }])
+    ).toEqual([{ label: "分攤旅伴", from: "2人", to: "3人（移除：小美；加入：阿明）" }])
   })
 
   it("labels a payer change (multi-payer joined names)", () => {

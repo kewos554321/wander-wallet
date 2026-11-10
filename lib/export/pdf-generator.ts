@@ -84,7 +84,7 @@ function addExpenseTable(
 
   autoTable(doc, {
     startY: startY + 5,
-    head: [["日期", "描述", "類別", "金額", "付款人", "分擔者"]],
+    head: [["日期", "描述", "類別", "金額", "付款旅伴", "分攤旅伴"]],
     body: tableData,
     styles: {
       fontSize: 9,
@@ -106,8 +106,8 @@ function addExpenseTable(
       1: { cellWidth: "auto" }, // 描述
       2: { cellWidth: 20 }, // 類別
       3: { cellWidth: 22, halign: "right" }, // 金額
-      4: { cellWidth: 25 }, // 付款人
-      5: { cellWidth: "auto" }, // 分擔者
+      4: { cellWidth: 25 }, // 付款旅伴
+      5: { cellWidth: "auto" }, // 分攤旅伴
     },
   })
 
@@ -140,7 +140,7 @@ function addSettlementTable(
 
   autoTable(doc, {
     startY: startY + 5,
-    head: [["付款人", "收款人", "金額"]],
+    head: [["付款旅伴", "收款人", "金額"]],
     body: tableData,
     styles: {
       fontSize: 10,
@@ -259,7 +259,7 @@ function addStatisticsSection(
 
     autoTable(doc, {
       startY: currentY + 5,
-      head: [["旅伴", "已付金額", "應分擔", "餘額"]],
+      head: [["旅伴", "已付金額", "應付金額", "餘額"]],
       body: memberData,
       styles: {
         fontSize: 9,
